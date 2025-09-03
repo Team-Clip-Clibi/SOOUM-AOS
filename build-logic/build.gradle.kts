@@ -10,6 +10,18 @@ gradlePlugin {
             id = "sooum.android.application"
             implementationClass = "convention.ApplicationConvention"
         }
+        create("networkConvention") {
+            id = "sooum.android.network"
+            implementationClass = "convention.NetworkConvention"
+        }
+        create("hiltConvention") {
+            id = "sooum.android.hilt"
+            implementationClass = "convention.HiltConvention"
+        }
+        create("domainConvention") {
+            id = "sooum.android.domain"
+            implementationClass = "convention.DomainConvention"
+        }
     }
 }
 

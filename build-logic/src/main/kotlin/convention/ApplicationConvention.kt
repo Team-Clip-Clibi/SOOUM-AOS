@@ -74,6 +74,12 @@ class ApplicationConvention : Plugin<Project> {
             // hilt
             "implementation"(libs.findLibrary("hilt-android").get())
             "ksp"(libs.findLibrary("hilt-compiler").get())
+            //module
+            add("implementation", project(":presentation"))
+            add("implementation", project(":domain"))
+            add("implementation", project(":data"))
+            add("implementation", project(":data:network"))
+            add("implementation", project(":core"))
         }
     }
 }
