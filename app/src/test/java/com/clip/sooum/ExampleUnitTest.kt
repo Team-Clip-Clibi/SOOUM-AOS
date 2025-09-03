@@ -1,4 +1,4 @@
-package com.clib.sooum
+package com.clip.sooum
 
 import org.junit.Test
 

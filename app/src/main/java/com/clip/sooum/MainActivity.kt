@@ -1,4 +1,4 @@
-package com.clib.sooum
+package com.clip.sooum
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -11,7 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.clib.sooum.ui.theme.SOOUMTheme
+import com.clip.sooum.ui.theme.SOOUMTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

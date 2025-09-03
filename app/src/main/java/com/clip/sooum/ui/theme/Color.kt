@@ -1,4 +1,4 @@
-package com.clib.sooum.ui.theme
+package com.clip.sooum.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

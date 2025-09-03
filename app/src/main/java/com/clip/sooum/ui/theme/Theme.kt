@@ -1,6 +1,5 @@
-package com.clib.sooum.ui.theme
+package com.clip.sooum.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
