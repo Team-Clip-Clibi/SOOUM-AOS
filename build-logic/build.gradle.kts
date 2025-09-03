@@ -22,6 +22,10 @@ gradlePlugin {
             id = "sooum.android.domain"
             implementationClass = "convention.DomainConvention"
         }
+        create("coreConvention") {
+            id = "sooum.android.core"
+            implementationClass = "convention.CoreConvention"
+        }
     }
 }
 
