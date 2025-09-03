@@ -1,4 +1,4 @@
-package com.clib.data
+package com.clip.data
 
 import org.junit.Test
 

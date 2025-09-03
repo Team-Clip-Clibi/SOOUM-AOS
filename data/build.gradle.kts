@@ -3,6 +3,6 @@ plugins {
 }
 
 android {
-    namespace = "com.clib.data"
+    namespace = "com.clip.data"
 }
 

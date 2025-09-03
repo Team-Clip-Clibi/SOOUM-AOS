@@ -1,4 +1,4 @@
-package com.clib.network
+package com.clip.presentation
 
 import org.junit.Test
 

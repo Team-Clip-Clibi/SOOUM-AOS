@@ -1,4 +1,4 @@
-package com.clib.domain
+package com.clip.domain
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4

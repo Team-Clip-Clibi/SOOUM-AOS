@@ -1,4 +1,4 @@
-package com.clib.domain
+package com.clip.domain
 
 import org.junit.Test
 

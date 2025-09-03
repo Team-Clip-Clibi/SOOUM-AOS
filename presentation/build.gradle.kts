@@ -3,5 +3,5 @@ plugins {
 }
 
 android {
-    namespace = "com.clib.presentation"
+    namespace = "com.clip.presentation"
 }
