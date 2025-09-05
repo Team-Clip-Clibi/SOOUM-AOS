@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.provider.Settings
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.coroutines.runBlocking
 
