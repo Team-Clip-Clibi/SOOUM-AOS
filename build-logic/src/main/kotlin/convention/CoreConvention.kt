@@ -18,7 +18,7 @@ class CoreConvention : Plugin<Project> {
         pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
 
         extensions.getByType<LibraryExtension>().apply {
-            namespace = "com.clip.core"
+            namespace = "com.phew.core"
             compileSdk = 35
             defaultConfig {
                 minSdk = 31

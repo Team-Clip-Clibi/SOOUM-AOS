@@ -20,10 +20,10 @@ class ApplicationConvention : Plugin<Project> {
         pluginManager.apply("com.google.devtools.ksp")
 
         extensions.getByType<ApplicationExtension>().apply {
-            namespace = "com.clip.sooum"
+            namespace = "com.phew.sooum"
             compileSdk = 36
             defaultConfig.apply {
-                applicationId = "com.clip.sooum"
+                applicationId = "com.phew.sooum"
                 minSdk = 31
                 targetSdk = 36
                 versionCode = 1

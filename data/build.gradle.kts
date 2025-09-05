@@ -3,6 +3,6 @@ plugins {
 }
 
 android {
-    namespace = "com.clip.data"
+    namespace = "com.phew.data"
 }
 

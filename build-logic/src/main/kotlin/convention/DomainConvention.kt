@@ -18,7 +18,7 @@ class DomainConvention : Plugin<Project> {
         pluginManager.apply("com.google.devtools.ksp")
         pluginManager.apply("com.google.dagger.hilt.android")
         extensions.getByType<LibraryExtension>().apply {
-            namespace = "com.clib.domain"
+            namespace = "com.phew.domain"
             compileSdk = 36
             defaultConfig {
                 minSdk = 31

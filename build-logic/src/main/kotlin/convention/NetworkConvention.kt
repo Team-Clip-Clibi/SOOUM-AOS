@@ -18,7 +18,7 @@ class NetworkConvention : Plugin<Project> {
         pluginManager.apply("com.google.devtools.ksp")
         pluginManager.apply("com.google.dagger.hilt.android")
         extensions.getByType<LibraryExtension>().apply {
-            namespace = "com.clib.network"
+            namespace = "com.phew.network"
             compileSdk = 36
             defaultConfig {
                 minSdk = 31
