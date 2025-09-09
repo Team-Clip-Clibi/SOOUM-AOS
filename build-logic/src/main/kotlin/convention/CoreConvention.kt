@@ -18,7 +18,7 @@ class CoreConvention : Plugin<Project> {
         pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
 
         extensions.getByType<LibraryExtension>().apply {
-            compileSdk = 35
+            compileSdk = 36
             defaultConfig {
                 minSdk = 31
                 testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
