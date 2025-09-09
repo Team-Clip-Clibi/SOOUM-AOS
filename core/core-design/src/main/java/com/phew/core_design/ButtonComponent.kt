@@ -79,7 +79,7 @@ object LargeButton {
                 .fillMaxWidth()
                 .height(56.dp)
                 .clip(shape = RoundedCornerShape(18.dp))
-                .background(background)
+                .background(color = background, shape = RoundedCornerShape(18.dp))
                 .clickable(
                     enabled = enabled && !animating,
                 ) { clicked = true },
@@ -370,7 +370,7 @@ object MediumButton {
                 .fillMaxWidth()
                 .height(48.dp)
                 .clip(shape = RoundedCornerShape(10.dp))
-                .background(background)
+                .background(color = background, shape = RoundedCornerShape(10.dp))
                 .clickable(
                     enabled = enabled && !animating,
                 ) { clicked = true },
@@ -662,7 +662,7 @@ object SmallButton {
                 .fillMaxWidth()
                 .height(32.dp)
                 .clip(shape = RoundedCornerShape(8.dp))
-                .background(background)
+                .background(color = background, shape = RoundedCornerShape(8.dp))
                 .clickable(
                     enabled = enabled && !animating,
                 ) { clicked = true },
@@ -761,7 +761,7 @@ object SignUpAgreeButton {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
-                .background(color = backgroundColor)
+                .background(color = backgroundColor, shape = RoundedCornerShape(10.dp))
                 .clip(shape = RoundedCornerShape(10.dp))
                 .clickable(
                     enabled = !animating,
@@ -773,7 +773,7 @@ object SignUpAgreeButton {
             Icon(
                 painter = painterResource(image),
                 contentDescription = "button icon",
-                tint = if(isSelected) Primary.DARK else NeutralColor.GRAY_400,
+                tint = if (isSelected) Primary.DARK else NeutralColor.GRAY_400,
                 modifier = Modifier
                     .size(24.dp)
             )
@@ -785,11 +785,12 @@ object SignUpAgreeButton {
             )
         }
     }
+
     @Composable
     fun AgreeButton(
         text: String,
         @DrawableRes image: Int = R.drawable.ic_check,
-        @DrawableRes endImage : Int = R.drawable.ic_right,
+        @DrawableRes endImage: Int = R.drawable.ic_right,
         onClick: () -> Unit,
         isSelected: Boolean = false,
     ) {
@@ -815,7 +816,7 @@ object SignUpAgreeButton {
                 .fillMaxWidth()
                 .height(56.dp)
                 .clip(RoundedCornerShape(10.dp))
-                .background(backgroundColor)
+                .background(color = backgroundColor, shape = RoundedCornerShape(10.dp))
                 .clickable(enabled = !animating) { clicked = true }
                 .padding(horizontal = 24.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -839,7 +840,9 @@ object SignUpAgreeButton {
                 painter = painterResource(endImage),
                 contentDescription = null,
                 tint = NeutralColor.GRAY_500,
-                modifier = Modifier.size(32.dp).padding(vertical =  8.dp)
+                modifier = Modifier
+                    .size(32.dp)
+                    .padding(vertical = 8.dp)
             )
         }
     }
@@ -849,7 +852,7 @@ object SignUpAgreeButton {
 @Preview
 private fun Preview(text: String = "Button") {
     SignUpAgreeButton.AgreeButton(
-        text  = text,
+        text = text,
         onClick = {},
         isSelected = true
     )
