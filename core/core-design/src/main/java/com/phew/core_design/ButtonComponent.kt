@@ -732,15 +732,125 @@ object SmallButton {
             )
         }
     }
+}
 
+object SignUpAgreeButton {
+    @Composable
+    fun AgreeAllButton(
+        text: String,
+        @DrawableRes image: Int = R.drawable.ic_check,
+        onClick: () -> Unit,
+        isSelected: Boolean = false,
+    ) {
+        var clicked by remember { mutableStateOf(false) }
+        var animating by remember { mutableStateOf(false) }
+        var backgroundColor by remember { mutableStateOf(NeutralColor.GRAY_100) }
+        val latestOnClick by rememberUpdatedState(newValue = onClick)
+        LaunchedEffect(clicked) {
+            if (clicked && !animating) {
+                animating = true
+                backgroundColor = NeutralColor.GRAY_200
+                delay(blinkTime.toLong())
+                backgroundColor = NeutralColor.GRAY_100
+                latestOnClick()
+                animating = false
+                clicked = false
+            }
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .background(color = backgroundColor)
+                .clip(shape = RoundedCornerShape(10.dp))
+                .clickable(
+                    enabled = !animating,
+                ) { clicked = true }
+                .padding(start = 24.dp, end = 24.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            Icon(
+                painter = painterResource(image),
+                contentDescription = "button icon",
+                tint = if(isSelected) Primary.DARK else NeutralColor.GRAY_400,
+                modifier = Modifier
+                    .size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = text,
+                style = TextComponent.TITLE_1_SB_18,
+                color = NeutralColor.GRAY_600
+            )
+        }
+    }
+    @Composable
+    fun AgreeButton(
+        text: String,
+        @DrawableRes image: Int = R.drawable.ic_check,
+        @DrawableRes endImage : Int = R.drawable.ic_right,
+        onClick: () -> Unit,
+        isSelected: Boolean = false,
+    ) {
+        var clicked by remember { mutableStateOf(false) }
+        var animating by remember { mutableStateOf(false) }
+        var backgroundColor by remember { mutableStateOf(NeutralColor.GRAY_100) }
+        val latestOnClick by rememberUpdatedState(newValue = onClick)
+
+        LaunchedEffect(clicked) {
+            if (clicked && !animating) {
+                animating = true
+                backgroundColor = NeutralColor.GRAY_200
+                delay(blinkTime.toLong())
+                backgroundColor = NeutralColor.GRAY_100
+                latestOnClick()
+                animating = false
+                clicked = false
+            }
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(backgroundColor)
+                .clickable(enabled = !animating) { clicked = true }
+                .padding(horizontal = 24.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+
+            Icon(
+                painter = painterResource(image),
+                contentDescription = null,
+                tint = if (isSelected) Primary.DARK else NeutralColor.GRAY_400,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = text,
+                style = TextComponent.SUBTITLE_1_M_16,
+                color = NeutralColor.GRAY_600
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            Icon(
+                painter = painterResource(endImage),
+                contentDescription = null,
+                tint = NeutralColor.GRAY_500,
+                modifier = Modifier.size(32.dp).padding(vertical =  8.dp)
+            )
+        }
+    }
 }
 
 @Composable
 @Preview
 private fun Preview(text: String = "Button") {
-    LargeButton.IconRightPrimary(
-        buttonText = text,
+    SignUpAgreeButton.AgreeButton(
+        text  = text,
         onClick = {},
-        isEnable = true
+        isSelected = true
     )
 }
