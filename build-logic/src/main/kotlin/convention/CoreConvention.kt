@@ -46,6 +46,8 @@ class CoreConvention : Plugin<Project> {
             add("implementation", libs.findLibrary("androidx-ui-graphics").get())
             add("implementation", libs.findLibrary("androidx-ui-tooling-preview").get())
             add("implementation", libs.findLibrary("androidx-material3").get())
+            add("implementation", libs.findLibrary("coil-compose").get())
+            add("implementation", libs.findLibrary("coil-network").get())
             add("debugImplementation", libs.findLibrary("androidx-ui-tooling").get())
             add("debugImplementation", libs.findLibrary("androidx-ui-test-manifest").get())
         }
