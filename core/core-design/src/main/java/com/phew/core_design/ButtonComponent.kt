@@ -33,6 +33,12 @@ import kotlinx.coroutines.delay
 
 const val blinkTime = 120
 
+/**
+ * button 중복 클래스 에러 발생시 아래의 명령어 터미널 작성
+ * ./gradlew :core:core-design:clean
+ * rm -rf core/core-design/build
+ * ./gradlew assembleDebug
+ */
 object LargeButton {
 
     @Composable
