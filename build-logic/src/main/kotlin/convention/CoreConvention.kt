@@ -18,8 +18,7 @@ class CoreConvention : Plugin<Project> {
         pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
 
         extensions.getByType<LibraryExtension>().apply {
-            namespace = "com.phew.core"
-            compileSdk = 35
+            compileSdk = 36
             defaultConfig {
                 minSdk = 31
                 testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -47,6 +46,10 @@ class CoreConvention : Plugin<Project> {
             add("implementation", libs.findLibrary("androidx-ui-graphics").get())
             add("implementation", libs.findLibrary("androidx-ui-tooling-preview").get())
             add("implementation", libs.findLibrary("androidx-material3").get())
+            add("implementation", libs.findLibrary("coil-compose").get())
+            add("implementation", libs.findLibrary("coil-network").get())
+            add("debugImplementation", libs.findLibrary("androidx-ui-tooling").get())
+            add("debugImplementation", libs.findLibrary("androidx-ui-test-manifest").get())
         }
     }
 }

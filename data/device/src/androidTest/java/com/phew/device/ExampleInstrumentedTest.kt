@@ -18,6 +18,10 @@ import org.junit.Assert.*
  */
 @RunWith(AndroidJUnit4::class)
 class ExampleInstrumentedTest {
+
+    /**
+     * Test that DeviceImpl.deviceId() returns the ANDROID_ID
+     */
     @Test
     fun deviceId_returnsAndroidId() = runBlocking {
         val ctx = ApplicationProvider.getApplicationContext<Context>()
@@ -31,6 +35,10 @@ class ExampleInstrumentedTest {
         assertTrue(actual.isNotBlank())
         assertEquals(expected, actual)
     }
+
+    /**
+     * Test that DeviceImpl.deviceId() throws an IllegalArgumentException
+     */
     @Test
     fun deviceId_throws_whenResolverFails() {
         val base = ApplicationProvider.getApplicationContext<Context>()

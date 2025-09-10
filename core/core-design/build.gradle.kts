@@ -1,6 +1,8 @@
 plugins {
     id("sooum.android.core")
 }
+
 android {
-    namespace = "com.phew.core"
+    namespace = "com.phew.core_design"
 }
+
