@@ -149,6 +149,6 @@ object AppBar {
 
 @Composable
 @Preview
-fun Preview() {
+private fun Preview() {
     AppBar.IconLeftAppBar(onClick = {})
 }
