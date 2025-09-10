@@ -185,6 +185,9 @@ object TextFiledComponent {
         }
     }
 
+    /**
+     * TODO 호출 시 글자 수 제한은 VIEW 에서
+     */
     @Composable
     fun TextArea(
         value: String,
