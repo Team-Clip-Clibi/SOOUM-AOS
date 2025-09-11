@@ -11,16 +11,41 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.phew.core_design.DialogComponent
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.Primary
 
 @Composable
-fun SplashScreen(viewModel: SplashViewModel, nextPage: () -> Unit) {
+fun SplashScreen(
+    viewModel: SplashViewModel,
+    nextPage: () -> Unit,
+    update: () -> Unit,
+    finish: () -> Unit,
+) {
+    val uiState by viewModel.usState.collectAsState()
+    LaunchedEffect(uiState) {
+        when (uiState) {
+            UiState.Fail -> {
+
+            }
+
+            UiState.Success -> {
+                nextPage()
+            }
+
+            else -> Unit
+        }
+    }
+
     Scaffold { paddingValues ->
         Column(
             modifier = Modifier
@@ -41,14 +66,28 @@ fun SplashScreen(viewModel: SplashViewModel, nextPage: () -> Unit) {
                     .width(200.dp)
                     .height(33.dp)
                     .padding(1.dp)
-                    .clickable { nextPage() } // TODO 앱 버전 체크 후 dialog으로 대체
+                    .clickable { viewModel.versionCheck() }
             )
+            if (uiState is UiState.Fail) {
+                DialogComponent.DefaultButtonOne(
+                    title = stringResource(R.string.splash_dialog_update_title),
+                    description = stringResource(R.string.splash_dialog_update_description),
+                    buttonText = stringResource(R.string.splash_dialog_update_btn),
+                    onClick = {
+                        nextPage()
+                    },
+                    onDismiss = {
+                        nextPage()
+                    }
+                )
+            }
         }
     }
 }
 
+
 @Composable
 @Preview
 private fun Preview() {
-    SplashScreen(viewModel = SplashViewModel(), nextPage = {})
+    SplashScreen(viewModel = SplashViewModel(), nextPage = {}, update = {}, finish = {})
 }
