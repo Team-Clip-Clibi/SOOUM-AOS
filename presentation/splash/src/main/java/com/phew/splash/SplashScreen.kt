@@ -1,6 +1,7 @@
 package com.phew.splash
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,7 +20,7 @@ import com.phew.core_design.NeutralColor
 import com.phew.core_design.Primary
 
 @Composable
-fun SplashScreen(viewModel: SplashViewModel) {
+fun SplashScreen(viewModel: SplashViewModel, nextPage: () -> Unit) {
     Scaffold { paddingValues ->
         Column(
             modifier = Modifier
@@ -40,6 +41,7 @@ fun SplashScreen(viewModel: SplashViewModel) {
                     .width(200.dp)
                     .height(33.dp)
                     .padding(1.dp)
+                    .clickable { nextPage() } // TODO 앱 버전 체크 후 dialog으로 대체
             )
         }
     }
@@ -48,5 +50,5 @@ fun SplashScreen(viewModel: SplashViewModel) {
 @Composable
 @Preview
 private fun Preview() {
-    SplashScreen(viewModel = SplashViewModel())
+    SplashScreen(viewModel = SplashViewModel(), nextPage = {})
 }
