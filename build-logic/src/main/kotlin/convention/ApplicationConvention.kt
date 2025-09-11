@@ -76,11 +76,13 @@ class ApplicationConvention : Plugin<Project> {
             "ksp"(libs.findLibrary("hilt-compiler").get())
             //module
             add("implementation", project(":presentation"))
+            add("implementation", project(":presentation:splash"))
             add("implementation", project(":domain"))
             add("implementation", project(":data"))
             add("implementation", project(":data:network"))
             add("implementation", project(":data:device"))
             add("implementation", project(":core"))
+            add("implementation", project(":core:core-design"))
         }
     }
 }
