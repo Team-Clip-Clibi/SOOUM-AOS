@@ -26,6 +26,10 @@ gradlePlugin {
             id = "sooum.android.core"
             implementationClass = "convention.CoreConvention"
         }
+        create("presentationConvention") {
+            id = "sooum.android.presentation"
+            implementationClass = "convention.PresentationConvention"
+        }
     }
 }
 

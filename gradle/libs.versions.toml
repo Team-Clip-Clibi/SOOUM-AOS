@@ -18,6 +18,7 @@ retrofit2 = "2.11.0"
 serialization = "1.6.0"
 gson = "2.8.8"
 coil = "3.3.0"
+splash = "1.0.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -46,6 +47,7 @@ squareup-retrofit2-retrofit = { group = "com.squareup.retrofit2", name = "retrof
 google-gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
 coil-network = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
+splash-screen = { group = "androidx.core", name = "core-splashscreen", version.ref = "splash" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
