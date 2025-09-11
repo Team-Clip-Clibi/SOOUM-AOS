@@ -18,8 +18,6 @@ fun Nav(
     splashViewModel: SplashViewModel,
 ) {
     val navController = rememberNavController()
-    val duration = 300
-    val spec = tween<IntOffset>(durationMillis = duration, easing = FastOutSlowInEasing)
     NavHost(
         navController = navController,
         startDestination = NAV_SPLASH
