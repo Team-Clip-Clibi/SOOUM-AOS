@@ -30,6 +30,10 @@ gradlePlugin {
             id = "sooum.android.presentation"
             implementationClass = "convention.PresentationConvention"
         }
+        create("testConvention"){
+            id = "sooum.android.defaultConvention"
+            implementationClass = "convention.DefaultConvention"
+        }
     }
 }
 

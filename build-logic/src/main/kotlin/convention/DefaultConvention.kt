@@ -10,15 +10,12 @@ import org.gradle.kotlin.dsl.getByType
 import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
 import java.util.Properties
 
-class DomainConvention : Plugin<Project> {
+class DefaultConvention : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
         val libs = extensions.getByType<VersionCatalogsExtension>().named("libs")
         pluginManager.apply("com.android.library")
         pluginManager.apply("org.jetbrains.kotlin.android")
-        pluginManager.apply("com.google.devtools.ksp")
-        pluginManager.apply("com.google.dagger.hilt.android")
         extensions.getByType<LibraryExtension>().apply {
-            namespace = "com.phew.domain"
             compileSdk = 36
             defaultConfig {
                 minSdk = 31
@@ -29,6 +26,7 @@ class DomainConvention : Plugin<Project> {
                 if (localPropsFile.exists()) {
                     localPropsFile.inputStream().use { properties.load(it) }
                 }
+
             }
             buildFeatures.buildConfig = true
             compileOptions {
@@ -40,13 +38,12 @@ class DomainConvention : Plugin<Project> {
             jvmToolchain(21)
         }
         dependencies {
-            "implementation"(libs.findLibrary("hilt-android").get())
-            "ksp"(libs.findLibrary("hilt-compiler").get())
-            "implementation"(project(":core:core-common"))
-            // test
-            "testImplementation"(libs.findLibrary("junit").get())
-            "androidTestImplementation"(libs.findLibrary("androidx-junit").get())
-            "androidTestImplementation"(libs.findLibrary("androidx-espresso-core").get())
+            "implementation"(libs.findLibrary("androidx-core-ktx").get())
+            "implementation"(libs.findLibrary("androidx-appcompat").get())
+            "implementation"(libs.findLibrary("material").get())
+            "implementation"(libs.findLibrary("junit").get())
+            "implementation"(libs.findLibrary("androidx-junit").get())
+            "implementation"(libs.findLibrary("androidx-espresso-core").get())
         }
     }
 }

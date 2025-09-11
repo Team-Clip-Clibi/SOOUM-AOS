@@ -55,6 +55,7 @@ class PresentationConvention : Plugin<Project> {
             add("debugImplementation", libs.findLibrary("androidx-ui-tooling").get())
             add("debugImplementation", libs.findLibrary("androidx-ui-test-manifest").get())
             add("implementation", project(":core:core-design"))
+            add("implementation", project(":core:core-common"))
             add("implementation", project(":domain"))
         }
     }
