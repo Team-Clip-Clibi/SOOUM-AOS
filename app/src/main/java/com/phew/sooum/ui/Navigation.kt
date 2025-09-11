@@ -1,9 +1,6 @@
 package com.phew.sooum.ui
 
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.unit.IntOffset
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import com.phew.core_common.NAV_SPLASH
