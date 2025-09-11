@@ -78,6 +78,7 @@ class ApplicationConvention : Plugin<Project> {
             //module
             add("implementation", project(":presentation"))
             add("implementation", project(":presentation:splash"))
+            add("implementation", project(":presentation:sign-up"))
             add("implementation", project(":domain"))
             add("implementation", project(":data"))
             add("implementation", project(":data:network"))
