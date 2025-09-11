@@ -8,7 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import com.phew.core_common.NAV_SPLASH
 import com.phew.core_design.slideComposable
-import com.phew.splash.SplashScreen
+import com.phew.splash.Splash
 import com.phew.splash.SplashViewModel
 
 @Composable
@@ -25,7 +25,7 @@ fun Nav(
         startDestination = NAV_SPLASH
     ) {
         slideComposable(NAV_SPLASH) {
-            SplashScreen(
+            Splash(
                 viewModel = splashViewModel,
                 nextPage = {
                     //TODO 다음 화면 - 로그인

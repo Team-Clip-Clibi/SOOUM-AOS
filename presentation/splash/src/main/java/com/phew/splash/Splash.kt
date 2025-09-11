@@ -25,7 +25,7 @@ import com.phew.core_design.NeutralColor
 import com.phew.core_design.Primary
 
 @Composable
-fun SplashScreen(
+fun Splash(
     viewModel: SplashViewModel,
     nextPage: () -> Unit,
     update: () -> Unit,
@@ -89,5 +89,5 @@ fun SplashScreen(
 @Composable
 @Preview
 private fun Preview() {
-    SplashScreen(viewModel = SplashViewModel(), nextPage = {}, update = {}, finish = {})
+    Splash(viewModel = SplashViewModel(), nextPage = {}, update = {}, finish = {})
 }
