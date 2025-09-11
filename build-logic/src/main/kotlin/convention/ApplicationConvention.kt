@@ -74,6 +74,7 @@ class ApplicationConvention : Plugin<Project> {
             // hilt
             "implementation"(libs.findLibrary("hilt-android").get())
             "ksp"(libs.findLibrary("hilt-compiler").get())
+            "implementation"(libs.findLibrary("compose-nav").get())
             //module
             add("implementation", project(":presentation"))
             add("implementation", project(":presentation:splash"))
