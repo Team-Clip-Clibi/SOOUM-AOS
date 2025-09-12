@@ -6,9 +6,11 @@ import androidx.navigation.compose.rememberNavController
 import com.phew.core_common.NAV_ON_BOARDING
 import com.phew.core_common.NAV_SIGN_UP_AGREEMENT
 import com.phew.core_common.NAV_SIGN_UP_AUTH_CODE
+import com.phew.core_common.NAV_SIGN_UP_NICKNAME
 import com.phew.core_common.NAV_SPLASH
 import com.phew.core_design.slideComposable
 import com.phew.sign_up.AuthCodeView
+import com.phew.sign_up.NickNameView
 import com.phew.sign_up.OnBoarding
 import com.phew.sign_up.SignUpAgreementView
 import com.phew.sign_up.SignUpViewModel
@@ -79,10 +81,21 @@ fun Nav(
                     navController.popBackStack()
                 },
                 nextPage = {
-                    //TODO 다음 화면 개발
+                    navController.navigate(NAV_SIGN_UP_NICKNAME)
                 }
             )
         }
 
+        slideComposable(NAV_SIGN_UP_NICKNAME) {
+            NickNameView(
+                viewModel = signUpViewModel,
+                onBack = {
+                    navController.popBackStack()
+                },
+                nextPage = {
+
+                }
+            )
+        }
     }
 }

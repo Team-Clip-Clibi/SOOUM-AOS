@@ -25,4 +25,7 @@
     <string name="signUp_agree_txt_service">[필수] 서비스 이용 약관</string>
     <string name="signUp_agree_txt_location">[필수] 위치정보 이용 약관"</string>
     <string name="signUp_agree_personal">[필수] 개인정보 처리 방침</string>
+    <string name="signUp_nickName_title">숨에서 사용할 닉네임을\n입력해주세요"</string>
+    <string name="signUp_nickName_helper">최대 8자까지 입력할 수 있어요</string>
+    <string name="signUp_nickName_hint_debug">부끄러운 하마</string>
 </resources>
