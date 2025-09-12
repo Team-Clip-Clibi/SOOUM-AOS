@@ -1,10 +1,10 @@
 package com.phew.sign_up
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -32,7 +32,15 @@ import androidx.compose.ui.unit.dp
 import com.phew.core_design.LargeButton
 
 @Composable
-fun OnBoarding(viewModel: SignUpViewModel, signUp: () -> Unit, alreadySignUp: () -> Unit) {
+fun OnBoarding(
+    viewModel: SignUpViewModel,
+    signUp: () -> Unit,
+    alreadySignUp: () -> Unit,
+    back: () -> Unit
+) {
+    BackHandler {
+        back()
+    }
     Scaffold(bottomBar = {
         BottomView(
             onClickStart = {
@@ -161,5 +169,5 @@ private fun BottomView(
 @Composable
 @Preview
 private fun Preview() {
-    OnBoarding(viewModel = SignUpViewModel(), signUp = {}, alreadySignUp = {})
+    OnBoarding(viewModel = SignUpViewModel(), signUp = {}, alreadySignUp = {}, back = {})
 }
