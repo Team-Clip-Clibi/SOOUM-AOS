@@ -32,14 +32,14 @@ import androidx.compose.ui.unit.dp
 import com.phew.core_design.LargeButton
 
 @Composable
-fun OnBoarding(viewModel: SignUpViewModel) {
+fun OnBoarding(viewModel: SignUpViewModel, signUp: () -> Unit, alreadySignUp: () -> Unit) {
     Scaffold(bottomBar = {
         BottomView(
             onClickStart = {
-
+                signUp()
             },
             onClickAlreadySignUp = {
-
+                alreadySignUp()
             }
         )
     }) { paddingValues ->
@@ -161,5 +161,5 @@ private fun BottomView(
 @Composable
 @Preview
 private fun Preview() {
-    OnBoarding(viewModel = SignUpViewModel())
+    OnBoarding(viewModel = SignUpViewModel(), signUp = {}, alreadySignUp = {})
 }
