@@ -30,6 +30,7 @@ fun Splash(
     nextPage: () -> Unit,
     update: () -> Unit,
     finish: () -> Unit,
+    home: () -> Unit
 ) {
     val uiState by viewModel.usState.collectAsState()
     LaunchedEffect(uiState) {
@@ -89,5 +90,5 @@ fun Splash(
 @Composable
 @Preview
 private fun Preview() {
-    Splash(viewModel = SplashViewModel(), nextPage = {}, update = {}, finish = {})
+    Splash(viewModel = SplashViewModel(), nextPage = {}, update = {}, finish = {}, home = {})
 }
