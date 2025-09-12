@@ -10,10 +10,13 @@ import com.phew.splash.SplashViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import com.phew.sooum.ui.Nav
 import androidx.core.net.toUri
+import com.phew.sign_up.SignUpViewModel
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val splashViewModel: SplashViewModel by viewModels()
+    private val signUpViewModel: SignUpViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -25,7 +28,8 @@ class MainActivity : ComponentActivity() {
                 },
                 update = {
                     playStore()
-                }
+                },
+                signUpViewModel = signUpViewModel
             )
         }
     }
