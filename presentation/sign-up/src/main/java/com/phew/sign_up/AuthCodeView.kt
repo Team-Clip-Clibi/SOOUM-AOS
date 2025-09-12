@@ -1,5 +1,6 @@
 package com.phew.sign_up
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,7 +11,9 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -35,7 +38,9 @@ import com.phew.core_design.TextFiledComponent
 @Composable
 fun AuthCodeView(viewModel: SignUpViewModel, onBack: () -> Unit, home: () -> Unit) {
     val uiState by viewModel.uiState.collectAsState()
-
+    BackHandler {
+        onBack()
+    }
     Scaffold(
         topBar = {
             AppBar.IconLeftAppBar(
@@ -50,12 +55,9 @@ fun AuthCodeView(viewModel: SignUpViewModel, onBack: () -> Unit, home: () -> Uni
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(color = NeutralColor.WHITE)
-                    .padding(
-                        start = 16.dp,
-                        end = 16.dp,
-                        bottom = WindowInsets.navigationBars.asPaddingValues()
-                            .calculateBottomPadding() + 12.dp
-                    )
+                    .navigationBarsPadding()
+                    .imePadding()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
                 ExplainContent(
                     onClick = home,
