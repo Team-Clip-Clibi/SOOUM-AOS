@@ -4,11 +4,13 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import com.phew.core_common.NAV_ON_BOARDING
+import com.phew.core_common.NAV_SIGN_UP_AGREEMENT
 import com.phew.core_common.NAV_SIGN_UP_AUTH_CODE
 import com.phew.core_common.NAV_SPLASH
 import com.phew.core_design.slideComposable
 import com.phew.sign_up.AuthCodeView
 import com.phew.sign_up.OnBoarding
+import com.phew.sign_up.SignUpAgreementView
 import com.phew.sign_up.SignUpViewModel
 import com.phew.splash.Splash
 import com.phew.splash.SplashViewModel
@@ -46,7 +48,7 @@ fun Nav(
         slideComposable(NAV_ON_BOARDING) {
             OnBoarding(
                 signUp = {
-
+                    navController.navigate(NAV_SIGN_UP_AGREEMENT)
                 },
                 alreadySignUp = {
                     navController.navigate(NAV_SIGN_UP_AUTH_CODE)
@@ -66,6 +68,18 @@ fun Nav(
                 },
                 onBack = {
                     navController.popBackStack()
+                }
+            )
+        }
+
+        slideComposable(NAV_SIGN_UP_AGREEMENT) {
+            SignUpAgreementView(
+                viewModel = signUpViewModel,
+                back = {
+                    navController.popBackStack()
+                },
+                nextPage = {
+                    //TODO 다음 화면 개발
                 }
             )
         }

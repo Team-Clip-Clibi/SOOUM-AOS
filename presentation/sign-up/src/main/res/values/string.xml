@@ -18,4 +18,11 @@
     <string name="authCode_txt_code_content">코드는 24시간 동안 유효해요</string>
     <string name="authCode_txt_content_title">내 계정 가져오기 안내</string>
     <string name="authCode_txt_content_content">기존 휴대폰의 숨 앱[설정>내 계정 내보내기]에서 발급한 코드를 입력하면, 기존 계정을 현재 휴대폰에서 그대로 사용할 수 있어요</string>
+    <!-- SignUp   -->
+    <string name="signUp_app_bar">회원가입</string>
+    <string name="signUp_agree_txt_title">숨 서비스 이용을 위해\n동의해주세요</string>
+    <string name="signUp_agree_txt_agree_all">전체 동의하기</string>
+    <string name="signUp_agree_txt_service">[필수] 서비스 이용 약관</string>
+    <string name="signUp_agree_txt_location">[필수] 위치정보 이용 약관"</string>
+    <string name="signUp_agree_personal">[필수] 개인정보 처리 방침</string>
 </resources>

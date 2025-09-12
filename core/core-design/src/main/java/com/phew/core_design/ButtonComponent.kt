@@ -747,6 +747,7 @@ object SignUpAgreeButton {
         @DrawableRes image: Int = R.drawable.ic_check,
         onClick: () -> Unit,
         isSelected: Boolean = false,
+        selectColor : Color = NeutralColor.BLACK
     ) {
         var clicked by remember { mutableStateOf(false) }
         var animating by remember { mutableStateOf(false) }
@@ -779,7 +780,7 @@ object SignUpAgreeButton {
             Icon(
                 painter = painterResource(image),
                 contentDescription = "button icon",
-                tint = if (isSelected) Primary.DARK else NeutralColor.GRAY_400,
+                tint = if (isSelected) selectColor else NeutralColor.GRAY_400,
                 modifier = Modifier
                     .size(24.dp)
             )
@@ -798,11 +799,12 @@ object SignUpAgreeButton {
         @DrawableRes image: Int = R.drawable.ic_check,
         @DrawableRes endImage: Int = R.drawable.ic_right,
         onClick: () -> Unit,
+        endClick : () -> Unit,
         isSelected: Boolean = false,
     ) {
         var clicked by remember { mutableStateOf(false) }
         var animating by remember { mutableStateOf(false) }
-        var backgroundColor by remember { mutableStateOf(NeutralColor.GRAY_100) }
+        var backgroundColor by remember { mutableStateOf(NeutralColor.WHITE) }
         val latestOnClick by rememberUpdatedState(newValue = onClick)
 
         LaunchedEffect(clicked) {
@@ -810,7 +812,7 @@ object SignUpAgreeButton {
                 animating = true
                 backgroundColor = NeutralColor.GRAY_200
                 delay(blinkTime.toLong())
-                backgroundColor = NeutralColor.GRAY_100
+                backgroundColor = NeutralColor.WHITE
                 latestOnClick()
                 animating = false
                 clicked = false
@@ -828,7 +830,6 @@ object SignUpAgreeButton {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start
         ) {
-
             Icon(
                 painter = painterResource(image),
                 contentDescription = null,
@@ -849,6 +850,7 @@ object SignUpAgreeButton {
                 modifier = Modifier
                     .size(32.dp)
                     .padding(vertical = 8.dp)
+                    .clickable { endClick() }
             )
         }
     }
@@ -860,6 +862,7 @@ private fun Preview(text: String = "Button") {
     SignUpAgreeButton.AgreeButton(
         text = text,
         onClick = {},
-        isSelected = true
+        isSelected = true,
+        endClick = {}
     )
 }

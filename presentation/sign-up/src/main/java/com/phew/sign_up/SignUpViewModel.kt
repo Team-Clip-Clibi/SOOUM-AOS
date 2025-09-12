@@ -20,10 +20,59 @@ class SignUpViewModel @Inject constructor() : ViewModel() {
         }
     }
 
+    fun agreement(type: String) {
+        _uiState.update { state ->
+            when (type) {
+                AGREEMENT_ALL -> {
+                    val newValue = !state.agreementAll
+                    state.copy(
+                        agreementAll = newValue,
+                        agreementService = newValue,
+                        agreementLocation = newValue,
+                        agreementPersonal = newValue
+                    )
+                }
+
+                AGREEMENT_SERVICE -> {
+                    val newValue = !state.agreementService
+                    state.copy(
+                        agreementService = newValue
+                    ).updateAgreementAll()
+                }
+
+                AGREEMENT_LOCATION -> {
+                    val newValue = !state.agreementLocation
+                    state.copy(
+                        agreementLocation = newValue
+                    ).updateAgreementAll()
+                }
+
+                AGREEMENT_PERSONAL -> {
+                    val newValue = !state.agreementPersonal
+                    state.copy(
+                        agreementPersonal = newValue
+                    ).updateAgreementAll()
+                }
+
+                else -> state
+            }
+        }
+    }
+
+
+    private fun SignUp.updateAgreementAll(): SignUp {
+        val allChecked = agreementService && agreementLocation && agreementPersonal
+        return copy(agreementAll = allChecked)
+    }
+
 }
 
 data class SignUp(
-    val authCode: String = ""
+    val authCode: String = "",
+    val agreementAll: Boolean = false,
+    val agreementService: Boolean = false,
+    val agreementLocation: Boolean = false,
+    val agreementPersonal: Boolean = false
 )
 
 sealed interface UiState {
