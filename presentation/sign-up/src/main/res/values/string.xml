@@ -7,4 +7,7 @@
     <string name="onBoarding_txt_anon">익명으로 솔직한 이야기를 나눠요</string>
     <string name="onBoarding_btn_start">숨 시작하기</string>
     <string name="onBoarding_btn_already_sign_up">기존 계정이 있으신가요?</string>
+    <string name="onBoarding_explain_no_personal">숨은 가입 시 어떤 개인정보도 요구하지 않아요</string>
+    <string name="onBoarding_explain_nick_name">자동으로 추천되는 닉네임으로 5초면 가입해요</string>
+    <string name="onBoarding_explain_annoy">익명으로 솔직한 이야기를 나눠요</string>
 </resources>

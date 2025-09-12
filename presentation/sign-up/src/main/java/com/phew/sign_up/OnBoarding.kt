@@ -4,12 +4,15 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -46,7 +49,7 @@ fun OnBoarding(viewModel: SignUpViewModel) {
                 .background(color = NeutralColor.WHITE)
                 .padding(
                     top = paddingValues.calculateTopPadding() + 60.dp,
-                    bottom = paddingValues.calculateBottomPadding() + 54.5.dp,
+                    bottom = paddingValues.calculateBottomPadding(),
                     start = 16.dp,
                     end = 16.dp
                 )
@@ -92,7 +95,36 @@ private fun ContentView() {
             modifier = Modifier
                 .width(239.dp)
                 .height(218.dp)
-                .padding(bottom = 60.dp)
+                .padding(bottom = 48.dp)
+        )
+        ExplainView(stringResource(R.string.onBoarding_explain_no_personal))
+        ExplainView(stringResource(R.string.onBoarding_explain_nick_name))
+        ExplainView(stringResource(R.string.onBoarding_explain_annoy))
+        Spacer(modifier = Modifier.height(54.5.dp))
+    }
+}
+
+@Composable
+private fun ExplainView(data: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(24.dp)
+            .padding(bottom = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Image(
+            painter = painterResource(com.phew.core_design.R.drawable.ic_check_filled_blue),
+            contentDescription = "data",
+            modifier = Modifier
+                .size(24.dp)
+                .padding(1.25.dp)
+        )
+        Text(
+            text = data,
+            style = TextComponent.BODY_1_M_14,
+            color = NeutralColor.GRAY_400
         )
     }
 }
@@ -128,6 +160,6 @@ private fun BottomView(
 
 @Composable
 @Preview
-private fun Preview(){
+private fun Preview() {
     OnBoarding(viewModel = SignUpViewModel())
 }
