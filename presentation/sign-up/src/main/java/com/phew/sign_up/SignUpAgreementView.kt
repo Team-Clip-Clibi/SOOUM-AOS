@@ -98,9 +98,9 @@ private fun PageNumberView() {
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        PageNumber("1", isSelect = true)
-        PageNumber("2")
-        PageNumber("3")
+        Component.PageNumber("1", isSelect = true)
+        Component.PageNumber("2")
+        Component.PageNumber("3")
     }
 }
 
@@ -153,29 +153,6 @@ private fun ContentView(uiState: SignUp, onClick: (String) -> Unit) {
             //TODO 추후 노션 연결
         }
     )
-}
-
-@Composable
-private fun PageNumber(number: String , isSelect : Boolean = false ) {
-    Column(
-        modifier = Modifier
-            .border(
-                width = 1.dp,
-                color = if(isSelect) Primary.LIGHT_2 else NeutralColor.GRAY_200,
-                shape = RoundedCornerShape(size = 100.dp)
-            )
-            .width(32.dp)
-            .height(32.dp)
-            .background(color = if(isSelect) Primary.MAIN else NeutralColor.GRAY_300, shape = RoundedCornerShape(size = 100.dp)),
-        verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            text = number,
-            style = TextComponent.SUBTITLE_2_SB_14,
-            color = NeutralColor.WHITE
-        )
-    }
 }
 
 @Composable

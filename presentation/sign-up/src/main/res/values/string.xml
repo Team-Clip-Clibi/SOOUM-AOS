@@ -28,4 +28,5 @@
     <string name="signUp_nickName_title">숨에서 사용할 닉네임을\n입력해주세요"</string>
     <string name="signUp_nickName_helper">최대 8자까지 입력할 수 있어요</string>
     <string name="signUp_nickName_hint_debug">부끄러운 하마</string>
+    <string name="signUp_picture_title">숨에서 사용할 프로필 사진을\n등록해주세요</string>
 </resources>

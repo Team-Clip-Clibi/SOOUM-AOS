@@ -2,4 +2,6 @@
 <resources>
     <string name="common_okay">확인</string>
     <string name="common_next">다음</string>
+    <string name="common_finish">완료</string>
+    <string name="common_skip">건너뛰기</string>
 </resources>
