@@ -2,7 +2,6 @@ package com.phew.sign_up
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,9 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -29,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import com.phew.core_design.AppBar
 import com.phew.core_design.LargeButton
 import com.phew.core_design.NeutralColor
-import com.phew.core_design.Primary
 import com.phew.core_design.TextComponent
 import com.phew.core_design.TextFiledComponent
 
@@ -98,9 +94,9 @@ private fun TitleView() {
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        PageNumberNickName("1", isSelect = true)
-        PageNumberNickName("2", isSelect = true)
-        PageNumberNickName("3")
+        Component.PageNumber("1", isSelect = true)
+        Component.PageNumber("2", isSelect = true)
+        Component.PageNumber("3")
     }
     Text(
         text = stringResource(R.string.signUp_nickName_title),
@@ -128,31 +124,6 @@ private fun InPutNickNameView(nickName: String, onValueChange: (String) -> Unit)
     )
 }
 
-@Composable
-private fun PageNumberNickName(number: String, isSelect: Boolean = false) {
-    Column(
-        modifier = Modifier
-            .border(
-                width = 1.dp,
-                color = if (isSelect) Primary.LIGHT_2 else NeutralColor.GRAY_200,
-                shape = RoundedCornerShape(size = 100.dp)
-            )
-            .width(32.dp)
-            .height(32.dp)
-            .background(
-                color = if (isSelect) Primary.MAIN else NeutralColor.GRAY_300,
-                shape = RoundedCornerShape(size = 100.dp)
-            ),
-        verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            text = number,
-            style = TextComponent.SUBTITLE_2_SB_14,
-            color = NeutralColor.WHITE
-        )
-    }
-}
 
 @Composable
 @Preview
