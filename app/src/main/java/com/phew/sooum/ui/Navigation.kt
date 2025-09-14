@@ -7,11 +7,13 @@ import com.phew.core_common.NAV_ON_BOARDING
 import com.phew.core_common.NAV_SIGN_UP_AGREEMENT
 import com.phew.core_common.NAV_SIGN_UP_AUTH_CODE
 import com.phew.core_common.NAV_SIGN_UP_NICKNAME
+import com.phew.core_common.NAV_SIGN_UP_PROFILE
 import com.phew.core_common.NAV_SPLASH
 import com.phew.core_design.slideComposable
 import com.phew.sign_up.AuthCodeView
 import com.phew.sign_up.NickNameView
 import com.phew.sign_up.OnBoarding
+import com.phew.sign_up.ProfileImageView
 import com.phew.sign_up.SignUpAgreementView
 import com.phew.sign_up.SignUpViewModel
 import com.phew.splash.Splash
@@ -93,6 +95,18 @@ fun Nav(
                     navController.popBackStack()
                 },
                 nextPage = {
+                    navController.navigate(NAV_SIGN_UP_PROFILE)
+                }
+            )
+        }
+
+        slideComposable(NAV_SIGN_UP_PROFILE) {
+            ProfileImageView(
+                viewModel = signUpViewModel,
+                onBack = {
+                    navController.popBackStack()
+                },
+                nexPage = {
 
                 }
             )

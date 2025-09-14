@@ -1,5 +1,6 @@
 package com.phew.sign_up
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -77,6 +78,24 @@ class SignUpViewModel @Inject constructor() : ViewModel() {
             state.copy(nickName = name)
         }
     }
+
+    /**
+     * 프로필 사진 URL
+     */
+    fun updateProfile(uri : Uri){
+        _uiState.update { state ->
+            state.copy(profile = uri)
+        }
+    }
+
+    /**
+     * 프로필 사진 바텀시트 출력 여부
+     */
+    fun updateProfileBottom(){
+        _uiState.update { state ->
+            state.copy(profileBottom = !_uiState.value.profileBottom)
+        }
+    }
 }
 
 data class SignUp(
@@ -85,7 +104,9 @@ data class SignUp(
     val agreementService: Boolean = false,
     val agreementLocation: Boolean = false,
     val agreementPersonal: Boolean = false,
-    val nickName: String = ""
+    val nickName: String = "",
+    val profile: Uri = Uri.EMPTY,
+    val profileBottom: Boolean = false
 )
 
 sealed interface UiState {

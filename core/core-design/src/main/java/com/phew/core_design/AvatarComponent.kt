@@ -1,5 +1,6 @@
 package com.phew.core_design
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,7 +26,7 @@ import coil3.compose.AsyncImage
 object AvatarComponent {
     @Composable
     fun LargeAvatar(
-        url: String = "",
+        url: Uri = Uri.EMPTY,
         onClick : () -> Unit
     ) {
         Box(
@@ -35,7 +36,7 @@ object AvatarComponent {
                 .clickable { onClick() }
         ) {
             AsyncImage(
-                model = if (url.trim().isEmpty()) R.drawable.ic_profile else url,
+                model = if (url == Uri.EMPTY) R.drawable.ic_profile else url,
                 contentDescription = "profile image",
                 modifier = Modifier
                     .fillMaxSize()
