@@ -7,3 +7,5 @@ const val NAV_SIGN_UP_AUTH_CODE = "authCode"
 const val NAV_SIGN_UP_AGREEMENT = "agreement"
 const val NAV_SIGN_UP_NICKNAME = "nickName"
 const val NAV_SIGN_UP_PROFILE = "profile"
+
+const val ERROR_FAIL_JOB = "Fail job"

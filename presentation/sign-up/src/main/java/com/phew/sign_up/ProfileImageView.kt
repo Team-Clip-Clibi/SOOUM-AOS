@@ -1,10 +1,7 @@
 package com.phew.sign_up
 
 import android.Manifest
-import android.content.ContentValues
-import android.content.Context
 import android.net.Uri
-import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -22,101 +19,85 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.phew.core_design.AppBar
 import com.phew.core_design.LargeButton
 import com.phew.core_design.NeutralColor
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.phew.core_design.AvatarComponent
 import com.phew.core_design.BottomSheetComponent
 import com.phew.core_design.BottomSheetItem
+import com.phew.core_design.DialogComponent
 import com.phew.core_design.TextComponent
+import kotlinx.coroutines.launch
+
 
 @Composable
 fun ProfileImageView(viewModel: SignUpViewModel, onBack: () -> Unit, nexPage: () -> Unit) {
     val uiState by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
-    val pickSingleLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.PickVisualMedia()
-    ) { uri: Uri? ->
-        uri?.let { image ->
-            viewModel.updateProfile(image)
-            viewModel.updateProfileBottom()
-        }
-    }
-    var cameraTargetUri by remember { mutableStateOf<Uri?>(null) }
-    val takePictureLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.TakePicture()
-    ) { success ->
-        cameraTargetUri?.let { out ->
-            finalizePending(context, out)
-            if (success) viewModel.updateProfile(out)
-            cameraTargetUri = null
-            viewModel.updateProfileBottom()
-        }
-    }
+    val snackBarHostState = remember { SnackbarHostState() }
 
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) {
-            val out = createImageUri(context)
-            cameraTargetUri = out
-            if (out != null) takePictureLauncher.launch(out)
-        } else {
-            //TODO snackbar 컴포넌트 만들고 에러 메세지 뛰우기
-        }
-    }
+    ImagePickerEffect(
+        viewModel = viewModel,
+        uiState = uiState,
+        snackBarHostState = snackBarHostState
+    )
 
-    Scaffold(topBar = {
-        AppBar.IconLeftAppBar(
-            onClick = onBack, appBarText = stringResource(R.string.signUp_app_bar)
-        )
-    }, bottomBar = {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .background(color = NeutralColor.WHITE)
-                .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.Start),
-            verticalAlignment = Alignment.Top,
-        ) {
-            Box(modifier = Modifier.weight(1f)) {
-                LargeButton.NoIconSecondary(
-                    onClick = nexPage,
-                    buttonText = stringResource(com.phew.core_design.R.string.common_skip)
-                )
+    Scaffold(
+        topBar = {
+            AppBar.IconLeftAppBar(
+                onClick = onBack, appBarText = stringResource(R.string.signUp_app_bar)
+            )
+        },
+        bottomBar = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .background(color = NeutralColor.WHITE)
+                    .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.Start),
+                verticalAlignment = Alignment.Top,
+            ) {
+                Box(modifier = Modifier.weight(1f)) {
+                    LargeButton.NoIconSecondary(
+                        onClick = nexPage,
+                        buttonText = stringResource(com.phew.core_design.R.string.common_skip)
+                    )
+                }
+                Box(modifier = Modifier.weight(1f)) {
+                    LargeButton.NoIconPrimary(
+                        onClick = nexPage,
+                        buttonText = stringResource(com.phew.core_design.R.string.common_finish)
+                    )
+                }
             }
-            Box(modifier = Modifier.weight(1f)) {
-                LargeButton.NoIconPrimary(
-                    onClick = nexPage,
-                    buttonText = stringResource(com.phew.core_design.R.string.common_finish)
-                )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackBarHostState) { data ->
+                DialogComponent.SnackBar(data)
             }
         }
-    }) { paddingValues ->
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(color = NeutralColor.WHITE)
-                .padding(
-                    top = paddingValues.calculateTopPadding() + 12.dp,
-                    start = 16.dp,
-                    end = 16.dp,
-                    bottom = paddingValues.calculateBottomPadding()
-                )
+                .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
         ) {
             TitleView()
@@ -124,20 +105,72 @@ fun ProfileImageView(viewModel: SignUpViewModel, onBack: () -> Unit, nexPage: ()
                 onClick = viewModel::updateProfileBottom,
                 url = uiState.profile
             )
-            if (uiState.profileBottom) {
-                ShowBottomSheet(
-                    album = {
-                        pickSingleLauncher.launch(
-                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                        )
-                    },
-                    camera = {
-                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                    },
-                    onDismiss = viewModel::updateProfileBottom
+        }
+    }
+}
+
+@Composable
+private fun ImagePickerEffect(
+    viewModel: SignUpViewModel,
+    uiState: SignUp,
+    snackBarHostState: SnackbarHostState
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    var cameraImageUri by remember { mutableStateOf<Uri?>(null) }
+
+    val pickSingleLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        uri?.let { viewModel.updateProfile(it) }
+    }
+
+    val takePictureLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.TakePicture()
+    ) { success ->
+        cameraImageUri?.let { uri ->
+            if (success) {
+                viewModel.updateProfile(uri)
+            } else {
+                context.contentResolver.delete(uri, null, null)
+            }
+        }
+        cameraImageUri = null
+    }
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            viewModel.createImage()
+        } else {
+            scope.launch {
+                snackBarHostState.showSnackbar(
+                    message = context.getString(com.phew.core_design.R.string.common_permission)
                 )
             }
         }
+    }
+
+    LaunchedEffect(uiState.createImageFile) {
+        val result = uiState.createImageFile
+        if (result is UiState.Success) {
+            cameraImageUri = result.data
+            takePictureLauncher.launch(result.data)
+        }
+    }
+
+    if (uiState.profileBottom) {
+        ShowBottomSheet(
+            album = {
+                pickSingleLauncher.launch(
+                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                )
+            },
+            camera = { cameraPermissionLauncher.launch(Manifest.permission.CAMERA) },
+            onDismiss = viewModel::updateProfileBottom
+        )
     }
 }
 
@@ -182,9 +215,8 @@ private fun ContentView(onClick: () -> Unit, url: Uri) {
 private fun ShowBottomSheet(
     album: () -> Unit,
     camera: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
-
     BottomSheetComponent.BottomSheet(
         data = arrayListOf(
             BottomSheetItem(
@@ -198,38 +230,10 @@ private fun ShowBottomSheet(
         ),
         onItemClick = { id ->
             when (id) {
-                PROFILE_ALBUM -> {
-                    album()
-                }
-
-                PROFILE_PICTURE -> {
-                    camera()
-                }
+                PROFILE_ALBUM -> album()
+                PROFILE_PICTURE -> camera()
             }
         },
         onDismiss = onDismiss
     )
 }
-
-private fun createImageUri(context: Context): Uri? {
-    val values = ContentValues().apply {
-        put(MediaStore.MediaColumns.DISPLAY_NAME, "IMG_${System.currentTimeMillis()}.jpg")
-        put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-        put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/YourApp")
-        put(MediaStore.Images.Media.IS_PENDING, 1)
-    }
-    val collection = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
-    return context.contentResolver.insert(collection, values)
-}
-
-private fun finalizePending(context: Context, uri: Uri)  {
-    val cv = ContentValues().apply { put(MediaStore.Images.Media.IS_PENDING, 0) }
-    context.contentResolver.update(uri, cv, null, null)
-}
-
-@Composable
-@Preview
-private fun Preview() {
-    ProfileImageView(viewModel = SignUpViewModel(), onBack = {}, nexPage = {})
-}
-

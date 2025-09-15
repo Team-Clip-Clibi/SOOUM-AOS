@@ -1,16 +1,30 @@
 package com.phew.sign_up
 
+import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.phew.core_common.Result
+import com.phew.domain.CreateImageFile
+import com.phew.domain.FinalizePending
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
-class SignUpViewModel @Inject constructor() : ViewModel() {
+class SignUpViewModel @Inject constructor(
+    private val finalizePending: FinalizePending,
+    private val createFile : CreateImageFile,
+    @ApplicationContext private val context: Context
+) : ViewModel() {
     private var _uiState = MutableStateFlow(SignUp())
     val uiState: StateFlow<SignUp> = _uiState.asStateFlow()
 
@@ -82,7 +96,7 @@ class SignUpViewModel @Inject constructor() : ViewModel() {
     /**
      * 프로필 사진 URL
      */
-    fun updateProfile(uri : Uri){
+    fun updateProfile(uri: Uri) {
         _uiState.update { state ->
             state.copy(profile = uri)
         }
@@ -91,9 +105,46 @@ class SignUpViewModel @Inject constructor() : ViewModel() {
     /**
      * 프로필 사진 바텀시트 출력 여부
      */
-    fun updateProfileBottom(){
+    fun updateProfileBottom() {
         _uiState.update { state ->
             state.copy(profileBottom = !_uiState.value.profileBottom)
+        }
+    }
+
+    /**
+     * 비디오 파일 finalize
+     */
+    fun finalizeAndSetProfile(uri: Uri) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val ok = finalizePending(uri)
+            withContext(Dispatchers.Main) {
+                if (ok) {
+                    _uiState.update { it.copy(profile = uri, finalizePending = true) }
+                } else {
+                    runCatching { context.contentResolver.delete(uri, null, null) }
+                    _uiState.update { it.copy(finalizePending = false) }
+                }
+            }
+        }
+    }
+
+    /**
+     * 이미지 파일 생성기
+     */
+    fun createImage(){
+        viewModelScope.launch(Dispatchers.IO) {
+            when(val result = createFile()){
+                is Result.Failure -> {
+                    _uiState.update { state ->
+                        state.copy(createImageFile = UiState.Fail(result.error))
+                    }
+                }
+                is Result.Success -> {
+                    _uiState.update{ state ->
+                        state.copy(createImageFile = UiState.Success(result.data))
+                    }
+                }
+            }
         }
     }
 }
@@ -106,11 +157,13 @@ data class SignUp(
     val agreementPersonal: Boolean = false,
     val nickName: String = "",
     val profile: Uri = Uri.EMPTY,
-    val profileBottom: Boolean = false
+    val profileBottom: Boolean = false,
+    val finalizePending: Boolean = false,
+    var createImageFile: UiState<Uri> = UiState.Loading
 )
 
-sealed interface UiState {
-    data object Loading : UiState
-    data object Success : UiState
-    data class Fail(val errorMessage: String) : UiState
+sealed interface UiState<out T>{
+    data object Loading : UiState<Nothing>
+    data class Success<T>(val data : T) : UiState<T>
+    data class Fail(val errorMessage: String) : UiState<Nothing>
 }

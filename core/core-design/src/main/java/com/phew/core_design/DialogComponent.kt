@@ -1,5 +1,6 @@
 package com.phew.core_design
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,6 +19,9 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.material3.Text
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.SnackbarData
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 
 object DialogComponent {
     @Composable
@@ -200,6 +204,34 @@ object DialogComponent {
         }
     }
 
+    @Composable
+    fun SnackBar(
+        data: SnackbarData,
+    ){
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+                .background(color = NeutralColor.GRAY_600, shape = RoundedCornerShape(size = 8.dp))
+                .padding(start = 16.dp, end = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.ic_message),
+                contentDescription = "message",
+                contentScale = ContentScale.None,
+                modifier = Modifier
+                    .width(24.dp)
+                    .height(24.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = data.visuals.message,
+                style = TextComponent.CAPTION_2_M_12,
+                color = NeutralColor.WHITE
+            )
+        }
+    }
 }
 
 @Composable
