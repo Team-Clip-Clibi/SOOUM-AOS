@@ -33,6 +33,7 @@ object AvatarComponent {
             modifier = Modifier
                 .width(120.dp)
                 .height(120.dp)
+                .border
                 .clickable { onClick() }
         ) {
             AsyncImage(
