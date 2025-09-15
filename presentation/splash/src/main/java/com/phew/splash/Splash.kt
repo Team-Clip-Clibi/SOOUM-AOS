@@ -67,7 +67,6 @@ fun Splash(
                     .width(200.dp)
                     .height(33.dp)
                     .padding(1.dp)
-                    .clickable { viewModel.versionCheck() }
             )
             if (uiState is UiState.Fail) {
                 DialogComponent.DefaultButtonOne(

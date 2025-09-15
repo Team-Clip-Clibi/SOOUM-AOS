@@ -15,7 +15,11 @@ class SplashViewModel @Inject constructor() : ViewModel() {
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
     val usState: StateFlow<UiState> = _uiState.asStateFlow()
 
-    fun versionCheck() {
+    init{
+        versionCheck()
+    }
+
+    private fun versionCheck() {
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.value = UiState.Fail
         }
