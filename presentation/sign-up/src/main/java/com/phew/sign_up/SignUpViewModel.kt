@@ -13,7 +13,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -111,22 +110,6 @@ class SignUpViewModel @Inject constructor(
         }
     }
 
-    /**
-     * 비디오 파일 finalize
-     */
-    fun finalizeAndSetProfile(uri: Uri) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val ok = finalizePending(uri)
-            withContext(Dispatchers.Main) {
-                if (ok) {
-                    _uiState.update { it.copy(profile = uri, finalizePending = true) }
-                } else {
-                    runCatching { context.contentResolver.delete(uri, null, null) }
-                    _uiState.update { it.copy(finalizePending = false) }
-                }
-            }
-        }
-    }
 
     /**
      * 이미지 파일 생성기
