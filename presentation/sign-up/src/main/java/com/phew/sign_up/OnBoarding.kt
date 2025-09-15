@@ -91,7 +91,7 @@ private fun TitleView() {
 @Composable
 private fun ContentView() {
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxSize().padding(top = 50.dp),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -107,7 +107,6 @@ private fun ContentView() {
         ExplainView(stringResource(R.string.onBoarding_explain_no_personal))
         ExplainView(stringResource(R.string.onBoarding_explain_nick_name))
         ExplainView(stringResource(R.string.onBoarding_explain_annoy))
-        Spacer(modifier = Modifier.height(54.5.dp))
     }
 }
 
