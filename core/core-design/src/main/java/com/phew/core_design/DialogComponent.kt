@@ -19,6 +19,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.material3.Text
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.SnackbarData
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -38,7 +39,7 @@ object DialogComponent {
             Column(
                 modifier = Modifier
                     .width(271.dp)
-                    .height(159.dp)
+                    .wrapContentHeight()
                     .background(color = NeutralColor.WHITE, shape = RoundedCornerShape(20.dp))
                     .padding(start = 24.dp, top = 16.dp, end = 24.dp, bottom = 16.dp),
                 verticalArrangement = Arrangement.Top,
