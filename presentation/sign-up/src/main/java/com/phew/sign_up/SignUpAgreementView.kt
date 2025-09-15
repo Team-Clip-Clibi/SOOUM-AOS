@@ -154,15 +154,3 @@ private fun ContentView(uiState: SignUp, onClick: (String) -> Unit) {
         }
     )
 }
-
-@Composable
-@Preview
-private fun Preview() {
-    SignUpAgreementView(
-        viewModel = SignUpViewModel(),
-        back = {
-
-        },
-        nextPage = {}
-    )
-}

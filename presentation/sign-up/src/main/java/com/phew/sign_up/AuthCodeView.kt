@@ -141,17 +141,3 @@ private fun ExplainContent(onClick: () -> Unit, isEnable: Boolean) {
         isEnable = isEnable
     )
 }
-
-@Composable
-@Preview
-private fun Preview() {
-    AuthCodeView(
-        viewModel = SignUpViewModel(),
-        home = {
-
-        },
-        onBack = {
-
-        }
-    )
-}

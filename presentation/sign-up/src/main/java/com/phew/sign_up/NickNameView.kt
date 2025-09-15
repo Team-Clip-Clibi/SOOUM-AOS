@@ -124,9 +124,3 @@ private fun InPutNickNameView(nickName: String, onValueChange: (String) -> Unit)
     )
 }
 
-
-@Composable
-@Preview
-private fun Preview() {
-    NickNameView(viewModel = SignUpViewModel(), onBack = {}, nextPage = {})
-}

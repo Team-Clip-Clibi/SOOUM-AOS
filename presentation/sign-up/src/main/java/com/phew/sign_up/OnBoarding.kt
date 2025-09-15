@@ -166,8 +166,3 @@ private fun BottomView(
     }
 }
 
-@Composable
-@Preview
-private fun Preview() {
-    OnBoarding(viewModel = SignUpViewModel(), signUp = {}, alreadySignUp = {}, back = {})
-}
