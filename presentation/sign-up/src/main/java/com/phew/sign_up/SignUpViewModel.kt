@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.phew.core_common.Result
 import com.phew.domain.CreateImageFile
 import com.phew.domain.FinalizePending
+import com.phew.domain.FinishTakePicture
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -22,8 +23,10 @@ import javax.inject.Inject
 class SignUpViewModel @Inject constructor(
     private val finalizePending: FinalizePending,
     private val createFile : CreateImageFile,
+    private val finishPhoto : FinishTakePicture,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
+
     private var _uiState = MutableStateFlow(SignUp())
     val uiState: StateFlow<SignUp> = _uiState.asStateFlow()
 
@@ -130,6 +133,24 @@ class SignUpViewModel @Inject constructor(
             }
         }
     }
+
+    fun closeFile(data : Uri){
+        viewModelScope.launch(Dispatchers.IO) {
+            when(val result = finishPhoto(FinishTakePicture.Param(data))){
+                is Result.Failure -> {
+                    _uiState.update { state ->
+                        state.copy(createImageFile = UiState.Fail(result.error))
+                    }
+                }
+                is Result.Success ->{
+                    _uiState.update { state ->
+                        state.copy(profile = result.data)
+                    }
+                }
+            }
+        }
+    }
+
 }
 
 data class SignUp(

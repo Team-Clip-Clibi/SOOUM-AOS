@@ -2,6 +2,7 @@ package com.phew.sign_up
 
 import android.Manifest
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -134,9 +135,10 @@ private fun ImagePickerEffect(
     val takePictureLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.TakePicture()
     ) { success ->
+        Log.d("photo" , "TakePicture result: $success")
         cameraImageUri?.let { uri ->
             if (success) {
-                viewModel.updateProfile(uri)
+                viewModel.closeFile(uri)
             } else {
                 context.contentResolver.delete(uri, null, null)
             }
