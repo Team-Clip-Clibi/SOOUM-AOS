@@ -1,5 +1,6 @@
 package com.phew.core_design
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,6 +18,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -25,7 +28,7 @@ import coil3.compose.AsyncImage
 object AvatarComponent {
     @Composable
     fun LargeAvatar(
-        url: String = "",
+        url: Uri = Uri.EMPTY,
         onClick : () -> Unit
     ) {
         Box(
@@ -35,11 +38,13 @@ object AvatarComponent {
                 .clickable { onClick() }
         ) {
             AsyncImage(
-                model = if (url.trim().isEmpty()) R.drawable.ic_profile else url,
+                model = if (url == Uri.EMPTY) R.drawable.ic_profile else url,
                 contentDescription = "profile image",
                 modifier = Modifier
                     .fillMaxSize()
-                    .align(Alignment.Center)
+                    .border(width = 1.dp , color = NeutralColor.GRAY_300 , shape = RoundedCornerShape(100.dp))
+                    .clip(shape = RoundedCornerShape(size = 100.dp)),
+                contentScale = ContentScale.FillBounds
             )
             Row(
                 modifier = Modifier

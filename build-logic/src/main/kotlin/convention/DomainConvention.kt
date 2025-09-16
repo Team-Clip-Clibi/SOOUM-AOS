@@ -42,6 +42,7 @@ class DomainConvention : Plugin<Project> {
         dependencies {
             "implementation"(libs.findLibrary("hilt-android").get())
             "ksp"(libs.findLibrary("hilt-compiler").get())
+            "implementation"(project(":core:core-common"))
             // test
             "testImplementation"(libs.findLibrary("junit").get())
             "androidTestImplementation"(libs.findLibrary("androidx-junit").get())
