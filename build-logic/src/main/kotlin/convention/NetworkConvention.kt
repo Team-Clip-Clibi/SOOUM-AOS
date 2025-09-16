@@ -29,6 +29,9 @@ class NetworkConvention : Plugin<Project> {
                 if (localPropsFile.exists()) {
                     localPropsFile.inputStream().use { properties.load(it) }
                 }
+                val baseUrl: String = properties.getProperty("base_url", "")
+
+                buildConfigField("String", "BASE_URL", baseUrl)
             }
             buildFeatures.buildConfig = true
             compileOptions {
