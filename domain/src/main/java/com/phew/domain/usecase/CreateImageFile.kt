@@ -1,4 +1,4 @@
-package com.phew.domain
+package com.phew.domain.usecase
 
 import android.content.ContentValues
 import android.content.Context

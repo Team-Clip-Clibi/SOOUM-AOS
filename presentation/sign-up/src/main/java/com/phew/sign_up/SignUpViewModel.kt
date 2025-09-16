@@ -5,9 +5,9 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.phew.core_common.Result
-import com.phew.domain.CreateImageFile
-import com.phew.domain.FinalizePending
-import com.phew.domain.FinishTakePicture
+import com.phew.domain.usecase.CreateImageFile
+import com.phew.domain.usecase.FinalizePending
+import com.phew.domain.usecase.FinishTakePicture
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
