@@ -6,6 +6,7 @@ import androidx.navigation.compose.rememberNavController
 import com.phew.core_common.NAV_ON_BOARDING
 import com.phew.core_common.NAV_SIGN_UP_AGREEMENT
 import com.phew.core_common.NAV_SIGN_UP_AUTH_CODE
+import com.phew.core_common.NAV_SIGN_UP_FINISH
 import com.phew.core_common.NAV_SIGN_UP_NICKNAME
 import com.phew.core_common.NAV_SIGN_UP_PROFILE
 import com.phew.core_common.NAV_SPLASH
@@ -15,6 +16,7 @@ import com.phew.sign_up.NickNameView
 import com.phew.sign_up.OnBoarding
 import com.phew.sign_up.ProfileImageView
 import com.phew.sign_up.SignUpAgreementView
+import com.phew.sign_up.SignUpFinish
 import com.phew.sign_up.SignUpViewModel
 import com.phew.splash.Splash
 import com.phew.splash.SplashViewModel
@@ -24,7 +26,7 @@ fun Nav(
     update: () -> Unit,
     finish: () -> Unit,
     splashViewModel: SplashViewModel,
-    signUpViewModel: SignUpViewModel
+    signUpViewModel: SignUpViewModel,
 ) {
     val navController = rememberNavController()
     NavHost(
@@ -107,7 +109,15 @@ fun Nav(
                     navController.popBackStack()
                 },
                 nexPage = {
+                    navController.navigate(NAV_SIGN_UP_FINISH)
+                }
+            )
+        }
 
+        slideComposable(NAV_SIGN_UP_FINISH) {
+            SignUpFinish(
+                home = {
+                    //TODO 홈화면 개발
                 }
             )
         }
