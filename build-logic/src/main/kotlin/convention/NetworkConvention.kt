@@ -30,8 +30,10 @@ class NetworkConvention : Plugin<Project> {
                     localPropsFile.inputStream().use { properties.load(it) }
                 }
                 val baseUrl: String = properties.getProperty("base_url", "")
+                val apiUrl: String = properties.getProperty("api_url", "")
 
                 buildConfigField("String", "BASE_URL", baseUrl)
+                buildConfigField("String", "API_URL", apiUrl)
             }
             buildFeatures.buildConfig = true
             compileOptions {
