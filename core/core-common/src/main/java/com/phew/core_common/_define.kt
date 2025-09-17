@@ -14,3 +14,4 @@ const val ERROR_FAIL_JOB = "Fail job"
 const val HTTP_NO_MORE_CONTENT = 204
 const val HTTP_INVALID_TOKEN = 401
 const val HTTP_NOT_FOUND = 404
+const val APP_ERROR_CODE = 505
