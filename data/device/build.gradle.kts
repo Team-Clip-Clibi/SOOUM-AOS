@@ -5,3 +5,7 @@ plugins {
 android {
     namespace = "com.phew.device"
 }
+
+dependencies {
+    implementation(libs.security.crypto)
+}

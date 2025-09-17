@@ -1,4 +1,4 @@
-package com.phew.device
+package com.phew.device.device
 
 import android.annotation.SuppressLint
 import android.content.Context

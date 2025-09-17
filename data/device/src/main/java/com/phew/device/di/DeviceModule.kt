@@ -1,6 +1,8 @@
-package com.phew.device
+package com.phew.device.di
 
 import android.content.Context
+import com.phew.device.device.Device
+import com.phew.device.device.DeviceImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
