@@ -29,6 +29,9 @@ class DomainConvention : Plugin<Project> {
                 if (localPropsFile.exists()) {
                     localPropsFile.inputStream().use { properties.load(it) }
                 }
+                val appType: String = properties.getProperty("appType", "")
+
+                buildConfigField("String", "APP_TYPE", appType)
             }
             buildFeatures.buildConfig = true
             compileOptions {
@@ -45,8 +48,12 @@ class DomainConvention : Plugin<Project> {
             "implementation"(project(":core:core-common"))
             // test
             "testImplementation"(libs.findLibrary("junit").get())
+            "testImplementation"(libs.findLibrary("mockk").get())
+            "testImplementation"(libs.findLibrary("truth").get())
+            "testImplementation"(libs.findLibrary("kotlinx-coroutines-test").get())
             "androidTestImplementation"(libs.findLibrary("androidx-junit").get())
             "androidTestImplementation"(libs.findLibrary("androidx-espresso-core").get())
+
         }
     }
 }

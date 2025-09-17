@@ -83,6 +83,7 @@ class ApplicationConvention : Plugin<Project> {
             add("implementation", project(":data"))
             add("implementation", project(":data:network"))
             add("implementation", project(":data:device"))
+            add("implementation", project(":data:repository"))
             add("implementation", project(":core"))
             add("implementation", project(":core:core-design"))
             add("implementation", project(":core:core-common"))

@@ -11,14 +11,13 @@ import javax.inject.Singleton
 
 @InstallIn(SingletonComponent::class)
 @Module
-abstract class NetworkModule {
-    companion object {
-        @Singleton
-        @Provides
-        fun provideRetrofit(): Retrofit = RetrofitFactory.create()
+object NetworkModule {
 
-        @Singleton
-        @Provides
-        fun provideHttp(retrofit: Retrofit): Http = retrofit.create(Http::class.java)
-    }
+    @Singleton
+    @Provides
+    fun provideRetrofit(): Retrofit = RetrofitFactory.create()
+
+    @Singleton
+    @Provides
+    fun provideHttp(retrofit: Retrofit): Http = retrofit.create(Http::class.java)
 }

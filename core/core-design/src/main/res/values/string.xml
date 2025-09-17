@@ -5,4 +5,5 @@
     <string name="common_finish">완료</string>
     <string name="common_skip">건너뛰기</string>
     <string name="common_permission">권한 승인이 필요합니다.</string>
+    <string name="error_network">네트워크 에러</string>
 </resources>
