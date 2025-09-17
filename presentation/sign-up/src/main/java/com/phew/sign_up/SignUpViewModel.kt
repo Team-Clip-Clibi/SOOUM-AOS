@@ -4,7 +4,7 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.phew.core_common.Result
+import com.phew.core_common.DomainResult
 import com.phew.domain.usecase.CreateImageFile
 import com.phew.domain.usecase.FinalizePending
 import com.phew.domain.usecase.FinishTakePicture
@@ -119,12 +119,12 @@ class SignUpViewModel @Inject constructor(
     fun createImage(){
         viewModelScope.launch(Dispatchers.IO) {
             when(val result = createFile()){
-                is Result.Failure -> {
+                is DomainResult.Failure -> {
                     _uiState.update { state ->
                         state.copy(createImageFile = UiState.Fail(result.error))
                     }
                 }
-                is Result.Success -> {
+                is DomainResult.Success -> {
                     _uiState.update{ state ->
                         state.copy(createImageFile = UiState.Success(result.data))
                     }
@@ -136,12 +136,12 @@ class SignUpViewModel @Inject constructor(
     fun closeFile(data : Uri){
         viewModelScope.launch(Dispatchers.IO) {
             when(val result = finishPhoto(FinishTakePicture.Param(data))){
-                is Result.Failure -> {
+                is DomainResult.Failure -> {
                     _uiState.update { state ->
                         state.copy(createImageFile = UiState.Fail(result.error))
                     }
                 }
-                is Result.Success ->{
+                is DomainResult.Success ->{
                     _uiState.update { state ->
                         state.copy(profile = result.data)
                     }
