@@ -7,7 +7,7 @@ package com.phew.core_common
  * @param E 실패 시 반환될 에러 타입
  */
 
-sealed interface Result<out T, out E> {
-    data class Success<T>(val data: T) : Result<T, Nothing>
-    data class Failure<E>(val error: E) : Result<Nothing, E>
+sealed interface DomainResult<out T, out E> {
+    data class Success<T>(val data: T) : DomainResult<T, Nothing>
+    data class Failure<E>(val error: E) : DomainResult<Nothing, E>
 }
