@@ -61,7 +61,6 @@ fun OnBoarding(
                     start = 16.dp,
                     end = 16.dp
                 )
-                .navigationBarsPadding()
                 .verticalScroll(rememberScrollState())
         ) {
             TitleView()
@@ -146,6 +145,7 @@ private fun BottomView(
         modifier = Modifier
             .fillMaxWidth()
             .background(color = NeutralColor.WHITE)
+            .navigationBarsPadding()
             .padding(start = 16.dp, end = 16.dp)
     ) {
         LargeButton.NoIconPrimary(
