@@ -9,6 +9,7 @@ import androidx.security.crypto.MasterKey
 import com.google.gson.Gson
 import com.phew.device.dto.TokenDTO
 import androidx.core.content.edit
+import com.phew.core_common.ERROR
 import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.ERROR_NO_DATA
 
@@ -72,6 +73,26 @@ class DataSourceImpl @Inject constructor(
         } catch (e: Exception) {
             e.printStackTrace()
             return false
+        }
+    }
+
+    override suspend fun insertFirebaseToken(key: String, data: String): Boolean {
+        try {
+            sharedPreferences.edit(commit = true) { putString(key, data) }
+            return true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return false
+        }
+    }
+
+    override suspend fun getFirebaseToken(key: String): String {
+        try {
+            val token = sharedPreferences.getString(key, "") ?: return ERROR_NO_DATA
+            return token
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return ERROR
         }
     }
 }

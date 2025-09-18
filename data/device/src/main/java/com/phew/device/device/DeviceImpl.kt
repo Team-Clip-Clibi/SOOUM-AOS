@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.provider.Settings
 import com.google.firebase.messaging.FirebaseMessaging
+import com.phew.core_common.ERROR
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -31,7 +32,7 @@ class DeviceImpl @Inject constructor(@ApplicationContext private val context: Co
             return token
         } catch (e: Exception) {
             e.printStackTrace()
-            return "error"
+            return ERROR
         }
     }
 
