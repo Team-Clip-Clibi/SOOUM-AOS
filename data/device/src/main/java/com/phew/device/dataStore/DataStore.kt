@@ -9,7 +9,11 @@ interface DataStore {
 
     suspend fun remove(key: String): Boolean
 
-    suspend fun insertFirebaseToken(key : String , data : String) : Boolean
+    suspend fun insertFirebaseToken(key: String, data: String): Boolean
 
-    suspend fun getFirebaseToken(key : String) : String
+    suspend fun getFirebaseToken(key: String): String
+
+    suspend fun insertNotifyAgree(key: String, data: Boolean): Boolean
+
+    suspend fun getNotifyAgree(key: String): Boolean
 }

@@ -95,4 +95,24 @@ class DataSourceImpl @Inject constructor(
             return ERROR
         }
     }
+
+    override suspend fun insertNotifyAgree(key: String, data: Boolean): Boolean {
+        try {
+            sharedPreferences.edit(commit = true) { putBoolean(key, data) }
+            return true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return false
+        }
+    }
+
+    override suspend fun getNotifyAgree(key: String): Boolean {
+        try {
+            val isAgree = sharedPreferences.getBoolean(key, false)
+            return isAgree
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return false
+        }
+    }
 }

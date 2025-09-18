@@ -33,11 +33,13 @@ class DomainConvention : Plugin<Project> {
                 val tokenKey: String = properties.getProperty("tokenKey", "")
                 val transformation: String = properties.getProperty("transformation", "")
                 val fcmTokenKey : String = properties.getProperty("fcm_token_key","")
+                val notifyKey : String = properties.getProperty("notify_key" , "")
 
                 buildConfigField("String", "APP_TYPE", appType)
                 buildConfigField("String", "TOKEN_KEY", tokenKey)
                 buildConfigField("String", "TRANSFORMATION", transformation)
                 buildConfigField("String","FCM_TOKEN_KEY" , fcmTokenKey)
+                buildConfigField("String" ,"NOTIFY_KEY" , notifyKey)
             }
             buildFeatures.buildConfig = true
             compileOptions {

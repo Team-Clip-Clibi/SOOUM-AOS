@@ -7,4 +7,6 @@ interface DeviceRepository {
     suspend fun firebaseToken(): String
     suspend fun requestGetSaveFirebaseToken(key: String): String
     suspend fun requestSaveFirebaseToken(key: String, data: String): Boolean
+    suspend fun requestSaveNotify(key: String, data: Boolean): Boolean
+    suspend fun requestGetNotify(key: String): Boolean
 }

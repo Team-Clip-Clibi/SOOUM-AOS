@@ -33,4 +33,12 @@ class DeviceRepositoryImpl @Inject constructor(
     override suspend fun requestSaveFirebaseToken(key: String, data: String): Boolean {
         return dataSource.insertFirebaseToken(key = key, data = data)
     }
+
+    override suspend fun requestSaveNotify(key: String, data: Boolean): Boolean {
+        return dataSource.insertNotifyAgree(key = key, data = data)
+    }
+
+    override suspend fun requestGetNotify(key: String): Boolean {
+        return dataSource.getNotifyAgree(key)
+    }
 }
