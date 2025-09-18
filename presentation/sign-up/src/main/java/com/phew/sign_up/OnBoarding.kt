@@ -130,7 +130,9 @@ fun OnBoarding(
             TitleView()
             ContentView()
             if (uiState.checkSignUp is UiState.Success) {
-                DialogView((uiState.checkSignUp as UiState.Success<SignUpResult>).data)
+                DialogView((uiState.checkSignUp as UiState.Success<SignUpResult>).data, onclick = {
+                    viewModel.initCheckSignUp()
+                })
             }
         }
     }
@@ -236,14 +238,34 @@ private fun BottomView(
 }
 
 @Composable
-private fun DialogView(data: SignUpResult) {
+private fun DialogView(data: SignUpResult, onclick: () -> Unit) {
     when (data.result) {
         SIGN_UP_BANNED -> {
-            //TODO 다이얼로그 호출
+            DialogComponent.DefaultButtonOne(
+                title = stringResource(R.string.onBoarding_dialog_banned_title),
+                description = stringResource(R.string.onBoarding_dialog_banned_content),
+                onClick = {
+                    onclick()
+                },
+                onDismiss = {
+                    onclick()
+                },
+                buttonText = stringResource(com.phew.core_design.R.string.common_okay)
+            )
         }
 
         SIGN_UP_WITHDRAWN -> {
-            //TODO 다이얼로그 호출
+            DialogComponent.DefaultButtonOne(
+                title = stringResource(R.string.onBoarding_dialog_withdraw_title),
+                description = stringResource(R.string.onBoarding_dialog_withdraw_content),
+                onClick = {
+                    onclick()
+                },
+                onDismiss = {
+                    onclick()
+                },
+                buttonText = stringResource(com.phew.core_design.R.string.common_okay)
+            )
         }
     }
 }

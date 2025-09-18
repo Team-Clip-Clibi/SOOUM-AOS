@@ -116,6 +116,11 @@ class SignUpViewModel @Inject constructor(
             }
         }
     }
+    fun initCheckSignUp(){
+        _uiState.update { state ->
+            state.copy(checkSignUp = UiState.Loading)
+        }
+    }
 
     /**
      * 로그인
