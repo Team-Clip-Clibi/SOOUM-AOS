@@ -5,6 +5,7 @@ import com.phew.network.dto.CheckSignUpDTO
 import com.phew.network.dto.FCMToken
 import com.phew.network.dto.InfoDTO
 import com.phew.network.dto.SecurityKeyDTO
+import com.phew.network.dto.SignUpRequest
 import com.phew.network.dto.TokenDTO
 import retrofit2.Response
 import retrofit2.http.Body
@@ -53,6 +54,11 @@ interface Http {
     @PATCH(BuildConfig.API_URL_FCM_UPDATE)
     suspend fun requestUpdateFcm(
         @Header("Authorization") bearerToken: String,
-        @Body body: FCMToken,
+        @Body body: FCMToken
     ): Response<Unit>
+
+    @POST(BuildConfig.API_URL_SIGN_UP)
+    suspend fun requestSignUp(
+        @Body body: SignUpRequest
+    ): Response<TokenDTO>
 }

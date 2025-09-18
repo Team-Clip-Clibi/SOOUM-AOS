@@ -37,6 +37,7 @@ class NetworkConvention : Plugin<Project> {
                 val loginUrl: String = properties.getProperty("api_url_login", "")
                 val checkSignUp: String = properties.getProperty("api_url_check_sign_up", "")
                 val updateFcm: String = properties.getProperty("api_url_update_fcm", "")
+                val signUp: String = properties.getProperty("api_url_sign_up", "")
 
                 buildConfigField("String", "BASE_URL", baseUrl)
                 buildConfigField("String", "API_URL", apiUrl)
@@ -46,6 +47,7 @@ class NetworkConvention : Plugin<Project> {
                 buildConfigField("String", "API_URL_LOGIN", loginUrl)
                 buildConfigField("String", "API_URL_CHECK_SIGN_UP", checkSignUp)
                 buildConfigField("String", "API_URL_FCM_UPDATE", updateFcm)
+                buildConfigField("String", "API_URL_SIGN_UP", signUp)
             }
             buildFeatures.buildConfig = true
             compileOptions {
