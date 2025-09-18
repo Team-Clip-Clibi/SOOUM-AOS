@@ -30,8 +30,10 @@ class DomainConvention : Plugin<Project> {
                     localPropsFile.inputStream().use { properties.load(it) }
                 }
                 val appType: String = properties.getProperty("appType", "")
+                val tokenKey: String = properties.getProperty("tokenKey", "")
 
                 buildConfigField("String", "APP_TYPE", appType)
+                buildConfigField("String", "TOKEN_KEY", tokenKey)
             }
             buildFeatures.buildConfig = true
             compileOptions {

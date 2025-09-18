@@ -58,6 +58,7 @@ coil-network = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", versi
 splash-screen = { group = "androidx.core", name = "core-splashscreen", version.ref = "splash" }
 compose-nav = { group = "androidx.navigation", name = "navigation-compose", version.ref = "nav_version" }
 security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "security" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

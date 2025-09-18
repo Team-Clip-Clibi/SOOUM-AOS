@@ -8,4 +8,6 @@ android {
 
 dependencies {
     implementation(libs.security.crypto)
+    implementation(libs.google.gson)
+    implementation(project(":core:core-common"))
 }

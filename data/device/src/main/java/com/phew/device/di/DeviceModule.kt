@@ -1,6 +1,9 @@
 package com.phew.device.di
 
 import android.content.Context
+import com.phew.device.BuildConfig
+import com.phew.device.dataStore.DataSourceImpl
+import com.phew.device.dataStore.DataStore
 import com.phew.device.device.Device
 import com.phew.device.device.DeviceImpl
 import dagger.Module
@@ -18,4 +21,12 @@ object DeviceModule {
     fun provideDevice(
         @ApplicationContext context: Context,
     ): Device = DeviceImpl(context)
+
+    @Provides
+    @Singleton
+    fun provideDataStore(
+        @ApplicationContext context: Context,
+    ): DataStore {
+        return DataSourceImpl(context, BuildConfig.SOOUM_FILE_NAME)
+    }
 }

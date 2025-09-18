@@ -10,6 +10,7 @@ const val NAV_SIGN_UP_PROFILE = "profile"
 const val NAV_SIGN_UP_FINISH = "finish"
 //domain error code
 const val ERROR_FAIL_JOB = "Fail job"
+const val ERROR_NO_DATA = "No Data"
 //server api error code
 const val HTTP_NO_MORE_CONTENT = 204
 const val HTTP_INVALID_TOKEN = 401

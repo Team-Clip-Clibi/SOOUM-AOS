@@ -28,7 +28,8 @@ class HiltConvention : Plugin<Project> {
                 if (localPropsFile.exists()) {
                     localPropsFile.inputStream().use { properties.load(it) }
                 }
-
+                val fileName : String = properties.getProperty("file_name","")
+                buildConfigField("String" ,"SOOUM_FILE_NAME" ,fileName)
             }
             buildFeatures.buildConfig = true
             compileOptions {
