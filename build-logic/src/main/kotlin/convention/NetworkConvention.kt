@@ -34,12 +34,16 @@ class NetworkConvention : Plugin<Project> {
                 val apiUrlType: String = properties.getProperty("api_url_type", "")
                 val apiUrlQuery: String = properties.getProperty("api_url_version", "")
                 val rsaKey: String = properties.getProperty("key_url", "")
+                val loginUrl : String = properties.getProperty("api_url_login" ,"")
+                val checkSignUp : String = properties.getProperty("api_url_check_sign_up" , "")
 
                 buildConfigField("String", "BASE_URL", baseUrl)
                 buildConfigField("String", "API_URL", apiUrl)
                 buildConfigField("String", "API_URL_TYPE", apiUrlType)
                 buildConfigField("String", "API_URL_QUERY", apiUrlQuery)
                 buildConfigField("String", "API_SECURITY_KEY", rsaKey)
+                buildConfigField("String", "API_URL_LOGIN", loginUrl)
+                buildConfigField("String" , "API_URL_CHECK_SIGN_UP" ,checkSignUp)
             }
             buildFeatures.buildConfig = true
             compileOptions {

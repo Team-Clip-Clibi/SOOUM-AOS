@@ -2,8 +2,10 @@ package com.phew.repository
 
 import com.phew.core_common.APP_ERROR_CODE
 import com.phew.core_common.DataResult
+import com.phew.domain.dto.CheckSignUp
 import com.phew.domain.repository.NetworkRepository
 import com.phew.network.Http
+import com.phew.network.dto.InfoDTO
 import javax.inject.Inject
 
 class NetworkRepositoryImpl @Inject constructor(private val http: Http) : NetworkRepository {
@@ -40,6 +42,52 @@ class NetworkRepositoryImpl @Inject constructor(private val http: Http) : Networ
                 return DataResult.Fail(code = result.code(), message = result.message())
             }
             return DataResult.Success(result.body()!!.publicKey)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return DataResult.Fail(
+                code = APP_ERROR_CODE,
+                message = e.message,
+                throwable = e
+            )
+        }
+    }
+
+    override suspend fun requestCheckSignUp(info: String): DataResult<CheckSignUp> {
+        try {
+            val result = http.requestCheckSignUp(InfoDTO(info))
+            if (!result.isSuccessful || result.body() == null) {
+                return DataResult.Fail(code = result.code(), message = result.message())
+            }
+            return DataResult.Success(
+                CheckSignUp(
+                    time = result.body()!!.rejoinAvailableAt,
+                    banned = result.body()!!.banned,
+                    registered = result.body()!!.registered,
+                    withdrawn = result.body()!!.withdrawn
+                )
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return DataResult.Fail(
+                code = APP_ERROR_CODE,
+                message = e.message,
+                throwable = e
+            )
+        }
+    }
+
+    override suspend fun requestLogin(info: String): DataResult<Pair<String, String>> {
+        try {
+            val result = http.requestLogin(InfoDTO(encryptedDeviceId = info))
+            if (!result.isSuccessful || result.body() == null) {
+                return DataResult.Fail(code = result.code(), message = result.message())
+            }
+            return DataResult.Success(
+                Pair(
+                    result.body()!!.refreshToken,
+                    result.body()!!.accessToken
+                )
+            )
         } catch (e: Exception) {
             e.printStackTrace()
             return DataResult.Fail(

@@ -1,9 +1,14 @@
 package com.phew.network
 
 import com.phew.network.dto.AppVersionDTO
+import com.phew.network.dto.CheckSignUpDTO
+import com.phew.network.dto.InfoDTO
 import com.phew.network.dto.SecurityKeyDTO
+import com.phew.network.dto.TokenDTO
 import retrofit2.Response
+import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -22,4 +27,20 @@ interface Http {
      */
     @GET(BuildConfig.API_SECURITY_KEY)
     suspend fun getSecurityKey(): Response<SecurityKeyDTO>
+
+    /**
+     * SignUp URL
+     */
+    @POST(BuildConfig.API_URL_CHECK_SIGN_UP)
+    suspend fun requestCheckSignUp(
+        @Body body: InfoDTO,
+    ): Response<CheckSignUpDTO>
+
+    /**
+     * Login url
+     */
+    @GET(BuildConfig.API_URL_LOGIN)
+    suspend fun requestLogin(
+        @Body body: InfoDTO,
+    ): Response<TokenDTO>
 }

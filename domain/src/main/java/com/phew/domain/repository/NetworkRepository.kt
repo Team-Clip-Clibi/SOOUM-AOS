@@ -1,8 +1,11 @@
 package com.phew.domain.repository
 
 import com.phew.core_common.DataResult
+import com.phew.domain.dto.CheckSignUp
 
 interface NetworkRepository {
-    suspend fun requestAppVersion(type : String,appVersion : String) : DataResult<String>
-    suspend fun requestSecurityKey() : DataResult<String>
+    suspend fun requestAppVersion(type: String, appVersion: String): DataResult<String>
+    suspend fun requestSecurityKey(): DataResult<String>
+    suspend fun requestCheckSignUp(info: String): DataResult<CheckSignUp>
+    suspend fun requestLogin(info: String): DataResult<Pair<String, String>>
 }
