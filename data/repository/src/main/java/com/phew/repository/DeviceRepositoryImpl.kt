@@ -17,4 +17,8 @@ class DeviceRepositoryImpl @Inject constructor(
     override suspend fun requestToken(key: String): Pair<String, String> {
         return dataSource.getToken(key)
     }
+
+    override suspend fun saveToken(key: String, data: Pair<String, String>): Boolean {
+        return dataSource.insertToken(key = key, data = data)
+    }
 }

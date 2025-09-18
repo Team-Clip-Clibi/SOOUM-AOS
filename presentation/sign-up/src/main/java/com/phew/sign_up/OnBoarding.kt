@@ -74,9 +74,25 @@ fun OnBoarding(
                     }
 
                     SIGN_UP_REGISTERED -> {
-                        //TODO 로그인 API 호출
+                        viewModel.login()
                     }
                 }
+            }
+
+            else -> Unit
+        }
+    }
+    LaunchedEffect(uiState) {
+        when (uiState.login) {
+            is UiState.Fail -> {
+                snackBarHostState.showSnackbar(
+                    message = context.getString(com.phew.core_design.R.string.error_network),
+                    duration = SnackbarDuration.Short
+                )
+            }
+
+            is UiState.Success -> {
+                //TODO HOME 화면 포팅
             }
 
             else -> Unit

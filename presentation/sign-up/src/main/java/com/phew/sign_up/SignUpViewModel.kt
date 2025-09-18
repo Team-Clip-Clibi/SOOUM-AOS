@@ -8,6 +8,7 @@ import com.phew.domain.usecase.CheckSignUp
 import com.phew.domain.usecase.CreateImageFile
 import com.phew.domain.usecase.FinalizePending
 import com.phew.domain.usecase.FinishTakePicture
+import com.phew.domain.usecase.Login
 import com.phew.sign_up.dto.SignUpResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -24,6 +25,7 @@ class SignUpViewModel @Inject constructor(
     private val createFile: CreateImageFile,
     private val finishPhoto: FinishTakePicture,
     private val checkSignUp: CheckSignUp,
+    private val requestLogin: Login,
 ) : ViewModel() {
 
     private var _uiState = MutableStateFlow(SignUp())
@@ -116,6 +118,29 @@ class SignUpViewModel @Inject constructor(
     }
 
     /**
+     * 로그인
+     */
+    fun login() {
+        viewModelScope.launch(Dispatchers.IO) {
+            when (val result = requestLogin()) {
+                is DomainResult.Failure -> {
+                    _uiState.update { state ->
+                        state.copy(
+                            login = UiState.Fail(result.error)
+                        )
+                    }
+                }
+
+                is DomainResult.Success -> {
+                    _uiState.update { state ->
+                        state.copy(login = UiState.Success(Unit))
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * 닉네임
      */
     fun nickName(name: String) {
@@ -196,6 +221,7 @@ data class SignUp(
     val finalizePending: Boolean = false,
     var createImageFile: UiState<Uri> = UiState.Loading,
     val checkSignUp: UiState<SignUpResult> = UiState.Loading,
+    val login: UiState<Unit> = UiState.Loading,
 )
 
 sealed interface UiState<out T> {
