@@ -50,30 +50,30 @@ class SignUpViewModel @Inject constructor(
                     val newValue = !state.agreementAll
                     state.copy(
                         agreementAll = newValue,
-                        agreementService = newValue,
-                        agreementLocation = newValue,
-                        agreementPersonal = newValue
+                        agreedToTermsOfService = newValue,
+                        agreedToLocationTerms = newValue,
+                        agreedToPrivacyPolicy = newValue
                     )
                 }
 
                 AGREEMENT_SERVICE -> {
-                    val newValue = !state.agreementService
+                    val newValue = !state.agreedToTermsOfService
                     state.copy(
-                        agreementService = newValue
+                        agreedToTermsOfService = newValue
                     ).updateAgreementAll()
                 }
 
                 AGREEMENT_LOCATION -> {
-                    val newValue = !state.agreementLocation
+                    val newValue = !state.agreedToLocationTerms
                     state.copy(
-                        agreementLocation = newValue
+                        agreedToLocationTerms = newValue
                     ).updateAgreementAll()
                 }
 
                 AGREEMENT_PERSONAL -> {
-                    val newValue = !state.agreementPersonal
+                    val newValue = !state.agreedToPrivacyPolicy
                     state.copy(
-                        agreementPersonal = newValue
+                        agreedToPrivacyPolicy = newValue
                     ).updateAgreementAll()
                 }
 
@@ -83,7 +83,7 @@ class SignUpViewModel @Inject constructor(
     }
 
     private fun SignUp.updateAgreementAll(): SignUp {
-        val allChecked = agreementService && agreementLocation && agreementPersonal
+        val allChecked = agreedToTermsOfService && agreedToLocationTerms && agreedToPrivacyPolicy
         return copy(agreementAll = allChecked)
     }
 
@@ -217,9 +217,9 @@ class SignUpViewModel @Inject constructor(
 data class SignUp(
     val authCode: String = "",
     val agreementAll: Boolean = false,
-    val agreementService: Boolean = false,
-    val agreementLocation: Boolean = false,
-    val agreementPersonal: Boolean = false,
+    val agreedToTermsOfService: Boolean = false,
+    val agreedToLocationTerms: Boolean = false,
+    val agreedToPrivacyPolicy: Boolean = false,
     val nickName: String = "",
     val profile: Uri = Uri.EMPTY,
     val profileBottom: Boolean = false,

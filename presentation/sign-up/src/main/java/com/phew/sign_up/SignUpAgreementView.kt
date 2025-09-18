@@ -63,7 +63,7 @@ fun SignUpAgreementView(
                     onClick = {
 
                     },
-                    isEnable = uiState.agreementAll || (uiState.agreementService && uiState.agreementLocation && uiState.agreementPersonal)
+                    isEnable = uiState.agreementAll || (uiState.agreedToTermsOfService && uiState.agreedToLocationTerms && uiState.agreedToPrivacyPolicy)
                 )
             }
         }
@@ -126,7 +126,7 @@ private fun ContentView(uiState: SignUp, onClick: (String) -> Unit) {
         onClick = {
             onClick(AGREEMENT_SERVICE)
         },
-        isSelected = uiState.agreementService,
+        isSelected = uiState.agreedToTermsOfService,
         endClick = {
             //TODO 추후 노션 연결
         }
@@ -136,7 +136,7 @@ private fun ContentView(uiState: SignUp, onClick: (String) -> Unit) {
         onClick = {
             onClick(AGREEMENT_LOCATION)
         },
-        isSelected = uiState.agreementLocation,
+        isSelected = uiState.agreedToLocationTerms,
         endClick = {
             //TODO 추후 노션 연결
         }
@@ -146,7 +146,7 @@ private fun ContentView(uiState: SignUp, onClick: (String) -> Unit) {
         onClick = {
             onClick(AGREEMENT_PERSONAL)
         },
-        isSelected = uiState.agreementPersonal,
+        isSelected = uiState.agreedToPrivacyPolicy,
         endClick = {
             //TODO 추후 노션 연결
         }
