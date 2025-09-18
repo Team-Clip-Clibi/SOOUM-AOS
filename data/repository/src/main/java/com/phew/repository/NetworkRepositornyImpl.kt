@@ -29,4 +29,24 @@ class NetworkRepositoryImpl @Inject constructor(private val http: Http) : Networ
             )
         }
     }
+
+    override suspend fun requestSecurityKey(): DataResult<String> {
+        try {
+            val result = http.getSecurityKey()
+            if (!result.isSuccessful) {
+                return DataResult.Fail(code = result.code(), message = result.message())
+            }
+            if (result.body() == null) {
+                return DataResult.Fail(code = result.code(), message = result.message())
+            }
+            return DataResult.Success(result.body()!!.publicKey)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return DataResult.Fail(
+                code = APP_ERROR_CODE,
+                message = e.message,
+                throwable = e
+            )
+        }
+    }
 }
