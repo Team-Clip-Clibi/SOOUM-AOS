@@ -46,12 +46,13 @@ fun Splash(
                 nextPage()
             }
 
-            UiState.Error -> {
+            is UiState.Error -> {
                 snackBarHostState.showSnackbar(
                     message = context.getString(com.phew.core_design.R.string.error_network),
                     duration = SnackbarDuration.Short
                 )
             }
+
             else -> Unit
         }
     }

@@ -2,12 +2,15 @@ package com.phew.network
 
 import com.phew.network.dto.AppVersionDTO
 import com.phew.network.dto.CheckSignUpDTO
+import com.phew.network.dto.FCMToken
 import com.phew.network.dto.InfoDTO
 import com.phew.network.dto.SecurityKeyDTO
 import com.phew.network.dto.TokenDTO
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Header
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -43,4 +46,13 @@ interface Http {
     suspend fun requestLogin(
         @Body body: InfoDTO,
     ): Response<TokenDTO>
+
+    /**
+     * Update FCM url
+     */
+    @PATCH(BuildConfig.API_URL_FCM_UPDATE)
+    suspend fun requestUpdateFcm(
+        @Header("Authorization") bearerToken: String,
+        @Body body: FCMToken,
+    ): Response<Unit>
 }

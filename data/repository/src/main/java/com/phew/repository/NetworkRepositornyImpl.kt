@@ -5,6 +5,7 @@ import com.phew.core_common.DataResult
 import com.phew.domain.dto.CheckSignUp
 import com.phew.domain.repository.NetworkRepository
 import com.phew.network.Http
+import com.phew.network.dto.FCMToken
 import com.phew.network.dto.InfoDTO
 import javax.inject.Inject
 
@@ -88,6 +89,26 @@ class NetworkRepositoryImpl @Inject constructor(private val http: Http) : Networ
                     result.body()!!.accessToken
                 )
             )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return DataResult.Fail(
+                code = APP_ERROR_CODE,
+                message = e.message,
+                throwable = e
+            )
+        }
+    }
+
+    override suspend fun requestUpdateFcm(token: String, fcmToken: String): DataResult<Unit> {
+        try {
+            val request = http.requestUpdateFcm(
+                bearerToken = token,
+                body = FCMToken(fcmToken)
+            )
+            if (!request.isSuccessful) {
+                return DataResult.Fail(code = request.code(), message = request.message())
+            }
+            return DataResult.Success(Unit)
         } catch (e: Exception) {
             e.printStackTrace()
             return DataResult.Fail(

@@ -8,4 +8,5 @@ interface NetworkRepository {
     suspend fun requestSecurityKey(): DataResult<String>
     suspend fun requestCheckSignUp(info: String): DataResult<CheckSignUp>
     suspend fun requestLogin(info: String): DataResult<Pair<String, String>>
+    suspend fun requestUpdateFcm(token : String , fcmToken : String) : DataResult<Unit>
 }
