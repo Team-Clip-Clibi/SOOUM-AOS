@@ -21,7 +21,7 @@ class CheckSignUp @Inject constructor(
     private val deviceRepository: DeviceRepository,
     private val networkRepository: NetworkRepository,
 ) {
-    suspend operator fun invoke(): DomainResult<Pair<String, String>, String> {
+    suspend operator fun invoke(): DomainResult<Triple<String, String, String>, String> {
         val securityKeyResult = networkRepository.requestSecurityKey()
         if (securityKeyResult is DataResult.Fail) {
             return DomainResult.Failure(ERROR_NETWORK)
@@ -43,7 +43,7 @@ class CheckSignUp @Inject constructor(
                     data.withdrawn -> SIGN_UP_WITHDRAWN
                     else -> SIGN_UP_OKAY
                 }
-                DomainResult.Success(Pair(resultType, data.time))
+                DomainResult.Success(Triple(resultType, data.time, encryptedInfo))
             }
         }
     }
