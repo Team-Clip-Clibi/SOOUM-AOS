@@ -4,10 +4,11 @@ import com.phew.network.dto.AppVersionDTO
 import com.phew.network.dto.CheckSignUpDTO
 import com.phew.network.dto.FCMToken
 import com.phew.network.dto.InfoDTO
-import com.phew.network.dto.NickNameGeneratorDTO
+import com.phew.network.dto.NickNameDTO
 import com.phew.network.dto.SecurityKeyDTO
 import com.phew.network.dto.SignUpRequest
 import com.phew.network.dto.TokenDTO
+import com.phew.network.dto.NickNameAvailableDTO
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -70,5 +71,10 @@ interface Http {
      * NickName Generator url
      */
     @GET(BuildConfig.API_URL_NICKNAME_GENERATOR)
-    suspend fun requestNickNameGenerator(): Response<NickNameGeneratorDTO>
+    suspend fun requestNickNameGenerator(): Response<NickNameDTO>
+
+    @POST(BuildConfig.API_URL_CHECK_NICKNAME_AVAILABLE)
+    suspend fun requestCheckNickName(
+        @Body body : NickNameDTO
+    ) : Response<NickNameAvailableDTO>
 }

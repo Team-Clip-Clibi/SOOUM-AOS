@@ -40,6 +40,7 @@ class NetworkConvention : Plugin<Project> {
                 val signUp: String = properties.getProperty("api_url_sign_up", "")
                 val nickNameGenerator: String =
                     properties.getProperty("api_url_nickname_generate", "")
+                val nickNameCheck: String = properties.getProperty("api_url_check_nick_name", "")
 
                 buildConfigField("String", "BASE_URL", baseUrl)
                 buildConfigField("String", "API_URL", apiUrl)
@@ -51,6 +52,7 @@ class NetworkConvention : Plugin<Project> {
                 buildConfigField("String", "API_URL_FCM_UPDATE", updateFcm)
                 buildConfigField("String", "API_URL_SIGN_UP", signUp)
                 buildConfigField("String", "API_URL_NICKNAME_GENERATOR", nickNameGenerator)
+                buildConfigField("String", "API_URL_CHECK_NICKNAME_AVAILABLE", nickNameCheck)
             }
             buildFeatures.buildConfig = true
             compileOptions {

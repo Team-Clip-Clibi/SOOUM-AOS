@@ -8,6 +8,7 @@ import com.phew.network.Http
 import com.phew.network.dto.FCMToken
 import com.phew.network.dto.InfoDTO
 import com.phew.network.dto.MemberInfoDTO
+import com.phew.network.dto.NickNameDTO
 import com.phew.network.dto.PolicyDTO
 import com.phew.network.dto.SignUpRequest
 import javax.inject.Inject
@@ -175,6 +176,27 @@ class NetworkRepositoryImpl @Inject constructor(private val http: Http) : Networ
                 return DataResult.Fail(code = request.code(), message = request.message())
             }
             return DataResult.Success(request.body()!!.nickname)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return DataResult.Fail(
+                code = APP_ERROR_CODE,
+                message = e.message,
+                throwable = e
+            )
+        }
+    }
+
+    override suspend fun checkNickName(nickname: String): DataResult<Boolean> {
+        try {
+            val request = http.requestCheckNickName(
+                NickNameDTO(
+                    nickname
+                )
+            )
+            if (!request.isSuccessful || request.body() == null) {
+                return DataResult.Fail(code = request.code(), message = request.message())
+            }
+            return DataResult.Success(request.body()!!.isAvailable)
         } catch (e: Exception) {
             e.printStackTrace()
             return DataResult.Fail(
