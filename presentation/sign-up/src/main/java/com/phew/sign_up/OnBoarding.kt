@@ -102,7 +102,7 @@ fun OnBoarding(
         bottomBar = {
             BottomView(
                 onClickStart = {
-                    viewModel.signUp()
+                    viewModel.checkRegister()
                 },
                 onClickAlreadySignUp = {
                     alreadySignUp()
