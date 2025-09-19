@@ -1,34 +1,112 @@
 package com.phew.sign_up
 
-import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.phew.core_common.Result
-import com.phew.domain.CreateImageFile
-import com.phew.domain.FinalizePending
-import com.phew.domain.FinishTakePicture
+import com.phew.core_common.DomainResult
+import com.phew.domain.usecase.CheckNickName
+import com.phew.domain.usecase.CheckSignUp
+import com.phew.domain.usecase.CreateImageFile
+import com.phew.domain.usecase.FinishTakePicture
+import com.phew.domain.usecase.GetNickName
+import com.phew.domain.usecase.Login
+import com.phew.domain.usecase.RequestSignUp
+import com.phew.sign_up.dto.SignUpResult
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
 class SignUpViewModel @Inject constructor(
-    private val finalizePending: FinalizePending,
-    private val createFile : CreateImageFile,
-    private val finishPhoto : FinishTakePicture,
-    @ApplicationContext private val context: Context
+    private val createFile: CreateImageFile,
+    private val finishPhoto: FinishTakePicture,
+    private val checkSignUp: CheckSignUp,
+    private val requestLogin: Login,
+    private val getNickName: GetNickName,
+    private val requestSignUp : RequestSignUp,
+    private val checkNickName : CheckNickName
 ) : ViewModel() {
 
     private var _uiState = MutableStateFlow(SignUp())
     val uiState: StateFlow<SignUp> = _uiState.asStateFlow()
+    init {
+        generateNickName()
+    }
+
+    /**
+     * 닉네임 생성 함수
+     */
+    private fun generateNickName() {
+        viewModelScope.launch(Dispatchers.IO) {
+            when (val result = getNickName()) {
+                is DomainResult.Failure -> {
+                    _uiState.update { state ->
+                        state.copy(nickNameHint = UiState.Fail(result.error))
+                    }
+                }
+
+                is DomainResult.Success -> {
+                    _uiState.update { state ->
+                        state.copy(nickNameHint = UiState.Success(result.data))
+
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * 회원가입
+     */
+    fun signUp() {
+        viewModelScope.launch(Dispatchers.IO) {
+            when (val result = requestSignUp(
+                data = RequestSignUp.Param(
+                    agreedToLocationTerms = _uiState.value.agreedToLocationTerms,
+                    agreedToPrivacyPolicy = _uiState.value.agreedToPrivacyPolicy,
+                    agreedToTermsOfService = _uiState.value.agreedToTermsOfService,
+                    nickName = _uiState.value.nickName,
+                    profileImage = _uiState.value.profile.toString()
+                )
+            )) {
+                is DomainResult.Failure -> {
+                    _uiState.update { state ->
+                        state.copy(signUp = UiState.Fail(result.error))
+                    }
+                }
+                is DomainResult.Success -> {
+                    _uiState.update { state ->
+                        state.copy(signUp = UiState.Success(Unit))
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * 닉네임 검증 함수
+     */
+    fun checkName(){
+        viewModelScope.launch(Dispatchers.IO) {
+            when(val result = checkNickName(CheckNickName.Param(_uiState.value.nickName))){
+                is DomainResult.Failure -> {
+                    _uiState.update { state ->
+                        state.copy(checkNickName = UiState.Fail(result.error))
+                    }
+                }
+                is DomainResult.Success -> {
+                    _uiState.update { state ->
+                        state.copy(checkNickName = UiState.Success(result.data))
+                    }
+                }
+            }
+        }
+    }
 
     /**
      * 인증 코드 전송
@@ -49,30 +127,30 @@ class SignUpViewModel @Inject constructor(
                     val newValue = !state.agreementAll
                     state.copy(
                         agreementAll = newValue,
-                        agreementService = newValue,
-                        agreementLocation = newValue,
-                        agreementPersonal = newValue
+                        agreedToTermsOfService = newValue,
+                        agreedToLocationTerms = newValue,
+                        agreedToPrivacyPolicy = newValue
                     )
                 }
 
                 AGREEMENT_SERVICE -> {
-                    val newValue = !state.agreementService
+                    val newValue = !state.agreedToTermsOfService
                     state.copy(
-                        agreementService = newValue
+                        agreedToTermsOfService = newValue
                     ).updateAgreementAll()
                 }
 
                 AGREEMENT_LOCATION -> {
-                    val newValue = !state.agreementLocation
+                    val newValue = !state.agreedToLocationTerms
                     state.copy(
-                        agreementLocation = newValue
+                        agreedToLocationTerms = newValue
                     ).updateAgreementAll()
                 }
 
                 AGREEMENT_PERSONAL -> {
-                    val newValue = !state.agreementPersonal
+                    val newValue = !state.agreedToPrivacyPolicy
                     state.copy(
-                        agreementPersonal = newValue
+                        agreedToPrivacyPolicy = newValue
                     ).updateAgreementAll()
                 }
 
@@ -82,8 +160,70 @@ class SignUpViewModel @Inject constructor(
     }
 
     private fun SignUp.updateAgreementAll(): SignUp {
-        val allChecked = agreementService && agreementLocation && agreementPersonal
+        val allChecked = agreedToTermsOfService && agreedToLocationTerms && agreedToPrivacyPolicy
         return copy(agreementAll = allChecked)
+    }
+
+    /**
+     * 회원 가입 가능 여부 확인
+     */
+    fun checkRegister() {
+        viewModelScope.launch(Dispatchers.IO) {
+            when (val result = checkSignUp()) {
+                is DomainResult.Failure -> {
+                    _uiState.update { state ->
+                        state.copy(
+                            checkSignUp = UiState.Fail(result.error)
+                        )
+                    }
+                }
+
+                is DomainResult.Success -> {
+                    _uiState.update { state ->
+                        state.copy(
+                            checkSignUp = UiState.Success(
+                                SignUpResult(
+                                    time = result.data.second,
+                                    result = result.data.first
+                                )
+                            ),
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * 로그인
+     */
+    fun login() {
+        viewModelScope.launch(Dispatchers.IO) {
+            when (val result = requestLogin()) {
+                is DomainResult.Failure -> {
+                    _uiState.update { state ->
+                        state.copy(
+                            login = UiState.Fail(result.error)
+                        )
+                    }
+                }
+
+                is DomainResult.Success -> {
+                    _uiState.update { state ->
+                        state.copy(login = UiState.Success(Unit))
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * 회원 가입 여부 초기화
+     */
+    fun initCheckSignUp() {
+        _uiState.update { state ->
+            state.copy(checkSignUp = UiState.Loading)
+        }
     }
 
     /**
@@ -117,16 +257,17 @@ class SignUpViewModel @Inject constructor(
     /**
      * 이미지 파일 생성기
      */
-    fun createImage(){
+    fun createImage() {
         viewModelScope.launch(Dispatchers.IO) {
-            when(val result = createFile()){
-                is Result.Failure -> {
+            when (val result = createFile()) {
+                is DomainResult.Failure -> {
                     _uiState.update { state ->
                         state.copy(createImageFile = UiState.Fail(result.error))
                     }
                 }
-                is Result.Success -> {
-                    _uiState.update{ state ->
+
+                is DomainResult.Success -> {
+                    _uiState.update { state ->
                         state.copy(createImageFile = UiState.Success(result.data))
                     }
                 }
@@ -134,15 +275,19 @@ class SignUpViewModel @Inject constructor(
         }
     }
 
-    fun closeFile(data : Uri){
+    /**
+     * 사진 만들기 종료
+     */
+    fun closeFile(data: Uri) {
         viewModelScope.launch(Dispatchers.IO) {
-            when(val result = finishPhoto(FinishTakePicture.Param(data))){
-                is Result.Failure -> {
+            when (val result = finishPhoto(FinishTakePicture.Param(data))) {
+                is DomainResult.Failure -> {
                     _uiState.update { state ->
                         state.copy(createImageFile = UiState.Fail(result.error))
                     }
                 }
-                is Result.Success ->{
+
+                is DomainResult.Success -> {
                     _uiState.update { state ->
                         state.copy(profile = result.data)
                     }
@@ -156,18 +301,23 @@ class SignUpViewModel @Inject constructor(
 data class SignUp(
     val authCode: String = "",
     val agreementAll: Boolean = false,
-    val agreementService: Boolean = false,
-    val agreementLocation: Boolean = false,
-    val agreementPersonal: Boolean = false,
+    val agreedToTermsOfService: Boolean = false,
+    val agreedToLocationTerms: Boolean = false,
+    val agreedToPrivacyPolicy: Boolean = false,
     val nickName: String = "",
+    val nickNameHint: UiState<String> = UiState.Loading,
     val profile: Uri = Uri.EMPTY,
     val profileBottom: Boolean = false,
     val finalizePending: Boolean = false,
-    var createImageFile: UiState<Uri> = UiState.Loading
+    var createImageFile: UiState<Uri> = UiState.Loading,
+    val checkSignUp: UiState<SignUpResult> = UiState.Loading,
+    val checkNickName : UiState<Boolean> = UiState.Loading,
+    val login: UiState<Unit> = UiState.Loading,
+    val signUp: UiState<Unit> = UiState.Loading,
 )
 
-sealed interface UiState<out T>{
+sealed interface UiState<out T> {
     data object Loading : UiState<Nothing>
-    data class Success<T>(val data : T) : UiState<T>
+    data class Success<T>(val data: T) : UiState<T>
     data class Fail(val errorMessage: String) : UiState<Nothing>
 }

@@ -29,6 +29,32 @@ class NetworkConvention : Plugin<Project> {
                 if (localPropsFile.exists()) {
                     localPropsFile.inputStream().use { properties.load(it) }
                 }
+                val baseUrl: String = properties.getProperty("base_url", "")
+                val apiUrl: String = properties.getProperty("api_url", "")
+                val apiUrlType: String = properties.getProperty("api_url_type", "")
+                val apiUrlQuery: String = properties.getProperty("api_url_version", "")
+                val rsaKey: String = properties.getProperty("key_url", "")
+                val loginUrl: String = properties.getProperty("api_url_login", "")
+                val checkSignUp: String = properties.getProperty("api_url_check_sign_up", "")
+                val updateFcm: String = properties.getProperty("api_url_update_fcm", "")
+                val signUp: String = properties.getProperty("api_url_sign_up", "")
+                val nickNameGenerator: String =
+                    properties.getProperty("api_url_nickname_generate", "")
+                val nickNameCheck: String = properties.getProperty("api_url_check_nick_name", "")
+                val upLoadImage: String = properties.getProperty("api_url_upload_image", "")
+
+                buildConfigField("String", "BASE_URL", baseUrl)
+                buildConfigField("String", "API_URL", apiUrl)
+                buildConfigField("String", "API_URL_TYPE", apiUrlType)
+                buildConfigField("String", "API_URL_QUERY", apiUrlQuery)
+                buildConfigField("String", "API_SECURITY_KEY", rsaKey)
+                buildConfigField("String", "API_URL_LOGIN", loginUrl)
+                buildConfigField("String", "API_URL_CHECK_SIGN_UP", checkSignUp)
+                buildConfigField("String", "API_URL_FCM_UPDATE", updateFcm)
+                buildConfigField("String", "API_URL_SIGN_UP", signUp)
+                buildConfigField("String", "API_URL_NICKNAME_GENERATOR", nickNameGenerator)
+                buildConfigField("String", "API_URL_CHECK_NICKNAME_AVAILABLE", nickNameCheck)
+                buildConfigField("String", "API_URL_UPLOAD_IMAGE", upLoadImage)
             }
             buildFeatures.buildConfig = true
             compileOptions {

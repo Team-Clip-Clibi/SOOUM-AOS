@@ -29,6 +29,19 @@ class DomainConvention : Plugin<Project> {
                 if (localPropsFile.exists()) {
                     localPropsFile.inputStream().use { properties.load(it) }
                 }
+                val appType: String = properties.getProperty("appType", "")
+                val tokenKey: String = properties.getProperty("tokenKey", "")
+                val transformation: String = properties.getProperty("transformation", "")
+                val fcmTokenKey: String = properties.getProperty("fcm_token_key", "")
+                val notifyKey: String = properties.getProperty("notify_key", "")
+                val userInfoKey: String = properties.getProperty("userInfo_key", "")
+
+                buildConfigField("String", "APP_TYPE", appType)
+                buildConfigField("String", "TOKEN_KEY", tokenKey)
+                buildConfigField("String", "TRANSFORMATION", transformation)
+                buildConfigField("String", "FCM_TOKEN_KEY", fcmTokenKey)
+                buildConfigField("String", "NOTIFY_KEY", notifyKey)
+                buildConfigField("String", "USER_INFO_KEY", userInfoKey)
             }
             buildFeatures.buildConfig = true
             compileOptions {
@@ -42,11 +55,17 @@ class DomainConvention : Plugin<Project> {
         dependencies {
             "implementation"(libs.findLibrary("hilt-android").get())
             "ksp"(libs.findLibrary("hilt-compiler").get())
+            "implementation"(libs.findLibrary("okhttp3").get())
+            //project
             "implementation"(project(":core:core-common"))
             // test
             "testImplementation"(libs.findLibrary("junit").get())
+            "testImplementation"(libs.findLibrary("mockk").get())
+            "testImplementation"(libs.findLibrary("truth").get())
+            "testImplementation"(libs.findLibrary("kotlinx-coroutines-test").get())
             "androidTestImplementation"(libs.findLibrary("androidx-junit").get())
             "androidTestImplementation"(libs.findLibrary("androidx-espresso-core").get())
+
         }
     }
 }

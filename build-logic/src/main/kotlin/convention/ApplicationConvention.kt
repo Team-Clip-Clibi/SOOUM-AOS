@@ -18,6 +18,7 @@ class ApplicationConvention : Plugin<Project> {
         pluginManager.apply("com.google.dagger.hilt.android")
         pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
         pluginManager.apply("com.google.devtools.ksp")
+        pluginManager.apply("com.google.gms.google-services")
 
         extensions.getByType<ApplicationExtension>().apply {
             namespace = "com.phew.sooum"
@@ -75,12 +76,15 @@ class ApplicationConvention : Plugin<Project> {
             "implementation"(libs.findLibrary("hilt-android").get())
             "ksp"(libs.findLibrary("hilt-compiler").get())
             "implementation"(libs.findLibrary("compose-nav").get())
+            //firebase
+            "implementation"(libs.findLibrary("firebase-bom").get())
             //module
             add("implementation", project(":presentation"))
             add("implementation", project(":presentation:splash"))
             add("implementation", project(":presentation:sign-up"))
             add("implementation", project(":domain"))
             add("implementation", project(":data"))
+            add("implementation", project(":data:repository"))
             add("implementation", project(":data:network"))
             add("implementation", project(":data:device"))
             add("implementation", project(":core"))
