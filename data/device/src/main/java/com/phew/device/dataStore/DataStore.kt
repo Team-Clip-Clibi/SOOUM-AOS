@@ -1,6 +1,6 @@
 package com.phew.device.dataStore
 
-import com.phew.device.dto.UserInfo
+import com.phew.device.dto.UserInfoDTO
 
 
 interface DataStore {
@@ -11,6 +11,6 @@ interface DataStore {
     suspend fun getFirebaseToken(key: String): String
     suspend fun insertNotifyAgree(key: String, data: Boolean): Boolean
     suspend fun getNotifyAgree(key: String): Boolean
-    suspend fun saveUserInfo(key: String, data: UserInfo): Boolean
-    suspend fun getUserInfo(key: String): UserInfo?
+    suspend fun saveUserInfo(key: String, data: UserInfoDTO): Boolean
+    suspend fun getUserInfo(key: String): UserInfoDTO?
 }

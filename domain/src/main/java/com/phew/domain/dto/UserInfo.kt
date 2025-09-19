@@ -1,4 +1,4 @@
-package com.phew.device.dto
+package com.phew.domain.dto
 
 data class UserInfo(
     val nickName: String,
