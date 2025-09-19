@@ -61,7 +61,7 @@ fun SignUpAgreementView(
                 LargeButton.NoIconPrimary(
                     buttonText = stringResource(com.phew.core_design.R.string.common_next),
                     onClick = {
-
+                        nextPage()
                     },
                     isEnable = uiState.agreementAll || (uiState.agreedToTermsOfService && uiState.agreedToLocationTerms && uiState.agreedToPrivacyPolicy)
                 )
