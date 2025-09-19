@@ -65,7 +65,7 @@ class NetworkRepositoryImpl @Inject constructor(private val http: Http) : Networ
             }
             return DataResult.Success(
                 CheckSignUp(
-                    time = result.body()!!.rejoinAvailableAt,
+                    time = result.body()!!.rejoinAvailableAt ?: "",
                     banned = result.body()!!.banned,
                     registered = result.body()!!.registered,
                     withdrawn = result.body()!!.withdrawn
