@@ -50,7 +50,7 @@ class CheckSignUp @Inject constructor(
 
     private fun makeSecurityKey(key: String): PublicKey {
         val cleanedKey = key.replace("\\s".toRegex(), "")
-        val keyBytes = Base64.decode(cleanedKey, Base64.DEFAULT)
+        val keyBytes = Base64.decode(cleanedKey, Base64.NO_WRAP)
         val spec = X509EncodedKeySpec(keyBytes)
         val keyFactory = KeyFactory.getInstance("RSA")
         return keyFactory.generatePublic(spec)
@@ -60,6 +60,6 @@ class CheckSignUp @Inject constructor(
         val cipher = Cipher.getInstance(BuildConfig.TRANSFORMATION)
         cipher.init(Cipher.ENCRYPT_MODE, key)
         val encryptedBytes = cipher.doFinal(data.toByteArray(Charsets.UTF_8))
-        return Base64.encodeToString(encryptedBytes, Base64.DEFAULT)
+        return Base64.encodeToString(encryptedBytes, Base64.NO_WRAP)
     }
 }
