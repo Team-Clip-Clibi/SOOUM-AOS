@@ -13,7 +13,7 @@ class CreateImageFile @Inject constructor(@ApplicationContext private val contex
 
     suspend operator fun invoke(): DomainResult<Uri, String> {
         val values = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, "IMG_${System.currentTimeMillis()}.jpg")
+            put(MediaStore.MediaColumns.DISPLAY_NAME, "IMG_${System.currentTimeMillis()}.jpeg")
             put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
             put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/YourApp")
         }
