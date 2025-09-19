@@ -72,6 +72,7 @@ fun Splash(
                     message = context.getString(com.phew.core_design.R.string.error_network),
                     duration = SnackbarDuration.Short
                 )
+                viewModel.initError()
             }
 
             else -> Unit

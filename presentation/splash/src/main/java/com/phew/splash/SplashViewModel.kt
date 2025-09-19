@@ -69,7 +69,7 @@ class SplashViewModel @Inject constructor(
 
     fun saveNotify(data : Boolean){
         viewModelScope.launch(Dispatchers.IO) {
-            when(val result = notify(SaveNotify.Param(data))){
+            when(notify(SaveNotify.Param(data))){
                 is DomainResult.Failure ->{
                     _uiState.value = UiState.Error(ERROR)
                 }
@@ -78,6 +78,10 @@ class SplashViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun initError(){
+        _uiState.value = UiState.Loading
     }
 }
 
