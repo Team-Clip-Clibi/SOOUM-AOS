@@ -70,7 +70,6 @@ class SignUpViewModel @Inject constructor(
                     agreedToLocationTerms = _uiState.value.agreedToLocationTerms,
                     agreedToPrivacyPolicy = _uiState.value.agreedToPrivacyPolicy,
                     agreedToTermsOfService = _uiState.value.agreedToTermsOfService,
-                    encryptedDeviceId = _uiState.value.encryptedInfo,
                     nickName = _uiState.value.nickName,
                     profileImage = _uiState.value.profile.toString()
                 )
@@ -188,7 +187,6 @@ class SignUpViewModel @Inject constructor(
                                     result = result.data.first
                                 )
                             ),
-                            encryptedInfo = result.data.third
                         )
                     }
                 }
@@ -314,7 +312,6 @@ data class SignUp(
     var createImageFile: UiState<Uri> = UiState.Loading,
     val checkSignUp: UiState<SignUpResult> = UiState.Loading,
     val checkNickName : UiState<Boolean> = UiState.Loading,
-    val encryptedInfo: String = "",
     val login: UiState<Unit> = UiState.Loading,
     val signUp: UiState<Unit> = UiState.Loading,
 )

@@ -3,7 +3,6 @@ package com.phew.domain.usecase
 import com.phew.core_common.DataResult
 import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR_NETWORK
-import com.phew.domain.BuildConfig
 import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.NetworkRepository
 import java.security.PublicKey
@@ -21,7 +20,7 @@ class CheckSignUp @Inject constructor(
     private val deviceRepository: DeviceRepository,
     private val networkRepository: NetworkRepository,
 ) {
-    suspend operator fun invoke(): DomainResult<Triple<String, String, String>, String> {
+    suspend operator fun invoke(): DomainResult<Pair<String, String>, String> {
         val securityKeyResult = networkRepository.requestSecurityKey()
         if (securityKeyResult is DataResult.Fail) {
             return DomainResult.Failure(ERROR_NETWORK)
@@ -43,7 +42,7 @@ class CheckSignUp @Inject constructor(
                     data.withdrawn -> SIGN_UP_WITHDRAWN
                     else -> SIGN_UP_OKAY
                 }
-                DomainResult.Success(Triple(resultType, data.time, encryptedInfo))
+                DomainResult.Success(Pair(resultType, data.time))
             }
         }
     }
