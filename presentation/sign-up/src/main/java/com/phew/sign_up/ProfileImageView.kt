@@ -186,7 +186,8 @@ private fun ImagePickerEffect(
         } else {
             scope.launch {
                 snackBarHostState.showSnackbar(
-                    message = context.getString(com.phew.core_design.R.string.common_permission)
+                    message = context.getString(com.phew.core_design.R.string.common_permission),
+                    duration = SnackbarDuration.Short
                 )
             }
         }
