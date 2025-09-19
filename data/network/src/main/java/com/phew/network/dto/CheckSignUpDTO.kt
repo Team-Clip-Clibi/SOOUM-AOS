@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class CheckSignUpDTO(
-    val rejoinAvailableAt: String,
+    val rejoinAvailableAt: String?,
     val banned: Boolean,
     val withdrawn: Boolean,
     val registered: Boolean,
