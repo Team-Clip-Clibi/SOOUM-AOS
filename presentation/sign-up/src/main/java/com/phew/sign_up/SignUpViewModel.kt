@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.phew.core_common.DomainResult
+import com.phew.domain.usecase.CheckNickName
 import com.phew.domain.usecase.CheckSignUp
 import com.phew.domain.usecase.CreateImageFile
 import com.phew.domain.usecase.FinishTakePicture
@@ -26,8 +27,9 @@ class SignUpViewModel @Inject constructor(
     private val finishPhoto: FinishTakePicture,
     private val checkSignUp: CheckSignUp,
     private val requestLogin: Login,
-    private val nickName: GetNickName,
-    private val requestSignUp : RequestSignUp
+    private val getNickName: GetNickName,
+    private val requestSignUp : RequestSignUp,
+    private val checkNickName : CheckNickName
 ) : ViewModel() {
 
     private var _uiState = MutableStateFlow(SignUp())
@@ -41,7 +43,7 @@ class SignUpViewModel @Inject constructor(
      */
     private fun generateNickName() {
         viewModelScope.launch(Dispatchers.IO) {
-            when (val result = nickName()) {
+            when (val result = getNickName()) {
                 is DomainResult.Failure -> {
                     _uiState.update { state ->
                         state.copy(nickNameHint = UiState.Fail(result.error))
@@ -58,6 +60,9 @@ class SignUpViewModel @Inject constructor(
         }
     }
 
+    /**
+     * 회원가입
+     */
     fun signUp() {
         viewModelScope.launch(Dispatchers.IO) {
             when (val result = requestSignUp(
@@ -78,6 +83,26 @@ class SignUpViewModel @Inject constructor(
                 is DomainResult.Success -> {
                     _uiState.update { state ->
                         state.copy(signUp = UiState.Success(Unit))
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * 닉네임 검증 함수
+     */
+    fun checkName(){
+        viewModelScope.launch(Dispatchers.IO) {
+            when(val result = checkNickName(CheckNickName.Param(_uiState.value.nickName))){
+                is DomainResult.Failure -> {
+                    _uiState.update { state ->
+                        state.copy(checkNickName = UiState.Fail(result.error))
+                    }
+                }
+                is DomainResult.Success -> {
+                    _uiState.update { state ->
+                        state.copy(checkNickName = UiState.Success(result.data))
                     }
                 }
             }
@@ -288,6 +313,7 @@ data class SignUp(
     val finalizePending: Boolean = false,
     var createImageFile: UiState<Uri> = UiState.Loading,
     val checkSignUp: UiState<SignUpResult> = UiState.Loading,
+    val checkNickName : UiState<Boolean> = UiState.Loading,
     val encryptedInfo: String = "",
     val login: UiState<Unit> = UiState.Loading,
     val signUp: UiState<Unit> = UiState.Loading,
