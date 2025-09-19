@@ -22,7 +22,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,12 +44,6 @@ fun NickNameView(viewModel: SignUpViewModel, onBack: () -> Unit, nextPage: () ->
     val uiState by viewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
-    var normalText = stringResource(R.string.signUp_nickName_helper)
-    val helperText = stringResource(R.string.signUp_nickName_helper)
-    val errorText = stringResource(R.string.signUp_nickName_helper_error)
-    val shortText = stringResource(R.string.signUp_nickName_helper_one_more)
-    var hintData = ""
-    val hint = remember { mutableStateOf(hintData) }
     LaunchedEffect(uiState) {
         when (val result = uiState.nickNameHint) {
             is UiState.Fail -> {
@@ -75,16 +68,7 @@ fun NickNameView(viewModel: SignUpViewModel, onBack: () -> Unit, nextPage: () ->
             }
 
             is UiState.Success -> {
-                hintData =
-                    if (result.data && uiState.nickName.length > 2) {
-                        helperText
-                    } else if (!result.data && uiState.nickName.length > 2) {
-                        errorText
-                    } else if (uiState.nickName.length < 2) {
-                        shortText
-                    } else {
-                        normalText
-                    }
+                if (result.data) nextPage()
             }
 
             else -> Unit
@@ -109,7 +93,8 @@ fun NickNameView(viewModel: SignUpViewModel, onBack: () -> Unit, nextPage: () ->
                 LargeButton.NoIconPrimary(
                     buttonText = stringResource(com.phew.core_design.R.string.common_next),
                     onClick = viewModel::checkName,
-                    isEnable = uiState.nickName.trim().isNotEmpty()
+                    isEnable = uiState.nickName.trim()
+                        .isNotEmpty() && uiState.nickName.trim().length > 2
                 )
             }
         },
@@ -137,8 +122,19 @@ fun NickNameView(viewModel: SignUpViewModel, onBack: () -> Unit, nextPage: () ->
                 onValueChange = { input ->
                     viewModel.nickName(input)
                 },
-                showError = if (uiState.checkNickName is UiState.Success) (uiState.checkNickName as UiState.Success<Boolean>).data else false,
-                hint = hint.value
+                showError = if (uiState.checkNickName is UiState.Success) !(uiState.checkNickName as UiState.Success<Boolean>).data else false,
+                hint = when {
+                    uiState.nickName.length < 2 -> stringResource(R.string.signUp_nickName_helper_one_more)
+                    uiState.checkNickName is UiState.Success -> {
+                        if (!(uiState.checkNickName as UiState.Success<Boolean>).data) {
+                            stringResource(R.string.signUp_nickName_helper_error)
+                        } else {
+                            stringResource(R.string.signUp_nickName_helper)
+                        }
+                    }
+
+                    else -> stringResource(R.string.signUp_nickName_helper)
+                }
             )
         }
     }

@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class MemberInfoDTO(
     val encryptedDeviceId: String,
-    val deviceType: String = "ANDROID",
+    val deviceType: String,
     val fcmToken: String,
     val isNotificationAgreed: Boolean,
     val nickname: String,

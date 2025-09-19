@@ -3,6 +3,7 @@ package com.phew.repository
 import com.phew.core_common.APP_ERROR_CODE
 import com.phew.core_common.DataResult
 import com.phew.domain.dto.CheckSignUp
+import com.phew.domain.dto.UploadImageUrl
 import com.phew.domain.repository.NetworkRepository
 import com.phew.network.Http
 import com.phew.network.dto.FCMToken
@@ -11,6 +12,7 @@ import com.phew.network.dto.MemberInfoDTO
 import com.phew.network.dto.NickNameDTO
 import com.phew.network.dto.PolicyDTO
 import com.phew.network.dto.SignUpRequest
+import okhttp3.RequestBody
 import javax.inject.Inject
 
 class NetworkRepositoryImpl @Inject constructor(private val http: Http) : NetworkRepository {
@@ -141,7 +143,8 @@ class NetworkRepositoryImpl @Inject constructor(private val http: Http) : Networ
                         fcmToken = fcmToken,
                         isNotificationAgreed = isNotificationAgreed,
                         profileImage = profileImage,
-                        nickname = nickname
+                        nickname = nickname,
+                        deviceType = "ANDROID"
                     ),
                     policy = PolicyDTO(
                         agreedToLocationTerms = agreedToLocationTerms,
@@ -198,6 +201,47 @@ class NetworkRepositoryImpl @Inject constructor(private val http: Http) : Networ
             }
             return DataResult.Success(request.body()!!.isAvailable)
         } catch (e: Exception) {
+            e.printStackTrace()
+            return DataResult.Fail(
+                code = APP_ERROR_CODE,
+                message = e.message,
+                throwable = e
+            )
+        }
+    }
+
+    override suspend fun requestUploadImageUrl(): DataResult<UploadImageUrl> {
+        try {
+            val request = http.requestUploadImageUrl()
+            if (!request.isSuccessful || request.body() == null) return DataResult.Fail(
+                code = request.code(),
+                message = request.message()
+            )
+            return DataResult.Success(
+                UploadImageUrl(
+                    imgUrl = request.body()!!.imgUrl,
+                    imgName = request.body()!!.imgName
+                )
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return DataResult.Fail(
+                code = APP_ERROR_CODE,
+                message = e.message,
+                throwable = e
+            )
+        }
+    }
+
+    override suspend fun requestUploadImage(data: RequestBody, url: String): DataResult<Unit> {
+        try{
+            val request = http.requestUploadImage(
+                url = url,
+                body = data
+            )
+            if(!request.isSuccessful) return DataResult.Fail(code = request.code(), message = request.message())
+            return DataResult.Success(Unit)
+        }catch (e: Exception) {
             e.printStackTrace()
             return DataResult.Fail(
                 code = APP_ERROR_CODE,
