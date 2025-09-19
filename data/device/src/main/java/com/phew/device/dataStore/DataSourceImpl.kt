@@ -12,6 +12,7 @@ import androidx.core.content.edit
 import com.phew.core_common.ERROR
 import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.ERROR_NO_DATA
+import com.phew.device.dto.UserInfo
 
 class DataSourceImpl @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -35,6 +36,8 @@ class DataSourceImpl @Inject constructor(
     @Volatile
     private var cachedToken: TokenDTO? = null
 
+    @Volatile
+    private var userInfo: UserInfo? = null
     override suspend fun insertToken(key: String, data: Pair<String, String>): Boolean {
         try {
             val token = TokenDTO(data.first, data.second)
@@ -113,6 +116,33 @@ class DataSourceImpl @Inject constructor(
         } catch (e: Exception) {
             e.printStackTrace()
             return false
+        }
+    }
+
+    override suspend fun saveUserInfo(key: String, data: UserInfo): Boolean {
+        try {
+            val jsonString = gson.toJson(data)
+            sharedPreferences.edit(commit = true) { putString(key, jsonString) }
+            userInfo = data
+            return true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return false
+        }
+    }
+
+    override suspend fun getUserInfo(key: String): UserInfo? {
+        try {
+            userInfo?.let { data ->
+                return data
+            }
+            val jsonString = sharedPreferences.getString(key, null) ?: return null
+            val userInfo = gson.fromJson(jsonString, UserInfo::class.java)
+            this.userInfo = userInfo
+            return userInfo
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return null
         }
     }
 }
