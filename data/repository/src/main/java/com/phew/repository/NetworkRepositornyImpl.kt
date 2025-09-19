@@ -130,7 +130,7 @@ class NetworkRepositoryImpl @Inject constructor(private val http: Http) : Networ
         profileImage: String,
         agreedToTermsOfService: Boolean,
         agreedToLocationTerms: Boolean,
-        agreedToPrivacyPolicy: Boolean
+        agreedToPrivacyPolicy: Boolean,
     ): DataResult<Pair<String, String>> {
         try {
             val request = http.requestSignUp(
@@ -158,6 +158,23 @@ class NetworkRepositoryImpl @Inject constructor(private val http: Http) : Networ
                     request.body()!!.accessToken
                 )
             )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return DataResult.Fail(
+                code = APP_ERROR_CODE,
+                message = e.message,
+                throwable = e
+            )
+        }
+    }
+
+    override suspend fun requestNickName(): DataResult<String> {
+        try {
+            val request = http.requestNickNameGenerator()
+            if (!request.isSuccessful || request.body() == null) {
+                return DataResult.Fail(code = request.code(), message = request.message())
+            }
+            return DataResult.Success(request.body()!!.nickname)
         } catch (e: Exception) {
             e.printStackTrace()
             return DataResult.Fail(

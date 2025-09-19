@@ -8,6 +8,7 @@ import com.phew.domain.usecase.CheckSignUp
 import com.phew.domain.usecase.CreateImageFile
 import com.phew.domain.usecase.FinalizePending
 import com.phew.domain.usecase.FinishTakePicture
+import com.phew.domain.usecase.GetNickName
 import com.phew.domain.usecase.Login
 import com.phew.sign_up.dto.SignUpResult
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,10 +27,32 @@ class SignUpViewModel @Inject constructor(
     private val finishPhoto: FinishTakePicture,
     private val checkSignUp: CheckSignUp,
     private val requestLogin: Login,
+    private val nickName: GetNickName,
 ) : ViewModel() {
 
     private var _uiState = MutableStateFlow(SignUp())
     val uiState: StateFlow<SignUp> = _uiState.asStateFlow()
+    init {
+        generateNickName()
+    }
+    private fun generateNickName() {
+        viewModelScope.launch(Dispatchers.IO) {
+            when (val result = nickName()) {
+                is DomainResult.Failure -> {
+                    _uiState.update { state ->
+                        state.copy(nickNameHint = UiState.Fail(result.error))
+                    }
+                }
+
+                is DomainResult.Success -> {
+                    _uiState.update { state ->
+                        state.copy(nickNameHint = UiState.Success(result.data))
+
+                    }
+                }
+            }
+        }
+    }
 
     /**
      * 인증 코드 전송
@@ -116,7 +139,8 @@ class SignUpViewModel @Inject constructor(
             }
         }
     }
-    fun initCheckSignUp(){
+
+    fun initCheckSignUp() {
         _uiState.update { state ->
             state.copy(checkSignUp = UiState.Loading)
         }
@@ -221,6 +245,7 @@ data class SignUp(
     val agreedToLocationTerms: Boolean = false,
     val agreedToPrivacyPolicy: Boolean = false,
     val nickName: String = "",
+    val nickNameHint: UiState<String> = UiState.Loading,
     val profile: Uri = Uri.EMPTY,
     val profileBottom: Boolean = false,
     val finalizePending: Boolean = false,

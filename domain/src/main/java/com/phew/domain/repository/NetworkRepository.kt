@@ -17,6 +17,8 @@ interface NetworkRepository {
         profileImage: String,
         agreedToTermsOfService: Boolean,
         agreedToLocationTerms: Boolean,
-        agreedToPrivacyPolicy: Boolean
+        agreedToPrivacyPolicy: Boolean,
     ): DataResult<Pair<String, String>>
+
+    suspend fun requestNickName(): DataResult<String>
 }
