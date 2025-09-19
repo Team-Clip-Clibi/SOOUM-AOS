@@ -6,10 +6,10 @@ import androidx.lifecycle.viewModelScope
 import com.phew.core_common.DomainResult
 import com.phew.domain.usecase.CheckSignUp
 import com.phew.domain.usecase.CreateImageFile
-import com.phew.domain.usecase.FinalizePending
 import com.phew.domain.usecase.FinishTakePicture
 import com.phew.domain.usecase.GetNickName
 import com.phew.domain.usecase.Login
+import com.phew.domain.usecase.RequestSignUp
 import com.phew.sign_up.dto.SignUpResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -22,12 +22,12 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SignUpViewModel @Inject constructor(
-    private val finalizePending: FinalizePending,
     private val createFile: CreateImageFile,
     private val finishPhoto: FinishTakePicture,
     private val checkSignUp: CheckSignUp,
     private val requestLogin: Login,
     private val nickName: GetNickName,
+    private val requestSignUp : RequestSignUp
 ) : ViewModel() {
 
     private var _uiState = MutableStateFlow(SignUp())
@@ -35,6 +35,10 @@ class SignUpViewModel @Inject constructor(
     init {
         generateNickName()
     }
+
+    /**
+     * 닉네임 생성 함수
+     */
     private fun generateNickName() {
         viewModelScope.launch(Dispatchers.IO) {
             when (val result = nickName()) {
@@ -48,6 +52,32 @@ class SignUpViewModel @Inject constructor(
                     _uiState.update { state ->
                         state.copy(nickNameHint = UiState.Success(result.data))
 
+                    }
+                }
+            }
+        }
+    }
+
+    fun signUp() {
+        viewModelScope.launch(Dispatchers.IO) {
+            when (val result = requestSignUp(
+                data = RequestSignUp.Param(
+                    agreedToLocationTerms = _uiState.value.agreedToLocationTerms,
+                    agreedToPrivacyPolicy = _uiState.value.agreedToPrivacyPolicy,
+                    agreedToTermsOfService = _uiState.value.agreedToTermsOfService,
+                    encryptedDeviceId = _uiState.value.encryptedInfo,
+                    nickName = _uiState.value.nickName,
+                    profileImage = _uiState.value.profile.toString()
+                )
+            )) {
+                is DomainResult.Failure -> {
+                    _uiState.update { state ->
+                        state.copy(signUp = UiState.Fail(result.error))
+                    }
+                }
+                is DomainResult.Success -> {
+                    _uiState.update { state ->
+                        state.copy(signUp = UiState.Success(Unit))
                     }
                 }
             }
@@ -113,7 +143,7 @@ class SignUpViewModel @Inject constructor(
     /**
      * 회원 가입 가능 여부 확인
      */
-    fun signUp() {
+    fun checkRegister() {
         viewModelScope.launch(Dispatchers.IO) {
             when (val result = checkSignUp()) {
                 is DomainResult.Failure -> {
@@ -132,17 +162,12 @@ class SignUpViewModel @Inject constructor(
                                     time = result.data.second,
                                     result = result.data.first
                                 )
-                            )
+                            ),
+                            encryptedInfo = result.data.third
                         )
                     }
                 }
             }
-        }
-    }
-
-    fun initCheckSignUp() {
-        _uiState.update { state ->
-            state.copy(checkSignUp = UiState.Loading)
         }
     }
 
@@ -166,6 +191,15 @@ class SignUpViewModel @Inject constructor(
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * 회원 가입 여부 초기화
+     */
+    fun initCheckSignUp() {
+        _uiState.update { state ->
+            state.copy(checkSignUp = UiState.Loading)
         }
     }
 
@@ -218,6 +252,9 @@ class SignUpViewModel @Inject constructor(
         }
     }
 
+    /**
+     * 사진 만들기 종료
+     */
     fun closeFile(data: Uri) {
         viewModelScope.launch(Dispatchers.IO) {
             when (val result = finishPhoto(FinishTakePicture.Param(data))) {
@@ -251,7 +288,9 @@ data class SignUp(
     val finalizePending: Boolean = false,
     var createImageFile: UiState<Uri> = UiState.Loading,
     val checkSignUp: UiState<SignUpResult> = UiState.Loading,
+    val encryptedInfo: String = "",
     val login: UiState<Unit> = UiState.Loading,
+    val signUp: UiState<Unit> = UiState.Loading,
 )
 
 sealed interface UiState<out T> {

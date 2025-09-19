@@ -3,6 +3,7 @@ package com.phew.sign_up
 import android.Manifest
 import android.net.Uri
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -39,6 +41,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import com.phew.core_common.ERROR
+import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_design.AvatarComponent
 import com.phew.core_design.BottomSheetComponent
 import com.phew.core_design.BottomSheetItem
@@ -51,6 +55,34 @@ import kotlinx.coroutines.launch
 fun ProfileImageView(viewModel: SignUpViewModel, onBack: () -> Unit, nexPage: () -> Unit) {
     val uiState by viewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+    BackHandler {
+        onBack()
+    }
+    LaunchedEffect(uiState) {
+        when(val result = uiState.signUp){
+            is UiState.Fail ->{
+                when(result.errorMessage){
+                    ERROR_NETWORK -> {
+                        snackBarHostState.showSnackbar(
+                            message = context.getString(com.phew.core_design.R.string.error_network),
+                            duration = SnackbarDuration.Short
+                        )
+                    }
+                    ERROR -> {
+                        snackBarHostState.showSnackbar(
+                            message = context.getString(com.phew.core_design.R.string.error_app),
+                            duration = SnackbarDuration.Short
+                        )
+                    }
+                }
+            }
+            is UiState.Success-> {
+                nexPage()
+            }
+            else -> Unit
+        }
+    }
 
     ImagePickerEffect(
         viewModel = viewModel,
@@ -76,13 +108,13 @@ fun ProfileImageView(viewModel: SignUpViewModel, onBack: () -> Unit, nexPage: ()
             ) {
                 Box(modifier = Modifier.weight(1f)) {
                     LargeButton.NoIconSecondary(
-                        onClick = nexPage,
+                        onClick = viewModel::signUp,
                         buttonText = stringResource(com.phew.core_design.R.string.common_skip)
                     )
                 }
                 Box(modifier = Modifier.weight(1f)) {
                     LargeButton.NoIconPrimary(
-                        onClick = nexPage,
+                        onClick = viewModel::signUp,
                         buttonText = stringResource(com.phew.core_design.R.string.common_finish)
                     )
                 }
