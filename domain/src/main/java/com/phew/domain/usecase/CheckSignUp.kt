@@ -8,7 +8,7 @@ import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.NetworkRepository
 import java.security.PublicKey
 import javax.inject.Inject
-import android.util.Base64
+import java.util.Base64
 import com.phew.domain.SIGN_UP_ALREADY_SIGN_UP
 import com.phew.domain.SIGN_UP_BANNED
 import com.phew.domain.SIGN_UP_OKAY
@@ -50,16 +50,16 @@ class CheckSignUp @Inject constructor(
 
     private fun makeSecurityKey(key: String): PublicKey {
         val cleanedKey = key.replace("\\s".toRegex(), "")
-        val keyBytes = Base64.decode(cleanedKey, Base64.NO_WRAP)
+        val keyBytes =  Base64.getDecoder().decode(cleanedKey)
         val spec = X509EncodedKeySpec(keyBytes)
         val keyFactory = KeyFactory.getInstance("RSA")
         return keyFactory.generatePublic(spec)
     }
 
     private fun encrypt(data: String, key: PublicKey): String {
-        val cipher = Cipher.getInstance(BuildConfig.TRANSFORMATION)
+        val cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding")
         cipher.init(Cipher.ENCRYPT_MODE, key)
         val encryptedBytes = cipher.doFinal(data.toByteArray(Charsets.UTF_8))
-        return Base64.encodeToString(encryptedBytes, Base64.NO_WRAP)
+        return Base64.getEncoder().encodeToString(encryptedBytes)
     }
 }

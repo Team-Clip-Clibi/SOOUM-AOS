@@ -16,6 +16,10 @@ import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.domain.BuildConfig
 import com.phew.domain.repository.DeviceRepository
+import java.security.KeyFactory
+import java.security.PublicKey
+import java.security.spec.X509EncodedKeySpec
+import javax.crypto.Cipher
 
 class RequestSignUp @Inject constructor(
     private val networkRepository: NetworkRepository,
@@ -23,7 +27,6 @@ class RequestSignUp @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
     data class Param(
-        val encryptedDeviceId: String,
         val nickName: String,
         val profileImage: String,
         val agreedToTermsOfService: Boolean,
@@ -32,9 +35,6 @@ class RequestSignUp @Inject constructor(
     )
 
     suspend operator fun invoke(data: Param): DomainResult<Unit, String> {
-        if (data.encryptedDeviceId == "") {
-            return DomainResult.Failure(ERROR_FAIL_JOB)
-        }
         val image = if (data.profileImage == "") "" else convertUriToJpegBase64(
             context = context,
             uriString = data.profileImage
@@ -44,8 +44,16 @@ class RequestSignUp @Inject constructor(
         if (fcmToken == ERROR) {
             return DomainResult.Failure(ERROR_FAIL_JOB)
         }
+        val deviceId = deviceRepository.requestDeviceId()
+        val requestKey = networkRepository.requestSecurityKey()
+        if(requestKey is DataResult.Fail){
+            return DomainResult.Failure(ERROR_NETWORK)
+        }
+        val makeKey = makeSecurityKey((requestKey as DataResult.Success).data)
+        val encryptedDeviceId = encrypt(data = deviceId , key = makeKey)
+
         val request = networkRepository.requestSignUp(
-            encryptedDeviceId = data.encryptedDeviceId,
+            encryptedDeviceId = encryptedDeviceId,
             fcmToken = fcmToken,
             isNotificationAgreed = notifyStatus,
             nickname = data.nickName,
@@ -72,6 +80,20 @@ class RequestSignUp @Inject constructor(
                 return DomainResult.Success(Unit)
             }
         }
+    }
+    private fun makeSecurityKey(key: String): PublicKey {
+        val cleanedKey = key.replace("\\s".toRegex(), "")
+        val keyBytes =  java.util.Base64.getDecoder().decode(cleanedKey)
+        val spec = X509EncodedKeySpec(keyBytes)
+        val keyFactory = KeyFactory.getInstance("RSA")
+        return keyFactory.generatePublic(spec)
+    }
+
+    private fun encrypt(data: String, key: PublicKey): String {
+        val cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding")
+        cipher.init(Cipher.ENCRYPT_MODE, key)
+        val encryptedBytes = cipher.doFinal(data.toByteArray(Charsets.UTF_8))
+        return java.util.Base64.getEncoder().encodeToString(encryptedBytes)
     }
 
     private fun convertUriToJpegBase64(
