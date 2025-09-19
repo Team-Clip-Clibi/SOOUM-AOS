@@ -186,7 +186,7 @@ class NetworkRepositoryImpl @Inject constructor(private val http: Http) : Networ
         }
     }
 
-    override suspend fun checkNickName(nickname: String): DataResult<Boolean> {
+    override suspend fun requestCheckNickName(nickname: String): DataResult<Boolean> {
         try {
             val request = http.requestCheckNickName(
                 NickNameDTO(

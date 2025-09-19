@@ -21,5 +21,5 @@ interface NetworkRepository {
     ): DataResult<Pair<String, String>>
 
     suspend fun requestNickName(): DataResult<String>
-    suspend fun checkNickName(nickname: String) : DataResult<Boolean>
+    suspend fun requestCheckNickName(nickname: String) : DataResult<Boolean>
 }
