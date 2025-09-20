@@ -97,6 +97,6 @@ interface Http {
     @PUT
     suspend fun requestUploadImage(
         @Url url: String,
-        @Body body: RequestBody?
+        @Body body: RequestBody
     ): Response<Unit>
 }

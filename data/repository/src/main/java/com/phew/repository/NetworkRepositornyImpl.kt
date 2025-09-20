@@ -130,7 +130,7 @@ class NetworkRepositoryImpl @Inject constructor(private val http: Http) : Networ
         fcmToken: String,
         isNotificationAgreed: Boolean,
         nickname: String,
-        profileImage: String,
+        profileImage: String?,
         agreedToTermsOfService: Boolean,
         agreedToLocationTerms: Boolean,
         agreedToPrivacyPolicy: Boolean,
@@ -233,7 +233,7 @@ class NetworkRepositoryImpl @Inject constructor(private val http: Http) : Networ
         }
     }
 
-    override suspend fun requestUploadImage(data: RequestBody?, url: String): DataResult<Unit> {
+    override suspend fun requestUploadImage(data: RequestBody, url: String): DataResult<Unit> {
         try{
             val request = http.requestUploadImage(
                 url = url,
