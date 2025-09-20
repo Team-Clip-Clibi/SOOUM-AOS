@@ -71,6 +71,7 @@ fun OnBoarding(
                 when (result.data.result) {
                     SIGN_UP_OKAY -> {
                         signUp()
+                        viewModel.initCheckSignUp()
                     }
 
                     SIGN_UP_REGISTERED -> {

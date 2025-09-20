@@ -68,7 +68,10 @@ fun NickNameView(viewModel: SignUpViewModel, onBack: () -> Unit, nextPage: () ->
             }
 
             is UiState.Success -> {
-                if (result.data) nextPage()
+                if (result.data) {
+                    nextPage()
+                    viewModel.initNickName()
+                }
             }
 
             else -> Unit
