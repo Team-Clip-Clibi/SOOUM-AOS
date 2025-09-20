@@ -233,7 +233,7 @@ class NetworkRepositoryImpl @Inject constructor(private val http: Http) : Networ
         }
     }
 
-    override suspend fun requestUploadImage(data: RequestBody, url: String): DataResult<Unit> {
+    override suspend fun requestUploadImage(data: RequestBody?, url: String): DataResult<Unit> {
         try{
             val request = http.requestUploadImage(
                 url = url,

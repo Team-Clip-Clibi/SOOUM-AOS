@@ -55,7 +55,8 @@ class RequestSignUp @Inject constructor(
         if (requestImageUploadUrl is DataResult.Fail) return DomainResult.Failure(ERROR_NETWORK)
         val fileName = (requestImageUploadUrl as DataResult.Success).data.imgName
         val uploadImageUrl = requestImageUploadUrl.data.imgUrl
-        val file = context.contentResolver.readAsRequestBody(uri = data.profileImage.toUri())
+        val file =
+            if (data.profileImage.isEmpty()) null else context.contentResolver.readAsRequestBody(uri = data.profileImage.toUri())
         val requestImageUpload = networkRepository.requestUploadImage(
             data = file,
             url = uploadImageUrl
@@ -107,7 +108,7 @@ class RequestSignUp @Inject constructor(
     }
 
     fun ContentResolver.readAsRequestBody(uri: Uri): RequestBody =
-        object: RequestBody() {
+        object : RequestBody() {
             override fun contentType(): MediaType? =
                 this@readAsRequestBody.getType(uri)?.toMediaTypeOrNull()
 

@@ -25,5 +25,5 @@ interface NetworkRepository {
     suspend fun requestNickName(): DataResult<String>
     suspend fun requestCheckNickName(nickname: String) : DataResult<Boolean>
     suspend fun requestUploadImageUrl() : DataResult<UploadImageUrl>
-    suspend fun requestUploadImage(data : RequestBody  , url : String) : DataResult<Unit>
+    suspend fun requestUploadImage(data : RequestBody?  , url : String) : DataResult<Unit>
 }

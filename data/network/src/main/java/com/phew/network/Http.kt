@@ -10,7 +10,6 @@ import com.phew.network.dto.SignUpRequest
 import com.phew.network.dto.TokenDTO
 import com.phew.network.dto.NickNameAvailableDTO
 import com.phew.network.dto.UploadImageUrlDTO
-import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
@@ -19,7 +18,6 @@ import retrofit2.http.Header
 import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
-import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 import retrofit2.http.Url
@@ -99,6 +97,6 @@ interface Http {
     @PUT
     suspend fun requestUploadImage(
         @Url url: String,
-        @Body body: RequestBody
+        @Body body: RequestBody?
     ): Response<Unit>
 }
