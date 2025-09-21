@@ -84,8 +84,8 @@ object LargeButton {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
-                .clip(shape = RoundedCornerShape(18.dp))
-                .background(color = background, shape = RoundedCornerShape(18.dp))
+                .clip(shape = RoundedCornerShape(10.dp))
+                .background(color = background, shape = RoundedCornerShape(10.dp))
                 .clickable(
                     enabled = enabled && !animating,
                 ) { clicked = true },

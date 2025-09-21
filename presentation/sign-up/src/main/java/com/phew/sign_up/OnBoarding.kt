@@ -7,7 +7,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -71,6 +70,7 @@ fun OnBoarding(
                 when (result.data.result) {
                     SIGN_UP_OKAY -> {
                         signUp()
+                        viewModel.initCheckSignUp()
                     }
 
                     SIGN_UP_REGISTERED -> {
@@ -195,9 +195,9 @@ private fun ExplainView(data: String) {
         Image(
             painter = painterResource(com.phew.core_design.R.drawable.ic_check_filled_blue),
             contentDescription = "data",
+            contentScale = ContentScale.Fit,
             modifier = Modifier
                 .size(24.dp)
-                .padding(1.25.dp)
         )
         Text(
             text = data,
@@ -217,13 +217,13 @@ private fun BottomView(
             .fillMaxWidth()
             .background(color = NeutralColor.WHITE)
             .navigationBarsPadding()
-            .padding(start = 16.dp, end = 16.dp)
+            .padding(start = 16.dp, end = 16.dp , bottom = 12.dp)
     ) {
         LargeButton.NoIconPrimary(
             buttonText = stringResource(R.string.onBoarding_btn_start),
             onClick = onClickStart
         )
-        Spacer(modifier = Modifier.height(8.dp))
+
         Text(
             text = stringResource(R.string.onBoarding_btn_already_sign_up),
             style = TextComponent.BODY_1_M_14,
@@ -232,6 +232,7 @@ private fun BottomView(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(32.dp)
+                .padding(top = 8.dp)
                 .clickable { onClickAlreadySignUp() }
         )
     }

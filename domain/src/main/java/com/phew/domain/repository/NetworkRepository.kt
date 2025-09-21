@@ -16,7 +16,7 @@ interface NetworkRepository {
         fcmToken: String,
         isNotificationAgreed: Boolean,
         nickname: String,
-        profileImage: String,
+        profileImage: String?,
         agreedToTermsOfService: Boolean,
         agreedToLocationTerms: Boolean,
         agreedToPrivacyPolicy: Boolean,

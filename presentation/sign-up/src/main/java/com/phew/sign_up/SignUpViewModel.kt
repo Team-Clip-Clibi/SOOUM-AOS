@@ -227,6 +227,15 @@ class SignUpViewModel @Inject constructor(
     }
 
     /**
+     * 닉네임 중복 검사 여부 초기화
+     */
+    fun initNickName(){
+        _uiState.update { state ->
+            state.copy(checkNickName = UiState.Loading)
+        }
+    }
+
+    /**
      * 닉네임
      */
     fun nickName(name: String) {

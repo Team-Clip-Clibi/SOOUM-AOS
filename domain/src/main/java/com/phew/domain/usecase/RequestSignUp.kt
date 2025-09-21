@@ -51,16 +51,21 @@ class RequestSignUp @Inject constructor(
         }
         val makeKey = makeSecurityKey((requestKey as DataResult.Success).data)
         val encryptedDeviceId = encrypt(data = deviceId, key = makeKey)
-        val requestImageUploadUrl = networkRepository.requestUploadImageUrl()
-        if (requestImageUploadUrl is DataResult.Fail) return DomainResult.Failure(ERROR_NETWORK)
-        val fileName = (requestImageUploadUrl as DataResult.Success).data.imgName
-        val uploadImageUrl = requestImageUploadUrl.data.imgUrl
-        val file = context.contentResolver.readAsRequestBody(uri = data.profileImage.toUri())
-        val requestImageUpload = networkRepository.requestUploadImage(
-            data = file,
-            url = uploadImageUrl
-        )
-        if (requestImageUpload is DataResult.Fail) return DomainResult.Failure(ERROR_NETWORK)
+        val fileName : String?
+        if (data.profileImage.isNotEmpty()) {
+            val requestImageUploadUrl = networkRepository.requestUploadImageUrl()
+            if (requestImageUploadUrl is DataResult.Fail) return DomainResult.Failure(ERROR_NETWORK)
+            fileName = (requestImageUploadUrl as DataResult.Success).data.imgName
+            val uploadImageUrl = requestImageUploadUrl.data.imgUrl
+            val file = context.contentResolver.readAsRequestBody(uri = data.profileImage.toUri())
+            val requestImageUpload = networkRepository.requestUploadImage(
+                data = file,
+                url = uploadImageUrl
+            )
+            if (requestImageUpload is DataResult.Fail) return DomainResult.Failure(ERROR_NETWORK)
+        } else {
+            fileName = null
+        }
         val request = networkRepository.requestSignUp(
             encryptedDeviceId = encryptedDeviceId,
             fcmToken = fcmToken,
@@ -107,7 +112,7 @@ class RequestSignUp @Inject constructor(
     }
 
     fun ContentResolver.readAsRequestBody(uri: Uri): RequestBody =
-        object: RequestBody() {
+        object : RequestBody() {
             override fun contentType(): MediaType? =
                 this@readAsRequestBody.getType(uri)?.toMediaTypeOrNull()
 
