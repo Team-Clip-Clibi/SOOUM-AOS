@@ -35,6 +35,8 @@ class DomainConvention : Plugin<Project> {
                 val fcmTokenKey: String = properties.getProperty("fcm_token_key", "")
                 val notifyKey: String = properties.getProperty("notify_key", "")
                 val userInfoKey: String = properties.getProperty("userInfo_key", "")
+                val encryptAlgorithm: String = properties.getProperty("encrypt_algorithm", "")
+                val decodeAlgorithm: String = properties.getProperty("decode_algorithm", "")
 
                 buildConfigField("String", "APP_TYPE", appType)
                 buildConfigField("String", "TOKEN_KEY", tokenKey)
@@ -42,6 +44,9 @@ class DomainConvention : Plugin<Project> {
                 buildConfigField("String", "FCM_TOKEN_KEY", fcmTokenKey)
                 buildConfigField("String", "NOTIFY_KEY", notifyKey)
                 buildConfigField("String", "USER_INFO_KEY", userInfoKey)
+                buildConfigField("String", "ENCRYPT_ALGORITHM", encryptAlgorithm)
+                buildConfigField("String", "DECODE_ALGORITHM", decodeAlgorithm)
+
             }
             buildFeatures.buildConfig = true
             compileOptions {
