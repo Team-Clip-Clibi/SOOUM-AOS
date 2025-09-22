@@ -34,3 +34,11 @@ object Danger {
     val L_RED = Color(0xFFFFE1DF)
     val M_RED = Color(0xFFEE3A26)
 }
+
+object OpacityColor {
+    val blackSmallColor = Color(0x99000000)
+}
+
+object UnKnowColor {
+    val color = Color(0x1AABBED1)
+}
