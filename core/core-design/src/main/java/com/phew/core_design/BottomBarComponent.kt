@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -54,7 +55,10 @@ object BottomBarComponent {
                 modifier = Modifier
                     .width(76.dp)
                     .height(46.dp)
-                    .clickable {
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {
                         selectIndex = HOME_VIEW
                         homeClick()
                     },
@@ -78,7 +82,10 @@ object BottomBarComponent {
                 modifier = Modifier
                     .width(76.dp)
                     .height(46.dp)
-                    .clickable {
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {
                         selectIndex = CARD_VIEW
                         addCardClick()
                     },
@@ -86,8 +93,10 @@ object BottomBarComponent {
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Image(
-                    painter = painterResource(R.drawable.ic_plus_filled),
-                    contentDescription = "home",
+                    painter = if (selectIndex == CARD_VIEW) painterResource(R.drawable.ic_plus_filled) else painterResource(
+                        R.drawable.ic_plus_filled_gray
+                    ),
+                    contentDescription = "add card",
                     modifier = Modifier
                         .size(22.dp)
                 )
@@ -101,7 +110,10 @@ object BottomBarComponent {
                 modifier = Modifier
                     .width(76.dp)
                     .height(46.dp)
-                    .clickable {
+                    .clickable (
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ){
                         selectIndex = TAG_VIEW
                         tagClick()
                     },
@@ -109,11 +121,11 @@ object BottomBarComponent {
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Image(
-                    painter = painterResource(R.drawable.ic_tag_filled),
-                    contentDescription = "home",
-                    colorFilter = if (selectIndex == TAG_VIEW) ColorFilter.tint(NeutralColor.BLACK) else ColorFilter.tint(
-                        NeutralColor.GRAY_300
-                    )
+                    painter = if (selectIndex == TAG_VIEW) painterResource(R.drawable.ic_tag_filled) else painterResource(
+                        R.drawable.ic_tag_filled_gray
+                    ),
+                    contentDescription = "tag"
+
                 )
                 Text(
                     text = stringResource(R.string.bottom_view_tag),
@@ -125,7 +137,10 @@ object BottomBarComponent {
                 modifier = Modifier
                     .width(76.dp)
                     .height(46.dp)
-                    .clickable {
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {
                         selectIndex = MY_PROFILE_VIEW
                         myProfileClick()
                     },
@@ -134,7 +149,7 @@ object BottomBarComponent {
             ) {
                 Image(
                     painter = painterResource(R.drawable.ic_user_filled),
-                    contentDescription = "home",
+                    contentDescription = "my profile",
                     colorFilter = if (selectIndex == MY_PROFILE_VIEW) ColorFilter.tint(NeutralColor.BLACK) else ColorFilter.tint(
                         NeutralColor.GRAY_300
                     )
