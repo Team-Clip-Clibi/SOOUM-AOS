@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,6 +54,7 @@ fun OnBoarding(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
+    var dialogShow = remember { mutableStateOf(false) }
     val context = LocalContext.current
     BackHandler {
         back()
@@ -70,7 +72,6 @@ fun OnBoarding(
                 when (result.data.result) {
                     SIGN_UP_OKAY -> {
                         signUp()
-                        viewModel.initCheckSignUp()
                     }
 
                     SIGN_UP_REGISTERED -> {
@@ -102,7 +103,17 @@ fun OnBoarding(
         bottomBar = {
             BottomView(
                 onClickStart = {
-                    viewModel.checkRegister()
+                    when (val checkSignUpResult = uiState.checkSignUp) {
+                        is UiState.Success -> {
+                            if (checkSignUpResult.data.result == SIGN_UP_OKAY) {
+                                signUp()
+                            } else {
+                                dialogShow.value = true
+                            }
+                        }
+
+                        else -> UInt
+                    }
                 },
                 onClickAlreadySignUp = {
                     alreadySignUp()
@@ -129,9 +140,9 @@ fun OnBoarding(
         ) {
             TitleView()
             ContentView()
-            if (uiState.checkSignUp is UiState.Success) {
+            if (dialogShow.value) {
                 DialogView((uiState.checkSignUp as UiState.Success<SignUpResult>).data, onclick = {
-                    viewModel.initCheckSignUp()
+                    dialogShow.value = false
                 })
             }
         }
@@ -217,7 +228,7 @@ private fun BottomView(
             .fillMaxWidth()
             .background(color = NeutralColor.WHITE)
             .navigationBarsPadding()
-            .padding(start = 16.dp, end = 16.dp , bottom = 12.dp)
+            .padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
     ) {
         LargeButton.NoIconPrimary(
             buttonText = stringResource(R.string.onBoarding_btn_start),
