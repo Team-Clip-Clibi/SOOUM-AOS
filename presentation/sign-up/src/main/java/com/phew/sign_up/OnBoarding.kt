@@ -60,43 +60,14 @@ fun OnBoarding(
         back()
     }
     LaunchedEffect(uiState) {
-        when (val result = uiState.checkSignUp) {
-            is UiState.Fail -> {
-                snackBarHostState.showSnackbar(
-                    message = context.getString(com.phew.core_design.R.string.error_network),
-                    duration = SnackbarDuration.Short
-                )
-            }
-
-            is UiState.Success -> {
-                when (result.data.result) {
-                    SIGN_UP_OKAY -> {
-                        signUp()
-                    }
-
-                    SIGN_UP_REGISTERED -> {
-                        viewModel.login()
-                    }
-                }
-            }
-
-            else -> Unit
+        if (uiState.checkSignUp is UiState.Fail || uiState.login is UiState.Fail) {
+            snackBarHostState.showSnackbar(
+                message = context.getString(com.phew.core_design.R.string.error_network),
+                duration = SnackbarDuration.Short
+            )
         }
-    }
-    LaunchedEffect(uiState) {
-        when (uiState.login) {
-            is UiState.Fail -> {
-                snackBarHostState.showSnackbar(
-                    message = context.getString(com.phew.core_design.R.string.error_network),
-                    duration = SnackbarDuration.Short
-                )
-            }
-
-            is UiState.Success -> {
-                //TODO HOME 화면 포팅
-            }
-
-            else -> Unit
+        if (uiState.login is UiState.Success) {
+            //TODO Home 화면 포팅
         }
     }
     Scaffold(
@@ -105,10 +76,16 @@ fun OnBoarding(
                 onClickStart = {
                     when (val checkSignUpResult = uiState.checkSignUp) {
                         is UiState.Success -> {
-                            if (checkSignUpResult.data.result == SIGN_UP_OKAY) {
-                                signUp()
-                            } else {
-                                dialogShow.value = true
+                            when (checkSignUpResult.data.result) {
+                                SIGN_UP_OKAY -> {
+                                    signUp()
+                                }
+
+                                SIGN_UP_REGISTERED -> {
+                                    viewModel.login()
+                                }
+
+                                else -> dialogShow.value = true
                             }
                         }
 
