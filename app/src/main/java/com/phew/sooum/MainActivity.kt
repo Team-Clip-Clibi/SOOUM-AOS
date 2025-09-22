@@ -5,15 +5,12 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatDelegate
-import com.phew.splash.SplashViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import com.phew.sooum.ui.Nav
 import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import com.phew.sign_up.SignUpViewModel
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
