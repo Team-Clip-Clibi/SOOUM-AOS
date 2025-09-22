@@ -91,9 +91,6 @@ object BottomBarComponent {
                 Image(
                     painter = painterResource(R.drawable.ic_plus_filled),
                     contentDescription = "home",
-                    colorFilter = if (selectIndex == CARD_VIEW) ColorFilter.tint(NeutralColor.BLACK) else ColorFilter.tint(
-                        NeutralColor.GRAY_300
-                    ),
                     modifier = Modifier
                         .size(22.dp)
                 )
