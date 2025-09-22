@@ -1,9 +1,13 @@
 package com.phew.sooum.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navigation
 import com.phew.core_common.NAV_ON_BOARDING
+import com.phew.core_common.NAV_SIGN_UP
 import com.phew.core_common.NAV_SIGN_UP_AGREEMENT
 import com.phew.core_common.NAV_SIGN_UP_AUTH_CODE
 import com.phew.core_common.NAV_SIGN_UP_FINISH
@@ -25,15 +29,15 @@ import com.phew.splash.SplashViewModel
 fun Nav(
     update: () -> Unit,
     finish: () -> Unit,
-    splashViewModel: SplashViewModel,
-    signUpViewModel: SignUpViewModel,
 ) {
     val navController = rememberNavController()
+
     NavHost(
         navController = navController,
         startDestination = NAV_SPLASH
     ) {
         slideComposable(NAV_SPLASH) {
+            val splashViewModel: SplashViewModel = hiltViewModel()
             Splash(
                 viewModel = splashViewModel,
                 nextPage = {
@@ -51,75 +55,95 @@ fun Nav(
             )
         }
 
-        slideComposable(NAV_ON_BOARDING) {
-            OnBoarding(
-                signUp = {
-                    navController.navigate(NAV_SIGN_UP_AGREEMENT)
-                },
-                alreadySignUp = {
-                    navController.navigate(NAV_SIGN_UP_AUTH_CODE)
-                },
-                back = {
-                    finish()
-                },
-                viewModel = signUpViewModel
-            )
-        }
+        navigation(
+            startDestination = NAV_ON_BOARDING,
+            route = NAV_SIGN_UP
+        ) {
+            slideComposable(NAV_ON_BOARDING) { nav ->
+                val navBackStackEntry =
+                    remember(nav) { navController.getBackStackEntry(NAV_SIGN_UP) }
+                val signUpViewModel: SignUpViewModel = hiltViewModel(navBackStackEntry)
+                OnBoarding(
+                    signUp = {
+                        navController.navigate(NAV_SIGN_UP_AGREEMENT)
+                    },
+                    alreadySignUp = {
+                        navController.navigate(NAV_SIGN_UP_AUTH_CODE)
+                    },
+                    back = {
+                        finish()
+                    },
+                    viewModel = signUpViewModel
+                )
+            }
 
-        slideComposable(NAV_SIGN_UP_AUTH_CODE) {
-            AuthCodeView(
-                viewModel = signUpViewModel,
-                home = {
-                    //TODO 홈화면 개발
-                },
-                onBack = {
-                    navController.popBackStack()
-                }
-            )
-        }
+            slideComposable(NAV_SIGN_UP_AUTH_CODE) { nav ->
+                val navBackStackEntry =
+                    remember(nav) { navController.getBackStackEntry(NAV_SIGN_UP) }
+                val signUpViewModel: SignUpViewModel = hiltViewModel(navBackStackEntry)
+                AuthCodeView(
+                    viewModel = signUpViewModel,
+                    home = {
+                        //TODO 홈화면 개발
+                    },
+                    onBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
 
-        slideComposable(NAV_SIGN_UP_AGREEMENT) {
-            SignUpAgreementView(
-                viewModel = signUpViewModel,
-                back = {
-                    navController.popBackStack()
-                },
-                nextPage = {
-                    navController.navigate(NAV_SIGN_UP_NICKNAME)
-                }
-            )
-        }
+            slideComposable(NAV_SIGN_UP_AGREEMENT) { nav ->
+                val navBackStackEntry =
+                    remember(nav) { navController.getBackStackEntry(NAV_SIGN_UP) }
+                val signUpViewModel: SignUpViewModel = hiltViewModel(navBackStackEntry)
+                SignUpAgreementView(
+                    viewModel = signUpViewModel,
+                    back = {
+                        navController.popBackStack()
+                    },
+                    nextPage = {
+                        navController.navigate(NAV_SIGN_UP_NICKNAME)
+                    }
+                )
+            }
 
-        slideComposable(NAV_SIGN_UP_NICKNAME) {
-            NickNameView(
-                viewModel = signUpViewModel,
-                onBack = {
-                    navController.popBackStack()
-                },
-                nextPage = {
-                    navController.navigate(NAV_SIGN_UP_PROFILE)
-                }
-            )
-        }
+            slideComposable(NAV_SIGN_UP_NICKNAME) { nav ->
+                val navBackStackEntry =
+                    remember(nav) { navController.getBackStackEntry(NAV_SIGN_UP) }
+                val signUpViewModel: SignUpViewModel = hiltViewModel(navBackStackEntry)
+                NickNameView(
+                    viewModel = signUpViewModel,
+                    onBack = {
+                        navController.popBackStack()
+                    },
+                    nextPage = {
+                        navController.navigate(NAV_SIGN_UP_PROFILE)
+                    }
+                )
+            }
 
-        slideComposable(NAV_SIGN_UP_PROFILE) {
-            ProfileImageView(
-                viewModel = signUpViewModel,
-                onBack = {
-                    navController.popBackStack()
-                },
-                nexPage = {
-                    navController.navigate(NAV_SIGN_UP_FINISH)
-                }
-            )
-        }
+            slideComposable(NAV_SIGN_UP_PROFILE) { nav ->
+                val navBackStackEntry =
+                    remember(nav) { navController.getBackStackEntry(NAV_SIGN_UP) }
+                val signUpViewModel: SignUpViewModel = hiltViewModel(navBackStackEntry)
+                ProfileImageView(
+                    viewModel = signUpViewModel,
+                    onBack = {
+                        navController.popBackStack()
+                    },
+                    nexPage = {
+                        navController.navigate(NAV_SIGN_UP_FINISH)
+                    }
+                )
+            }
 
-        slideComposable(NAV_SIGN_UP_FINISH) {
-            SignUpFinish(
-                home = {
-                    //TODO 홈화면 개발
-                }
-            )
+            slideComposable(NAV_SIGN_UP_FINISH) {
+                SignUpFinish(
+                    home = {
+                        //TODO 홈화면 개발
+                    }
+                )
+            }
         }
     }
 }

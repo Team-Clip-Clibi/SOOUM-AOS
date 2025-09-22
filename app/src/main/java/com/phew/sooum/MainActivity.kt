@@ -17,9 +17,6 @@ import com.phew.sign_up.SignUpViewModel
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private val splashViewModel: SplashViewModel by viewModels()
-    private val signUpViewModel: SignUpViewModel by viewModels()
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -30,14 +27,12 @@ class MainActivity : ComponentActivity() {
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
         setContent {
             Nav(
-                splashViewModel = splashViewModel,
                 finish = {
                     finish()
                 },
                 update = {
                     playStore()
                 },
-                signUpViewModel = signUpViewModel
             )
         }
     }
