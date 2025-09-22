@@ -54,7 +54,7 @@ fun OnBoarding(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
-    var dialogShow = remember { mutableStateOf(false) }
+    val dialogShow = remember { mutableStateOf(false) }
     val context = LocalContext.current
     BackHandler {
         back()
