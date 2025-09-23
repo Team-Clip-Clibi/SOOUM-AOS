@@ -102,7 +102,7 @@ fun FeedView(viewModel: HomeViewModel, finish: () -> Unit) {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Image(
-                        painter = painterResource(com.phew.core_design.R.drawable.ic_empty_view),
+                        painter = painterResource(com.phew.core_design.R.drawable.ic_feed_empty_view),
                         contentDescription = "empty view",
                         modifier = Modifier.width(162.dp).width(113.dp)
                     )
