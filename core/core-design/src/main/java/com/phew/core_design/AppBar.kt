@@ -25,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.zIndex
 
 object AppBar {
     @Composable
@@ -34,6 +35,7 @@ object AppBar {
                 .fillMaxWidth()
                 .height(48.dp)
                 .background(color = NeutralColor.WHITE)
+                .zIndex(1f)
                 .padding(start = 16.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
