@@ -8,5 +8,5 @@
     <string name="home_feed_10km_distance">10km</string>
     <string name="home_feed_20km_distance">20km</string>
     <string name="home_feed_50km_distance">50km</string>
-
+    <string name = "home_feed_no_card">아직 작성된 글이 없어요\n하고 싶은 이야기를 카드로 남겨보세요</string>
 </resources>

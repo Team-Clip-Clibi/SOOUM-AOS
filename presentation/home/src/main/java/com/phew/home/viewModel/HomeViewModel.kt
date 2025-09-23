@@ -1,7 +1,9 @@
 package com.phew.home.viewModel
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.phew.domain.dto.FeedData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +18,10 @@ class HomeViewModel @Inject constructor() : ViewModel() {
     private val _uiState = MutableStateFlow(Home())
     val uiState: StateFlow<Home> = _uiState.asStateFlow()
 
+    init {
+        initTestData()
+    }
+
     fun refresh() {
         if (_uiState.value.refresh is UiState.Loading) {
             return
@@ -23,11 +29,27 @@ class HomeViewModel @Inject constructor() : ViewModel() {
 
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(refresh = UiState.Loading)
-
             try {
                 delay(5000)
-
-                _uiState.value = _uiState.value.copy(refresh = UiState.Success(true))
+                val newFeedItems = (1..10).map { it ->
+                    FeedData(
+                        location = "정자동",
+                        writeTime = when (it) {
+                            1 -> "1시간전"
+                            2 -> "2025-09-21"
+                            3 -> "2025-09-20"
+                            else -> "2025-09-19"
+                        },
+                        commentValue = "1",
+                        likeValue = "1",
+                        uri = Uri.EMPTY,
+                        content = "test$it"
+                    )
+                }
+                _uiState.value = _uiState.value.copy(
+                    feedItem = emptyList(),
+                    refresh = UiState.Success(true)
+                )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     refresh = UiState.Fail(e.message ?: "새로고침 실패")
@@ -35,10 +57,30 @@ class HomeViewModel @Inject constructor() : ViewModel() {
             }
         }
     }
+
+    fun initTestData() {
+        val newFeedItems = (1..10).map {
+            FeedData(
+                location = "정자동",
+                writeTime = when (it) {
+                    1 -> "1시간전"
+                    2 -> "2025-09-21"
+                    3 -> "2025-09-20"
+                    else -> "2025-09-19"
+                },
+                commentValue = "1",
+                likeValue = "1",
+                uri = Uri.EMPTY,
+                content = "test"
+            )
+        }
+        _uiState.value = _uiState.value.copy(feedItem = emptyList())
+    }
 }
 
 data class Home(
     val refresh: UiState<Boolean> = UiState.None,
+    val feedItem: List<FeedData> = emptyList()
 )
 
 sealed interface UiState<out T> {
