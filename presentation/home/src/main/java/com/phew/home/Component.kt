@@ -5,10 +5,14 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.Tab
@@ -24,6 +28,10 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import com.phew.core_design.TextComponent
 import androidx.compose.material3.Divider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 
 
 @Composable
@@ -33,6 +41,7 @@ fun AnimatedTabLayout(
     popularClick: () -> Unit,
     nearClick: () -> Unit,
     isTabsVisible: Boolean,
+    onDistanceClick: (Int) -> Unit
 ) {
     val tabItem = listOf(
         stringResource(R.string.home_feed_tab_recent_card),
@@ -102,6 +111,53 @@ fun AnimatedTabLayout(
                     .height(1.dp),
                 color = NeutralColor.GRAY_200
             )
+            if (selectTabData == NAV_HOME_NEAR_INDEX) {
+                var selectDistance by remember { mutableIntStateOf(DISTANCE_1KM) }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .background(color = NeutralColor.WHITE)
+                        .padding(start = 16.dp, end = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.Start),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    DistanceText(
+                        distance = stringResource(R.string.home_feed_1km_distance),
+                        onClick = { onDistanceClick(DISTANCE_1KM) },
+                        isSelect = selectDistance == DISTANCE_1KM
+                    )
+                    DistanceText(
+                        distance = stringResource(R.string.home_feed_5km_distance),
+                        onClick = { onDistanceClick(DISTANCE_5KM) },
+                        isSelect = selectDistance == DISTANCE_5KM
+                    )
+                    DistanceText(
+                        distance = stringResource(R.string.home_feed_10km_distance),
+                        onClick = { onDistanceClick(DISTANCE_10KM) },
+                        isSelect = selectDistance == DISTANCE_10KM
+                    )
+                    DistanceText(
+                        distance = stringResource(R.string.home_feed_20km_distance),
+                        onClick = { onDistanceClick(DISTANCE_20KM) },
+                        isSelect = selectDistance == DISTANCE_20KM
+                    )
+                }
+            }
         }
     }
+}
+
+@Composable
+private fun DistanceText(distance: String, onClick: (String) -> Unit, isSelect: Boolean) {
+    Text(
+        text = distance,
+        style = TextComponent.SUBTITLE_3_SB_14,
+        color = if (isSelect) NeutralColor.BLACK else NeutralColor.GRAY_400,
+        modifier = Modifier
+            .width(48.dp)
+            .height(37.dp)
+            .padding(start = 10.dp, top = 8.dp, end = 10.dp, bottom = 8.dp)
+            .clickable { onClick(distance) }
+    )
 }

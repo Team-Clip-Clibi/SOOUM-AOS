@@ -3,8 +3,11 @@ package com.phew.home
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -43,6 +47,10 @@ import com.airbnb.lottie.compose.rememberLottieComposition
 import com.phew.core_design.CardViewComponent
 import com.phew.home.viewModel.UiState
 import com.phew.domain.dto.FeedData
+import androidx.compose.material3.Text
+import androidx.compose.ui.res.stringResource
+import com.phew.core_design.TextComponent
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,7 +68,7 @@ fun FeedView(viewModel: HomeViewModel, finish: () -> Unit) {
         }
     }
     val composition by rememberLottieComposition(
-       LottieCompositionSpec.RawRes(com.phew.core_design.R.raw.ic_refresh)
+        LottieCompositionSpec.RawRes(com.phew.core_design.R.raw.ic_refresh)
     )
     val progress by animateLottieCompositionAsState(
         composition = composition,
@@ -90,7 +98,9 @@ fun FeedView(viewModel: HomeViewModel, finish: () -> Unit) {
                 .padding(start = 16.dp, end = 16.dp, top = 16.dp),
             indicator = {
                 Box(
-                    modifier = Modifier.fillMaxWidth().height(60.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(60.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     if (isRefresh) {
@@ -148,6 +158,7 @@ private fun TopLayout(
     isTabsVisible: Boolean,
 ) {
     var selectIndex by remember { mutableIntStateOf(NAV_HOME_FEED_INDEX) }
+    var distanceShow by remember { mutableStateOf(false) }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -162,19 +173,26 @@ private fun TopLayout(
             recentClick = {
                 recentClick()
                 selectIndex = NAV_HOME_FEED_INDEX
+                distanceShow = false
             },
             popularClick = {
                 popularClick()
                 selectIndex = NAV_HOME_POPULAR_INDEX
+                distanceShow = false
             },
             nearClick = {
                 nearClick()
                 selectIndex = NAV_HOME_NEAR_INDEX
+                distanceShow = true
             },
             isTabsVisible = isTabsVisible,
+            onDistanceClick = { value ->
+
+            }
         )
     }
 }
+
 
 
 @Composable
