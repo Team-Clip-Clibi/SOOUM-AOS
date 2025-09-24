@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -36,9 +37,11 @@ import com.phew.home.viewModel.HomeViewModel
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -56,6 +59,7 @@ import com.phew.home.viewModel.Home
 import com.phew.home.viewModel.UiState
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeedView(viewModel: HomeViewModel, finish: () -> Unit) {
     val uiState by viewModel.uiState.collectAsState()
@@ -149,6 +153,7 @@ private fun TopLayout(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FeedContent(
     uiState: Home,
@@ -208,20 +213,30 @@ private fun FeedListView(
     composition: LottieComposition?,
     progress: Float
 ) {
+    val refreshingOffset = 56.dp
+    val refreshState = rememberPullToRefreshState()
+    val density = LocalDensity.current
+
     PullToRefreshBox(
         isRefreshing = isRefreshing,
         onRefresh = onRefresh,
+        state = refreshState,
         indicator = {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(60.dp),
+                    .height(with(density) { refreshingOffset + 20.dp }),
                 contentAlignment = Alignment.Center
             ) {
+                val lottieProgress = if (isRefreshing) {
+                    progress
+                } else {
+                    refreshState.distanceFraction
+                }
                 if (isRefreshing) {
                     LottieAnimation(
                         composition = composition,
-                        progress = { progress },
+                        progress = { lottieProgress },
                         modifier = Modifier.size(60.dp)
                     )
                 }
@@ -232,7 +247,11 @@ private fun FeedListView(
             modifier = Modifier
                 .fillMaxSize()
                 .nestedScroll(nestedScrollConnection)
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 16.dp)
+                .graphicsLayer {
+                    translationY =
+                        refreshState.distanceFraction * with(density) { refreshingOffset.toPx() }
+                },
             state = lazyListState
         ) {
             items(feedItems) { feedItem ->
@@ -255,4 +274,3 @@ private fun FeedListView(
 private fun Preview() {
     FeedView(viewModel = HomeViewModel(), finish = {})
 }
-
