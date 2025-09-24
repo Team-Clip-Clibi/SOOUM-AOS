@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,6 +43,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import com.airbnb.lottie.LottieComposition
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
@@ -49,10 +51,11 @@ import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.phew.core_design.CardViewComponent
 import com.phew.core_design.TextComponent
+import com.phew.domain.dto.FeedData
+import com.phew.home.viewModel.Home
 import com.phew.home.viewModel.UiState
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeedView(viewModel: HomeViewModel, finish: () -> Unit) {
     val uiState by viewModel.uiState.collectAsState()
@@ -89,76 +92,21 @@ fun FeedView(viewModel: HomeViewModel, finish: () -> Unit) {
             .systemBarsPadding()
     ) {
         TopLayout(
-            recentClick = { viewModel.initTestData() },
-            popularClick = { viewModel.initTestData() },
-            nearClick = { viewModel.initTestData() },
+            recentClick = viewModel::initTestData,
+            popularClick = viewModel::initTestData,
+            nearClick = viewModel::initTestData,
             isTabsVisible = isTabsVisible,
         )
-        when {
-            uiState.feedItem.isEmpty() -> {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Image(
-                        painter = painterResource(com.phew.core_design.R.drawable.ic_feed_empty_view),
-                        contentDescription = "empty view",
-                        modifier = Modifier.width(162.dp).width(113.dp)
-                    )
-                    Spacer(modifier = Modifier.height(20.dp))
-                    Text(
-                        text = stringResource(R.string.home_feed_no_card),
-                        style = TextComponent.BODY_1_M_14,
-                        color = NeutralColor.GRAY_400,
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
 
-            uiState.feedItem.size > 1 -> {
-                PullToRefreshBox(
-                    isRefreshing = isRefreshing,
-                    onRefresh = { viewModel.refresh() },
-                    indicator = {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(60.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (isRefreshing) {
-                                LottieAnimation(
-                                    composition = composition,
-                                    progress = { progress },
-                                    modifier = Modifier.size(60.dp)
-                                )
-                            }
-                        }
-                    }
-                ) {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .nestedScroll(nestedScrollConnection)
-                            .padding(horizontal = 16.dp),
-                        state = lazyListState
-                    ) {
-                        items(uiState.feedItem) { feedItem ->
-                            CardViewComponent.FeedCardView(
-                                location = feedItem.location,
-                                writeTime = feedItem.writeTime,
-                                commentValue = feedItem.commentValue,
-                                likeValue = feedItem.likeValue,
-                                uri = feedItem.uri,
-                                content = feedItem.content
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                        }
-                    }
-                }
-            }
-        }
+        FeedContent(
+            uiState = uiState,
+            isRefreshing = isRefreshing,
+            onRefresh = viewModel::refresh,
+            lazyListState = lazyListState,
+            nestedScrollConnection = nestedScrollConnection,
+            composition = composition,
+            progress = progress
+        )
     }
 }
 
@@ -195,10 +143,113 @@ private fun TopLayout(
             },
             isTabsVisible = isTabsVisible,
             onDistanceClick = { value ->
+
             }
         )
     }
 }
+
+@Composable
+private fun FeedContent(
+    uiState: Home,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
+    lazyListState: LazyListState,
+    nestedScrollConnection: NestedScrollConnection,
+    composition: LottieComposition?,
+    progress: Float
+) {
+    when {
+        uiState.feedItem.isEmpty() -> EmptyFeedView()
+        else -> FeedListView(
+            feedItems = uiState.feedItem,
+            isRefreshing = isRefreshing,
+            onRefresh = onRefresh,
+            lazyListState = lazyListState,
+            nestedScrollConnection = nestedScrollConnection,
+            composition = composition,
+            progress = progress
+        )
+    }
+}
+
+@Composable
+private fun EmptyFeedView() {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Image(
+            painter = painterResource(com.phew.core_design.R.drawable.ic_feed_empty_view),
+            contentDescription = "empty view",
+            modifier = Modifier
+                .width(162.dp)
+                .height(113.dp)
+        )
+        Spacer(modifier = Modifier.height(20.dp))
+        Text(
+            text = stringResource(R.string.home_feed_no_card),
+            style = TextComponent.BODY_1_M_14,
+            color = NeutralColor.GRAY_400,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FeedListView(
+    feedItems: List<FeedData>,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
+    lazyListState: LazyListState,
+    nestedScrollConnection: NestedScrollConnection,
+    composition: LottieComposition?,
+    progress: Float
+) {
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = onRefresh,
+        indicator = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(60.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                if (isRefreshing) {
+                    LottieAnimation(
+                        composition = composition,
+                        progress = { progress },
+                        modifier = Modifier.size(60.dp)
+                    )
+                }
+            }
+        }
+    ) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .nestedScroll(nestedScrollConnection)
+                .padding(horizontal = 16.dp),
+            state = lazyListState
+        ) {
+            items(feedItems) { feedItem ->
+                CardViewComponent.FeedCardView(
+                    location = feedItem.location,
+                    writeTime = feedItem.writeTime,
+                    commentValue = feedItem.commentValue,
+                    likeValue = feedItem.likeValue,
+                    uri = feedItem.uri,
+                    content = feedItem.content
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
+    }
+}
+
 @Composable
 @Preview
 private fun Preview() {
