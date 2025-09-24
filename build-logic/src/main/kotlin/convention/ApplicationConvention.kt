@@ -74,7 +74,9 @@ class ApplicationConvention : Plugin<Project> {
             "debugImplementation"(libs.findLibrary("androidx-ui-test-manifest").get())
             // hilt
             "implementation"(libs.findLibrary("hilt-android").get())
+            "implementation"(libs.findLibrary("hilt-navigation-compose").get())
             "ksp"(libs.findLibrary("hilt-compiler").get())
+            //nav
             "implementation"(libs.findLibrary("compose-nav").get())
             //firebase
             "implementation"(libs.findLibrary("firebase-bom").get())
@@ -82,6 +84,7 @@ class ApplicationConvention : Plugin<Project> {
             add("implementation", project(":presentation"))
             add("implementation", project(":presentation:splash"))
             add("implementation", project(":presentation:sign-up"))
+            add("implementation", project(":presentation:home"))
             add("implementation", project(":domain"))
             add("implementation", project(":data"))
             add("implementation", project(":data:repository"))
