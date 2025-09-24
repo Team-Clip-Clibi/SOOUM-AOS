@@ -50,6 +50,9 @@ class HomeViewModel @Inject constructor() : ViewModel() {
                     feedItem = newFeedItems,
                     refresh = UiState.Success(true)
                 )
+                _uiState.value = _uiState.value.copy(
+                    refresh = UiState.None
+                )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     refresh = UiState.Fail(e.message ?: "새로고침 실패")
