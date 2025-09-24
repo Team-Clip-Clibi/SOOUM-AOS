@@ -47,7 +47,7 @@ class HomeViewModel @Inject constructor() : ViewModel() {
                     )
                 }
                 _uiState.value = _uiState.value.copy(
-                    feedItem = emptyList(),
+                    feedItem = newFeedItems,
                     refresh = UiState.Success(true)
                 )
             } catch (e: Exception) {
@@ -74,7 +74,7 @@ class HomeViewModel @Inject constructor() : ViewModel() {
                 content = "test"
             )
         }
-        _uiState.value = _uiState.value.copy(feedItem = emptyList())
+        _uiState.value = _uiState.value.copy(feedItem = newFeedItems)
     }
 }
 
