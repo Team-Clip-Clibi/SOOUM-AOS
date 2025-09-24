@@ -131,7 +131,7 @@ private fun TopLayout(
             onClick = {},
             newAlarm = false,
         )
-        AnimatedTabLayout(
+        AnimatedFeedTabLayout(
             selectTabData = selectIndex,
             recentClick = {
                 recentClick()
