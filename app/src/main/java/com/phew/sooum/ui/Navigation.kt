@@ -32,7 +32,6 @@ import com.phew.core_common.NAV_SIGN_UP_FINISH
 import com.phew.core_common.NAV_SIGN_UP_NICKNAME
 import com.phew.core_common.NAV_SIGN_UP_PROFILE
 import com.phew.core_common.NAV_SPLASH
-import com.phew.core_design.AppBar
 import com.phew.core_design.BottomBarComponent
 import com.phew.core_design.slideComposable
 import com.phew.home.FeedView
