@@ -51,6 +51,8 @@ class CoreConvention : Plugin<Project> {
             add("implementation", libs.findLibrary("compose-nav").get())
             add("debugImplementation", libs.findLibrary("androidx-ui-tooling").get())
             add("debugImplementation", libs.findLibrary("androidx-ui-test-manifest").get())
+            add("implementation", project(":core:core-common"))
+
         }
     }
 }

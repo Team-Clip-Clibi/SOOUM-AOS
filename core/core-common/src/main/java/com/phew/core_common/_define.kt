@@ -15,13 +15,19 @@ const val NAV_HOME_ADD_CARD = "addCard"
 const val NAV_HOME_TAG = "tag"
 const val NAV_HONE_PROFILE = "myProfile"
 const val NAV_SIGN_UP = "signUpGraph"
+
 //domain error code
 const val ERROR_FAIL_JOB = "Fail job"
 const val ERROR_NO_DATA = "No Data"
 const val ERROR_NETWORK = "error_network"
 const val ERROR = "error"
+
 //server api error code
 const val HTTP_NO_MORE_CONTENT = 204
 const val HTTP_INVALID_TOKEN = 401
 const val HTTP_NOT_FOUND = 404
 const val APP_ERROR_CODE = 505
+
+//banner category
+const val BANNER_NEWS = "news"
+const val BANNER_SERVICE = "service"
