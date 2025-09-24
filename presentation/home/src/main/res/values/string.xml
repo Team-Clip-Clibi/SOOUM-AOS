@@ -14,4 +14,6 @@
     <string name="home_notice_card">카드</string>
     <string name="home_notice_follow">팔로우</string>
     <string name="home_notice_notice">공지사항</string>
+    <string name="home_notice_last_title">지난 알림</string>
+    <string name="home_notice_no_notice">아직 알림이 없어요</string>
 </resources>
