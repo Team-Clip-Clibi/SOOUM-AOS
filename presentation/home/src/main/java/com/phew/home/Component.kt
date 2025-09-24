@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -27,15 +28,94 @@ import com.phew.core_design.NeutralColor
 import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import com.phew.core_design.TextComponent
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
+import com.phew.core_design.Primary
+import com.phew.domain.dto.Notify
 
 @Composable
-fun AnimatedTabLayout(
+internal fun AnimatedNoticeTabLayout(
+    selectTabData: Int,
+    allClick: () -> Unit,
+    cardClick: () -> Unit,
+    followClick: () -> Unit,
+    noticeClick: () -> Unit,
+    isTabsVisible: Boolean
+) {
+    val tabItem = listOf(
+        stringResource(R.string.home_notice_all),
+        stringResource(R.string.home_notice_card),
+        stringResource(R.string.home_notice_follow),
+        stringResource(R.string.home_notice_notice)
+    )
+    AnimatedVisibility(
+        visible = isTabsVisible,
+        enter = slideInVertically(
+            initialOffsetY = { -it },
+            animationSpec = tween(durationMillis = 150)
+        ),
+        exit = slideOutVertically(
+            targetOffsetY = { -it },
+            animationSpec = tween(durationMillis = 150)
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .background(color = NeutralColor.WHITE)
+        ) {
+            TabRow(
+                selectedTabIndex = selectTabData,
+                modifier = Modifier
+                    .wrapContentWidth(align = Alignment.Start)
+                    .height(56.dp)
+                    .padding(start = 16.dp, end = 16.dp),
+                containerColor = NeutralColor.WHITE,
+                contentColor = NeutralColor.BLACK,
+                indicator = { tabPositions ->
+                    TabRowDefaults.SecondaryIndicator(
+                        Modifier
+                            .tabIndicatorOffset(tabPositions[selectTabData]),
+                        height = 2.dp,
+                        color = NeutralColor.BLACK
+                    )
+                },
+                divider = {}
+            ) {
+                tabItem.forEachIndexed { index, title ->
+                    val isSelected = selectTabData == index
+                    Tab(
+                        selected = isSelected,
+                        onClick = {
+                            when (index) {
+                                NAV_NOTICE_ALL_INDEX -> allClick()
+                                NAV_NOTICE_CARD_INDEX -> cardClick()
+                                NAV_NOTICE_FOLLOW_INDEX -> followClick()
+                                NAV_NOTICE_NOTIFY_INDEX -> noticeClick()
+                            }
+                        },
+                        text = {
+                            Text(
+                                text = title,
+                                style = TextComponent.BODY_1_M_14,
+                                color = if (isSelected) NeutralColor.GRAY_600 else NeutralColor.GRAY_400,
+                            )
+                        },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+internal fun AnimatedFeedTabLayout(
     selectTabData: Int,
     recentClick: () -> Unit,
     popularClick: () -> Unit,
@@ -105,7 +185,7 @@ fun AnimatedTabLayout(
                     )
                 }
             }
-            Divider(
+            HorizontalDivider(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(1.dp),
@@ -160,4 +240,102 @@ private fun DistanceText(distance: String, onClick: (String) -> Unit, isSelect: 
             .padding(start = 10.dp, top = 8.dp, end = 10.dp, bottom = 8.dp)
             .clickable { onClick(distance) }
     )
+}
+
+@Composable
+internal fun NotifyViewUnread(data: Notify) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(102.dp)
+            .background(color = Primary.LIGHT_1)
+            .padding(horizontal = 24.dp, vertical = 18.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(18.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Image(
+                painter = when (data.category) {
+                    NOTIFY_ANNOUNCE -> painterResource(com.phew.core_design.R.drawable.ic_notification)
+                    NOTIFY_LIMIT -> painterResource(com.phew.core_design.R.drawable.ic_danger)
+                    NOTIFY_FOLLOW -> painterResource(com.phew.core_design.R.drawable.ic_users_filled)
+                    else -> painterResource(com.phew.core_design.R.drawable.ic_check)
+                },
+                contentDescription = data.category
+            )
+            Text(
+                text = data.title,
+                style = TextComponent.CAPTION_1_SB_12,
+                color = NeutralColor.GRAY_400,
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.Start
+            )
+            Text(
+                text = data.time,
+                style = TextComponent.CAPTION_1_SB_12,
+                color = NeutralColor.GRAY_400
+            )
+        }
+        Text(
+            text = data.content,
+            style = TextComponent.TITLE_2_SB_16,
+            color = NeutralColor.GRAY_600,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp)
+        )
+    }
+}
+
+@Composable
+internal fun NotifyViewReadd(data: Notify) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(102.dp)
+            .background(color = NeutralColor.WHITE)
+            .padding(horizontal = 24.dp, vertical = 18.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(18.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Image(
+                painter = when (data.category) {
+                    NOTIFY_ANNOUNCE -> painterResource(com.phew.core_design.R.drawable.ic_notification)
+                    NOTIFY_LIMIT -> painterResource(com.phew.core_design.R.drawable.ic_danger)
+                    NOTIFY_FOLLOW -> painterResource(com.phew.core_design.R.drawable.ic_users_filled)
+                    else -> painterResource(com.phew.core_design.R.drawable.ic_check)
+                },
+                contentDescription = data.category
+            )
+            Text(
+                text = data.title,
+                style = TextComponent.CAPTION_1_SB_12,
+                color = NeutralColor.GRAY_400,
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.Start
+            )
+            Text(
+                text = data.time,
+                style = TextComponent.CAPTION_1_SB_12,
+                color = NeutralColor.GRAY_400
+            )
+        }
+        Text(
+            text = data.content,
+            style = TextComponent.TITLE_2_SB_16,
+            color = NeutralColor.GRAY_600,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp)
+        )
+    }
 }

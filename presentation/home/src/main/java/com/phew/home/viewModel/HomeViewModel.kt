@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.phew.domain.dto.FeedData
+import com.phew.domain.dto.Notify
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -83,7 +84,8 @@ class HomeViewModel @Inject constructor() : ViewModel() {
 
 data class Home(
     val refresh: UiState<Boolean> = UiState.None,
-    val feedItem: List<FeedData> = emptyList()
+    val feedItem: List<FeedData> = emptyList(),
+    val notifyItem: List<Notify> = emptyList()
 )
 
 sealed interface UiState<out T> {
