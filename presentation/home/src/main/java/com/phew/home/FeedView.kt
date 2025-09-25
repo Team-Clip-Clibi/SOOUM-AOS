@@ -59,7 +59,6 @@ import com.phew.home.viewModel.Home
 import com.phew.home.viewModel.UiState
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeedView(viewModel: HomeViewModel, finish: () -> Unit) {
     val uiState by viewModel.uiState.collectAsState()
@@ -153,7 +152,6 @@ private fun TopLayout(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FeedContent(
     uiState: Home,
