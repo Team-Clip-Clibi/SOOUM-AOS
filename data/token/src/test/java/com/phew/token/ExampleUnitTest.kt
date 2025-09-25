@@ -1,4 +1,4 @@
-package com.phew.data
+package com.phew.token
 
 import org.junit.Test
 
