@@ -7,7 +7,6 @@ import com.phew.domain.dto.Token
 import com.phew.domain.dto.UserInfo
 import com.phew.domain.repository.DeviceRepository
 import javax.inject.Inject
-import kotlin.io.path.Path
 
 
 class DeviceRepositoryImpl @Inject constructor(
