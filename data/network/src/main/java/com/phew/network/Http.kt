@@ -60,7 +60,7 @@ interface Http {
     @PATCH(BuildConfig.API_URL_FCM_UPDATE)
     suspend fun requestUpdateFcm(
         @Header("Authorization") bearerToken: String,
-        @Body body: FCMToken
+        @Body body: FCMToken,
     ): Response<Unit>
 
     /**
@@ -68,7 +68,7 @@ interface Http {
      */
     @POST(BuildConfig.API_URL_SIGN_UP)
     suspend fun requestSignUp(
-        @Body body: SignUpRequest
+        @Body body: SignUpRequest,
     ): Response<TokenDTO>
 
     /**
@@ -82,14 +82,14 @@ interface Http {
      */
     @POST(BuildConfig.API_URL_CHECK_NICKNAME_AVAILABLE)
     suspend fun requestCheckNickName(
-        @Body body : NickNameDTO
-    ) : Response<NickNameAvailableDTO>
+        @Body body: NickNameDTO,
+    ): Response<NickNameAvailableDTO>
 
     /**
      * get Upload Image Url
      */
     @POST(BuildConfig.API_URL_UPLOAD_IMAGE)
-    suspend fun requestUploadImageUrl() : Response<UploadImageUrlDTO>
+    suspend fun requestUploadImageUrl(): Response<UploadImageUrlDTO>
 
     /**
      * upload image url
@@ -97,6 +97,14 @@ interface Http {
     @PUT
     suspend fun requestUploadImage(
         @Url url: String,
-        @Body body: RequestBody
+        @Body body: RequestBody,
     ): Response<Unit>
+
+    /**
+     * Refresh Token url
+     */
+    @POST(BuildConfig.API_URL_REFRESH_TOKEN)
+    suspend fun requestRefreshToken(
+        @Body body: TokenDTO,
+    ): Response<TokenDTO>
 }
