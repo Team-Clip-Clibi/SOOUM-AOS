@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.phew.domain.dto.FeedData
 import com.phew.domain.dto.Notify
+import com.phew.domain.usecase.CheckLocationPermission
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,10 +13,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 
 
 @HiltViewModel
-class HomeViewModel @Inject constructor() : ViewModel() {
+class HomeViewModel @Inject constructor(private val locationAsk: CheckLocationPermission) :
+    ViewModel() {
     private val _uiState = MutableStateFlow(Home())
     val uiState: StateFlow<Home> = _uiState.asStateFlow()
 
@@ -80,12 +83,20 @@ class HomeViewModel @Inject constructor() : ViewModel() {
         }
         _uiState.value = _uiState.value.copy(feedItem = newFeedItems)
     }
+
+    fun checkLocationPermission() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val isAsk = locationAsk()
+            _uiState.value = _uiState.value.copy(isLocationAsk = isAsk)
+        }
+    }
 }
 
 data class Home(
     val refresh: UiState<Boolean> = UiState.None,
     val feedItem: List<FeedData> = emptyList(),
-    val notifyItem: List<Notify> = emptyList()
+    val notifyItem: List<Notify> = emptyList(),
+    val isLocationAsk: Boolean = true
 )
 
 sealed interface UiState<out T> {

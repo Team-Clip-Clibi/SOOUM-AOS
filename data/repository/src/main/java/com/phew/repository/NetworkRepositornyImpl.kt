@@ -3,6 +3,7 @@ package com.phew.repository
 import com.phew.core_common.APP_ERROR_CODE
 import com.phew.core_common.DataResult
 import com.phew.domain.dto.CheckSignUp
+import com.phew.domain.dto.Token
 import com.phew.domain.dto.UploadImageUrl
 import com.phew.domain.repository.NetworkRepository
 import com.phew.network.Http
@@ -12,6 +13,7 @@ import com.phew.network.dto.MemberInfoDTO
 import com.phew.network.dto.NickNameDTO
 import com.phew.network.dto.PolicyDTO
 import com.phew.network.dto.SignUpRequest
+import com.phew.network.dto.TokenDTO
 import okhttp3.RequestBody
 import javax.inject.Inject
 
@@ -242,6 +244,34 @@ class NetworkRepositoryImpl @Inject constructor(private val http: Http) : Networ
             if(!request.isSuccessful) return DataResult.Fail(code = request.code(), message = request.message())
             return DataResult.Success(Unit)
         }catch (e: Exception) {
+            e.printStackTrace()
+            return DataResult.Fail(
+                code = APP_ERROR_CODE,
+                message = e.message,
+                throwable = e
+            )
+        }
+    }
+
+    override suspend fun requestRefreshToken(data: Token): DataResult<Token> {
+        try {
+            val request = http.requestRefreshToken(
+                body = TokenDTO(
+                    refreshToken = data.refreshToken,
+                    accessToken = data.accessToken
+                )
+            )
+            if (!request.isSuccessful || request.body() == null) return DataResult.Fail(
+                code = request.code(),
+                message = request.message()
+            )
+            return DataResult.Success(
+                Token(
+                    refreshToken = data.refreshToken,
+                    accessToken = data.accessToken
+                )
+            )
+        } catch (e: Exception) {
             e.printStackTrace()
             return DataResult.Fail(
                 code = APP_ERROR_CODE,

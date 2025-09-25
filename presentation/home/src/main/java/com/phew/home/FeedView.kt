@@ -1,6 +1,9 @@
 package com.phew.home
 
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -53,6 +56,7 @@ import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.phew.core_design.CardViewComponent
+import com.phew.core_design.DialogComponent
 import com.phew.core_design.TextComponent
 import com.phew.domain.dto.FeedData
 import com.phew.home.viewModel.Home
@@ -60,12 +64,11 @@ import com.phew.home.viewModel.UiState
 
 
 @Composable
-fun FeedView(viewModel: HomeViewModel, finish: () -> Unit) {
+fun FeedView(viewModel: HomeViewModel, finish: () -> Unit, locationPermission: () -> Unit , dialogDismiss : Boolean , closeDialog : () -> Unit) {
     val uiState by viewModel.uiState.collectAsState()
     val isRefreshing = uiState.refresh is UiState.Loading
     val lazyListState = rememberLazyListState()
     var isTabsVisible by remember { mutableStateOf(true) }
-
     val nestedScrollConnection = remember {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
@@ -97,7 +100,7 @@ fun FeedView(viewModel: HomeViewModel, finish: () -> Unit) {
         TopLayout(
             recentClick = viewModel::initTestData,
             popularClick = viewModel::initTestData,
-            nearClick = viewModel::initTestData,
+            nearClick = viewModel::checkLocationPermission,
             isTabsVisible = isTabsVisible,
         )
 
@@ -110,6 +113,19 @@ fun FeedView(viewModel: HomeViewModel, finish: () -> Unit) {
             composition = composition,
             progress = progress
         )
+        if (!dialogDismiss) {
+            DialogComponent.DefaultButtonTwo(
+                title = stringResource(R.string.home_feed_dialog_location_title),
+                description = stringResource(R.string.home_feed_dialog_location_content),
+                buttonTextStart = stringResource(R.string.home_feed_dialog_location_negative),
+                buttonTextEnd = stringResource(R.string.home_feed_dialog_location_positive),
+                onClick = { locationPermission},
+                onDismiss = {
+                    closeDialog()
+                    viewModel::initTestData
+                }
+            )
+        }
     }
 }
 
@@ -265,10 +281,4 @@ private fun FeedListView(
             }
         }
     }
-}
-
-@Composable
-@Preview
-private fun Preview() {
-    FeedView(viewModel = HomeViewModel(), finish = {})
 }

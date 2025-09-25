@@ -37,6 +37,7 @@ class DomainConvention : Plugin<Project> {
                 val userInfoKey: String = properties.getProperty("userInfo_key", "")
                 val encryptAlgorithm: String = properties.getProperty("encrypt_algorithm", "")
                 val decodeAlgorithm: String = properties.getProperty("decode_algorithm", "")
+                val locationKey : String = properties.getProperty("location_key", "")
 
                 buildConfigField("String", "APP_TYPE", appType)
                 buildConfigField("String", "TOKEN_KEY", tokenKey)
@@ -46,6 +47,7 @@ class DomainConvention : Plugin<Project> {
                 buildConfigField("String", "USER_INFO_KEY", userInfoKey)
                 buildConfigField("String", "ENCRYPT_ALGORITHM", encryptAlgorithm)
                 buildConfigField("String", "DECODE_ALGORITHM", decodeAlgorithm)
+                buildConfigField("String", "LOCATION_KEY", locationKey)
 
             }
             buildFeatures.buildConfig = true

@@ -3,6 +3,7 @@ package com.phew.repository
 import com.phew.device.dataStore.DataStore
 import com.phew.device.device.Device
 import com.phew.device.dto.UserInfoDTO
+import com.phew.domain.dto.Token
 import com.phew.domain.dto.UserInfo
 import com.phew.domain.repository.DeviceRepository
 import javax.inject.Inject
@@ -20,8 +21,8 @@ class DeviceRepositoryImpl @Inject constructor(
         return dataSource.getToken(key)
     }
 
-    override suspend fun saveToken(key: String, data: Pair<String, String>): Boolean {
-        return dataSource.insertToken(key = key, data = data)
+    override suspend fun saveToken(key: String, data: Token): Boolean {
+        return dataSource.insertToken(key = key, data = Pair(data.refreshToken, data.refreshToken))
     }
 
     override suspend fun firebaseToken(): String {
@@ -73,5 +74,16 @@ class DeviceRepositoryImpl @Inject constructor(
             agreedToPrivacyPolicy = request.agreedToPrivacyPolicy,
             agreedToTermsOfService = request.agreedToTermsOfService
         )
+    }
+
+    override suspend fun requestGetLocationPermissionIsAsk(key: String): Boolean {
+        return dataSource.getLocationPermissionIsAsk(key = key)
+    }
+
+    override suspend fun requestSetLocationPermissionIsAsk(
+        key: String,
+        data: Boolean
+    ): Boolean {
+        return dataSource.setLocationPermissionIsAsk(key = key, data = data)
     }
 }

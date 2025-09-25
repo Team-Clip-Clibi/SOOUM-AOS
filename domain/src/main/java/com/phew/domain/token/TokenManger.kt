@@ -1,5 +1,7 @@
 package com.phew.domain.token
 
+import com.phew.domain.dto.Token
+
 interface TokenManger {
-    suspend fun requestUpdateToken(refreshToken: String): Boolean
+    suspend fun requestUpdateToken(data: Token): Boolean
 }

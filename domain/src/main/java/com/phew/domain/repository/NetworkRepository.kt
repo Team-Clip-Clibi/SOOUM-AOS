@@ -2,6 +2,7 @@ package com.phew.domain.repository
 
 import com.phew.core_common.DataResult
 import com.phew.domain.dto.CheckSignUp
+import com.phew.domain.dto.Token
 import com.phew.domain.dto.UploadImageUrl
 import okhttp3.RequestBody
 
@@ -23,7 +24,8 @@ interface NetworkRepository {
     ): DataResult<Pair<String, String>>
 
     suspend fun requestNickName(): DataResult<String>
-    suspend fun requestCheckNickName(nickname: String) : DataResult<Boolean>
-    suspend fun requestUploadImageUrl() : DataResult<UploadImageUrl>
-    suspend fun requestUploadImage(data : RequestBody  , url : String) : DataResult<Unit>
+    suspend fun requestCheckNickName(nickname: String): DataResult<Boolean>
+    suspend fun requestUploadImageUrl(): DataResult<UploadImageUrl>
+    suspend fun requestUploadImage(data: RequestBody, url: String): DataResult<Unit>
+    suspend fun requestRefreshToken(data: Token): DataResult<Token>
 }

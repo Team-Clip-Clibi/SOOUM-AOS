@@ -1,11 +1,11 @@
 package com.phew.domain.usecase
 
-import android.util.Base64
 import com.phew.core_common.DataResult
 import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.domain.BuildConfig
+import com.phew.domain.dto.Token
 import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.NetworkRepository
 import java.security.KeyFactory
@@ -37,7 +37,7 @@ class Login @Inject constructor(
                 val accessToken = requestLogin.data.second
                 val saveToken = deviceRepository.saveToken(
                     key = BuildConfig.TOKEN_KEY,
-                    data = Pair(refreshToken, accessToken)
+                    data = Token(refreshToken = refreshToken, accessToken = accessToken)
                 )
                 if (!saveToken) {
                     return DomainResult.Failure(ERROR_FAIL_JOB)
@@ -49,7 +49,7 @@ class Login @Inject constructor(
 
     private fun makeSecurityKey(key: String): PublicKey {
         val cleanedKey = key.replace("\\s".toRegex(), "")
-        val keyBytes =  java.util.Base64.getDecoder().decode(cleanedKey)
+        val keyBytes = java.util.Base64.getDecoder().decode(cleanedKey)
         val spec = X509EncodedKeySpec(keyBytes)
         val keyFactory = KeyFactory.getInstance("RSA")
         return keyFactory.generatePublic(spec)
