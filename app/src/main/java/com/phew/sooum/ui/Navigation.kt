@@ -47,6 +47,9 @@ import com.phew.splash.SplashViewModel
 fun Nav(
     update: () -> Unit,
     finish: () -> Unit,
+    locationPermission: () -> Unit,
+    feedLocationDialogNotShow : Boolean,
+    closeDialog: () -> Unit
 ) {
     val navController = rememberNavController()
 
@@ -62,6 +65,13 @@ fun Nav(
         signUpNabGraph(
             navController = navController,
             finish = finish
+        )
+        homeGraph(
+            navController = navController,
+            finish = finish,
+            dialogDismiss = feedLocationDialogNotShow,
+            locationPermission = locationPermission,
+            closeDialog = closeDialog
         )
     }
 }
@@ -190,6 +200,9 @@ fun NavGraphBuilder.signUpNabGraph(
 fun NavGraphBuilder.homeGraph(
     navController: NavController,
     finish: () -> Unit,
+    dialogDismiss : Boolean,
+    locationPermission: () -> Unit,
+    closeDialog : () -> Unit
 ) {
     slideComposable(NAV_HOME) { nav ->
         val navBackStackEntry =
@@ -241,6 +254,9 @@ fun NavGraphBuilder.homeGraph(
                     FeedView(
                         viewModel = homeViewModel,
                         finish = finish,
+                        locationPermission = locationPermission,
+                        dialogDismiss = dialogDismiss,
+                        closeDialog = closeDialog
                     )
                 }
             }

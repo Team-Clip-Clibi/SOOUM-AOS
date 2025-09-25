@@ -64,7 +64,7 @@ import com.phew.home.viewModel.UiState
 
 
 @Composable
-fun FeedView(viewModel: HomeViewModel, finish: () -> Unit, settingClick: () -> Unit) {
+fun FeedView(viewModel: HomeViewModel, finish: () -> Unit, locationPermission: () -> Unit , dialogDismiss : Boolean , closeDialog : () -> Unit) {
     val uiState by viewModel.uiState.collectAsState()
     val isRefreshing = uiState.refresh is UiState.Loading
     val lazyListState = rememberLazyListState()
@@ -113,15 +113,17 @@ fun FeedView(viewModel: HomeViewModel, finish: () -> Unit, settingClick: () -> U
             composition = composition,
             progress = progress
         )
-        if (!uiState.isLocationAsk) {
-            //TODO onClick 시 설정 화면으로 이동 OnDismiss 시 다시 물어보지 않기
+        if (!dialogDismiss) {
             DialogComponent.DefaultButtonTwo(
                 title = stringResource(R.string.home_feed_dialog_location_title),
                 description = stringResource(R.string.home_feed_dialog_location_content),
                 buttonTextStart = stringResource(R.string.home_feed_dialog_location_negative),
                 buttonTextEnd = stringResource(R.string.home_feed_dialog_location_positive),
-                onClick = { viewModel::initTestData },
-                onDismiss = { viewModel::initTestData }
+                onClick = { locationPermission},
+                onDismiss = {
+                    closeDialog()
+                    viewModel::initTestData
+                }
             )
         }
     }
