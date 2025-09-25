@@ -75,4 +75,15 @@ class DeviceRepositoryImpl @Inject constructor(
             agreedToTermsOfService = request.agreedToTermsOfService
         )
     }
+
+    override suspend fun requestGetLocationPermissionIsAsk(key: String): Boolean {
+        return dataSource.getLocationPermissionIsAsk(key = key)
+    }
+
+    override suspend fun requestSetLocationPermissionIsAsk(
+        key: String,
+        data: Boolean
+    ): Boolean {
+        return dataSource.setLocationPermissionIsAsk(key = key, data = data)
+    }
 }
