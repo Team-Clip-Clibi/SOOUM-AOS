@@ -10,6 +10,7 @@ import com.phew.network.dto.SignUpRequest
 import com.phew.network.dto.TokenDTO
 import com.phew.network.dto.NickNameAvailableDTO
 import com.phew.network.dto.UploadImageUrlDTO
+import com.phew.network.dto.NoticeDto
 import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
@@ -107,4 +108,18 @@ interface Http {
     suspend fun requestRefreshToken(
         @Body body: TokenDTO,
     ): Response<TokenDTO>
+
+    /**
+     * Notice url
+     */
+    @GET(BuildConfig.API_URL_NOTICE)
+    suspend fun requestNotice(
+        @Header("Authorization") bearerToken: String,
+    ): Response<NoticeDto>
+
+    @GET(BuildConfig.API_URL_NOTICE)
+    suspend fun requestNoticePatch(
+        @Header("Authorization") bearerToken: String,
+        @Path("lastId") lastId: Int,
+    ): Response<NoticeDto>
 }

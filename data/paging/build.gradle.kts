@@ -8,4 +8,6 @@ android {
 
 dependencies {
     implementation(libs.paging.runtime)
+    implementation(project(":domain"))
+    implementation(project(":core:core-common"))
 }

@@ -63,6 +63,7 @@ class DomainConvention : Plugin<Project> {
             "implementation"(libs.findLibrary("hilt-android").get())
             "ksp"(libs.findLibrary("hilt-compiler").get())
             "implementation"(libs.findLibrary("okhttp3").get())
+            "implementation"(libs.findLibrary("paging-runtime").get())
             //project
             "implementation"(project(":core:core-common"))
             // test

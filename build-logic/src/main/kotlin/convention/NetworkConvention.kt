@@ -43,6 +43,7 @@ class NetworkConvention : Plugin<Project> {
                 val nickNameCheck: String = properties.getProperty("api_url_check_nick_name", "")
                 val upLoadImage: String = properties.getProperty("api_url_upload_image", "")
                 val refreshToken: String = properties.getProperty("api_url_refresh_token", "")
+                val noticeUrl: String = properties.getProperty("api_url_notice", "")
 
                 buildConfigField("String", "BASE_URL", baseUrl)
                 buildConfigField("String", "API_URL", apiUrl)
@@ -57,6 +58,7 @@ class NetworkConvention : Plugin<Project> {
                 buildConfigField("String", "API_URL_CHECK_NICKNAME_AVAILABLE", nickNameCheck)
                 buildConfigField("String", "API_URL_UPLOAD_IMAGE", upLoadImage)
                 buildConfigField("String", "API_URL_REFRESH_TOKEN", refreshToken)
+                buildConfigField("String", "API_URL_NOTICE", noticeUrl)
             }
             buildFeatures.buildConfig = true
             compileOptions {
