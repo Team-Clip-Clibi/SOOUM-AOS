@@ -47,7 +47,7 @@ class ApplicationConvention : Plugin<Project> {
                 buildConfig = true
             }
             composeOptions.kotlinCompilerExtensionVersion = "1.5.13"
-            packaging.resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            packaging.resources.excludes += "/META-INF/{AL2.0,LGPL2.1,LICENSE.md,LICENSE-notice.md}"
         }
         extensions.getByType<KotlinAndroidProjectExtension>().apply {
             jvmToolchain(21)
