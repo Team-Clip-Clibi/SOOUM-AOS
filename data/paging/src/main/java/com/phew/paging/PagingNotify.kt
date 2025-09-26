@@ -3,6 +3,7 @@ package com.phew.paging
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.phew.core_common.DataResult
+import com.phew.core_common.ERROR_LOGOUT
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.HTTP_INVALID_TOKEN
 import com.phew.core_common.HTTP_NO_MORE_CONTENT
@@ -54,7 +55,7 @@ class PagingNotify @Inject constructor(
 
                 is DataResult.Fail -> {
                     if (result.code != HTTP_INVALID_TOKEN) {
-                        return LoadResult.Error(Throwable(result.throwable))
+                        return LoadResult.Error(Throwable(ERROR_NETWORK))
                     }
                     val requestRefreshToken = tokenManger.requestUpdateToken(
                         Token(
@@ -63,7 +64,7 @@ class PagingNotify @Inject constructor(
                         )
                     )
                     if (!requestRefreshToken) {
-                        return LoadResult.Error(Throwable(ERROR_NETWORK))
+                        return LoadResult.Error(Throwable(ERROR_LOGOUT))
                     }
                     val newToken = deviceRepository.requestToken(BuildConfig.TOKEN_KEY)
                     val reRequest = if (params.key == -1) {

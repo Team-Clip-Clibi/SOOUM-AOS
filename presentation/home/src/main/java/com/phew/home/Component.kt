@@ -36,21 +36,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import com.phew.core_design.Primary
+import com.phew.domain.dto.Notice
 import com.phew.domain.dto.Notify
 
 @Composable
 internal fun AnimatedNoticeTabLayout(
     selectTabData: Int,
     allClick: () -> Unit,
-    cardClick: () -> Unit,
-    followClick: () -> Unit,
     noticeClick: () -> Unit,
     isTabsVisible: Boolean
 ) {
     val tabItem = listOf(
-        stringResource(R.string.home_notice_all),
-        stringResource(R.string.home_notice_card),
-        stringResource(R.string.home_notice_follow),
+        stringResource(R.string.home_notice_activate),
         stringResource(R.string.home_notice_notice)
     )
     AnimatedVisibility(
@@ -94,9 +91,7 @@ internal fun AnimatedNoticeTabLayout(
                         selected = isSelected,
                         onClick = {
                             when (index) {
-                                NAV_NOTICE_ALL_INDEX -> allClick()
-                                NAV_NOTICE_CARD_INDEX -> cardClick()
-                                NAV_NOTICE_FOLLOW_INDEX -> followClick()
+                                NAV_NOTICE_ACTIVATE -> allClick()
                                 NAV_NOTICE_NOTIFY_INDEX -> noticeClick()
                             }
                         },
@@ -240,6 +235,50 @@ private fun DistanceText(distance: String, onClick: (String) -> Unit, isSelect: 
             .padding(start = 10.dp, top = 8.dp, end = 10.dp, bottom = 8.dp)
             .clickable { onClick(distance) }
     )
+}
+
+@Composable
+internal fun NoticeComponentView(data: Notice) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(182.dp)
+            .background(color = NeutralColor.WHITE)
+            .padding(start = 24.dp, top = 16.dp, end = 24.dp, bottom = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Top),
+        horizontalAlignment = Alignment.Start,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(18.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Image(
+                painter = painterResource(com.phew.core_design.R.drawable.ic_notification),
+                contentDescription = data.title,
+            )
+            Text(
+                text = stringResource(R.string.home_notice_notice),
+                style = TextComponent.CAPTION_1_SB_12,
+                color = NeutralColor.GRAY_400,
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.Start
+            )
+            Text(
+                text = data.viewTime,
+                style = TextComponent.CAPTION_1_SB_12,
+                color = NeutralColor.GRAY_400
+            )
+        }
+        Text(
+            text = data.title,
+            style = TextComponent.SUBTITLE_1_M_16,
+            color = NeutralColor.GRAY_600,
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
 }
 
 @Composable

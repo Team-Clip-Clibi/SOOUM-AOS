@@ -4,73 +4,149 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieComposition
+import com.phew.core_common.ERROR_LOGOUT
+import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_design.AppBar
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
+import com.phew.domain.dto.Notice
 import com.phew.home.viewModel.HomeViewModel
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.paging.LoadState
+import kotlinx.coroutines.launch
+
 
 @Composable
-fun NotifyView(viewModel: HomeViewModel, backClick: () -> Unit) {
-    var selectIndex by remember { mutableIntStateOf(NAV_NOTICE_ALL_INDEX) }
-    var isTabsVisible by remember { mutableStateOf(true) }
+fun NotifyView(
+    viewModel: HomeViewModel,
+    backClick: () -> Unit,
+    logout: () -> Unit,
+    snackBarHostState: SnackbarHostState
+) {
+    var selectIndex by remember { mutableIntStateOf(NAV_NOTICE_ACTIVATE) }
     val lazyListState = rememberLazyListState()
-    val nestedScrollConnection = remember {
-        object : NestedScrollConnection {
-            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                isTabsVisible = available.y > 0 || lazyListState.firstVisibleItemIndex == 0
-                return Offset.Zero
-            }
+    val isTabsVisible by remember(lazyListState) {
+        derivedStateOf {
+            lazyListState.firstVisibleItemIndex == 0 &&
+                    lazyListState.firstVisibleItemScrollOffset < 8
         }
     }
-    BackHandler {
-        backClick()
-    }
+    val notices = viewModel.notice.collectAsLazyPagingItems()
+    val scope = rememberCoroutineScope()
+    val networkErrorMsg = stringResource(com.phew.core_design.R.string.error_network)
+    val onBack by rememberUpdatedState(newValue = backClick)
+    val onLogout by rememberUpdatedState(newValue = logout)
+    val nestedScrollConnection = remember { object : NestedScrollConnection {} }
+    BackHandler { onBack() }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(color = NeutralColor.WHITE)
+            .background(NeutralColor.WHITE)
             .statusBarsPadding()
             .navigationBarsPadding()
     ) {
         TopBar(
-            allClick = {
-
-            },
-            followClick = {
-
-            },
-            cardClick = {
-
-            },
-            noticeClick = {
-
-            },
-
-            backClick = backClick,
+            allClick = { selectIndex = NAV_NOTICE_ACTIVATE },
+            noticeClick = { selectIndex = NAV_NOTICE_NOTIFY_INDEX },
+            backClick = onBack,
             isTabsVisible = isTabsVisible,
             selectIndex = selectIndex
         )
+
+        when (selectIndex) {
+            NAV_NOTICE_ACTIVATE -> {
+                EmptyNotifyView()
+            }
+
+            NAV_NOTICE_NOTIFY_INDEX -> {
+                when {
+                    notices.loadState.refresh is LoadState.Loading -> {
+                        EmptyNotifyView()
+                    }
+
+                    notices.loadState.refresh is LoadState.Error -> {
+                        val error = (notices.loadState.refresh as LoadState.Error).error
+                        when (error.message) {
+                            ERROR_NETWORK -> {
+                                LaunchedEffect("network_refresh_snackbar") {
+                                    snackBarHostState.showSnackbar(
+                                        message = networkErrorMsg,
+                                        withDismissAction = true
+                                    )
+                                }
+                            }
+
+                            ERROR_LOGOUT -> onLogout()
+                            else -> error.cause?.printStackTrace()
+                        }
+                    }
+
+                    notices.itemCount == 0 -> {
+                        EmptyNotifyView()
+                    }
+
+                    else -> {
+                        NoticeView(
+                            data = notices,
+                            lazyListState = lazyListState,
+                            nestedScrollConnection = nestedScrollConnection,
+                            failToLoad = {
+                                scope.launch {
+                                    snackBarHostState.showSnackbar(
+                                        message = networkErrorMsg,
+                                        withDismissAction = true,
+                                        duration = SnackbarDuration.Short
+                                    )
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -78,8 +154,6 @@ fun NotifyView(viewModel: HomeViewModel, backClick: () -> Unit) {
 private fun TopBar(
     backClick: () -> Unit,
     allClick: () -> Unit,
-    followClick: () -> Unit,
-    cardClick: () -> Unit,
     noticeClick: () -> Unit,
     isTabsVisible: Boolean,
     selectIndex: Int
@@ -90,12 +164,111 @@ private fun TopBar(
     )
     AnimatedNoticeTabLayout(
         allClick = allClick,
-        followClick = followClick,
-        cardClick = cardClick,
         noticeClick = noticeClick,
         isTabsVisible = isTabsVisible,
         selectTabData = selectIndex
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun NoticeView(
+    data: LazyPagingItems<Notice>,
+    lazyListState: LazyListState,
+    nestedScrollConnection: NestedScrollConnection,
+    failToLoad: () -> Unit
+) {
+    val refreshState = rememberPullToRefreshState()
+    val refreshingOffset = 56.dp
+    val density = LocalDensity.current
+    val composition by rememberLottieComposition(
+        LottieCompositionSpec.RawRes(com.phew.core_design.R.raw.ic_refresh)
+    )
+    val isRefreshing by remember(data.loadState.refresh) {
+        derivedStateOf { data.loadState.refresh is LoadState.Loading }
+    }
+    val refreshProgress by animateLottieCompositionAsState(
+        composition = composition,
+        iterations = LottieConstants.IterateForever,
+        isPlaying = isRefreshing
+    )
+    (data.loadState.refresh as? LoadState.Error)?.error?.let { err ->
+        LaunchedEffect("refresh_err_${err.message}") { failToLoad() }
+    }
+
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = { data.refresh() },
+        state = refreshState,
+        indicator = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(with(density) { refreshingOffset + 20.dp }),
+                contentAlignment = Alignment.Center
+            ) {
+                val progress = if (isRefreshing) refreshProgress else refreshState.distanceFraction
+                if (isRefreshing || refreshState.distanceFraction > 0f) {
+                    LottieAnimation(
+                        composition = composition,
+                        progress = { progress },
+                        modifier = Modifier.size(60.dp)
+                    )
+                }
+            }
+        }
+    ) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .nestedScroll(nestedScrollConnection)
+                .padding(horizontal = 16.dp)
+                .graphicsLayer {
+                    translationY =
+                        refreshState.distanceFraction * with(density) { refreshingOffset.toPx() }
+                },
+            state = lazyListState
+        ) {
+            // 본문
+            items(
+                count = data.itemCount,
+                key = { index -> data.peek(index)?.id ?: index }
+            ) { index ->
+                val item = data[index] ?: return@items
+                NoticeComponentView(data = item)
+            }
+
+            when (data.loadState.append) {
+                is LoadState.Loading -> {
+                    item {
+                        val appendProgress by animateLottieCompositionAsState(
+                            composition = composition,
+                            iterations = LottieConstants.IterateForever,
+                            isPlaying = true
+                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            LottieAnimation(
+                                composition = composition,
+                                progress = { appendProgress },
+                                modifier = Modifier.size(48.dp)
+                            )
+                        }
+                    }
+                }
+
+                is LoadState.Error -> {
+                    failToLoad()
+                }
+
+                else -> Unit
+            }
+        }
+    }
 }
 
 @Composable

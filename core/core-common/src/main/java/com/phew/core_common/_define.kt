@@ -11,6 +11,7 @@ const val NAV_SIGN_UP_FINISH = "finish"
 const val NAV_HOME_GRAPH = "homeGraph"
 const val NAV_HOME = "home"
 const val NAV_HOME_FEED = "feed"
+const val NAV_HOME_NOTIFY = "homeNotify"
 const val NAV_HOME_ADD_CARD = "addCard"
 const val NAV_HOME_TAG = "tag"
 const val NAV_HONE_PROFILE = "myProfile"
@@ -21,7 +22,7 @@ const val ERROR_FAIL_JOB = "Fail job"
 const val ERROR_NO_DATA = "No Data"
 const val ERROR_NETWORK = "error_network"
 const val ERROR = "error"
-
+const val ERROR_LOGOUT = "errorLogout"
 //server api error code
 const val HTTP_NO_MORE_CONTENT = 204
 const val HTTP_INVALID_TOKEN = 401

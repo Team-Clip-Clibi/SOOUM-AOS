@@ -1,9 +1,6 @@
 package com.phew.home
 
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.ActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -48,7 +45,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.airbnb.lottie.LottieComposition
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
@@ -59,13 +57,22 @@ import com.phew.core_design.CardViewComponent
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.TextComponent
 import com.phew.domain.dto.FeedData
+import com.phew.domain.dto.Notice
 import com.phew.home.viewModel.Home
 import com.phew.home.viewModel.UiState
 
 
 @Composable
-fun FeedView(viewModel: HomeViewModel, finish: () -> Unit, locationPermission: () -> Unit , dialogDismiss : Boolean , closeDialog : () -> Unit) {
+fun FeedView(
+    viewModel: HomeViewModel,
+    finish: () -> Unit,
+    locationPermission: () -> Unit,
+    dialogDismiss: Boolean,
+    closeDialog: () -> Unit,
+    noticeClick: () -> Unit
+) {
     val uiState by viewModel.uiState.collectAsState()
+    val notice = viewModel.notice.collectAsLazyPagingItems()
     val isRefreshing = uiState.refresh is UiState.Loading
     val lazyListState = rememberLazyListState()
     var isTabsVisible by remember { mutableStateOf(true) }
@@ -102,6 +109,8 @@ fun FeedView(viewModel: HomeViewModel, finish: () -> Unit, locationPermission: (
             popularClick = viewModel::initTestData,
             nearClick = viewModel::checkLocationPermission,
             isTabsVisible = isTabsVisible,
+            notice = notice,
+            noticeClick = noticeClick
         )
 
         FeedContent(
@@ -135,6 +144,8 @@ private fun TopLayout(
     popularClick: () -> Unit,
     nearClick: () -> Unit,
     isTabsVisible: Boolean,
+    notice: LazyPagingItems<Notice>,
+    noticeClick : () -> Unit
 ) {
     var selectIndex by remember { mutableIntStateOf(NAV_HOME_FEED_INDEX) }
     Column(
@@ -143,8 +154,8 @@ private fun TopLayout(
             .wrapContentHeight()
     ) {
         AppBar.HomeAppBar(
-            onClick = {},
-            newAlarm = false,
+            onClick = noticeClick,
+            newAlarm = notice.itemCount != 0,
         )
         AnimatedFeedTabLayout(
             selectTabData = selectIndex,
@@ -225,7 +236,7 @@ private fun FeedListView(
     lazyListState: LazyListState,
     nestedScrollConnection: NestedScrollConnection,
     composition: LottieComposition?,
-    progress: Float
+    progress: Float,
 ) {
     val refreshingOffset = 56.dp
     val refreshState = rememberPullToRefreshState()
