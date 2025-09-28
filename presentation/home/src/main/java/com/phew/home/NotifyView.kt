@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.SnackbarHostState
@@ -54,7 +55,11 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.paging.LoadState
+import com.airbnb.lottie.LottieComposition
+import com.phew.domain.dto.Notification
 import kotlinx.coroutines.launch
 
 
@@ -74,6 +79,8 @@ fun NotifyView(
         }
     }
     val notices = viewModel.notice.collectAsLazyPagingItems()
+    val unRead = viewModel.unReadNotification.collectAsLazyPagingItems()
+    val read = viewModel.readNotification.collectAsLazyPagingItems()
     val scope = rememberCoroutineScope()
     val networkErrorMsg = stringResource(com.phew.core_design.R.string.error_network)
     val onBack by rememberUpdatedState(newValue = backClick)
@@ -98,7 +105,47 @@ fun NotifyView(
 
         when (selectIndex) {
             NAV_NOTICE_ACTIVATE -> {
-                EmptyNotifyView()
+                when{
+                    unRead.loadState.refresh is LoadState.Loading || read.loadState.refresh is LoadState.Loading ->{
+                        EmptyNotifyView()
+                    }
+                    unRead.loadState.refresh is LoadState.Error || read.loadState.refresh is LoadState.Error -> {
+                        val error = if (unRead.loadState.refresh is LoadState.Error) {
+                            (unRead.loadState.refresh as LoadState.Error).error
+                        } else (read.loadState.refresh as LoadState.Error).error
+                        when (error.message) {
+                            ERROR_NETWORK -> {
+                                LaunchedEffect("network_refresh_snackbar") {
+                                    snackBarHostState.showSnackbar(
+                                        message = networkErrorMsg,
+                                        withDismissAction = true
+                                    )
+                                }
+                            }
+
+                            ERROR_LOGOUT -> onLogout()
+                            else -> error.cause?.printStackTrace()
+                        }
+                    }
+                    unRead.itemCount == 0 && read.itemCount == 0 -> {
+                        EmptyNotifyView()
+                    }
+                    else -> ActivateNotify(
+                        read = read,
+                        unRead = unRead,
+                        nestedScrollConnection = nestedScrollConnection,
+                        failToLoad = {
+                            scope.launch {
+                                snackBarHostState.showSnackbar(
+                                    message = networkErrorMsg,
+                                    withDismissAction = true,
+                                    duration = SnackbarDuration.Short
+                                )
+                            }
+                        },
+                        lazyListState = lazyListState,
+                    )
+                }
             }
 
             NAV_NOTICE_NOTIFY_INDEX -> {
@@ -269,6 +316,38 @@ private fun NoticeView(
             }
         }
     }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ActivateNotify(
+    unRead: LazyPagingItems<Notification>,
+    read: LazyPagingItems<Notification>,
+    lazyListState: LazyListState,
+    nestedScrollConnection: NestedScrollConnection,
+    failToLoad: () -> Unit
+) {
+    val refreshState = rememberPullToRefreshState()
+    val refreshOffset = 56.dp
+    val density = LocalDensity.current
+    val composition by rememberLottieComposition(
+        LottieCompositionSpec.RawRes(com.phew.core_design.R.raw.ic_refresh)
+    )
+    val isRefreshing = unRead.loadState.refresh is LoadState.Loading ||
+            read.loadState.refresh is LoadState.Loading
+
+    val refreshProgress by animateLottieCompositionAsState(
+        composition = composition,
+        iterations = LottieConstants.IterateForever,
+        isPlaying = isRefreshing
+    )
+    LaunchedEffect(unRead.loadState.refresh, read.loadState.refresh) {
+        if (unRead.loadState.refresh is LoadState.Error || read.loadState.refresh is LoadState.Error) {
+            failToLoad()
+        }
+    }
+
 }
 
 @Composable

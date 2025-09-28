@@ -11,6 +11,7 @@ import com.phew.network.dto.TokenDTO
 import com.phew.network.dto.NickNameAvailableDTO
 import com.phew.network.dto.UploadImageUrlDTO
 import com.phew.network.dto.NoticeDto
+import com.phew.network.dto.NotificationDTO
 import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
@@ -122,4 +123,30 @@ interface Http {
         @Header("Authorization") bearerToken: String,
         @Path("lastId") lastId: Int,
     ): Response<NoticeDto>
+
+    /**
+     * Notification url
+     */
+    @GET(BuildConfig.API_URL_NOTIFICATION_UN_READ)
+    suspend fun requestNotificationUnRead(
+        @Header("Authorization") bearerToken: String,
+    ): Response<List<NotificationDTO>>
+
+    @GET(BuildConfig.API_URL_NOTIFICATION_UN_READ)
+    suspend fun requestNotificationUnReadPatch(
+        @Header("Authorization") bearerToken: String,
+        @Path("lastId") lastId: Long,
+    ): Response<List<NotificationDTO>>
+
+    @GET(BuildConfig.API_URL_NOTIFICATION_READ)
+    suspend fun requestNotificationRead(
+        @Header("Authorization") bearerToken: String,
+    ): Response<List<NotificationDTO>>
+
+    @GET(BuildConfig.API_URL_NOTIFICATION_READ)
+    suspend fun requestNotificationReadPatch(
+        @Header("Authorization") bearerToken: String,
+        @Path("lastId") lastId: Long,
+    ): Response<List<NotificationDTO>>
+
 }

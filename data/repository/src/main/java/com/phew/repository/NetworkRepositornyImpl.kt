@@ -4,6 +4,7 @@ import com.phew.core_common.APP_ERROR_CODE
 import com.phew.core_common.DataResult
 import com.phew.domain.dto.CheckSignUp
 import com.phew.domain.dto.Notice
+import com.phew.domain.dto.Notification
 import com.phew.domain.dto.Token
 import com.phew.domain.dto.UploadImageUrl
 import com.phew.domain.repository.NetworkRepository
@@ -15,8 +16,8 @@ import com.phew.network.dto.NickNameDTO
 import com.phew.network.dto.PolicyDTO
 import com.phew.network.dto.SignUpRequest
 import com.phew.network.dto.TokenDTO
+import com.phew.repository.mapper.toDomain
 import okhttp3.RequestBody
-import okhttp3.ResponseBody
 import javax.inject.Inject
 
 class NetworkRepositoryImpl @Inject constructor(private val http: Http) : NetworkRepository {
@@ -343,6 +344,111 @@ class NetworkRepositoryImpl @Inject constructor(private val http: Http) : Networ
                     )
                 })
             )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return DataResult.Fail(
+                code = APP_ERROR_CODE,
+                message = e.message,
+                throwable = e
+            )
+        }
+    }
+
+    override suspend fun requestNotificationUnRead(accessToken: String): DataResult<Pair<Int, List<Notification>>> {
+        try {
+            val request = http.requestNotificationUnRead(bearerToken = accessToken)
+            if (!request.isSuccessful || request.body() == null) {
+                return DataResult.Fail(code = request.code(), message = request.message())
+            }
+            val data = request.body()!!
+            if (data.isEmpty()) {
+                return DataResult.Success(Pair(request.code(), emptyList()))
+            }
+            val domainBody = data.map { data ->
+                data.toDomain()
+            }
+            return DataResult.Success(Pair(request.code(), domainBody))
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return DataResult.Fail(
+                code = APP_ERROR_CODE,
+                message = e.message,
+                throwable = e
+            )
+        }
+    }
+
+    override suspend fun requestNotificationUnReadPatch(
+        accessToken: String,
+        lastId: Long
+    ): DataResult<Pair<Int, List<Notification>>> {
+        try {
+            val request =
+                http.requestNotificationUnReadPatch(bearerToken = accessToken, lastId = lastId)
+            if (!request.isSuccessful || request.body() == null) {
+                return DataResult.Fail(code = request.code(), message = request.message())
+            }
+            val data = request.body()!!
+            if (data.isEmpty()) {
+                return DataResult.Success(Pair(request.code(), emptyList()))
+            }
+            val domainBody = data.map { data ->
+                data.toDomain()
+            }
+            return DataResult.Success(Pair(request.code(), domainBody))
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return DataResult.Fail(
+                code = APP_ERROR_CODE,
+                message = e.message,
+                throwable = e
+            )
+        }
+    }
+
+    override suspend fun requestNotificationRead(accessToken: String): DataResult<Pair<Int, List<Notification>>> {
+        try {
+            val request =
+                http.requestNotificationRead(bearerToken = accessToken)
+            if (!request.isSuccessful || request.body() == null) {
+                return DataResult.Fail(code = request.code(), message = request.message())
+            }
+            val data = request.body()!!
+            if (data.isEmpty()) {
+                return DataResult.Success(Pair(request.code(), emptyList()))
+            }
+            val domainBody = data.map { data ->
+                data.toDomain()
+            }
+            return DataResult.Success(Pair(request.code(), domainBody))
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return DataResult.Fail(
+                code = APP_ERROR_CODE,
+                message = e.message,
+                throwable = e
+            )
+        }
+    }
+
+    override suspend fun requestNotificationReadPatch(
+        accessToken: String,
+        lastId: Long
+    ): DataResult<Pair<Int, List<Notification>>> {
+        try {
+            val request =
+                http.requestNotificationReadPatch(bearerToken = accessToken, lastId = lastId)
+            if (!request.isSuccessful || request.body() == null) {
+                return DataResult.Fail(code = request.code(), message = request.message())
+            }
+            val data = request.body()!!
+            if (data.isEmpty()) {
+                return DataResult.Success(Pair(request.code(), emptyList()))
+            }
+            val domainBody = data.map { data ->
+                data.toDomain()
+            }
+            return DataResult.Success(Pair(request.code(), domainBody))
         } catch (e: Exception) {
             e.printStackTrace()
             return DataResult.Fail(

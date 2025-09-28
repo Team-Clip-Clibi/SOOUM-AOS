@@ -36,8 +36,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import com.phew.core_design.Primary
+import com.phew.domain.dto.FeedLikeNotification
+import com.phew.domain.dto.FollowNotification
 import com.phew.domain.dto.Notice
+import com.phew.domain.dto.Notification
 import com.phew.domain.dto.Notify
+import com.phew.domain.dto.UserBlockNotification
+import com.phew.domain.dto.UserCommentLike
+import com.phew.domain.dto.UserCommentWrite
+import com.phew.domain.dto.UserDeleteNotification
 
 @Composable
 internal fun AnimatedNoticeTabLayout(
@@ -282,7 +289,7 @@ internal fun NoticeComponentView(data: Notice) {
 }
 
 @Composable
-internal fun NotifyViewUnread(data: Notify) {
+internal fun NotifyViewUnread(data: Notification) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -298,29 +305,50 @@ internal fun NotifyViewUnread(data: Notify) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Image(
-                painter = when (data.category) {
-                    NOTIFY_ANNOUNCE -> painterResource(com.phew.core_design.R.drawable.ic_notification)
-                    NOTIFY_LIMIT -> painterResource(com.phew.core_design.R.drawable.ic_danger)
-                    NOTIFY_FOLLOW -> painterResource(com.phew.core_design.R.drawable.ic_users_filled)
-                    else -> painterResource(com.phew.core_design.R.drawable.ic_check)
+                painter = when (data) {
+                    is FollowNotification -> painterResource(com.phew.core_design.R.drawable.ic_users_filled)
+                    is UserBlockNotification,
+                    is UserDeleteNotification -> painterResource(com.phew.core_design.R.drawable.ic_danger)
+                    else -> painterResource(com.phew.core_design.R.drawable.ic_card_filled_blue)
                 },
-                contentDescription = data.category
+                contentDescription = ""
             )
             Text(
-                text = data.title,
+                text = when (data) {
+                    is FollowNotification,
+                    is UserCommentLike,
+                    is UserCommentWrite -> stringResource(R.string.home_notice_item_follow)
+                    is UserBlockNotification,
+                    is UserDeleteNotification -> stringResource(R.string.home_notice_item_limit)
+                    is FeedLikeNotification -> stringResource(R.string.home_notice_item_feed_like)
+                },
                 style = TextComponent.CAPTION_1_SB_12,
                 color = NeutralColor.GRAY_400,
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Start
             )
             Text(
-                text = data.time,
+                text = when(data){
+                    is FeedLikeNotification -> data.viewTime
+                    is FollowNotification -> data.viewTime
+                    is UserBlockNotification -> data.viewTime
+                    is UserCommentLike -> data.viewTime
+                    is UserCommentWrite -> data.viewTime
+                    is UserDeleteNotification -> data.viewTime
+                },
                 style = TextComponent.CAPTION_1_SB_12,
                 color = NeutralColor.GRAY_400
             )
         }
         Text(
-            text = data.content,
+            text = when(data){
+                is FeedLikeNotification -> stringResource(R.string.home_notice_like_comment , data.nickName)
+                is FollowNotification -> stringResource(R.string.home_notice_follow_comment , data.nickName)
+                is UserBlockNotification -> stringResource(R.string.home_notice_limit_card_comment , data.blockTimeView)
+                is UserCommentLike -> stringResource(R.string.home_notice_limit_card_comment , data.nickName)
+                is UserCommentWrite -> stringResource(R.string.home_notice_under_card_comment , data.nickName)
+                is UserDeleteNotification -> stringResource(R.string.home_notice_delete_card)
+            },
             style = TextComponent.TITLE_2_SB_16,
             color = NeutralColor.GRAY_600,
             modifier = Modifier
@@ -348,7 +376,6 @@ internal fun NotifyViewReadd(data: Notify) {
         ) {
             Image(
                 painter = when (data.category) {
-                    NOTIFY_ANNOUNCE -> painterResource(com.phew.core_design.R.drawable.ic_notification)
                     NOTIFY_LIMIT -> painterResource(com.phew.core_design.R.drawable.ic_danger)
                     NOTIFY_FOLLOW -> painterResource(com.phew.core_design.R.drawable.ic_users_filled)
                     else -> painterResource(com.phew.core_design.R.drawable.ic_check)

@@ -3,6 +3,7 @@ package com.phew.domain.repository
 import com.phew.core_common.DataResult
 import com.phew.domain.dto.CheckSignUp
 import com.phew.domain.dto.Notice
+import com.phew.domain.dto.Notification
 import com.phew.domain.dto.Token
 import com.phew.domain.dto.UploadImageUrl
 import okhttp3.RequestBody
@@ -31,4 +32,8 @@ interface NetworkRepository {
     suspend fun requestRefreshToken(data: Token): DataResult<Token>
     suspend fun requestNotice(accessToken: String): DataResult<Pair<Int , List<Notice>>>
     suspend fun requestNoticePatch(accessToken: String , lastId : Int): DataResult<Pair<Int , List<Notice>>>
+    suspend fun requestNotificationUnRead(accessToken : String) : DataResult<Pair<Int,List<Notification>>>
+    suspend fun requestNotificationUnReadPatch(accessToken: String , lastId: Long) : DataResult<Pair<Int,List<Notification>>>
+    suspend fun requestNotificationRead(accessToken: String) :DataResult<Pair<Int,List<Notification>>>
+    suspend fun requestNotificationReadPatch(accessToken: String , lastId: Long) : DataResult<Pair<Int,List<Notification>>>
 }

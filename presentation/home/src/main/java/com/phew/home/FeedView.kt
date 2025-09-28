@@ -58,6 +58,7 @@ import com.phew.core_design.DialogComponent
 import com.phew.core_design.TextComponent
 import com.phew.domain.dto.FeedData
 import com.phew.domain.dto.Notice
+import com.phew.domain.dto.Notification
 import com.phew.home.viewModel.Home
 import com.phew.home.viewModel.UiState
 
@@ -73,6 +74,7 @@ fun FeedView(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val notice = viewModel.notice.collectAsLazyPagingItems()
+    val unRead = viewModel.unReadNotification.collectAsLazyPagingItems()
     val isRefreshing = uiState.refresh is UiState.Loading
     val lazyListState = rememberLazyListState()
     var isTabsVisible by remember { mutableStateOf(true) }
@@ -110,7 +112,8 @@ fun FeedView(
             nearClick = viewModel::checkLocationPermission,
             isTabsVisible = isTabsVisible,
             notice = notice,
-            noticeClick = noticeClick
+            noticeClick = noticeClick,
+            activate = unRead
         )
 
         FeedContent(
@@ -128,7 +131,7 @@ fun FeedView(
                 description = stringResource(R.string.home_feed_dialog_location_content),
                 buttonTextStart = stringResource(R.string.home_feed_dialog_location_negative),
                 buttonTextEnd = stringResource(R.string.home_feed_dialog_location_positive),
-                onClick = { locationPermission},
+                onClick = { locationPermission },
                 onDismiss = {
                     closeDialog()
                     viewModel::initTestData
@@ -145,7 +148,8 @@ private fun TopLayout(
     nearClick: () -> Unit,
     isTabsVisible: Boolean,
     notice: LazyPagingItems<Notice>,
-    noticeClick : () -> Unit
+    noticeClick: () -> Unit,
+    activate: LazyPagingItems<Notification>
 ) {
     var selectIndex by remember { mutableIntStateOf(NAV_HOME_FEED_INDEX) }
     Column(
@@ -155,7 +159,7 @@ private fun TopLayout(
     ) {
         AppBar.HomeAppBar(
             onClick = noticeClick,
-            newAlarm = notice.itemCount != 0,
+            newAlarm = notice.itemCount != 0 && activate.itemCount != 0,
         )
         AnimatedFeedTabLayout(
             selectTabData = selectIndex,

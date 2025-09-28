@@ -7,9 +7,12 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.phew.domain.dto.FeedData
 import com.phew.domain.dto.Notice
+import com.phew.domain.dto.Notification
 import com.phew.domain.dto.Notify
 import com.phew.domain.usecase.CheckLocationPermission
 import com.phew.domain.usecase.GetNotification
+import com.phew.domain.usecase.GetReadNotification
+import com.phew.domain.usecase.GetUnReadNotification
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,13 +27,23 @@ import kotlinx.coroutines.flow.Flow
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val locationAsk: CheckLocationPermission,
-    private val getNotificationPage: GetNotification
+    private val getNotificationPage: GetNotification,
+    private val getUnReadNotification: GetUnReadNotification,
+    private val getReadNotification: GetReadNotification
 ) :
     ViewModel() {
     private val _uiState = MutableStateFlow(Home())
     val uiState: StateFlow<Home> = _uiState.asStateFlow()
 
+    /**
+     * 공지사항(notice)
+     * 활동알림(unRead , read)
+     */
     val notice: Flow<PagingData<Notice>> = getNotificationPage().cachedIn(viewModelScope)
+    val unReadNotification: Flow<PagingData<Notification>> =
+        getUnReadNotification().cachedIn(viewModelScope)
+    val readNotification: Flow<PagingData<Notification>> =
+        getReadNotification().cachedIn(viewModelScope)
 
     init {
         initTestData()
