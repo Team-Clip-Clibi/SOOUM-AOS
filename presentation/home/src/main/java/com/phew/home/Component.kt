@@ -47,76 +47,6 @@ import com.phew.domain.dto.UserCommentWrite
 import com.phew.domain.dto.UserDeleteNotification
 
 @Composable
-internal fun AnimatedNoticeTabLayout(
-    selectTabData: Int,
-    allClick: () -> Unit,
-    noticeClick: () -> Unit,
-    isTabsVisible: Boolean
-) {
-    val tabItem = listOf(
-        stringResource(R.string.home_notice_activate),
-        stringResource(R.string.home_notice_notice)
-    )
-    AnimatedVisibility(
-        visible = isTabsVisible,
-        enter = slideInVertically(
-            initialOffsetY = { -it },
-            animationSpec = tween(durationMillis = 150)
-        ),
-        exit = slideOutVertically(
-            targetOffsetY = { -it },
-            animationSpec = tween(durationMillis = 150)
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-                .background(color = NeutralColor.WHITE)
-        ) {
-            TabRow(
-                selectedTabIndex = selectTabData,
-                modifier = Modifier
-                    .wrapContentWidth(align = Alignment.Start)
-                    .height(56.dp)
-                    .padding(start = 16.dp, end = 16.dp),
-                containerColor = NeutralColor.WHITE,
-                contentColor = NeutralColor.BLACK,
-                indicator = { tabPositions ->
-                    TabRowDefaults.SecondaryIndicator(
-                        Modifier
-                            .tabIndicatorOffset(tabPositions[selectTabData]),
-                        height = 2.dp,
-                        color = NeutralColor.BLACK
-                    )
-                },
-                divider = {}
-            ) {
-                tabItem.forEachIndexed { index, title ->
-                    val isSelected = selectTabData == index
-                    Tab(
-                        selected = isSelected,
-                        onClick = {
-                            when (index) {
-                                NAV_NOTICE_ACTIVATE -> allClick()
-                                NAV_NOTICE_NOTIFY_INDEX -> noticeClick()
-                            }
-                        },
-                        text = {
-                            Text(
-                                text = title,
-                                style = TextComponent.BODY_1_M_14,
-                                color = if (isSelected) NeutralColor.GRAY_600 else NeutralColor.GRAY_400,
-                            )
-                        },
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
 internal fun AnimatedFeedTabLayout(
     selectTabData: Int,
     recentClick: () -> Unit,
@@ -244,186 +174,312 @@ private fun DistanceText(distance: String, onClick: (String) -> Unit, isSelect: 
     )
 }
 
-@Composable
-internal fun NoticeComponentView(data: Notice) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(182.dp)
-            .background(color = NeutralColor.WHITE)
-            .padding(start = 24.dp, top = 16.dp, end = 24.dp, bottom = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Top),
-        horizontalAlignment = Alignment.Start,
+object NotificationUi {
+
+    @Composable
+    internal fun AnimatedNoticeTabLayout(
+        selectTabData: Int,
+        allClick: () -> Unit,
+        noticeClick: () -> Unit,
+        isTabsVisible: Boolean,
     ) {
-        Row(
+        val tabItem = listOf(
+            stringResource(R.string.home_notice_activate),
+            stringResource(R.string.home_notice_notice)
+        )
+        AnimatedVisibility(
+            visible = isTabsVisible,
+            enter = slideInVertically(
+                initialOffsetY = { -it },
+                animationSpec = tween(durationMillis = 150)
+            ),
+            exit = slideOutVertically(
+                targetOffsetY = { -it },
+                animationSpec = tween(durationMillis = 150)
+            )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .background(color = NeutralColor.WHITE)
+            ) {
+                TabRow(
+                    selectedTabIndex = selectTabData,
+                    modifier = Modifier
+                        .wrapContentWidth(align = Alignment.Start)
+                        .height(56.dp)
+                        .padding(start = 16.dp, end = 16.dp),
+                    containerColor = NeutralColor.WHITE,
+                    contentColor = NeutralColor.BLACK,
+                    indicator = { tabPositions ->
+                        TabRowDefaults.SecondaryIndicator(
+                            Modifier
+                                .tabIndicatorOffset(tabPositions[selectTabData]),
+                            height = 2.dp,
+                            color = NeutralColor.BLACK
+                        )
+                    },
+                    divider = {}
+                ) {
+                    tabItem.forEachIndexed { index, title ->
+                        val isSelected = selectTabData == index
+                        Tab(
+                            selected = isSelected,
+                            onClick = {
+                                when (index) {
+                                    NAV_NOTICE_ACTIVATE -> allClick()
+                                    NAV_NOTICE_NOTIFY_INDEX -> noticeClick()
+                                }
+                            },
+                            text = {
+                                Text(
+                                    text = title,
+                                    style = TextComponent.BODY_1_M_14,
+                                    color = if (isSelected) NeutralColor.GRAY_600 else NeutralColor.GRAY_400,
+                                )
+                            },
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+
+    @Composable
+    internal fun NoticeComponentView(data: Notice) {
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(18.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
-            verticalAlignment = Alignment.CenterVertically,
+                .height(182.dp)
+                .background(color = NeutralColor.WHITE)
+                .padding(start = 24.dp, top = 16.dp, end = 24.dp, bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Top),
+            horizontalAlignment = Alignment.Start,
         ) {
-            Image(
-                painter = painterResource(com.phew.core_design.R.drawable.ic_notification),
-                contentDescription = data.title,
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(18.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Image(
+                    painter = painterResource(com.phew.core_design.R.drawable.ic_notification),
+                    contentDescription = data.title,
+                )
+                Text(
+                    text = stringResource(R.string.home_notice_notice),
+                    style = TextComponent.CAPTION_1_SB_12,
+                    color = NeutralColor.GRAY_400,
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.Start
+                )
+                Text(
+                    text = data.viewTime,
+                    style = TextComponent.CAPTION_1_SB_12,
+                    color = NeutralColor.GRAY_400
+                )
+            }
             Text(
-                text = stringResource(R.string.home_notice_notice),
-                style = TextComponent.CAPTION_1_SB_12,
-                color = NeutralColor.GRAY_400,
-                modifier = Modifier.weight(1f),
-                textAlign = TextAlign.Start
-            )
-            Text(
-                text = data.viewTime,
-                style = TextComponent.CAPTION_1_SB_12,
-                color = NeutralColor.GRAY_400
+                text = data.title,
+                style = TextComponent.SUBTITLE_1_M_16,
+                color = NeutralColor.GRAY_600,
+                modifier = Modifier.fillMaxWidth()
             )
         }
-        Text(
-            text = data.title,
-            style = TextComponent.SUBTITLE_1_M_16,
-            color = NeutralColor.GRAY_600,
-            modifier = Modifier.fillMaxWidth()
-        )
     }
-}
 
-@Composable
-internal fun NotifyViewUnread(data: Notification) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(102.dp)
-            .background(color = Primary.LIGHT_1)
-            .padding(horizontal = 24.dp, vertical = 18.dp)
-    ) {
-        Row(
+    @Composable
+    internal fun NotifyViewUnread(data: Notification) {
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(18.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
-            verticalAlignment = Alignment.CenterVertically,
+                .height(102.dp)
+                .background(color = Primary.LIGHT_1)
+                .padding(horizontal = 24.dp, vertical = 18.dp)
         ) {
-            Image(
-                painter = when (data) {
-                    is FollowNotification -> painterResource(com.phew.core_design.R.drawable.ic_users_filled)
-                    is UserBlockNotification,
-                    is UserDeleteNotification -> painterResource(com.phew.core_design.R.drawable.ic_danger)
-                    else -> painterResource(com.phew.core_design.R.drawable.ic_card_filled_blue)
-                },
-                contentDescription = ""
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(18.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Image(
+                    painter = when (data) {
+                        is FollowNotification -> painterResource(com.phew.core_design.R.drawable.ic_users_filled)
+                        is UserBlockNotification,
+                        is UserDeleteNotification,
+                            -> painterResource(com.phew.core_design.R.drawable.ic_danger)
+
+                        else -> painterResource(com.phew.core_design.R.drawable.ic_card_filled_blue)
+                    },
+                    contentDescription = ""
+                )
+                Text(
+                    text = when (data) {
+                        is FollowNotification,
+                        is UserCommentLike,
+                        is UserCommentWrite,
+                            -> stringResource(R.string.home_notice_item_follow)
+
+                        is UserBlockNotification,
+                        is UserDeleteNotification,
+                            -> stringResource(R.string.home_notice_item_limit)
+
+                        is FeedLikeNotification -> stringResource(R.string.home_notice_item_feed_like)
+                    },
+                    style = TextComponent.CAPTION_1_SB_12,
+                    color = NeutralColor.GRAY_400,
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.Start
+                )
+                Text(
+                    text = when (data) {
+                        is FeedLikeNotification -> data.viewTime
+                        is FollowNotification -> data.viewTime
+                        is UserBlockNotification -> data.viewTime
+                        is UserCommentLike -> data.viewTime
+                        is UserCommentWrite -> data.viewTime
+                        is UserDeleteNotification -> data.viewTime
+                    },
+                    style = TextComponent.CAPTION_1_SB_12,
+                    color = NeutralColor.GRAY_400
+                )
+            }
             Text(
                 text = when (data) {
-                    is FollowNotification,
-                    is UserCommentLike,
-                    is UserCommentWrite -> stringResource(R.string.home_notice_item_follow)
-                    is UserBlockNotification,
-                    is UserDeleteNotification -> stringResource(R.string.home_notice_item_limit)
-                    is FeedLikeNotification -> stringResource(R.string.home_notice_item_feed_like)
+                    is FeedLikeNotification -> stringResource(
+                        R.string.home_notice_like_comment,
+                        data.nickName
+                    )
+
+                    is FollowNotification -> stringResource(
+                        R.string.home_notice_follow_comment,
+                        data.nickName
+                    )
+
+                    is UserBlockNotification -> stringResource(
+                        R.string.home_notice_limit_card_comment,
+                        data.blockTimeView
+                    )
+
+                    is UserCommentLike -> stringResource(
+                        R.string.home_notice_limit_card_comment,
+                        data.nickName
+                    )
+
+                    is UserCommentWrite -> stringResource(
+                        R.string.home_notice_under_card_comment,
+                        data.nickName
+                    )
+
+                    is UserDeleteNotification -> stringResource(R.string.home_notice_delete_card)
                 },
-                style = TextComponent.CAPTION_1_SB_12,
-                color = NeutralColor.GRAY_400,
-                modifier = Modifier.weight(1f),
-                textAlign = TextAlign.Start
-            )
-            Text(
-                text = when(data){
-                    is FeedLikeNotification -> data.viewTime
-                    is FollowNotification -> data.viewTime
-                    is UserBlockNotification -> data.viewTime
-                    is UserCommentLike -> data.viewTime
-                    is UserCommentWrite -> data.viewTime
-                    is UserDeleteNotification -> data.viewTime
-                },
-                style = TextComponent.CAPTION_1_SB_12,
-                color = NeutralColor.GRAY_400
+                style = TextComponent.TITLE_2_SB_16,
+                color = NeutralColor.GRAY_600,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp)
             )
         }
-        Text(
-            text = when(data){
-                is FeedLikeNotification -> stringResource(R.string.home_notice_like_comment , data.nickName)
-                is FollowNotification -> stringResource(R.string.home_notice_follow_comment , data.nickName)
-                is UserBlockNotification -> stringResource(R.string.home_notice_limit_card_comment , data.blockTimeView)
-                is UserCommentLike -> stringResource(R.string.home_notice_limit_card_comment , data.nickName)
-                is UserCommentWrite -> stringResource(R.string.home_notice_under_card_comment , data.nickName)
-                is UserDeleteNotification -> stringResource(R.string.home_notice_delete_card)
-            },
-            style = TextComponent.TITLE_2_SB_16,
-            color = NeutralColor.GRAY_600,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 4.dp)
-        )
     }
-}
 
-@Composable
-internal fun NotifyViewRead(data: Notification) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(102.dp)
-            .background(color = NeutralColor.WHITE)
-            .padding(horizontal = 24.dp, vertical = 18.dp)
-    ) {
-        Row(
+    @Composable
+    internal fun NotifyViewRead(data: Notification) {
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(18.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
-            verticalAlignment = Alignment.CenterVertically,
+                .height(102.dp)
+                .background(color = NeutralColor.WHITE)
+                .padding(horizontal = 24.dp, vertical = 18.dp)
         ) {
-            Image(
-                painter = when (data) {
-                    is FollowNotification -> painterResource(com.phew.core_design.R.drawable.ic_users_filled)
-                    is UserBlockNotification,
-                    is UserDeleteNotification -> painterResource(com.phew.core_design.R.drawable.ic_danger)
-                    else -> painterResource(com.phew.core_design.R.drawable.ic_card_filled_blue)
-                },
-                contentDescription = ""
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(18.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Image(
+                    painter = when (data) {
+                        is FollowNotification -> painterResource(com.phew.core_design.R.drawable.ic_users_filled)
+                        is UserBlockNotification,
+                        is UserDeleteNotification,
+                            -> painterResource(com.phew.core_design.R.drawable.ic_danger)
+
+                        else -> painterResource(com.phew.core_design.R.drawable.ic_card_filled_blue)
+                    },
+                    contentDescription = ""
+                )
+                Text(
+                    text = when (data) {
+                        is FollowNotification,
+                        is UserCommentLike,
+                        is UserCommentWrite,
+                            -> stringResource(R.string.home_notice_item_follow)
+
+                        is UserBlockNotification,
+                        is UserDeleteNotification,
+                            -> stringResource(R.string.home_notice_item_limit)
+
+                        is FeedLikeNotification -> stringResource(R.string.home_notice_item_feed_like)
+                    },
+                    style = TextComponent.CAPTION_1_SB_12,
+                    color = NeutralColor.GRAY_400,
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.Start
+                )
+                Text(
+                    text = when (data) {
+                        is FeedLikeNotification -> data.viewTime
+                        is FollowNotification -> data.viewTime
+                        is UserBlockNotification -> data.viewTime
+                        is UserCommentLike -> data.viewTime
+                        is UserCommentWrite -> data.viewTime
+                        is UserDeleteNotification -> data.viewTime
+                    },
+                    style = TextComponent.CAPTION_1_SB_12,
+                    color = NeutralColor.GRAY_400
+                )
+            }
             Text(
                 text = when (data) {
-                    is FollowNotification,
-                    is UserCommentLike,
-                    is UserCommentWrite -> stringResource(R.string.home_notice_item_follow)
-                    is UserBlockNotification,
-                    is UserDeleteNotification -> stringResource(R.string.home_notice_item_limit)
-                    is FeedLikeNotification -> stringResource(R.string.home_notice_item_feed_like)
+                    is FeedLikeNotification -> stringResource(
+                        R.string.home_notice_like_comment,
+                        data.nickName
+                    )
+
+                    is FollowNotification -> stringResource(
+                        R.string.home_notice_follow_comment,
+                        data.nickName
+                    )
+
+                    is UserBlockNotification -> stringResource(
+                        R.string.home_notice_limit_card_comment,
+                        data.blockTimeView
+                    )
+
+                    is UserCommentLike -> stringResource(
+                        R.string.home_notice_limit_card_comment,
+                        data.nickName
+                    )
+
+                    is UserCommentWrite -> stringResource(
+                        R.string.home_notice_under_card_comment,
+                        data.nickName
+                    )
+
+                    is UserDeleteNotification -> stringResource(R.string.home_notice_delete_card)
                 },
-                style = TextComponent.CAPTION_1_SB_12,
-                color = NeutralColor.GRAY_400,
-                modifier = Modifier.weight(1f),
-                textAlign = TextAlign.Start
-            )
-            Text(
-                text = when(data){
-                    is FeedLikeNotification -> data.viewTime
-                    is FollowNotification -> data.viewTime
-                    is UserBlockNotification -> data.viewTime
-                    is UserCommentLike -> data.viewTime
-                    is UserCommentWrite -> data.viewTime
-                    is UserDeleteNotification -> data.viewTime
-                },
-                style = TextComponent.CAPTION_1_SB_12,
-                color = NeutralColor.GRAY_400
+                style = TextComponent.TITLE_2_SB_16,
+                color = NeutralColor.GRAY_600,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp)
             )
         }
-        Text(
-            text = when(data){
-                is FeedLikeNotification -> stringResource(R.string.home_notice_like_comment , data.nickName)
-                is FollowNotification -> stringResource(R.string.home_notice_follow_comment , data.nickName)
-                is UserBlockNotification -> stringResource(R.string.home_notice_limit_card_comment , data.blockTimeView)
-                is UserCommentLike -> stringResource(R.string.home_notice_limit_card_comment , data.nickName)
-                is UserCommentWrite -> stringResource(R.string.home_notice_under_card_comment , data.nickName)
-                is UserDeleteNotification -> stringResource(R.string.home_notice_delete_card)
-            },
-            style = TextComponent.TITLE_2_SB_16,
-            color = NeutralColor.GRAY_600,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 4.dp)
-        )
     }
 }

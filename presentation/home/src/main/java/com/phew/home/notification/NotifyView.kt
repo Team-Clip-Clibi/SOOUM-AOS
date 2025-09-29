@@ -56,12 +56,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.paging.LoadState
 import com.phew.domain.dto.Notification
-import com.phew.home.AnimatedNoticeTabLayout
 import com.phew.home.NAV_NOTICE_ACTIVATE
 import com.phew.home.NAV_NOTICE_NOTIFY_INDEX
-import com.phew.home.NoticeComponentView
-import com.phew.home.NotifyViewRead
-import com.phew.home.NotifyViewUnread
+import com.phew.home.NotificationUi
 import com.phew.home.R
 import kotlinx.coroutines.launch
 
@@ -119,7 +116,7 @@ fun NotifyView(
                         } else (read.loadState.refresh as LoadState.Error).error
                         when (error.message) {
                             ERROR_NETWORK -> {
-                                LaunchedEffect("network_refresh_snackbar") {
+                                LaunchedEffect(error.message) {
                                     snackBarHostState.showSnackbar(
                                         message = networkErrorMsg,
                                         withDismissAction = true
@@ -164,7 +161,7 @@ fun NotifyView(
                         val error = (notices.loadState.refresh as LoadState.Error).error
                         when (error.message) {
                             ERROR_NETWORK -> {
-                                LaunchedEffect("network_refresh_snackbar") {
+                                LaunchedEffect(error.message) {
                                     snackBarHostState.showSnackbar(
                                         message = networkErrorMsg,
                                         withDismissAction = true
@@ -215,7 +212,7 @@ private fun TopBar(
         onClick = backClick,
         appBarText = stringResource(R.string.home_notice_top_bar)
     )
-    AnimatedNoticeTabLayout(
+    NotificationUi.AnimatedNoticeTabLayout(
         allClick = allClick,
         noticeClick = noticeClick,
         isTabsVisible = isTabsVisible,
@@ -257,7 +254,7 @@ private fun NoticeView(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(with(density) { refreshingOffset + 20.dp }),
+                    .height(refreshingOffset + 20.dp),
                 contentAlignment = Alignment.Center
             ) {
                 val progress = if (isRefreshing) refreshProgress else refreshState.distanceFraction
@@ -288,7 +285,7 @@ private fun NoticeView(
                 key = { index -> data.peek(index)?.id ?: index }
             ) { index ->
                 val item = data[index] ?: return@items
-                NoticeComponentView(data = item)
+                NotificationUi.NoticeComponentView(data = item)
             }
 
             when (data.loadState.append) {
@@ -389,7 +386,7 @@ fun ActivateNotify(
                 key = { index -> unRead.peek(index)?.notificationId ?: index }
             ) { index ->
                 val item = unRead[index] ?: return@items
-                NotifyViewUnread(item)
+                NotificationUi.NotifyViewUnread(item)
             }
             when (unRead.loadState.refresh) {
                 is LoadState.Loading -> {
@@ -434,7 +431,7 @@ fun ActivateNotify(
                 key = { index -> read.peek(index)?.notificationId ?: index }
             ) { index ->
                 val item = read[index] ?: return@items
-                NotifyViewRead(item)
+                NotificationUi.NotifyViewRead(item)
             }
         }
     }
