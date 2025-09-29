@@ -51,7 +51,7 @@ interface Http {
     /**
      * Login url
      */
-    @GET(BuildConfig.API_URL_LOGIN)
+    @POST(BuildConfig.API_URL_LOGIN)
     suspend fun requestLogin(
         @Body body: InfoDTO,
     ): Response<TokenDTO>

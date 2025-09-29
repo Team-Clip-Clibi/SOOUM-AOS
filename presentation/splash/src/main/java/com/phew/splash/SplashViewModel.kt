@@ -21,7 +21,7 @@ class SplashViewModel @Inject constructor(
     @IsDebug private val isDebug: Boolean,
     @AppVersion private val appVersion: String,
     private val updateFcm: GetFirebaseToken,
-    private val notify : SaveNotify
+    private val notify : SaveNotify,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
     val usState: StateFlow<UiState> = _uiState.asStateFlow()

@@ -39,6 +39,7 @@ import com.phew.core_design.TextComponent
 import androidx.compose.ui.unit.dp
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.LargeButton
+import com.phew.domain.SIGN_UP_ALREADY_SIGN_UP
 import com.phew.domain.SIGN_UP_BANNED
 import com.phew.domain.SIGN_UP_OKAY
 import com.phew.domain.SIGN_UP_REGISTERED
@@ -51,6 +52,7 @@ fun OnBoarding(
     signUp: () -> Unit,
     alreadySignUp: () -> Unit,
     back: () -> Unit,
+    home : () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
@@ -67,7 +69,7 @@ fun OnBoarding(
             )
         }
         if (uiState.login is UiState.Success) {
-            //TODO Home 화면 포팅
+            home()
         }
     }
     Scaffold(
@@ -84,7 +86,9 @@ fun OnBoarding(
                                 SIGN_UP_REGISTERED -> {
                                     viewModel.login()
                                 }
-
+                                SIGN_UP_ALREADY_SIGN_UP -> {
+                                    viewModel.login()
+                                }
                                 else -> dialogShow.value = true
                             }
                         }

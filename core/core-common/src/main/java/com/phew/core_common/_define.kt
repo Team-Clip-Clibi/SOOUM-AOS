@@ -32,3 +32,6 @@ const val APP_ERROR_CODE = 505
 //banner category
 const val BANNER_NEWS = "news"
 const val BANNER_SERVICE = "service"
+
+//TOKEN
+const val TOKEN_FORM ="Bearer "

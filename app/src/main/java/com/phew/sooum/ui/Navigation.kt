@@ -35,8 +35,8 @@ import com.phew.core_common.NAV_SPLASH
 import com.phew.core_design.BottomBarComponent
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.slideComposable
-import com.phew.home.FeedView
-import com.phew.home.NotifyView
+import com.phew.home.feed.FeedView
+import com.phew.home.notification.NotifyView
 import com.phew.home.viewModel.HomeViewModel
 import com.phew.sign_up.AuthCodeView
 import com.phew.sign_up.NickNameView
@@ -128,7 +128,10 @@ fun NavGraphBuilder.signUpNabGraph(
                 back = {
                     finish()
                 },
-                viewModel = signUpViewModel
+                viewModel = signUpViewModel,
+                home = {
+                    navController.navigate(NAV_HOME)
+                }
             )
         }
 
@@ -139,7 +142,7 @@ fun NavGraphBuilder.signUpNabGraph(
             AuthCodeView(
                 viewModel = signUpViewModel,
                 home = {
-                    navController.navigate(NAV_HOME_FEED)
+                    navController.navigate(NAV_HOME)
                 },
                 onBack = {
                     navController.popBackStack()
@@ -195,7 +198,7 @@ fun NavGraphBuilder.signUpNabGraph(
         slideComposable(NAV_SIGN_UP_FINISH) {
             SignUpFinish(
                 home = {
-                    navController.navigate(NAV_HOME_FEED)
+                    navController.navigate(NAV_HOME)
                 }
             )
         }
@@ -260,7 +263,6 @@ fun NavGraphBuilder.homeGraph(
                 navController = homeNavController,
                 startDestination = NAV_HOME_FEED,
                 modifier = Modifier.padding(
-                    top = paddingValues.calculateTopPadding(),
                     bottom = paddingValues.calculateBottomPadding()
                 )
             ) {
@@ -271,14 +273,14 @@ fun NavGraphBuilder.homeGraph(
                         locationPermission = locationPermission,
                         dialogDismiss = dialogDismiss,
                         closeDialog = closeDialog,
-                        noticeClick = { navController.navigate(NAV_HOME_NOTIFY) }
+                        noticeClick = { homeNavController.navigate(NAV_HOME_NOTIFY) }
                     )
                 }
                 slideComposable(NAV_HOME_NOTIFY) {
                     NotifyView(
                         viewModel = homeViewModel,
                         snackBarHostState = snackBarHostState,
-                        backClick = { navController.popBackStack() },
+                        backClick = { homeNavController.popBackStack() },
                         logout = {}
                     )
                 }

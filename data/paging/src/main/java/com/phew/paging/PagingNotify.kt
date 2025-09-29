@@ -7,6 +7,7 @@ import com.phew.core_common.ERROR_LOGOUT
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.HTTP_INVALID_TOKEN
 import com.phew.core_common.HTTP_NO_MORE_CONTENT
+import com.phew.core_common.TOKEN_FORM
 import com.phew.domain.BuildConfig
 import com.phew.domain.dto.Notice
 import com.phew.domain.dto.Token
@@ -29,10 +30,10 @@ class PagingNotify @Inject constructor(
             val token = deviceRepository.requestToken(BuildConfig.TOKEN_KEY)
             val key = params.key ?: -1
             val result = if (key == -1) {
-                networkRepository.requestNotice(accessToken = token.second)
+                networkRepository.requestNotice(accessToken = TOKEN_FORM + token.second)
             } else {
                 networkRepository.requestNoticePatch(
-                    accessToken = token.second,
+                    accessToken = TOKEN_FORM +token.second,
                     lastId = key
                 )
             }
@@ -68,10 +69,10 @@ class PagingNotify @Inject constructor(
                     }
                     val newToken = deviceRepository.requestToken(BuildConfig.TOKEN_KEY)
                     val reRequest = if (params.key == -1) {
-                        networkRepository.requestNotice(accessToken = newToken.second)
+                        networkRepository.requestNotice(accessToken = TOKEN_FORM +newToken.second)
                     } else {
                         networkRepository.requestNoticePatch(
-                            accessToken = newToken.second,
+                            accessToken = TOKEN_FORM +newToken.second,
                             lastId = params.key!!
                         )
                     }
