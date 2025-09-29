@@ -1,4 +1,4 @@
-package com.phew.home
+package com.phew.home.feed
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -59,6 +59,11 @@ import com.phew.core_design.TextComponent
 import com.phew.domain.dto.FeedData
 import com.phew.domain.dto.Notice
 import com.phew.domain.dto.Notification
+import com.phew.home.AnimatedFeedTabLayout
+import com.phew.home.NAV_HOME_FEED_INDEX
+import com.phew.home.NAV_HOME_NEAR_INDEX
+import com.phew.home.NAV_HOME_POPULAR_INDEX
+import com.phew.home.R
 import com.phew.home.viewModel.Home
 import com.phew.home.viewModel.UiState
 

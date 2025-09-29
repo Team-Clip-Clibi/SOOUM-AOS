@@ -1,4 +1,4 @@
-package com.phew.home
+package com.phew.home.notification
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.SnackbarHostState
@@ -55,11 +54,15 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.Dp
 import androidx.paging.LoadState
-import com.airbnb.lottie.LottieComposition
 import com.phew.domain.dto.Notification
+import com.phew.home.AnimatedNoticeTabLayout
+import com.phew.home.NAV_NOTICE_ACTIVATE
+import com.phew.home.NAV_NOTICE_NOTIFY_INDEX
+import com.phew.home.NoticeComponentView
+import com.phew.home.NotifyViewRead
+import com.phew.home.NotifyViewUnread
+import com.phew.home.R
 import kotlinx.coroutines.launch
 
 
@@ -68,7 +71,7 @@ fun NotifyView(
     viewModel: HomeViewModel,
     backClick: () -> Unit,
     logout: () -> Unit,
-    snackBarHostState: SnackbarHostState
+    snackBarHostState: SnackbarHostState,
 ) {
     var selectIndex by remember { mutableIntStateOf(NAV_NOTICE_ACTIVATE) }
     val lazyListState = rememberLazyListState()
@@ -105,10 +108,11 @@ fun NotifyView(
 
         when (selectIndex) {
             NAV_NOTICE_ACTIVATE -> {
-                when{
-                    unRead.loadState.refresh is LoadState.Loading || read.loadState.refresh is LoadState.Loading ->{
+                when {
+                    unRead.loadState.refresh is LoadState.Loading || read.loadState.refresh is LoadState.Loading -> {
                         EmptyNotifyView()
                     }
+
                     unRead.loadState.refresh is LoadState.Error || read.loadState.refresh is LoadState.Error -> {
                         val error = if (unRead.loadState.refresh is LoadState.Error) {
                             (unRead.loadState.refresh as LoadState.Error).error
@@ -127,9 +131,11 @@ fun NotifyView(
                             else -> error.cause?.printStackTrace()
                         }
                     }
+
                     unRead.itemCount == 0 && read.itemCount == 0 -> {
                         EmptyNotifyView()
                     }
+
                     else -> ActivateNotify(
                         read = read,
                         unRead = unRead,
@@ -203,7 +209,7 @@ private fun TopBar(
     allClick: () -> Unit,
     noticeClick: () -> Unit,
     isTabsVisible: Boolean,
-    selectIndex: Int
+    selectIndex: Int,
 ) {
     AppBar.IconLeftAppBar(
         onClick = backClick,
@@ -223,7 +229,7 @@ private fun NoticeView(
     data: LazyPagingItems<Notice>,
     lazyListState: LazyListState,
     nestedScrollConnection: NestedScrollConnection,
-    failToLoad: () -> Unit
+    failToLoad: () -> Unit,
 ) {
     val refreshState = rememberPullToRefreshState()
     val refreshingOffset = 56.dp
@@ -326,7 +332,7 @@ fun ActivateNotify(
     read: LazyPagingItems<Notification>,
     lazyListState: LazyListState,
     nestedScrollConnection: NestedScrollConnection,
-    failToLoad: () -> Unit
+    failToLoad: () -> Unit,
 ) {
     val refreshState = rememberPullToRefreshState()
     val refreshOffset = 56.dp
@@ -347,7 +353,91 @@ fun ActivateNotify(
             failToLoad()
         }
     }
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = { unRead.refresh() },
+        indicator = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(refreshOffset + 20.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                val progress = if (isRefreshing) refreshProgress else refreshState.distanceFraction
+                if (isRefreshing || refreshState.distanceFraction > 0f) {
+                    LottieAnimation(
+                        composition = composition,
+                        progress = { progress },
+                        modifier = Modifier.size(60.dp)
+                    )
+                }
+            }
+        }
+    ) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .nestedScroll(nestedScrollConnection)
+                .graphicsLayer {
+                    translationY =
+                        refreshState.distanceFraction * with(density) { refreshOffset.toPx() }
+                },
+            state = lazyListState
+        ) {
+            items(
+                count = unRead.itemCount,
+                key = { index -> unRead.peek(index)?.notificationId ?: index }
+            ) { index ->
+                val item = unRead[index] ?: return@items
+                NotifyViewUnread(item)
+            }
+            when (unRead.loadState.refresh) {
+                is LoadState.Loading -> {
+                    item {
+                        val appendProgress by animateLottieCompositionAsState(
+                            composition = composition,
+                            iterations = LottieConstants.IterateForever,
+                            isPlaying = true
+                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            LottieAnimation(
+                                composition = composition,
+                                progress = { appendProgress },
+                                modifier = Modifier.size(48.dp)
+                            )
+                        }
+                    }
+                }
 
+                is LoadState.Error -> {
+                    failToLoad()
+                }
+
+                else -> Unit
+            }
+            if (read.itemCount > 0) {
+                item {
+                    Text(
+                        text = stringResource(R.string.home_notice_last_alarm),
+                        style = TextComponent.SUBTITLE_3_SB_14,
+                        color = NeutralColor.BLACK
+                    )
+                }
+            }
+            items(
+                count = read.itemCount,
+                key = { index -> read.peek(index)?.notificationId ?: index }
+            ) { index ->
+                val item = read[index] ?: return@items
+                NotifyViewRead(item)
+            }
+        }
+    }
 }
 
 @Composable
