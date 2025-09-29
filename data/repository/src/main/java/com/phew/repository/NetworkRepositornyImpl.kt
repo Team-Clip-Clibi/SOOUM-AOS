@@ -289,7 +289,7 @@ class NetworkRepositoryImpl @Inject constructor(private val http: Http) : Networ
             val request = http.requestNotice(
                 bearerToken = accessToken
             )
-            if (!request.isSuccessful || request.body() == null) return DataResult.Fail(
+            if (!request.isSuccessful) return DataResult.Fail(
                 code = request.code(),
                 message = request.message()
             )
@@ -326,7 +326,7 @@ class NetworkRepositoryImpl @Inject constructor(private val http: Http) : Networ
                 bearerToken = accessToken,
                 lastId = lastId
             )
-            if (!request.isSuccessful || request.body() == null) return DataResult.Fail(
+            if (!request.isSuccessful) return DataResult.Fail(
                 code = request.code(),
                 message = request.message()
             )
@@ -357,7 +357,7 @@ class NetworkRepositoryImpl @Inject constructor(private val http: Http) : Networ
     override suspend fun requestNotificationUnRead(accessToken: String): DataResult<Pair<Int, List<Notification>>> {
         try {
             val request = http.requestNotificationUnRead(bearerToken = accessToken)
-            if (!request.isSuccessful || request.body() == null) {
+            if (!request.isSuccessful) {
                 return DataResult.Fail(code = request.code(), message = request.message())
             }
             val data = request.body()!!
@@ -385,7 +385,7 @@ class NetworkRepositoryImpl @Inject constructor(private val http: Http) : Networ
         try {
             val request =
                 http.requestNotificationUnReadPatch(bearerToken = accessToken, lastId = lastId)
-            if (!request.isSuccessful || request.body() == null) {
+            if (!request.isSuccessful) {
                 return DataResult.Fail(code = request.code(), message = request.message())
             }
             val data = request.body()!!
@@ -410,7 +410,7 @@ class NetworkRepositoryImpl @Inject constructor(private val http: Http) : Networ
         try {
             val request =
                 http.requestNotificationRead(bearerToken = accessToken)
-            if (!request.isSuccessful || request.body() == null) {
+            if (!request.isSuccessful) {
                 return DataResult.Fail(code = request.code(), message = request.message())
             }
             val data = request.body()!!
@@ -438,7 +438,7 @@ class NetworkRepositoryImpl @Inject constructor(private val http: Http) : Networ
         try {
             val request =
                 http.requestNotificationReadPatch(bearerToken = accessToken, lastId = lastId)
-            if (!request.isSuccessful || request.body() == null) {
+            if (!request.isSuccessful) {
                 return DataResult.Fail(code = request.code(), message = request.message())
             }
             val data = request.body()!!
