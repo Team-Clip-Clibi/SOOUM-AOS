@@ -53,13 +53,12 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
-import com.phew.core_design.CardViewComponent
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.TextComponent
 import com.phew.domain.dto.FeedData
 import com.phew.domain.dto.Notice
 import com.phew.domain.dto.Notification
-import com.phew.home.AnimatedFeedTabLayout
+import com.phew.home.FeedUi
 import com.phew.home.NAV_HOME_FEED_INDEX
 import com.phew.home.NAV_HOME_NEAR_INDEX
 import com.phew.home.NAV_HOME_POPULAR_INDEX
@@ -136,10 +135,10 @@ fun FeedView(
                 description = stringResource(R.string.home_feed_dialog_location_content),
                 buttonTextStart = stringResource(R.string.home_feed_dialog_location_negative),
                 buttonTextEnd = stringResource(R.string.home_feed_dialog_location_positive),
-                onClick = { locationPermission },
+                onClick = { locationPermission() },
                 onDismiss = {
                     closeDialog()
-                    viewModel::initTestData
+                    viewModel.initTestData()
                 }
             )
         }
@@ -166,7 +165,7 @@ private fun TopLayout(
             onClick = noticeClick,
             newAlarm = notice.itemCount != 0 && activate.itemCount != 0,
         )
-        AnimatedFeedTabLayout(
+        FeedUi.AnimatedFeedTabLayout(
             selectTabData = selectIndex,
             recentClick = {
                 recentClick()
@@ -259,7 +258,7 @@ private fun FeedListView(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(with(density) { refreshingOffset + 20.dp }),
+                    .height(refreshingOffset + 20.dp),
                 contentAlignment = Alignment.Center
             ) {
                 val lottieProgress = if (isRefreshing) {
@@ -289,7 +288,7 @@ private fun FeedListView(
             state = lazyListState
         ) {
             items(feedItems) { feedItem ->
-                CardViewComponent.FeedCardView(
+                FeedUi.FeedCardView(
                     location = feedItem.location,
                     writeTime = feedItem.writeTime,
                     commentValue = feedItem.commentValue,

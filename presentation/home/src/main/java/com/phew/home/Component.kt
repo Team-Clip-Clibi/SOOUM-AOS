@@ -1,21 +1,28 @@
 package com.phew.home
 
+import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
@@ -32,146 +39,389 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
+import coil3.compose.AsyncImage
+import com.phew.core_design.OpacityColor
 import com.phew.core_design.Primary
 import com.phew.domain.dto.FeedLikeNotification
 import com.phew.domain.dto.FollowNotification
 import com.phew.domain.dto.Notice
 import com.phew.domain.dto.Notification
-import com.phew.domain.dto.Notify
 import com.phew.domain.dto.UserBlockNotification
 import com.phew.domain.dto.UserCommentLike
 import com.phew.domain.dto.UserCommentWrite
 import com.phew.domain.dto.UserDeleteNotification
 
-@Composable
-internal fun AnimatedFeedTabLayout(
-    selectTabData: Int,
-    recentClick: () -> Unit,
-    popularClick: () -> Unit,
-    nearClick: () -> Unit,
-    isTabsVisible: Boolean,
-    onDistanceClick: (Int) -> Unit
-) {
-    val tabItem = listOf(
-        stringResource(R.string.home_feed_tab_recent_card),
-        stringResource(R.string.home_feed_tab_popular_card),
-        stringResource(R.string.home_feed_tab_near_card)
-    )
-
-    AnimatedVisibility(
-        visible = isTabsVisible,
-        enter = slideInVertically(
-            initialOffsetY = { -it },
-            animationSpec = tween(durationMillis = 150)
-        ),
-        exit = slideOutVertically(
-            targetOffsetY = { -it },
-            animationSpec = tween(durationMillis = 150)
-        )
+object FeedUi {
+    @Composable
+    internal fun AnimatedFeedTabLayout(
+        selectTabData: Int,
+        recentClick: () -> Unit,
+        popularClick: () -> Unit,
+        nearClick: () -> Unit,
+        isTabsVisible: Boolean,
+        onDistanceClick: (Int) -> Unit,
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-                .background(color = NeutralColor.WHITE)
+        val tabItem = listOf(
+            stringResource(R.string.home_feed_tab_recent_card),
+            stringResource(R.string.home_feed_tab_popular_card),
+            stringResource(R.string.home_feed_tab_near_card)
+        )
+
+        AnimatedVisibility(
+            visible = isTabsVisible,
+            enter = slideInVertically(
+                initialOffsetY = { -it },
+                animationSpec = tween(durationMillis = 150)
+            ),
+            exit = slideOutVertically(
+                targetOffsetY = { -it },
+                animationSpec = tween(durationMillis = 150)
+            )
         ) {
-            TabRow(
-                selectedTabIndex = selectTabData,
-                modifier = Modifier
-                    .wrapContentWidth(align = Alignment.Start)
-                    .height(56.dp)
-                    .padding(start = 16.dp, end = 16.dp),
-                containerColor = NeutralColor.WHITE,
-                contentColor = NeutralColor.BLACK,
-                indicator = { tabPositions ->
-                    TabRowDefaults.SecondaryIndicator(
-                        Modifier
-                            .tabIndicatorOffset(tabPositions[selectTabData]),
-                        height = 2.dp,
-                        color = NeutralColor.BLACK
-                    )
-                },
-                divider = {}
-            ) {
-                tabItem.forEachIndexed { index, title ->
-                    val isSelected = selectTabData == index
-                    Tab(
-                        selected = isSelected,
-                        onClick = {
-                            when (index) {
-                                NAV_HOME_FEED_INDEX -> recentClick()
-                                NAV_HOME_POPULAR_INDEX -> popularClick()
-                                NAV_HOME_NEAR_INDEX -> nearClick()
-                            }
-                        },
-                        text = {
-                            Text(
-                                text = title,
-                                style = TextComponent.TITLE_2_SB_16,
-                                color = if (isSelected) NeutralColor.BLACK else NeutralColor.GRAY_400
-                            )
-                        },
-                    )
-                }
-            }
-            HorizontalDivider(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(1.dp),
-                color = NeutralColor.GRAY_200
-            )
-            if (selectTabData == NAV_HOME_NEAR_INDEX) {
-                var selectDistance by remember { mutableIntStateOf(DISTANCE_1KM) }
-                Row(
+                    .wrapContentHeight()
+                    .background(color = NeutralColor.WHITE)
+            ) {
+                TabRow(
+                    selectedTabIndex = selectTabData,
+                    modifier = Modifier
+                        .wrapContentWidth(align = Alignment.Start)
+                        .height(56.dp)
+                        .padding(start = 16.dp, end = 16.dp),
+                    containerColor = NeutralColor.WHITE,
+                    contentColor = NeutralColor.BLACK,
+                    indicator = { tabPositions ->
+                        TabRowDefaults.SecondaryIndicator(
+                            Modifier
+                                .tabIndicatorOffset(tabPositions[selectTabData]),
+                            height = 2.dp,
+                            color = NeutralColor.BLACK
+                        )
+                    },
+                    divider = {}
+                ) {
+                    tabItem.forEachIndexed { index, title ->
+                        val isSelected = selectTabData == index
+                        Tab(
+                            selected = isSelected,
+                            onClick = {
+                                when (index) {
+                                    NAV_HOME_FEED_INDEX -> recentClick()
+                                    NAV_HOME_POPULAR_INDEX -> popularClick()
+                                    NAV_HOME_NEAR_INDEX -> nearClick()
+                                }
+                            },
+                            text = {
+                                Text(
+                                    text = title,
+                                    style = TextComponent.TITLE_2_SB_16,
+                                    color = if (isSelected) NeutralColor.BLACK else NeutralColor.GRAY_400
+                                )
+                            },
+                        )
+                    }
+                }
+                HorizontalDivider(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(56.dp)
-                        .background(color = NeutralColor.WHITE)
-                        .padding(start = 16.dp, end = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.Start),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    DistanceText(
-                        distance = stringResource(R.string.home_feed_1km_distance),
-                        onClick = { onDistanceClick(DISTANCE_1KM) },
-                        isSelect = selectDistance == DISTANCE_1KM
-                    )
-                    DistanceText(
-                        distance = stringResource(R.string.home_feed_5km_distance),
-                        onClick = { onDistanceClick(DISTANCE_5KM) },
-                        isSelect = selectDistance == DISTANCE_5KM
-                    )
-                    DistanceText(
-                        distance = stringResource(R.string.home_feed_10km_distance),
-                        onClick = { onDistanceClick(DISTANCE_10KM) },
-                        isSelect = selectDistance == DISTANCE_10KM
-                    )
-                    DistanceText(
-                        distance = stringResource(R.string.home_feed_20km_distance),
-                        onClick = { onDistanceClick(DISTANCE_20KM) },
-                        isSelect = selectDistance == DISTANCE_20KM
-                    )
+                        .height(1.dp),
+                    color = NeutralColor.GRAY_200
+                )
+                if (selectTabData == NAV_HOME_NEAR_INDEX) {
+                    val selectDistance by remember { mutableIntStateOf(DISTANCE_1KM) }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .background(color = NeutralColor.WHITE)
+                            .padding(start = 16.dp, end = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.Start),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        DistanceText(
+                            distance = stringResource(R.string.home_feed_1km_distance),
+                            onClick = { onDistanceClick(DISTANCE_1KM) },
+                            isSelect = selectDistance == DISTANCE_1KM
+                        )
+                        DistanceText(
+                            distance = stringResource(R.string.home_feed_5km_distance),
+                            onClick = { onDistanceClick(DISTANCE_5KM) },
+                            isSelect = selectDistance == DISTANCE_5KM
+                        )
+                        DistanceText(
+                            distance = stringResource(R.string.home_feed_10km_distance),
+                            onClick = { onDistanceClick(DISTANCE_10KM) },
+                            isSelect = selectDistance == DISTANCE_10KM
+                        )
+                        DistanceText(
+                            distance = stringResource(R.string.home_feed_20km_distance),
+                            onClick = { onDistanceClick(DISTANCE_20KM) },
+                            isSelect = selectDistance == DISTANCE_20KM
+                        )
+                    }
                 }
             }
         }
     }
-}
 
-@Composable
-private fun DistanceText(distance: String, onClick: (String) -> Unit, isSelect: Boolean) {
-    Text(
-        text = distance,
-        style = TextComponent.SUBTITLE_3_SB_14,
-        color = if (isSelect) NeutralColor.BLACK else NeutralColor.GRAY_400,
-        modifier = Modifier
-            .width(48.dp)
-            .height(37.dp)
-            .padding(start = 10.dp, top = 8.dp, end = 10.dp, bottom = 8.dp)
-            .clickable { onClick(distance) }
-    )
+    @Composable
+    private fun DistanceText(distance: String, onClick: (String) -> Unit, isSelect: Boolean) {
+        Text(
+            text = distance,
+            style = TextComponent.SUBTITLE_3_SB_14,
+            color = if (isSelect) NeutralColor.BLACK else NeutralColor.GRAY_400,
+            modifier = Modifier
+                .width(48.dp)
+                .height(37.dp)
+                .padding(start = 10.dp, top = 8.dp, end = 10.dp, bottom = 8.dp)
+                .clickable { onClick(distance) }
+        )
+    }
+
+
+    @Composable
+    internal fun TemporaryCard(
+        limitedTime: String,
+        location: String,
+        writeTime: String,
+        commentValue: String,
+        likeValue: String,
+        uri: Uri,
+        content: String,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(206.dp)
+                .border(
+                    width = 1.dp,
+                    color = NeutralColor.GRAY_100,
+                    shape = RoundedCornerShape(size = 16.dp)
+                )
+                .clip(RoundedCornerShape(size = 16.dp))
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(172.dp)
+            ) {
+                AsyncImage(
+                    model = uri,
+                    contentDescription = "SOOUM FEED $content",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 32.dp, top = 32.dp, end = 32.dp, bottom = 32.dp)
+                        .height(82.dp)
+                        .background(
+                            color = OpacityColor.blackSmallColor,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .align(Alignment.Center),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = content,
+                        style = TextComponent.BODY_1_M_14,
+                        color = NeutralColor.WHITE,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(34.dp)
+                    .background(color = NeutralColor.WHITE)
+                    .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 8.dp),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Image(
+                    painter = painterResource(com.phew.core_design.R.drawable.ic_bomb),
+                    contentDescription = "Time Limit card : $limitedTime",
+                    modifier = Modifier.size(16.dp)
+                )
+                Text(
+                    text = limitedTime,
+                    style = TextComponent.CAPTION_2_M_12,
+                    color = Primary.DARK,
+                    modifier = Modifier.padding(start = 2.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Image(
+                    painter = painterResource(com.phew.core_design.R.drawable.ic_spot),
+                    contentDescription = "Time Limit card : $limitedTime",
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Image(
+                    painter = painterResource(com.phew.core_design.R.drawable.ic_location),
+                    modifier = Modifier.size(14.dp),
+                    contentDescription = "location $location",
+                )
+                Text(
+                    text = location,
+                    style = TextComponent.CAPTION_2_M_12,
+                    color = NeutralColor.GRAY_500,
+                    modifier = Modifier.padding(start = 2.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Image(
+                    painter = painterResource(com.phew.core_design.R.drawable.ic_spot),
+                    contentDescription = "Time Limit card : $limitedTime",
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = writeTime,
+                    style = TextComponent.CAPTION_2_M_12,
+                    color = NeutralColor.GRAY_500,
+                    modifier = Modifier.weight(1f)
+                )
+                Image(
+                    painter = painterResource(com.phew.core_design.R.drawable.ic_message_circle),
+                    contentDescription = "comment $commentValue",
+                    modifier = Modifier.size(14.dp)
+                )
+                Text(
+                    text = commentValue,
+                    style = TextComponent.CAPTION_2_M_12,
+                    color = NeutralColor.GRAY_500,
+                    modifier = Modifier.padding(horizontal = 2.dp)
+                )
+                Image(
+                    painter = painterResource(com.phew.core_design.R.drawable.ic_heart),
+                    contentDescription = "like $likeValue",
+                    modifier = Modifier.size(14.dp)
+                )
+                Text(
+                    text = likeValue,
+                    style = TextComponent.CAPTION_2_M_12,
+                    color = NeutralColor.GRAY_500,
+                    modifier = Modifier.padding(horizontal = 2.dp)
+                )
+            }
+        }
+    }
+
+    @Composable
+    internal fun FeedCardView(
+        location: String,
+        writeTime: String,
+        commentValue: String,
+        likeValue: String,
+        uri: Uri,
+        content: String,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(206.dp)
+                .border(
+                    width = 1.dp,
+                    color = NeutralColor.GRAY_100,
+                    shape = RoundedCornerShape(size = 16.dp)
+                )
+                .clip(RoundedCornerShape(size = 16.dp))
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(172.dp)
+            ) {
+                AsyncImage(
+                    model = uri,
+                    contentDescription = "SOOUM FEED $content",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 32.dp, top = 32.dp, end = 32.dp, bottom = 32.dp)
+                        .height(82.dp)
+                        .background(
+                            color = OpacityColor.blackSmallColor,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .align(Alignment.Center),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = content,
+                        style = TextComponent.BODY_1_M_14,
+                        color = NeutralColor.WHITE,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(34.dp)
+                    .background(color = NeutralColor.WHITE)
+                    .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 8.dp),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Image(
+                    painter = painterResource(com.phew.core_design.R.drawable.ic_location),
+                    modifier = Modifier.size(14.dp),
+                    contentDescription = "location $location",
+                )
+                Text(
+                    text = location,
+                    style = TextComponent.CAPTION_2_M_12,
+                    color = NeutralColor.GRAY_500,
+                    modifier = Modifier.padding(start = 2.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Image(
+                    painter = painterResource(com.phew.core_design.R.drawable.ic_spot),
+                    contentDescription = "Time Limit card : $location",
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = writeTime,
+                    style = TextComponent.CAPTION_2_M_12,
+                    color = NeutralColor.GRAY_500,
+                    modifier = Modifier.weight(1f)
+                )
+                Image(
+                    painter = painterResource(com.phew.core_design.R.drawable.ic_message_circle),
+                    contentDescription = "comment $commentValue",
+                    modifier = Modifier.size(14.dp)
+                )
+                Text(
+                    text = commentValue,
+                    style = TextComponent.CAPTION_2_M_12,
+                    color = NeutralColor.GRAY_500,
+                    modifier = Modifier.padding(horizontal = 2.dp)
+                )
+                Image(
+                    painter = painterResource(com.phew.core_design.R.drawable.ic_heart),
+                    contentDescription = "like $likeValue",
+                    modifier = Modifier.size(14.dp)
+                )
+                Text(
+                    text = likeValue,
+                    style = TextComponent.CAPTION_2_M_12,
+                    color = NeutralColor.GRAY_500,
+                    modifier = Modifier.padding(horizontal = 2.dp)
+                )
+            }
+        }
+    }
 }
 
 object NotificationUi {
