@@ -71,6 +71,6 @@ internal fun NotificationDTO.toDomain(): Notification {
             )
         }
 
-        else -> throw IllegalArgumentException("Unknow type")
+        else -> throw IllegalArgumentException("Unknown type")
     }
 }
