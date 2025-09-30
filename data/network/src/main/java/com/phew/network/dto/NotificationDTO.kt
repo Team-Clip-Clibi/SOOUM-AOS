@@ -8,7 +8,6 @@ data class NotificationDTO(
     val notificationId: Long,
     val notificationType: String,
     val createTime: String,
-
     val blockExpirationDateTime: String? = null,
     val nickName: String? = null,
     val userId: Long? = null,
