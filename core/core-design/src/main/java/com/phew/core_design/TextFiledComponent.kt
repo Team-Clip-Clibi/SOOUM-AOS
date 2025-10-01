@@ -85,7 +85,7 @@ object TextFiledComponent {
                 ) {
                     if (showError) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_error),
+                            painter = painterResource(R.drawable.ic_error_stoke),
                             contentDescription = "Error $helperText",
                             tint = Danger.M_RED
                         )
@@ -170,7 +170,7 @@ object TextFiledComponent {
                 ) {
                     if (showError) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_error),
+                            painter = painterResource(R.drawable.ic_error_stoke),
                             contentDescription = "Error $helperText",
                             tint = Danger.M_RED
                         )

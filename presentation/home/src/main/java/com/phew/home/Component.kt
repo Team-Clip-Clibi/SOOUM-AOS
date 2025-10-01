@@ -265,7 +265,7 @@ object FeedUi {
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Image(
-                    painter = painterResource(com.phew.core_design.R.drawable.ic_location),
+                    painter = painterResource(com.phew.core_design.R.drawable.ic_location_stoke),
                     modifier = Modifier.size(14.dp),
                     contentDescription = "location $location",
                 )
@@ -288,7 +288,7 @@ object FeedUi {
                     modifier = Modifier.weight(1f)
                 )
                 Image(
-                    painter = painterResource(com.phew.core_design.R.drawable.ic_message_circle),
+                    painter = painterResource(com.phew.core_design.R.drawable.ic_message_stoke),
                     contentDescription = "comment $commentValue",
                     modifier = Modifier.size(14.dp)
                 )
@@ -299,7 +299,7 @@ object FeedUi {
                     modifier = Modifier.padding(horizontal = 2.dp)
                 )
                 Image(
-                    painter = painterResource(com.phew.core_design.R.drawable.ic_heart),
+                    painter = painterResource(com.phew.core_design.R.drawable.ic_heart_stoke),
                     contentDescription = "like $likeValue",
                     modifier = Modifier.size(14.dp)
                 )
@@ -375,7 +375,7 @@ object FeedUi {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Image(
-                    painter = painterResource(com.phew.core_design.R.drawable.ic_location),
+                    painter = painterResource(com.phew.core_design.R.drawable.ic_location_stoke),
                     modifier = Modifier.size(14.dp),
                     contentDescription = "location $location",
                 )
@@ -398,7 +398,7 @@ object FeedUi {
                     modifier = Modifier.weight(1f)
                 )
                 Image(
-                    painter = painterResource(com.phew.core_design.R.drawable.ic_message_circle),
+                    painter = painterResource(com.phew.core_design.R.drawable.ic_message_stoke),
                     contentDescription = "comment $commentValue",
                     modifier = Modifier.size(14.dp)
                 )
@@ -409,7 +409,7 @@ object FeedUi {
                     modifier = Modifier.padding(horizontal = 2.dp)
                 )
                 Image(
-                    painter = painterResource(com.phew.core_design.R.drawable.ic_heart),
+                    painter = painterResource(com.phew.core_design.R.drawable.ic_heart_stoke),
                     contentDescription = "like $likeValue",
                     modifier = Modifier.size(14.dp)
                 )
