@@ -10,9 +10,9 @@ import java.util.concurrent.TimeUnit
 
 object RetrofitFactory {
 
-    private const val CONNECTION_TIMEOUT_SEC = 60L // OkHttp Default: 10 sec
-    private const val READ_TIMEOUT_SEC = 60L // OkHttp Default: 10 sec
-    private const val WRITE_TIMEOUT_SEC = 60L // OkHttp Default: 10 sec
+    private const val CONNECTION_TIMEOUT_SEC = 20L // OkHttp Default: 10 sec
+    private const val READ_TIMEOUT_SEC = 20L // OkHttp Default: 10 sec
+    private const val WRITE_TIMEOUT_SEC = 20L // OkHttp Default: 10 sec
 
     private val json = Json {
         ignoreUnknownKeys = true
