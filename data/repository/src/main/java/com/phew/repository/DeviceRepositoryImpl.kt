@@ -3,6 +3,7 @@ package com.phew.repository
 import com.phew.device.dataStore.DataStore
 import com.phew.device.device.Device
 import com.phew.device.dto.UserInfoDTO
+import com.phew.domain.dto.Location
 import com.phew.domain.dto.Token
 import com.phew.domain.dto.UserInfo
 import com.phew.domain.repository.DeviceRepository
@@ -85,5 +86,12 @@ class DeviceRepositoryImpl @Inject constructor(
         data: Boolean
     ): Boolean {
         return dataSource.setLocationPermissionIsAsk(key = key, data = data)
+    }
+
+    override suspend fun requestLocation(): Location {
+        return Location(
+            latitude = device.location().latitude,
+            longitude = device.location().longitude
+        )
     }
 }

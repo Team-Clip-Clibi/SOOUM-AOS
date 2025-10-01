@@ -45,8 +45,6 @@ class DeviceImpl @Inject constructor(@ApplicationContext private val context: Co
         }
     }
 
-
-    @RequiresPermission(anyOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
     override suspend fun location(): LocationDTO {
         val hasFineLocationPermission = ContextCompat.checkSelfPermission(
             context, Manifest.permission.ACCESS_FINE_LOCATION
