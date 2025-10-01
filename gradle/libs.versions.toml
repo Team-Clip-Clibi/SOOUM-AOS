@@ -30,6 +30,7 @@ await = "1.8.1"
 firebase-messaging = "23.4.1"
 lottie = "6.6.9"
 paging-version = "3.3.6"
+play-services-location = "21.3.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -72,6 +73,7 @@ firebase-message = { group = "com.google.firebase", name = "firebase-messaging",
 lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", version = "6.1.0" }
 paging-runtime = { group = "androidx.paging", name = "paging-runtime", version.ref = "paging-version" }
 paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "paging-version" }
+google-play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "play-services-location" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
