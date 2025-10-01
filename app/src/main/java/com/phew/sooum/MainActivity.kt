@@ -19,7 +19,7 @@ import androidx.compose.runtime.setValue
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private var isLocationPermissionGranted by mutableStateOf(true)
+    private var isLocationPermissionGranted by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
