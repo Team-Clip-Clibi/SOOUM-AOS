@@ -19,7 +19,7 @@ import androidx.compose.runtime.setValue
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private var isLocationPermissionGranted by mutableStateOf(false)
+    private var shouldShowPermissionRationale by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,9 +40,9 @@ class MainActivity : ComponentActivity() {
                 locationPermission = {
                     requestLocationPermission()
                 },
-                feedLocationDialogNotShow = isLocationPermissionGranted,
-                closeDialog = {
-                    isLocationPermissionGranted = true
+                feedLocationDialogNotShow = shouldShowPermissionRationale,
+                onDismissRationale = {
+                    shouldShowPermissionRationale = true
                 }
             )
         }
@@ -66,7 +66,10 @@ class MainActivity : ComponentActivity() {
     private val locationPermission = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
-        isLocationPermissionGranted = permissions[permission.ACCESS_FINE_LOCATION] ?: false
+        val isGranted = permissions[permission.ACCESS_FINE_LOCATION] ?: false
+        if (!isGranted) {
+            shouldShowPermissionRationale = true
+        }
     }
 
     private fun requestLocationPermission() {

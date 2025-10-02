@@ -54,7 +54,7 @@ fun Nav(
     finish: () -> Unit,
     locationPermission: () -> Unit,
     feedLocationDialogNotShow : Boolean,
-    closeDialog: () -> Unit
+    onDismissRationale: () -> Unit
 ) {
     val navController = rememberNavController()
 
@@ -76,7 +76,7 @@ fun Nav(
             finish = finish,
             dialogDismiss = feedLocationDialogNotShow,
             locationPermission = locationPermission,
-            closeDialog = closeDialog
+            closeDialog = onDismissRationale
         )
     }
 }
