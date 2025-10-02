@@ -1,6 +1,5 @@
 package com.phew.home.viewModel
 
-import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
@@ -17,14 +16,15 @@ import com.phew.domain.usecase.GetNotification
 import com.phew.domain.usecase.GetReadNotification
 import com.phew.domain.usecase.GetUnReadNotification
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.update
 import com.phew.core_common.DataResult
 
@@ -32,15 +32,14 @@ import com.phew.core_common.DataResult
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val locationAsk: CheckLocationPermission,
-    private val getNotificationPage: GetNotification,
-    private val getUnReadNotification: GetUnReadNotification,
-    private val getReadNotification: GetReadNotification,
+    getNotificationPage: GetNotification,
+    getUnReadNotification: GetUnReadNotification,
+    getReadNotification: GetReadNotification,
     private val cardFeedRepository: CardFeedRepository
 ) :
     ViewModel() {
     private val _uiState = MutableStateFlow(Home())
     val uiState: StateFlow<Home> = _uiState.asStateFlow()
-
     /**
      * 공지사항(notice)
      * 활동알림(unRead , read)
@@ -50,54 +49,40 @@ class HomeViewModel @Inject constructor(
         getUnReadNotification().cachedIn(viewModelScope)
     val readNotification: Flow<PagingData<Notification>> =
         getReadNotification().cachedIn(viewModelScope)
+    /**
+     * 권한 요청
+     */
+    private val _requestPermissionEvent = MutableSharedFlow<Array<String>>()
+    val requestPermissionEvent = _requestPermissionEvent.asSharedFlow()
 
-    init {
-        loadLatestFeeds()
-    }
-
-    fun refresh() {
-        if (_uiState.value.refresh is UiState.Loading) {
+    fun checkLocationPermission() {
+        val isGranted = locationAsk()
+        if (isGranted) {
+            //TODO 근처 피드 게시물 가져오기
             return
         }
+        _uiState.update { state ->
+            state.copy(shouldShowPermissionRationale = true)
+        }
+    }
 
+    fun onPermissionRequest(permission: Array<String>) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(refresh = UiState.Loading)
-            try {
-                delay(5000)
-                val newFeedItems = (1..10).map { it ->
-                    FeedData(
-                        location = "정자동",
-                        writeTime = when (it) {
-                            1 -> "1시간전"
-                            2 -> "2025-09-21"
-                            3 -> "2025-09-20"
-                            else -> "2025-09-19"
-                        },
-                        commentValue = "1",
-                        likeValue = "1",
-                        uri = Uri.EMPTY,
-                        content = "test$it"
-                    )
-                }
-                _uiState.value = _uiState.value.copy(
-                    feedItem = newFeedItems,
-                    refresh = UiState.Success(true)
-                )
-                _uiState.value = _uiState.value.copy(
-                    refresh = UiState.None
-                )
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    refresh = UiState.Fail(e.message ?: "새로고침 실패")
-                )
+            _requestPermissionEvent.emit(permission)
+        }
+    }
+
+    fun onPermissionResult(isGranted: Boolean) {
+        if (!isGranted) {
+            _uiState.update { state ->
+                state.copy(shouldShowPermissionRationale = true)
             }
         }
     }
 
-    fun checkLocationPermission() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val isAsk = locationAsk()
-            _uiState.update { it.copy(isLocationAsk = isAsk) }
+    fun rationalDialogDismissed() {
+        _uiState.update { state ->
+            state.copy(shouldShowPermissionRationale = false)
         }
     }
 
@@ -108,11 +93,11 @@ class HomeViewModel @Inject constructor(
 
         viewModelScope.launch {
             _uiState.update { it.copy(latestState = UiState.Loading) }
-            
+
             try {
                 val latitude = if (_uiState.value.isLocationAsk) null else null // TODO: 실제 위치 정보 가져오기
                 val longitude = if (_uiState.value.isLocationAsk) null else null // TODO: 실제 위치 정보 가져오기
-                
+
                 when (val result = cardFeedRepository.requestFeedLatest(
                     latitude = latitude,
                     longitude = longitude,
@@ -122,13 +107,13 @@ class HomeViewModel @Inject constructor(
                         _uiState.update { it.copy(latestState = UiState.Success(result.data)) }
                     }
                     is DataResult.Fail -> {
-                        _uiState.update { 
+                        _uiState.update {
                             it.copy(latestState = UiState.Fail(result.message ?: "최신 피드 로딩 실패"))
                         }
                     }
                 }
             } catch (e: Exception) {
-                _uiState.update { 
+                _uiState.update {
                     it.copy(latestState = UiState.Fail(e.message ?: "최신 피드 로딩 실패"))
                 }
             }
@@ -142,11 +127,11 @@ class HomeViewModel @Inject constructor(
 
         viewModelScope.launch {
             _uiState.update { it.copy(popularState = UiState.Loading) }
-            
+
             try {
                 val latitude = if (_uiState.value.isLocationAsk) null else null // TODO: 실제 위치 정보 가져오기
                 val longitude = if (_uiState.value.isLocationAsk) null else null // TODO: 실제 위치 정보 가져오기
-                
+
                 when (val result = cardFeedRepository.requestFeedPopular(
                     latitude = latitude,
                     longitude = longitude
@@ -155,13 +140,13 @@ class HomeViewModel @Inject constructor(
                         _uiState.update { it.copy(popularState = UiState.Success(result.data)) }
                     }
                     is DataResult.Fail -> {
-                        _uiState.update { 
+                        _uiState.update {
                             it.copy(popularState = UiState.Fail(result.message ?: "인기 피드 로딩 실패"))
                         }
                     }
                 }
             } catch (e: Exception) {
-                _uiState.update { 
+                _uiState.update {
                     it.copy(popularState = UiState.Fail(e.message ?: "인기 피드 로딩 실패"))
                 }
             }
@@ -170,7 +155,7 @@ class HomeViewModel @Inject constructor(
 
     fun switchTab(feedType: FeedType) {
         _uiState.update { it.copy(currentTab = feedType) }
-        
+
         when (feedType) {
             FeedType.Latest -> {
                 if (_uiState.value.latestState is UiState.None) {
@@ -202,7 +187,7 @@ data class Home(
     val refresh: UiState<Boolean> = UiState.None,
     val feedItem: List<FeedData> = emptyList(),
     val notifyItem: List<Notify> = emptyList(),
-    val isLocationAsk: Boolean = true
+    val shouldShowPermissionRationale: Boolean = false,
 )
 
 enum class FeedType {

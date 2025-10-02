@@ -1,11 +1,17 @@
 package com.phew.domain.usecase
 
-import com.phew.domain.BuildConfig
-import com.phew.domain.repository.DeviceRepository
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
-class CheckLocationPermission @Inject constructor(private val deviceRepository: DeviceRepository) {
-    suspend operator fun invoke(): Boolean {
-        return deviceRepository.requestGetLocationPermissionIsAsk(BuildConfig.LOCATION_KEY)
+class CheckLocationPermission @Inject constructor(@ApplicationContext private val context: Context) {
+    operator fun invoke(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
     }
 }

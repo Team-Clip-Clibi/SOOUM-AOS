@@ -1,7 +1,5 @@
 package com.phew.repository.di
 
-import com.phew.device.dataStore.DataStore
-import com.phew.device.device.Device
 import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.NetworkRepository
 import com.phew.domain.repository.network.CardFeedRepository
@@ -9,39 +7,32 @@ import com.phew.network.Http
 import com.phew.network.retrofit.FeedHttp
 import com.phew.repository.DeviceRepositoryImpl
 import com.phew.repository.NetworkRepositoryImpl
-import com.phew.repository.network.CardFeedRepositoryImpl
 import dagger.Binds
+import com.phew.repository.network.CardFeedRepositoryImpl
 import dagger.Module
-import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-class RepositoryModule {
-    @Provides
-    @Singleton
-    fun provideNetworkRepository(
-        http: Http,
-    ): NetworkRepository {
-        return NetworkRepositoryImpl(http)
-    }
+abstract class RepositoryModule {
 
-    @Provides
+    @Binds
     @Singleton
-    fun provideDeviceRepository(
-        device: Device,
-        dataStore: DataStore,
-    ): DeviceRepository {
-        return DeviceRepositoryImpl(device, dataStore)
-    }
+    abstract fun bindNetworkRepository(
+        impl: NetworkRepositoryImpl,
+    ): NetworkRepository
 
-    @Provides
+    @Binds
     @Singleton
-    fun provideCardFeedRepository(
-        feedHttp: FeedHttp
-    ): CardFeedRepository {
-        return CardFeedRepositoryImpl(feedHttp)
-    }
+    abstract fun bindDeviceRepository(
+        impl: DeviceRepositoryImpl,
+    ): DeviceRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindCardFeedRepository(
+        impl: CardFeedRepositoryImpl
+    ): CardFeedRepository
 }

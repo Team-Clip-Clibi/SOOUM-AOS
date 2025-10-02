@@ -2,6 +2,7 @@ package com.phew.repository
 
 import com.phew.core_common.APP_ERROR_CODE
 import com.phew.core_common.DataResult
+import com.phew.core_common.HTTP_NO_MORE_CONTENT
 import com.phew.domain.dto.CheckSignUp
 import com.phew.domain.dto.Notice
 import com.phew.domain.dto.Notification
@@ -293,6 +294,9 @@ class NetworkRepositoryImpl @Inject constructor(private val http: Http) : Networ
                 code = request.code(),
                 message = request.message()
             )
+            if (request.body() == null && request.code() == HTTP_NO_MORE_CONTENT) {
+                return DataResult.Success(Pair(request.code(), emptyList()))
+            }
             val body = request.body()!!
             if (body.notices.isEmpty()) {
                 return DataResult.Success(Pair(request.code(), emptyList()))
@@ -330,6 +334,9 @@ class NetworkRepositoryImpl @Inject constructor(private val http: Http) : Networ
                 code = request.code(),
                 message = request.message()
             )
+            if (request.body() == null && request.code() == HTTP_NO_MORE_CONTENT) {
+                return DataResult.Success(Pair(request.code(), emptyList()))
+            }
             val body = request.body()!!
             if (body.notices.isEmpty()) {
                 return DataResult.Success(Pair(request.code(), emptyList()))
@@ -360,6 +367,9 @@ class NetworkRepositoryImpl @Inject constructor(private val http: Http) : Networ
             if (!request.isSuccessful) {
                 return DataResult.Fail(code = request.code(), message = request.message())
             }
+            if (request.body() == null && request.code() == HTTP_NO_MORE_CONTENT) {
+                return DataResult.Success(Pair(request.code(), emptyList()))
+            }
             val data = request.body()!!
             if (data.isEmpty()) {
                 return DataResult.Success(Pair(request.code(), emptyList()))
@@ -388,6 +398,9 @@ class NetworkRepositoryImpl @Inject constructor(private val http: Http) : Networ
             if (!request.isSuccessful) {
                 return DataResult.Fail(code = request.code(), message = request.message())
             }
+            if (request.body() == null && request.code() == HTTP_NO_MORE_CONTENT) {
+                return DataResult.Success(Pair(request.code(), emptyList()))
+            }
             val data = request.body()!!
             if (data.isEmpty()) {
                 return DataResult.Success(Pair(request.code(), emptyList()))
@@ -412,6 +425,9 @@ class NetworkRepositoryImpl @Inject constructor(private val http: Http) : Networ
                 http.requestNotificationRead(bearerToken = accessToken)
             if (!request.isSuccessful) {
                 return DataResult.Fail(code = request.code(), message = request.message())
+            }
+            if (request.body() == null && request.code() == HTTP_NO_MORE_CONTENT) {
+                return DataResult.Success(Pair(request.code(), emptyList()))
             }
             val data = request.body()!!
             if (data.isEmpty()) {
@@ -440,6 +456,9 @@ class NetworkRepositoryImpl @Inject constructor(private val http: Http) : Networ
                 http.requestNotificationReadPatch(bearerToken = accessToken, lastId = lastId)
             if (!request.isSuccessful) {
                 return DataResult.Fail(code = request.code(), message = request.message())
+            }
+            if (request.body() == null && request.code() == HTTP_NO_MORE_CONTENT) {
+                return DataResult.Success(Pair(request.code(), emptyList()))
             }
             val data = request.body()!!
             if (data.isEmpty()) {

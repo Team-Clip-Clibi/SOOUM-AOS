@@ -1,5 +1,6 @@
 package com.phew.domain.repository
 
+import com.phew.domain.dto.Location
 import com.phew.domain.dto.Token
 import com.phew.domain.dto.UserInfo
 
@@ -22,6 +23,5 @@ interface DeviceRepository {
     ): Boolean
 
     suspend fun getUserInfo(key: String): UserInfo?
-    suspend fun requestGetLocationPermissionIsAsk(key: String): Boolean
-    suspend fun requestSetLocationPermissionIsAsk(key: String, data: Boolean): Boolean
+    suspend fun requestLocation() : Location
 }

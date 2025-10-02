@@ -71,10 +71,9 @@ import com.phew.home.viewModel.UiState
 fun FeedView(
     viewModel: HomeViewModel,
     finish: () -> Unit,
-    locationPermission: () -> Unit,
-    dialogDismiss: Boolean,
+    requestPermission: () -> Unit,
     closeDialog: () -> Unit,
-    noticeClick: () -> Unit
+    noticeClick: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val notice = viewModel.notice.collectAsLazyPagingItems()
@@ -111,8 +110,12 @@ fun FeedView(
             .systemBarsPadding()
     ) {
         TopLayout(
-            recentClick = viewModel::initTestData,
-            popularClick = viewModel::initTestData,
+            recentClick = {
+                //TODO 최신 카드
+            },
+            popularClick = {
+                //TODO 인기 카드
+            },
             nearClick = viewModel::checkLocationPermission,
             isTabsVisible = isTabsVisible,
             notice = notice,
@@ -123,22 +126,26 @@ fun FeedView(
         FeedContent(
             uiState = uiState,
             isRefreshing = isRefreshing,
-            onRefresh = viewModel::refresh,
+            onRefresh = {
+
+            },
             lazyListState = lazyListState,
             nestedScrollConnection = nestedScrollConnection,
             composition = composition,
             progress = progress
         )
-        if (!dialogDismiss) {
+        if (uiState.shouldShowPermissionRationale) {
             DialogComponent.DefaultButtonTwo(
                 title = stringResource(R.string.home_feed_dialog_location_title),
                 description = stringResource(R.string.home_feed_dialog_location_content),
                 buttonTextStart = stringResource(R.string.home_feed_dialog_location_negative),
                 buttonTextEnd = stringResource(R.string.home_feed_dialog_location_positive),
-                onClick = { locationPermission() },
+                onClick = {
+                    requestPermission()
+                    closeDialog()
+                },
                 onDismiss = {
                     closeDialog()
-                    viewModel.initTestData()
                 }
             )
         }
@@ -153,7 +160,7 @@ private fun TopLayout(
     isTabsVisible: Boolean,
     notice: LazyPagingItems<Notice>,
     noticeClick: () -> Unit,
-    activate: LazyPagingItems<Notification>
+    activate: LazyPagingItems<Notification>,
 ) {
     var selectIndex by remember { mutableIntStateOf(NAV_HOME_FEED_INDEX) }
     Column(
@@ -195,7 +202,7 @@ private fun FeedContent(
     lazyListState: LazyListState,
     nestedScrollConnection: NestedScrollConnection,
     composition: LottieComposition?,
-    progress: Float
+    progress: Float,
 ) {
     when {
         uiState.feedItem.isEmpty() -> EmptyFeedView()
