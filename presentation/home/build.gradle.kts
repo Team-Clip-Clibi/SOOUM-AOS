@@ -5,3 +5,8 @@ plugins {
 android {
     namespace = "com.phew.home"
 }
+
+dependencies {
+    implementation(libs.paging.compose)
+    implementation(libs.paging.runtime)
+}

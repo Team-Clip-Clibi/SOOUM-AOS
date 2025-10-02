@@ -14,6 +14,7 @@ import com.phew.core_common.ERROR
 import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.domain.BuildConfig
+import com.phew.domain.dto.Token
 import com.phew.domain.repository.DeviceRepository
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -91,6 +92,13 @@ class RequestSignUp @Inject constructor(
                     isNotifyAgree = notifyStatus
                 )
                 if (!saveUserInfo) return DomainResult.Failure(ERROR_FAIL_JOB)
+                val refreshToken = request.data.first
+                val accessToken = request.data.second
+                val saveToken = deviceRepository.saveToken(
+                    key = BuildConfig.TOKEN_KEY,
+                    data = Token(refreshToken = refreshToken, accessToken = accessToken)
+                )
+                if(!saveToken) return DomainResult.Failure(ERROR_FAIL_JOB)
                 return DomainResult.Success(Unit)
             }
         }

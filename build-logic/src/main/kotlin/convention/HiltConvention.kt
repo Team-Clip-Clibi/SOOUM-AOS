@@ -29,6 +29,9 @@ class HiltConvention : Plugin<Project> {
                     localPropsFile.inputStream().use { properties.load(it) }
                 }
                 val fileName : String = properties.getProperty("file_name","")
+                val tokenKey = properties.getProperty("tokenKey", "")
+
+                buildConfigField("String", "TOKEN_KEY", tokenKey)
                 buildConfigField("String" ,"SOOUM_FILE_NAME" ,fileName)
             }
             buildFeatures.buildConfig = true
@@ -36,16 +39,22 @@ class HiltConvention : Plugin<Project> {
                 sourceCompatibility = JavaVersion.VERSION_21
                 targetCompatibility = JavaVersion.VERSION_21
             }
+            packaging.resources.excludes += "/META-INF/{AL2.0,LGPL2.1,LICENSE.md,LICENSE-notice.md}"
         }
         extensions.getByType<KotlinAndroidProjectExtension>().apply {
             jvmToolchain(21)
         }
+
+
         dependencies {
             "implementation"(libs.findLibrary("hilt-android").get())
             "ksp"(libs.findLibrary("hilt-compiler").get())
             "implementation"(libs.findLibrary("junit").get())
             "implementation"(libs.findLibrary("androidx-junit").get())
             "implementation"(libs.findLibrary("androidx-espresso-core").get())
+            "testImplementation"(libs.findLibrary("mockk").get())
+            "androidTestImplementation"(libs.findLibrary("mockk-android").get())
+            "implementation"(libs.findLibrary("kotlinx-coroutines-test").get())
         }
     }
 }

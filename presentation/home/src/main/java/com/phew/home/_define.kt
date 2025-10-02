@@ -9,12 +9,11 @@ const val DISTANCE_5KM = 2
 const val DISTANCE_10KM = 3
 const val DISTANCE_20KM = 4
 
-const val NAV_NOTICE_ALL_INDEX = 0
-const val NAV_NOTICE_CARD_INDEX = 1
-const val NAV_NOTICE_FOLLOW_INDEX = 2
-const val NAV_NOTICE_NOTIFY_INDEX = 3
+const val NAV_NOTICE_ACTIVATE = 0
+const val NAV_NOTICE_NOTIFY_INDEX = 1
 
 const val NOTIFY_ANNOUNCE = "announcement"
 const val NOTIFY_CARD = "card"
 const val NOTIFY_LIMIT = "limit"
 const val NOTIFY_FOLLOW = "follow"
+const val NOTIFY_FEED_LIKE = "FEED_LIKE"

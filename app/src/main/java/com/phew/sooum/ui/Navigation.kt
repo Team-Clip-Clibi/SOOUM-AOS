@@ -1,12 +1,18 @@
 package com.phew.sooum.ui
 
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -21,6 +27,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import com.phew.core_common.NAV_HOME
 import com.phew.core_common.NAV_HOME_FEED
+import com.phew.core_common.NAV_HOME_NOTIFY
 import com.phew.core_common.NAV_ON_BOARDING
 import com.phew.core_common.NAV_SIGN_UP
 import com.phew.core_common.NAV_SIGN_UP_AGREEMENT
@@ -30,8 +37,10 @@ import com.phew.core_common.NAV_SIGN_UP_NICKNAME
 import com.phew.core_common.NAV_SIGN_UP_PROFILE
 import com.phew.core_common.NAV_SPLASH
 import com.phew.core_design.BottomBarComponent
+import com.phew.core_design.DialogComponent
 import com.phew.core_design.slideComposable
-import com.phew.home.FeedView
+import com.phew.home.feed.FeedView
+import com.phew.home.notification.NotifyView
 import com.phew.home.viewModel.HomeViewModel
 import com.phew.sign_up.AuthCodeView
 import com.phew.sign_up.NickNameView
@@ -63,6 +72,10 @@ fun Nav(
             navController = navController,
             finish = finish
         )
+        homeGraph(
+            navController = navController,
+            finish = finish,
+        )
     }
 }
 
@@ -85,7 +98,7 @@ fun NavGraphBuilder.splashNavGraph(
                 update()
             },
             home = {
-                //TODO 홈화면 포팅
+                navController.navigate(NAV_HOME_FEED)
             },
         )
     }
@@ -113,7 +126,10 @@ fun NavGraphBuilder.signUpNabGraph(
                 back = {
                     finish()
                 },
-                viewModel = signUpViewModel
+                viewModel = signUpViewModel,
+                home = {
+                    navController.navigate(NAV_HOME)
+                }
             )
         }
 
@@ -124,7 +140,7 @@ fun NavGraphBuilder.signUpNabGraph(
             AuthCodeView(
                 viewModel = signUpViewModel,
                 home = {
-                    //TODO 홈화면 개발
+                    navController.navigate(NAV_HOME)
                 },
                 onBack = {
                     navController.popBackStack()
@@ -180,7 +196,7 @@ fun NavGraphBuilder.signUpNabGraph(
         slideComposable(NAV_SIGN_UP_FINISH) {
             SignUpFinish(
                 home = {
-                    //TODO 홈화면 개발
+                    navController.navigate(NAV_HOME)
                 }
             )
         }
@@ -198,34 +214,55 @@ fun NavGraphBuilder.homeGraph(
         val homeNavController = rememberNavController()
         val homeNavBackStackEntry by homeNavController.currentBackStackEntryAsState()
         val currentRoute = homeNavBackStackEntry?.destination?.route
+        val snackBarHostState = remember { SnackbarHostState() }
+        val locationPermission = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestMultiplePermissions(),
+            onResult = { permissionResult ->
+                val isGranted = permissionResult[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
+                homeViewModel.onPermissionResult(isGranted = isGranted)
+            }
+        )
+        LaunchedEffect(homeViewModel) {
+            homeViewModel.requestPermissionEvent.collect { permissions ->
+                locationPermission.launch(permissions)
+            }
+        }
+
         Scaffold(
             bottomBar = {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight()
-                        .navigationBarsPadding()
-                ) {
-                    BottomBarComponent.HomeBottomBar(
-                        homeClick = {
-                            homeNavController.navigate(NAV_HOME_FEED) {
-                                popUpTo(homeNavController.graph.findStartDestination().id) {
-                                    saveState = true
+                if (currentRoute == NAV_HOME_FEED) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                            .navigationBarsPadding()
+                    ) {
+                        BottomBarComponent.HomeBottomBar(
+                            homeClick = {
+                                homeNavController.navigate(NAV_HOME_FEED) {
+                                    popUpTo(homeNavController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        addCardClick = {
-                            //TODO 카드추가 화면 포팅
-                        },
-                        tagClick = {
-                            //TODO 태그 화면 포팅
-                        },
-                        myProfileClick = {
-                            //TODO 마이프로필 화면 포팅
-                        },
-                    )
+                            },
+                            addCardClick = {
+                                //TODO 카드추가 화면 포팅
+                            },
+                            tagClick = {
+                                //TODO 태그 화면 포팅
+                            },
+                            myProfileClick = {
+                                //TODO 마이프로필 화면 포팅
+                            },
+                        )
+                    }
+                }
+            },
+            snackbarHost = {
+                SnackbarHost(hostState = snackBarHostState) { data ->
+                    DialogComponent.SnackBar(data)
                 }
             }
         ) { paddingValues ->
@@ -233,7 +270,6 @@ fun NavGraphBuilder.homeGraph(
                 navController = homeNavController,
                 startDestination = NAV_HOME_FEED,
                 modifier = Modifier.padding(
-                    top = paddingValues.calculateTopPadding(),
                     bottom = paddingValues.calculateBottomPadding()
                 )
             ) {
@@ -241,6 +277,22 @@ fun NavGraphBuilder.homeGraph(
                     FeedView(
                         viewModel = homeViewModel,
                         finish = finish,
+                        requestPermission = {
+                            homeViewModel.onPermissionRequest(arrayOf(
+                                Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.ACCESS_COARSE_LOCATION
+                            ))
+                        },
+                        closeDialog =  homeViewModel::rationalDialogDismissed,
+                        noticeClick = { homeNavController.navigate(NAV_HOME_NOTIFY) }
+                    )
+                }
+                slideComposable(NAV_HOME_NOTIFY) {
+                    NotifyView(
+                        viewModel = homeViewModel,
+                        snackBarHostState = snackBarHostState,
+                        backClick = { homeNavController.popBackStack() },
+                        logout = {}
                     )
                 }
             }
