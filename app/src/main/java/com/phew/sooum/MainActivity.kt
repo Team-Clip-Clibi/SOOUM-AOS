@@ -42,7 +42,7 @@ class MainActivity : ComponentActivity() {
                 },
                 feedLocationDialogNotShow = isLocationPermissionGranted,
                 closeDialog = {
-                    isLocationPermissionGranted = false
+                    isLocationPermissionGranted = true
                 }
             )
         }
