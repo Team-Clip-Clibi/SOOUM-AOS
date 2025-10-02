@@ -6,9 +6,12 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.phew.domain.dto.FeedData
+import com.phew.domain.dto.Latest
 import com.phew.domain.dto.Notice
 import com.phew.domain.dto.Notification
 import com.phew.domain.dto.Notify
+import com.phew.domain.dto.Popular
+import com.phew.domain.repository.network.CardFeedRepository
 import com.phew.domain.usecase.CheckLocationPermission
 import com.phew.domain.usecase.GetNotification
 import com.phew.domain.usecase.GetReadNotification
@@ -22,6 +25,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.update
+import com.phew.core_common.DataResult
 
 
 @HiltViewModel
@@ -29,7 +34,8 @@ class HomeViewModel @Inject constructor(
     private val locationAsk: CheckLocationPermission,
     private val getNotificationPage: GetNotification,
     private val getUnReadNotification: GetUnReadNotification,
-    private val getReadNotification: GetReadNotification
+    private val getReadNotification: GetReadNotification,
+    private val cardFeedRepository: CardFeedRepository
 ) :
     ViewModel() {
     private val _uiState = MutableStateFlow(Home())
@@ -46,7 +52,7 @@ class HomeViewModel @Inject constructor(
         getReadNotification().cachedIn(viewModelScope)
 
     init {
-        initTestData()
+        loadLatestFeeds()
     }
 
     fun refresh() {
@@ -88,39 +94,120 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun initTestData() {
-        val newFeedItems = (1..10).map {
-            FeedData(
-                location = "정자동",
-                writeTime = when (it) {
-                    1 -> "1시간전"
-                    2 -> "2025-09-21"
-                    3 -> "2025-09-20"
-                    else -> "2025-09-19"
-                },
-                commentValue = "1",
-                likeValue = "1",
-                uri = Uri.EMPTY,
-                content = "test"
-            )
-        }
-        _uiState.value = _uiState.value.copy(feedItem = newFeedItems)
-    }
-
     fun checkLocationPermission() {
         viewModelScope.launch(Dispatchers.IO) {
             val isAsk = locationAsk()
-            _uiState.value = _uiState.value.copy(isLocationAsk = isAsk)
+            _uiState.update { it.copy(isLocationAsk = isAsk) }
         }
     }
+
+    fun loadLatestFeeds() {
+        if (_uiState.value.latestState is UiState.Loading) {
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(latestState = UiState.Loading) }
+            
+            try {
+                val latitude = if (_uiState.value.isLocationAsk) null else null // TODO: 실제 위치 정보 가져오기
+                val longitude = if (_uiState.value.isLocationAsk) null else null // TODO: 실제 위치 정보 가져오기
+                
+                when (val result = cardFeedRepository.requestFeedLatest(
+                    latitude = latitude,
+                    longitude = longitude,
+                    lastId = null
+                )) {
+                    is DataResult.Success -> {
+                        _uiState.update { it.copy(latestState = UiState.Success(result.data)) }
+                    }
+                    is DataResult.Fail -> {
+                        _uiState.update { 
+                            it.copy(latestState = UiState.Fail(result.message ?: "최신 피드 로딩 실패"))
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update { 
+                    it.copy(latestState = UiState.Fail(e.message ?: "최신 피드 로딩 실패"))
+                }
+            }
+        }
+    }
+
+    fun loadPopularFeeds() {
+        if (_uiState.value.popularState is UiState.Loading) {
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(popularState = UiState.Loading) }
+            
+            try {
+                val latitude = if (_uiState.value.isLocationAsk) null else null // TODO: 실제 위치 정보 가져오기
+                val longitude = if (_uiState.value.isLocationAsk) null else null // TODO: 실제 위치 정보 가져오기
+                
+                when (val result = cardFeedRepository.requestFeedPopular(
+                    latitude = latitude,
+                    longitude = longitude
+                )) {
+                    is DataResult.Success -> {
+                        _uiState.update { it.copy(popularState = UiState.Success(result.data)) }
+                    }
+                    is DataResult.Fail -> {
+                        _uiState.update { 
+                            it.copy(popularState = UiState.Fail(result.message ?: "인기 피드 로딩 실패"))
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update { 
+                    it.copy(popularState = UiState.Fail(e.message ?: "인기 피드 로딩 실패"))
+                }
+            }
+        }
+    }
+
+    fun switchTab(feedType: FeedType) {
+        _uiState.update { it.copy(currentTab = feedType) }
+        
+        when (feedType) {
+            FeedType.Latest -> {
+                if (_uiState.value.latestState is UiState.None) {
+                    loadLatestFeeds()
+                }
+            }
+            FeedType.Popular -> {
+                if (_uiState.value.popularState is UiState.None) {
+                    loadPopularFeeds()
+                }
+            }
+        }
+    }
+
+    fun refreshCurrentTab() {
+        when (_uiState.value.currentTab) {
+            FeedType.Latest -> loadLatestFeeds()
+            FeedType.Popular -> loadPopularFeeds()
+        }
+    }
+
+
 }
 
 data class Home(
+    val currentTab: FeedType = FeedType.Latest,
+    val latestState: UiState<List<Latest>> = UiState.None,
+    val popularState: UiState<List<Popular>> = UiState.None,
     val refresh: UiState<Boolean> = UiState.None,
     val feedItem: List<FeedData> = emptyList(),
     val notifyItem: List<Notify> = emptyList(),
     val isLocationAsk: Boolean = true
 )
+
+enum class FeedType {
+    Latest, Popular
+}
 
 sealed interface UiState<out T> {
     data object None : UiState<Nothing>

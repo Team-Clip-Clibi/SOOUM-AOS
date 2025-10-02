@@ -14,8 +14,7 @@ class CardFeedRepositoryImpl @Inject constructor(
 ) : CardFeedRepository {
     
     override suspend fun requestFeedPopular(
-        accessToken: String, 
-        latitude: Double?, 
+        latitude: Double?,
         longitude: Double?
     ): DataResult<List<Popular>> {
         return try {
@@ -26,6 +25,7 @@ class CardFeedRepositoryImpl @Inject constructor(
             )
             
             val response = feedHttp.requestPopularFeed(
+                //  TODO: Token 어디서 가져오는지
                 bearerToken = accessToken,
                 latitude = feedDto.latitude,
                 longitude = feedDto.longitude
@@ -49,8 +49,7 @@ class CardFeedRepositoryImpl @Inject constructor(
     }
     
     override suspend fun requestFeedLatest(
-        accessToken: String, 
-        latitude: Double?, 
+        latitude: Double?,
         longitude: Double?, 
         lastId: Int?
     ): DataResult<List<Latest>> {
@@ -64,6 +63,7 @@ class CardFeedRepositoryImpl @Inject constructor(
             val response = if (feedDto.lastId != null) {
                 // 페이징이 있는 경우 - 다음 페이지 요청
                 feedHttp.requestLatestFeedLast(
+                    //  TODO: Token 어디서 가져오는지
                     bearerToken = accessToken,
                     latitude = feedDto.latitude,
                     longitude = feedDto.longitude,
@@ -72,6 +72,7 @@ class CardFeedRepositoryImpl @Inject constructor(
             } else {
                 // 페이징이 없는 경우 - 첫 페이지 요청
                 feedHttp.requestLatestFeed(
+                    //  TODO: Token 어디서 가져오는지
                     bearerToken = accessToken,
                     latitude = feedDto.latitude,
                     longitude = feedDto.longitude

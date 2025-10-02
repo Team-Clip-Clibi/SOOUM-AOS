@@ -4,9 +4,13 @@ import com.phew.device.dataStore.DataStore
 import com.phew.device.device.Device
 import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.NetworkRepository
+import com.phew.domain.repository.network.CardFeedRepository
 import com.phew.network.Http
+import com.phew.network.retrofit.FeedHttp
 import com.phew.repository.DeviceRepositoryImpl
 import com.phew.repository.NetworkRepositoryImpl
+import com.phew.repository.network.CardFeedRepositoryImpl
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -33,4 +37,11 @@ class RepositoryModule {
         return DeviceRepositoryImpl(device, dataStore)
     }
 
+    @Provides
+    @Singleton
+    fun provideCardFeedRepository(
+        feedHttp: FeedHttp
+    ): CardFeedRepository {
+        return CardFeedRepositoryImpl(feedHttp)
+    }
 }
