@@ -77,17 +77,6 @@ class DeviceRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun requestGetLocationPermissionIsAsk(key: String): Boolean {
-        return dataSource.getLocationPermissionIsAsk(key = key)
-    }
-
-    override suspend fun requestSetLocationPermissionIsAsk(
-        key: String,
-        data: Boolean
-    ): Boolean {
-        return dataSource.setLocationPermissionIsAsk(key = key, data = data)
-    }
-
     override suspend fun requestLocation(): Location {
         return Location(
             latitude = device.location().latitude,

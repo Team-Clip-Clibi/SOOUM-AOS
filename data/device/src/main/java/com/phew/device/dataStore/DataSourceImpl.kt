@@ -145,27 +145,4 @@ class DataSourceImpl @Inject constructor(
             return null
         }
     }
-
-    override suspend fun setLocationPermissionIsAsk(
-        key: String,
-        data: Boolean
-    ): Boolean {
-        try {
-            sharedPreferences.edit(commit = true) { putBoolean(key, data) }
-            return true
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return false
-        }
-    }
-
-    override suspend fun getLocationPermissionIsAsk(key: String): Boolean {
-        try {
-            val isAgree = sharedPreferences.getBoolean(key, false)
-            return isAgree
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return false
-        }
-    }
 }

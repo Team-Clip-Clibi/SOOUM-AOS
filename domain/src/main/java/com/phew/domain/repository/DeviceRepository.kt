@@ -23,7 +23,5 @@ interface DeviceRepository {
     ): Boolean
 
     suspend fun getUserInfo(key: String): UserInfo?
-    suspend fun requestGetLocationPermissionIsAsk(key: String): Boolean
-    suspend fun requestSetLocationPermissionIsAsk(key: String, data: Boolean): Boolean
     suspend fun requestLocation() : Location
 }
