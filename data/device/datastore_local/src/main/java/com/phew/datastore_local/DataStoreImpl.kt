@@ -1,20 +1,20 @@
-package com.phew.device.dataStore
+package com.phew.datastore_local
 
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.google.gson.Gson
-import com.phew.device.dto.TokenDTO
-import androidx.core.content.edit
 import com.phew.core_common.ERROR
 import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.ERROR_NO_DATA
-import com.phew.device.dto.UserInfoDTO
+import com.phew.datastore_local.dto.TokenDTO
+import com.phew.datastore_local.dto.UserInfoDTO
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
 
-class DataSourceImpl @Inject constructor(
+class DataStoreImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val fileName: String,
 ) : DataStore {
@@ -51,21 +51,21 @@ class DataSourceImpl @Inject constructor(
         }
     }
 
-    override suspend fun getToken(key: String): Pair<String, String> {
+    override suspend fun getToken(key: String): TokenDTO {
         try {
             cachedToken?.let { token ->
-                return Pair(token.refreshToken, token.accessToken)
+                return TokenDTO(token.refreshToken, token.accessToken)
             }
             val jsonString = sharedPreferences.getString(key, ERROR_NO_DATA)
             if (jsonString == ERROR_NO_DATA) {
-                return Pair(ERROR_NO_DATA, ERROR_NO_DATA)
+                return TokenDTO(ERROR_NO_DATA, ERROR_NO_DATA)
             }
             val token = gson.fromJson(jsonString, TokenDTO::class.java)
             cachedToken = token
-            return Pair(token.refreshToken, token.accessToken)
+            return TokenDTO(token.refreshToken, token.accessToken)
         } catch (e: Exception) {
             e.printStackTrace()
-            return Pair(ERROR_FAIL_JOB, ERROR_FAIL_JOB)
+            return TokenDTO(ERROR_FAIL_JOB, ERROR_FAIL_JOB)
         }
     }
 

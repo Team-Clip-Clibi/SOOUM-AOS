@@ -1,8 +1,10 @@
 package com.phew.repository
 
-import com.phew.device.dataStore.DataStore
-import com.phew.device.device.Device
-import com.phew.device.dto.UserInfoDTO
+
+import com.clib.device_info.DeviceInfo
+import com.clib.location_provider.LocationProvider
+import com.phew.datastore_local.DataStore
+import com.phew.datastore_local.dto.UserInfoDTO
 import com.phew.domain.dto.Location
 import com.phew.domain.dto.Token
 import com.phew.domain.dto.UserInfo
@@ -11,39 +13,44 @@ import javax.inject.Inject
 
 
 class DeviceRepositoryImpl @Inject constructor(
-    private val device: Device,
-    private val dataSource: DataStore,
+    private val dataStoreLocal: DataStore,
+    private val deviceInfo: DeviceInfo,
+    private val location: LocationProvider,
 ) : DeviceRepository {
     override suspend fun requestDeviceId(): String {
-        return device.deviceId()
+        return deviceInfo.deviceId()
     }
 
     override suspend fun requestToken(key: String): Pair<String, String> {
-        return dataSource.getToken(key)
+        val data = dataStoreLocal.getToken(key)
+        return Pair(data.refreshToken, data.accessToken)
     }
 
     override suspend fun saveToken(key: String, data: Token): Boolean {
-        return dataSource.insertToken(key = key, data = Pair(data.refreshToken, data.refreshToken))
+        return dataStoreLocal.insertToken(
+            key = key,
+            data = Pair(data.refreshToken, data.refreshToken)
+        )
     }
 
     override suspend fun firebaseToken(): String {
-        return device.firebaseToken()
+        return deviceInfo.firebaseToken()
     }
 
     override suspend fun requestGetSaveFirebaseToken(key: String): String {
-        return dataSource.getFirebaseToken(key)
+        return dataStoreLocal.getFirebaseToken(key)
     }
 
     override suspend fun requestSaveFirebaseToken(key: String, data: String): Boolean {
-        return dataSource.insertFirebaseToken(key = key, data = data)
+        return dataStoreLocal.insertFirebaseToken(key = key, data = data)
     }
 
     override suspend fun requestSaveNotify(key: String, data: Boolean): Boolean {
-        return dataSource.insertNotifyAgree(key = key, data = data)
+        return dataStoreLocal.insertNotifyAgree(key = key, data = data)
     }
 
     override suspend fun requestGetNotify(key: String): Boolean {
-        return dataSource.getNotifyAgree(key)
+        return dataStoreLocal.getNotifyAgree(key)
     }
 
     override suspend fun saveUserInfo(
@@ -54,7 +61,7 @@ class DeviceRepositoryImpl @Inject constructor(
         agreedToLocationTerms: Boolean,
         agreedToPrivacyPolicy: Boolean,
     ): Boolean {
-        return dataSource.saveUserInfo(
+        return dataStoreLocal.saveUserInfo(
             key = key,
             data = UserInfoDTO(
                 nickName = nickName,
@@ -67,7 +74,7 @@ class DeviceRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getUserInfo(key: String): UserInfo? {
-        val request = dataSource.getUserInfo(key = key) ?: return null
+        val request = dataStoreLocal.getUserInfo(key = key) ?: return null
         return UserInfo(
             nickName = request.nickName,
             isNotifyAgree = request.isNotifyAgree,
@@ -79,8 +86,8 @@ class DeviceRepositoryImpl @Inject constructor(
 
     override suspend fun requestLocation(): Location {
         return Location(
-            latitude = device.location().latitude,
-            longitude = device.location().longitude
+            latitude = location.location().latitude,
+            longitude = location.location().longitude
         )
     }
 }

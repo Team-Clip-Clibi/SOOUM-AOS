@@ -1,4 +1,4 @@
-package com.phew.device.dto
+package com.phew.datastore_local.dto
 
 data class UserInfoDTO(
     val nickName: String,

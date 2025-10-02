@@ -1,48 +1,31 @@
-package com.phew.device.device
+package com.clib.location_provider
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
-import android.provider.Settings
-import androidx.annotation.RequiresPermission
-import com.google.firebase.messaging.FirebaseMessaging
-import com.phew.core_common.ERROR
+import android.location.LocationManager
+import androidx.core.content.ContextCompat
+import com.clib.location_provider.dto.LocationDTO
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
-import androidx.core.content.ContextCompat
-import com.phew.device.dto.LocationDTO
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
-import kotlin.Exception
 
-class DeviceImpl @Inject constructor(@ApplicationContext private val context: Context) :
-    Device {
+class LocationProviderImpl @Inject constructor(@ApplicationContext private val context: Context) :
+    LocationProvider {
     private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
-
-    @SuppressLint("HardwareIds")
-    override suspend fun deviceId(): String {
-        try {
-            val id = Settings.Secure.getString(
-                context.contentResolver,
-                Settings.Secure.ANDROID_ID
-            )
-            return id
-        } catch (e: Exception) {
-            e.printStackTrace()
-            throw IllegalArgumentException("Device ID not fount ${e.message}")
-        }
+    override suspend fun locationPermissionCheck(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
     }
 
-    override suspend fun firebaseToken(): String {
-        try {
-            val token = FirebaseMessaging.getInstance().token.await()
-            return token
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return ERROR
-        }
+    override suspend fun isLocationEnable(): Boolean {
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
     }
 
     override suspend fun location(): LocationDTO {
@@ -68,5 +51,4 @@ class DeviceImpl @Inject constructor(@ApplicationContext private val context: Co
             return LocationDTO(latitude = null, longitude = null)
         }
     }
-
 }

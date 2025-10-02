@@ -1,11 +1,11 @@
-package com.phew.device.dataStore
+package com.phew.datastore_local
 
-import com.phew.device.dto.UserInfoDTO
-
+import com.phew.datastore_local.dto.TokenDTO
+import com.phew.datastore_local.dto.UserInfoDTO
 
 interface DataStore {
     suspend fun insertToken(key: String, data: Pair<String, String>): Boolean
-    suspend fun getToken(key: String): Pair<String, String>
+    suspend fun getToken(key: String): TokenDTO
     suspend fun remove(key: String): Boolean
     suspend fun insertFirebaseToken(key: String, data: String): Boolean
     suspend fun getFirebaseToken(key: String): String
