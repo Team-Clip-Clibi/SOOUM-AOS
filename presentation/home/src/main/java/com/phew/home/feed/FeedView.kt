@@ -110,8 +110,12 @@ fun FeedView(
             .systemBarsPadding()
     ) {
         TopLayout(
-            recentClick = viewModel::initTestData,
-            popularClick = viewModel::initTestData,
+            recentClick = {
+                //TODO 최신 카드
+            },
+            popularClick = {
+                //TODO 인기 카드
+            },
             nearClick = viewModel::checkLocationPermission,
             isTabsVisible = isTabsVisible,
             notice = notice,
@@ -122,7 +126,9 @@ fun FeedView(
         FeedContent(
             uiState = uiState,
             isRefreshing = isRefreshing,
-            onRefresh = viewModel::refresh,
+            onRefresh = {
+
+            },
             lazyListState = lazyListState,
             nestedScrollConnection = nestedScrollConnection,
             composition = composition,
