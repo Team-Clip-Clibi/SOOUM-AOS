@@ -20,16 +20,18 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.update
 
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val locationAsk: CheckLocationPermission,
-    private val getNotificationPage: GetNotification,
-    private val getUnReadNotification: GetUnReadNotification,
-    private val getReadNotification: GetReadNotification
+    getNotificationPage: GetNotification,
+    getUnReadNotification: GetUnReadNotification,
+    getReadNotification: GetReadNotification,
 ) :
     ViewModel() {
     private val _uiState = MutableStateFlow(Home())
@@ -45,6 +47,12 @@ class HomeViewModel @Inject constructor(
     val readNotification: Flow<PagingData<Notification>> =
         getReadNotification().cachedIn(viewModelScope)
 
+    /**
+     * 권한 요청
+     */
+    private val _requestPermissionEvent = MutableSharedFlow<Array<String>>()
+    val requestPermissionEvent = _requestPermissionEvent.asSharedFlow()
+
     init {
         initTestData()
     }
@@ -58,7 +66,7 @@ class HomeViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(refresh = UiState.Loading)
             try {
                 delay(5000)
-                val newFeedItems = (1..10).map { it ->
+                val newFeedItems = (1..10).map {
                     FeedData(
                         location = "정자동",
                         writeTime = when (it) {
@@ -108,18 +116,41 @@ class HomeViewModel @Inject constructor(
     }
 
     fun checkLocationPermission() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val isAsk = locationAsk()
-            _uiState.value = _uiState.value.copy(isLocationAsk = isAsk)
+        val isGranted = locationAsk()
+        if (isGranted) {
+            //TODO 근처 피드 게시물 가져오기
+            return
+        }
+        _uiState.value = _uiState.value.copy(shouldShowPermissionRationale = true)
+    }
+
+    fun onPermissionRequest(permission: Array<String>) {
+        viewModelScope.launch {
+            _requestPermissionEvent.emit(permission)
         }
     }
+
+    fun onPermissionResult(isGranted: Boolean) {
+        if (!isGranted) {
+            _uiState.update { state ->
+                state.copy(shouldShowPermissionRationale = true)
+            }
+        }
+    }
+
+    fun rationalDialogDismissed() {
+        _uiState.update { state ->
+            state.copy(shouldShowPermissionRationale = false)
+        }
+    }
+
 }
 
 data class Home(
     val refresh: UiState<Boolean> = UiState.None,
     val feedItem: List<FeedData> = emptyList(),
     val notifyItem: List<Notify> = emptyList(),
-    val isLocationAsk: Boolean = true
+    val shouldShowPermissionRationale: Boolean = false,
 )
 
 sealed interface UiState<out T> {

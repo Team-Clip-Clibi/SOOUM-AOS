@@ -1,5 +1,8 @@
 package com.phew.sooum.ui
 
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -9,6 +12,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -52,9 +56,6 @@ import com.phew.splash.SplashViewModel
 fun Nav(
     update: () -> Unit,
     finish: () -> Unit,
-    locationPermission: () -> Unit,
-    feedLocationDialogNotShow : Boolean,
-    onDismissRationale: () -> Unit
 ) {
     val navController = rememberNavController()
 
@@ -74,9 +75,6 @@ fun Nav(
         homeGraph(
             navController = navController,
             finish = finish,
-            dialogDismiss = feedLocationDialogNotShow,
-            locationPermission = locationPermission,
-            closeDialog = onDismissRationale
         )
     }
 }
@@ -208,9 +206,6 @@ fun NavGraphBuilder.signUpNabGraph(
 fun NavGraphBuilder.homeGraph(
     navController: NavController,
     finish: () -> Unit,
-    dialogDismiss: Boolean,
-    locationPermission: () -> Unit,
-    closeDialog: () -> Unit
 ) {
     slideComposable(NAV_HOME) { nav ->
         val navBackStackEntry =
@@ -220,6 +215,18 @@ fun NavGraphBuilder.homeGraph(
         val homeNavBackStackEntry by homeNavController.currentBackStackEntryAsState()
         val currentRoute = homeNavBackStackEntry?.destination?.route
         val snackBarHostState = remember { SnackbarHostState() }
+        val locationPermission = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestMultiplePermissions(),
+            onResult = { permissionResult ->
+                val isGranted = permissionResult[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
+                homeViewModel.onPermissionResult(isGranted = isGranted)
+            }
+        )
+        LaunchedEffect(homeViewModel) {
+            homeViewModel.requestPermissionEvent.collect { permissions ->
+                locationPermission.launch(permissions)
+            }
+        }
 
         Scaffold(
             bottomBar = {
@@ -270,9 +277,13 @@ fun NavGraphBuilder.homeGraph(
                     FeedView(
                         viewModel = homeViewModel,
                         finish = finish,
-                        locationPermission = locationPermission,
-                        dialogDismiss = dialogDismiss,
-                        closeDialog = closeDialog,
+                        requestPermission = {
+                            homeViewModel.onPermissionRequest(arrayOf(
+                                Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.ACCESS_COARSE_LOCATION
+                            ))
+                        },
+                        closeDialog =  homeViewModel::rationalDialogDismissed,
                         noticeClick = { homeNavController.navigate(NAV_HOME_NOTIFY) }
                     )
                 }

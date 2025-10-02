@@ -5,21 +5,15 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatDelegate
 import dagger.hilt.android.AndroidEntryPoint
 import com.phew.sooum.ui.Nav
 import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import android.Manifest.permission
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private var shouldShowPermissionRationale by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,13 +30,6 @@ class MainActivity : ComponentActivity() {
                 },
                 update = {
                     playStore()
-                },
-                locationPermission = {
-                    requestLocationPermission()
-                },
-                feedLocationDialogNotShow = shouldShowPermissionRationale,
-                onDismissRationale = {
-                    shouldShowPermissionRationale = true
                 }
             )
         }
@@ -61,23 +48,5 @@ class MainActivity : ComponentActivity() {
             e.printStackTrace()
             throw IllegalArgumentException(e)
         }
-    }
-
-    private val locationPermission = registerForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        val isGranted = permissions[permission.ACCESS_FINE_LOCATION] ?: false
-        if (!isGranted) {
-            shouldShowPermissionRationale = true
-        }
-    }
-
-    private fun requestLocationPermission() {
-        locationPermission.launch(
-            arrayOf(
-                permission.ACCESS_FINE_LOCATION,
-                permission.ACCESS_COARSE_LOCATION
-            )
-        )
     }
 }
