@@ -5,7 +5,7 @@ import com.phew.network.dto.response.PopularDto
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Header
-import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface FeedHttp {
     /**
@@ -14,8 +14,8 @@ interface FeedHttp {
     @GET(BuildConfig.API_URL_CARD_FEED_POPULAR)
     suspend fun requestPopularFeed(
         @Header("Authorization") bearerToken: String,
-        @Path("latitude") latitude: Double,
-        @Path("longitude") longitude: Double
+        @Query("latitude") latitude: Double? = null,
+        @Query("longitude") longitude: Double? = null
     ): Response<List<PopularDto>>
 
     /**
@@ -24,8 +24,8 @@ interface FeedHttp {
     @GET(BuildConfig.API_URL_CARD_FEED_LATEST)
     suspend fun requestLatestFeed(
         @Header("Authorization") bearerToken: String,
-        @Path("latitude") latitude: Double,
-        @Path("longitude") longitude: Double
+        @Query("latitude") latitude: Double? = null,
+        @Query("longitude") longitude: Double? = null
     ): Response<List<LatestDto>>
 
     /**
@@ -34,9 +34,9 @@ interface FeedHttp {
     @GET(BuildConfig.API_URL_CARD_FEED_LATEST_LAST)
     suspend fun requestLatestFeedLast(
         @Header("Authorization") bearerToken: String,
-        @Path("latitude") latitude: Double,
-        @Path("longitude") longitude: Double,
-        @Path("lastId") lastId: Long
+        @Query("latitude") latitude: Double? = null,
+        @Query("longitude") longitude: Double? = null,
+        @Query("lastId") lastId: Int? = null
     ): Response<List<LatestDto>>
 
 }

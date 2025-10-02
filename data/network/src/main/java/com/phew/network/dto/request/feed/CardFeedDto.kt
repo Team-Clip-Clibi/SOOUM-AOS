@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 
 @OptIn(InternalSerializationApi::class)
 @Serializable
-data class FeedDto(
+data class CardFeedDto(
     val latitude: Double?,
     val longitude: Double?,
     val lastId: Int?

@@ -2,12 +2,16 @@ package com.phew.repository.mapper
 
 import com.phew.domain.dto.FeedLikeNotification
 import com.phew.domain.dto.FollowNotification
+import com.phew.domain.dto.Latest
 import com.phew.domain.dto.Notification
+import com.phew.domain.dto.Popular
 import com.phew.domain.dto.UserBlockNotification
 import com.phew.domain.dto.UserCommentLike
 import com.phew.domain.dto.UserCommentWrite
 import com.phew.domain.dto.UserDeleteNotification
 import com.phew.network.dto.NotificationDTO
+import com.phew.network.dto.response.LatestDto
+import com.phew.network.dto.response.PopularDto
 import com.phew.repository.TYPE_BLOCK
 import com.phew.repository.TYPE_COMMENT_LIKE
 import com.phew.repository.TYPE_COMMENT_WRITE
@@ -73,4 +77,36 @@ internal fun NotificationDTO.toDomain(): Notification {
 
         else -> throw IllegalArgumentException("Unknow type")
     }
+}
+
+internal fun PopularDto.toDomain(): Popular {
+    return Popular(
+        cardId = this.cardId,
+        likeCount = this.likeCount,
+        commentCardCount = this.commentCardCount,
+        cardImgUrl = this.cardImgUrl,
+        cardImagName = this.cardImagName,
+        cardContent = this.cardContent,
+        font = this.font,
+        distance = this.distance,
+        createAt = this.createAt,
+        storyExpirationTime = this.storyExpirationTime,
+        isAdminCard = this.isAdminCard
+    )
+}
+
+internal fun LatestDto.toDomain(): Latest {
+    return Latest(
+        cardId = this.cardId,
+        likeCount = this.likeCount,
+        commentCardCount = this.commentCardCount,
+        cardImgUrl = this.cardImgUrl,
+        cardImagName = this.cardImagName,
+        cardContent = this.cardContent,
+        font = this.font,
+        distance = this.distance,
+        createAt = this.createAt,
+        storyExpirationTime = this.storyExpirationTime,
+        isAdminCard = this.isAdminCard
+    )
 }
