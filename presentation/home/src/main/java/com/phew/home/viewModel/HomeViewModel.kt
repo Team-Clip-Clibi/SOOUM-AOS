@@ -27,6 +27,8 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.update
 import com.phew.core_common.DataResult
+import com.phew.domain.dto.Location
+import com.phew.domain.repository.DeviceRepository
 
 
 @HiltViewModel
@@ -35,7 +37,8 @@ class HomeViewModel @Inject constructor(
     getNotificationPage: GetNotification,
     getUnReadNotification: GetUnReadNotification,
     getReadNotification: GetReadNotification,
-    private val cardFeedRepository: CardFeedRepository
+    private val cardFeedRepository: CardFeedRepository,
+    private val deviceRepository: DeviceRepository
 ) :
     ViewModel() {
     private val _uiState = MutableStateFlow(Home())
@@ -59,10 +62,20 @@ class HomeViewModel @Inject constructor(
         val isGranted = locationAsk()
         if (isGranted) {
             //TODO 근처 피드 게시물 가져오기
+            getLocation()
             return
         }
         _uiState.update { state ->
             state.copy(shouldShowPermissionRationale = true)
+        }
+    }
+
+    private fun getLocation() {
+        viewModelScope.launch {
+            val location = deviceRepository.requestLocation()
+            _uiState.update { state ->
+                state.copy(location = location)
+            }
         }
     }
 
@@ -86,7 +99,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun loadLatestFeeds() {
+    private fun loadLatestFeeds() {
         if (_uiState.value.latestState is UiState.Loading) {
             return
         }
@@ -95,8 +108,8 @@ class HomeViewModel @Inject constructor(
             _uiState.update { it.copy(latestState = UiState.Loading) }
 
             try {
-                val latitude = if (_uiState.value.isLocationAsk) null else null // TODO: 실제 위치 정보 가져오기
-                val longitude = if (_uiState.value.isLocationAsk) null else null // TODO: 실제 위치 정보 가져오기
+                val latitude = _uiState.value.location.latitude
+                val longitude = _uiState.value.location.longitude
 
                 when (val result = cardFeedRepository.requestFeedLatest(
                     latitude = latitude,
@@ -120,7 +133,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun loadPopularFeeds() {
+    private fun loadPopularFeeds() {
         if (_uiState.value.popularState is UiState.Loading) {
             return
         }
@@ -129,8 +142,8 @@ class HomeViewModel @Inject constructor(
             _uiState.update { it.copy(popularState = UiState.Loading) }
 
             try {
-                val latitude = if (_uiState.value.isLocationAsk) null else null // TODO: 실제 위치 정보 가져오기
-                val longitude = if (_uiState.value.isLocationAsk) null else null // TODO: 실제 위치 정보 가져오기
+                val latitude = _uiState.value.location.latitude
+                val longitude = _uiState.value.location.longitude
 
                 when (val result = cardFeedRepository.requestFeedPopular(
                     latitude = latitude,
@@ -187,6 +200,7 @@ data class Home(
     val refresh: UiState<Boolean> = UiState.None,
     val feedItem: List<FeedData> = emptyList(),
     val notifyItem: List<Notify> = emptyList(),
+    val location: Location = Location.EMPTY,
     val shouldShowPermissionRationale: Boolean = false,
 )
 
