@@ -1,6 +1,6 @@
 package com.phew.repository.network
 
-import com.clib.device_info.BuildConfig
+import com.phew.device_info.BuildConfig
 import com.phew.core_common.DataResult
 import com.phew.core_common.TOKEN_FORM
 import com.phew.domain.dto.Latest
@@ -71,7 +71,7 @@ class CardFeedRepositoryImpl @Inject constructor(
             
             val response = if (feedDto.lastId != null) {
                 // 페이징이 있는 경우 - 다음 페이지 요청
-                feedHttp.requestLatestFeedLast(
+                feedHttp.requestLatestFeed(
                     bearerToken = TOKEN_FORM + token.second,
                     latitude = feedDto.latitude,
                     longitude = feedDto.longitude,

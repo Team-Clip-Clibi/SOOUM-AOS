@@ -1,11 +1,11 @@
-package com.clib.location_provider
+package com.phew.location_provider
 
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import androidx.core.content.ContextCompat
-import com.clib.location_provider.dto.LocationDTO
+import com.phew.location_provider.dto.LocationDTO
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import dagger.hilt.android.qualifiers.ApplicationContext

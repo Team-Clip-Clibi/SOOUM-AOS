@@ -1,5 +1,6 @@
 package com.phew.network.retrofit
 
+import com.phew.network.BuildConfig
 import com.phew.network.dto.response.LatestDto
 import com.phew.network.dto.response.PopularDto
 import retrofit2.Response
@@ -25,18 +26,7 @@ interface FeedHttp {
     suspend fun requestLatestFeed(
         @Header("Authorization") bearerToken: String,
         @Query("latitude") latitude: Double? = null,
-        @Query("longitude") longitude: Double? = null
-    ): Response<List<LatestDto>>
-
-    /**
-     * Latest Feed Last url
-     */
-    @GET(BuildConfig.API_URL_CARD_FEED_LATEST_LAST)
-    suspend fun requestLatestFeedLast(
-        @Header("Authorization") bearerToken: String,
-        @Query("latitude") latitude: Double? = null,
         @Query("longitude") longitude: Double? = null,
         @Query("lastId") lastId: Int? = null
     ): Response<List<LatestDto>>
-
 }

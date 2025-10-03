@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "com.clib.location_provider"
+    namespace = "com.phew.location_provider"
 }
 
 dependencies {

@@ -1,8 +1,8 @@
 package com.phew.repository
 
 
-import com.clib.device_info.DeviceInfo
-import com.clib.location_provider.LocationProvider
+import com.phew.device_info.DeviceInfo
+import com.phew.location_provider.LocationProvider
 import com.phew.datastore_local.DataStore
 import com.phew.datastore_local.dto.UserInfoDTO
 import com.phew.domain.dto.Location

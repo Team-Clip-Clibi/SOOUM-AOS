@@ -1,4 +1,4 @@
-package com.clib.device_info
+package com.phew.device_info
 
 import android.annotation.SuppressLint
 import android.content.Context

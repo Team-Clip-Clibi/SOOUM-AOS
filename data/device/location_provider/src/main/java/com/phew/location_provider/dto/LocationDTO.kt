@@ -1,4 +1,4 @@
-package com.clib.location_provider.dto
+package com.phew.location_provider.dto
 
 data class LocationDTO(
     val latitude: Double?,

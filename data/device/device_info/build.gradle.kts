@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "com.clib.device_info"
+    namespace = "com.phew.device_info"
 }
 
 dependencies {

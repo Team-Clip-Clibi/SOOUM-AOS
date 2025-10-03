@@ -1,4 +1,4 @@
-package com.clib.device_info
+package com.phew.device_info
 
 interface DeviceInfo {
     suspend fun deviceId(): String

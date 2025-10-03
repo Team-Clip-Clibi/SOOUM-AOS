@@ -1,8 +1,8 @@
-package com.clib.location_provider.di
+package com.phew.device_info.di
 
 import android.content.Context
-import com.clib.location_provider.LocationProvider
-import com.clib.location_provider.LocationProviderImpl
+import com.phew.device_info.DeviceInfo
+import com.phew.device_info.DeviceInfoImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -12,10 +12,10 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object LocationModule {
+object DeviceInfoModule {
     @Provides
     @Singleton
-    fun provideLocation(
-        @ApplicationContext context: Context,
-    ): LocationProvider = LocationProviderImpl(context = context)
+    fun provideDeviceInfo(@ApplicationContext context: Context): DeviceInfo = DeviceInfoImpl(
+        context = context
+    )
 }

@@ -1,6 +1,6 @@
-package com.clib.location_provider
+package com.phew.location_provider
 
-import com.clib.location_provider.dto.LocationDTO
+import com.phew.location_provider.dto.LocationDTO
 
 interface LocationProvider {
     suspend fun locationPermissionCheck(): Boolean
