@@ -51,7 +51,14 @@ class HomeViewModel @Inject constructor(
 
     init {
         // 홈 화면 진입 시 최신 피드 자동 로딩
-        loadLatestFeeds()
+        loadInitialFeeds()
+    }
+    
+    private fun loadInitialFeeds() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(latestPagingState = FeedPagingState.Loading) }
+            loadLatestFeeds(isInitial = true)
+        }
     }
     val notice: Flow<PagingData<Notice>> = getNotificationPage().cachedIn(viewModelScope)
     val unReadNotification: Flow<PagingData<Notification>> =
@@ -114,90 +121,122 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private fun loadLatestFeeds() {
-        if (_uiState.value.latestState is UiState.Loading) {
-            return
-        }
-
+    private fun loadLatestFeeds(isInitial: Boolean) {
         viewModelScope.launch {
-            _uiState.update { it.copy(latestState = UiState.Loading) }
-
             try {
-                // 위치 정보 가져오기 완료 대기 (오류 무시)
+                val currentState = _uiState.value.latestPagingState
+                
+                if (!isInitial) {
+                    _uiState.update { 
+                        it.copy(latestPagingState = FeedPagingState.LoadingMore) 
+                    }
+                }
+                
                 val location = getLocationSafely()
-                _uiState.update { it.copy(location = location) }
-
-                // 위치 정보 유무와 관계없이 피드 로딩 진행
                 val latitude = location.latitude.takeIf { it != 0.0 }
                 val longitude = location.longitude.takeIf { it != 0.0 }
-
+                
+                val lastId = if (isInitial) null else {
+                    (currentState as? FeedPagingState.Success)?.lastId
+                }
+                
                 when (val result = cardFeedRepository.requestFeedLatest(
                     latitude = latitude,
                     longitude = longitude,
-                    lastId = null
+                    lastId = lastId
                 )) {
                     is DataResult.Success -> {
-                        val feedCards = mapLatestToFeedCards(result.data)
-                        _uiState.update { 
-                            it.copy(
-                                latestState = UiState.Success(result.data),
-                                feedCards = feedCards
-                            ) 
+                        val newFeedCards = mapLatestToFeedCards(result.data)
+                        val existingCards = if (isInitial) emptyList() else {
+                            (currentState as? FeedPagingState.Success)?.feedCards ?: emptyList()
+                        }
+                        
+                        _uiState.update { state ->
+                            state.copy(
+                                location = location,
+                                latestPagingState = FeedPagingState.Success(
+                                    feedCards = existingCards + newFeedCards,
+                                    hasNextPage = result.data.isNotEmpty(),
+                                    lastId = result.data.lastOrNull()?.cardId?.toIntOrNull()
+                                )
+                            )
                         }
                     }
                     is DataResult.Fail -> {
                         _uiState.update {
-                            it.copy(latestState = UiState.Fail(result.message ?: "최신 피드 로딩 실패"))
+                            it.copy(
+                                latestPagingState = FeedPagingState.Error(
+                                    result.message ?: "최신 피드 로딩 실패"
+                                )
+                            )
                         }
                     }
                 }
             } catch (e: Exception) {
                 _uiState.update {
-                    it.copy(latestState = UiState.Fail(e.message ?: "최신 피드 로딩 실패"))
+                    it.copy(
+                        latestPagingState = FeedPagingState.Error(
+                            e.message ?: "최신 피드 로딩 실패"
+                        )
+                    )
                 }
             }
         }
     }
 
-    private fun loadPopularFeeds() {
-        if (_uiState.value.popularState is UiState.Loading) {
-            return
-        }
-
+    private fun loadPopularFeeds(isInitial: Boolean) {
         viewModelScope.launch {
-            _uiState.update { it.copy(popularState = UiState.Loading) }
-
             try {
-                // 위치 정보 가져오기 완료 대기 (오류 무시)
+                val currentState = _uiState.value.popularPagingState
+                
+                if (!isInitial) {
+                    _uiState.update { 
+                        it.copy(popularPagingState = FeedPagingState.LoadingMore) 
+                    }
+                }
+                
                 val location = getLocationSafely()
-                _uiState.update { it.copy(location = location) }
-
-                // 위치 정보 유무와 관계없이 피드 로딩 진행
                 val latitude = location.latitude.takeIf { it != 0.0 }
                 val longitude = location.longitude.takeIf { it != 0.0 }
-
+                
                 when (val result = cardFeedRepository.requestFeedPopular(
                     latitude = latitude,
                     longitude = longitude
                 )) {
                     is DataResult.Success -> {
-                        val feedCards = mapPopularToFeedCards(result.data)
-                        _uiState.update { 
-                            it.copy(
-                                popularState = UiState.Success(result.data),
-                                feedCards = feedCards
-                            ) 
+                        val newFeedCards = mapPopularToFeedCards(result.data)
+                        val existingCards = if (isInitial) emptyList() else {
+                            (currentState as? FeedPagingState.Success)?.feedCards ?: emptyList()
+                        }
+                        
+                        _uiState.update { state ->
+                            state.copy(
+                                location = location,
+                                popularPagingState = FeedPagingState.Success(
+                                    feedCards = existingCards + newFeedCards,
+                                    hasNextPage = result.data.isNotEmpty(),
+                                    lastId = null // Popular는 페이징이 없으므로 null
+                                )
+                            )
                         }
                     }
                     is DataResult.Fail -> {
                         _uiState.update {
-                            it.copy(popularState = UiState.Fail(result.message ?: "인기 피드 로딩 실패"))
+                            it.copy(
+                                popularPagingState = FeedPagingState.Error(
+                                    result.message ?: "인기 피드 로딩 실패"
+                                )
+                            )
                         }
                     }
                 }
             } catch (e: Exception) {
                 _uiState.update {
-                    it.copy(popularState = UiState.Fail(e.message ?: "인기 피드 로딩 실패"))
+                    it.copy(
+                        popularPagingState = FeedPagingState.Error(
+                            e.message ?: "인기 피드 로딩 실패"
+                        )
+                    )
                 }
             }
         }
@@ -208,22 +247,37 @@ class HomeViewModel @Inject constructor(
 
         when (feedType) {
             FeedType.Latest -> {
-                if (_uiState.value.latestState is UiState.None) {
-                    loadLatestFeeds()
+                if (_uiState.value.latestPagingState is FeedPagingState.None) {
+                    _uiState.update { it.copy(latestPagingState = FeedPagingState.Loading) }
+                    loadLatestFeeds(isInitial = true)
                 }
             }
             FeedType.Popular -> {
-                if (_uiState.value.popularState is UiState.None) {
-                    loadPopularFeeds()
+                if (_uiState.value.popularPagingState is FeedPagingState.None) {
+                    _uiState.update { it.copy(popularPagingState = FeedPagingState.Loading) }
+                    loadPopularFeeds(isInitial = true)
                 }
             }
         }
     }
 
+    fun loadMoreFeeds() {
+        when (_uiState.value.currentTab) {
+            FeedType.Latest -> loadLatestFeeds(isInitial = false)
+            FeedType.Popular -> loadPopularFeeds(isInitial = false)
+        }
+    }
+
     fun refreshCurrentTab() {
         when (_uiState.value.currentTab) {
-            FeedType.Latest -> loadLatestFeeds()
-            FeedType.Popular -> loadPopularFeeds()
+            FeedType.Latest -> {
+                _uiState.update { it.copy(latestPagingState = FeedPagingState.Loading) }
+                loadLatestFeeds(isInitial = true)
+            }
+            FeedType.Popular -> {
+                _uiState.update { it.copy(popularPagingState = FeedPagingState.Loading) }
+                loadPopularFeeds(isInitial = true)
+            }
         }
     }
 
@@ -315,14 +369,33 @@ class HomeViewModel @Inject constructor(
 
     fun removeFeedCard(cardId: String) {
         _uiState.update { currentState ->
-            currentState.copy(
-                feedCards = currentState.feedCards.filter { feedCard ->
-                    when (feedCard) {
-                        is FeedCardType.BoombType -> feedCard.cardId != cardId
-                        is FeedCardType.AdminType -> feedCard.cardId != cardId
-                        is FeedCardType.NormalType -> feedCard.cardId != cardId
+            val updatedLatestState = if (currentState.latestPagingState is FeedPagingState.Success) {
+                currentState.latestPagingState.copy(
+                    feedCards = currentState.latestPagingState.feedCards.filter { feedCard ->
+                        when (feedCard) {
+                            is FeedCardType.BoombType -> feedCard.cardId != cardId
+                            is FeedCardType.AdminType -> feedCard.cardId != cardId
+                            is FeedCardType.NormalType -> feedCard.cardId != cardId
+                        }
                     }
-                }
+                )
+            } else currentState.latestPagingState
+            
+            val updatedPopularState = if (currentState.popularPagingState is FeedPagingState.Success) {
+                currentState.popularPagingState.copy(
+                    feedCards = currentState.popularPagingState.feedCards.filter { feedCard ->
+                        when (feedCard) {
+                            is FeedCardType.BoombType -> feedCard.cardId != cardId
+                            is FeedCardType.AdminType -> feedCard.cardId != cardId
+                            is FeedCardType.NormalType -> feedCard.cardId != cardId
+                        }
+                    }
+                )
+            } else currentState.popularPagingState
+            
+            currentState.copy(
+                latestPagingState = updatedLatestState,
+                popularPagingState = updatedPopularState
             )
         }
     }
@@ -331,15 +404,20 @@ class HomeViewModel @Inject constructor(
 
 data class Home(
     val currentTab: FeedType = FeedType.Latest,
-    val latestState: UiState<List<Latest>> = UiState.None,
-    val popularState: UiState<List<Popular>> = UiState.None,
+    val latestPagingState: FeedPagingState = FeedPagingState.None,
+    val popularPagingState: FeedPagingState = FeedPagingState.None,
     val refresh: UiState<Boolean> = UiState.None,
     val feedItem: List<FeedData> = emptyList(),
-    val feedCards: List<FeedCardType> = emptyList(),
     val notifyItem: List<Notify> = emptyList(),
     val location: Location = Location.EMPTY,
     val shouldShowPermissionRationale: Boolean = false,
-)
+) {
+    val currentPagingState: FeedPagingState
+        get() = when (currentTab) {
+            FeedType.Latest -> latestPagingState
+            FeedType.Popular -> popularPagingState
+        }
+}
 
 enum class FeedType {
     Latest, Popular
@@ -350,4 +428,16 @@ sealed interface UiState<out T> {
     data object Loading : UiState<Nothing>
     data class Success<T>(val data: T) : UiState<T>
     data class Fail(val errorMessage: String) : UiState<Nothing>
+}
+
+sealed interface FeedPagingState {
+    data object None : FeedPagingState
+    data object Loading : FeedPagingState
+    data object LoadingMore : FeedPagingState
+    data class Success(
+        val feedCards: List<FeedCardType>,
+        val hasNextPage: Boolean,
+        val lastId: Int?
+    ) : FeedPagingState
+    data class Error(val message: String) : FeedPagingState
 }

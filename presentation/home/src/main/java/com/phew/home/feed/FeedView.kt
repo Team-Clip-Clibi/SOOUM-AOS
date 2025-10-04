@@ -25,11 +25,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.phew.core_design.AppBar
@@ -66,6 +69,7 @@ import com.phew.home.NAV_HOME_FEED_INDEX
 import com.phew.home.NAV_HOME_NEAR_INDEX
 import com.phew.home.NAV_HOME_POPULAR_INDEX
 import com.phew.home.R
+import com.phew.home.viewModel.FeedPagingState
 import com.phew.home.viewModel.FeedType
 import com.phew.home.viewModel.Home
 import com.phew.home.viewModel.UiState
@@ -115,6 +119,31 @@ fun FeedView(
         finish()
     }
 
+    // 리컴포지션 최적화: 페이징 상태만 관찰
+    val currentPagingState by remember(uiState.currentTab) {
+        derivedStateOf { uiState.currentPagingState }
+    }
+    
+    // 무한 스크롤 감지
+    val isLoadingMore = currentPagingState is FeedPagingState.LoadingMore
+    
+    LaunchedEffect(lazyListState) {
+        snapshotFlow { lazyListState.layoutInfo.visibleItemsInfo }
+            .collect { visibleItems ->
+                val lastVisibleIndex = visibleItems.lastOrNull()?.index ?: 0
+                val totalItems = lazyListState.layoutInfo.totalItemsCount
+                
+                val state = currentPagingState
+                if (lastVisibleIndex >= totalItems - 3 && 
+                    state is FeedPagingState.Success &&
+                    state.hasNextPage &&
+                    !isLoadingMore
+                ) {
+                    viewModel.loadMoreFeeds()
+                }
+            }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -136,11 +165,10 @@ fun FeedView(
         )
 
         FeedContent(
-            uiState = uiState,
+            currentPagingState = currentPagingState,
             isRefreshing = isRefreshing,
-            onRefresh = {
-                viewModel::refreshCurrentTab
-            },
+            isLoadingMore = isLoadingMore,
+            onRefresh = viewModel::refreshCurrentTab,
             lazyListState = lazyListState,
             nestedScrollConnection = nestedScrollConnection,
             composition = composition,
@@ -209,8 +237,9 @@ private fun TopLayout(
 
 @Composable
 private fun FeedContent(
-    uiState: Home,
+    currentPagingState: FeedPagingState,
     isRefreshing: Boolean,
+    isLoadingMore: Boolean,
     onRefresh: () -> Unit,
     lazyListState: LazyListState,
     nestedScrollConnection: NestedScrollConnection,
@@ -218,18 +247,43 @@ private fun FeedContent(
     progress: Float,
     onRemoveCard: (String) -> Unit,
 ) {
-    when {
-        uiState.feedCards.isEmpty() -> EmptyFeedView()
-        else -> FeedListView(
-            feedCards = uiState.feedCards,
-            isRefreshing = isRefreshing,
-            onRefresh = onRefresh,
-            lazyListState = lazyListState,
-            nestedScrollConnection = nestedScrollConnection,
-            composition = composition,
-            progress = progress,
-            onRemoveCard = onRemoveCard
-        )
+    when (currentPagingState) {
+        is FeedPagingState.None,
+        is FeedPagingState.Loading -> {
+            if (isRefreshing || currentPagingState is FeedPagingState.Loading) {
+                // 로딩 UI는 PullToRefresh에서 처리 또는 초기 로딩
+            }
+        }
+        
+        is FeedPagingState.LoadingMore -> {
+            // LoadingMore일 때도 성공 상태의 데이터를 표시하고 로딩 인디케이터를 추가
+            // 하지만 현재 상태에서는 기존 데이터가 없으므로 빈 화면 표시
+        }
+        
+        is FeedPagingState.Success -> {
+            if (currentPagingState.feedCards.isEmpty()) {
+                EmptyFeedView()
+            } else {
+                FeedListView(
+                    feedCards = currentPagingState.feedCards,
+                    isRefreshing = isRefreshing,
+                    isLoadingMore = isLoadingMore,
+                    onRefresh = onRefresh,
+                    lazyListState = lazyListState,
+                    nestedScrollConnection = nestedScrollConnection,
+                    composition = composition,
+                    progress = progress,
+                    onRemoveCard = onRemoveCard
+                )
+            }
+        }
+        
+        is FeedPagingState.Error -> {
+            ErrorView(
+                message = currentPagingState.message,
+                onRetry = onRefresh
+            )
+        }
     }
 }
 
@@ -262,6 +316,7 @@ private fun EmptyFeedView() {
 private fun FeedListView(
     feedCards: List<FeedCardType>,
     isRefreshing: Boolean,
+    isLoadingMore: Boolean,
     onRefresh: () -> Unit,
     lazyListState: LazyListState,
     nestedScrollConnection: NestedScrollConnection,
@@ -326,6 +381,45 @@ private fun FeedListView(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
+            
+            // 더 로딩 중일 때 로딩 인디케이터
+            if (isLoadingMore) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        androidx.compose.material3.CircularProgressIndicator()
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ErrorView(
+    message: String,
+    onRetry: () -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = message,
+            style = TextComponent.BODY_1_M_14,
+            color = NeutralColor.GRAY_400,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        androidx.compose.material3.Button(
+            onClick = onRetry
+        ) {
+            Text("다시 시도")
         }
     }
 }
