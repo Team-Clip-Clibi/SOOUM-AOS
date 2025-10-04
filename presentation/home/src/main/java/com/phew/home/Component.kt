@@ -64,8 +64,22 @@ import com.phew.domain.dto.UserBlockNotification
 import com.phew.domain.dto.UserCommentLike
 import com.phew.domain.dto.UserCommentWrite
 import com.phew.domain.dto.UserDeleteNotification
+import androidx.compose.ui.tooling.preview.Preview
 
 object FeedUi {
+    // TODO 임시.. 어떤 데이터가 오는지 어떻게 매칭 해야할지 모르겠음..
+    @Composable
+    private fun getTextStyleForFont(font: String) = when (font.lowercase()) {
+        "bold", "pretendard-bold" -> TextComponent.TITLE_2_SB_16
+        "semi_bold", "semibold", "pretendard-semibold" -> TextComponent.SUBTITLE_1_M_16  
+        "medium", "pretendard-medium" -> TextComponent.BODY_1_M_14
+        "regular", "pretendard-regular", "default" -> TextComponent.BODY_1_M_14
+        "light", "pretendard-light" -> TextComponent.CAPTION_2_M_12
+        "extra_bold", "extrabold", "pretendard-extrabold" -> TextComponent.HEAD_3_B_20
+        "black", "pretendard-black" -> TextComponent.HEAD_2_B_24
+        else -> TextComponent.BODY_1_M_14 // fallback to default
+    }
+    
     @Composable
     internal fun AnimatedFeedTabLayout(
         selectTabData: Int,
@@ -470,11 +484,6 @@ object FeedUi {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(if (isExpired) 240.dp else 206.dp)
-                .border(
-                    width = 1.dp,
-                    color = NeutralColor.GRAY_100,
-                    shape = RoundedCornerShape(size = 16.dp)
-                )
                 .clip(RoundedCornerShape(size = 16.dp))
         ) {
             Box(
@@ -503,7 +512,7 @@ object FeedUi {
                 ) {
                     Text(
                         text = feedCard.content,
-                        style = TextComponent.BODY_1_M_14,
+                        style = getTextStyleForFont(feedCard.font),
                         color = NeutralColor.WHITE,
                         textAlign = TextAlign.Center
                     )
@@ -619,11 +628,6 @@ object FeedUi {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(206.dp)
-                .border(
-                    width = 2.dp,
-                    color = Primary.MAIN,
-                    shape = RoundedCornerShape(size = 16.dp)
-                )
                 .clip(RoundedCornerShape(size = 16.dp))
         ) {
             Box(
@@ -652,26 +656,9 @@ object FeedUi {
                 ) {
                     Text(
                         text = feedCard.content,
-                        style = TextComponent.BODY_1_M_14,
+                        style = getTextStyleForFont(feedCard.font),
                         color = NeutralColor.WHITE,
                         textAlign = TextAlign.Center
-                    )
-                }
-                // Admin badge
-                Box(
-                    modifier = Modifier
-                        .padding(12.dp)
-                        .background(
-                            color = Primary.MAIN,
-                            shape = RoundedCornerShape(8.dp)
-                        )
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                        .align(Alignment.TopEnd)
-                ) {
-                    Text(
-                        text = "ADMIN",
-                        style = TextComponent.CAPTION_2_M_12,
-                        color = NeutralColor.WHITE
                     )
                 }
             }
@@ -685,14 +672,14 @@ object FeedUi {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Image(
-                    painter = painterResource(com.phew.core_design.R.drawable.ic_location_stoke),
-                    modifier = Modifier.size(14.dp),
-                    contentDescription = "location ${feedCard.location}",
+                    painter = painterResource(com.phew.core_design.R.drawable.ic_official_filled),
+                    contentDescription = "Time Limit card",
+                    modifier = Modifier.size(16.dp)
                 )
                 Text(
-                    text = feedCard.location,
+                    text = "sooum",
                     style = TextComponent.CAPTION_2_M_12,
-                    color = NeutralColor.GRAY_500,
+                    color = NeutralColor.BLACK,
                     modifier = Modifier.padding(start = 2.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
@@ -701,6 +688,22 @@ object FeedUi {
                     contentDescription = "Spot separator",
                 )
                 Spacer(modifier = Modifier.width(4.dp))
+                // TODO Location 처리 여부에 따른 분기 View 하도록 분리 필요
+                if (feedCard.location.isNotEmpty()) {
+                    Image(
+                        painter = painterResource(com.phew.core_design.R.drawable.ic_location_stoke),
+                        modifier = Modifier.size(14.dp),
+                        contentDescription = "location ${feedCard.location}",
+                    )
+                    Text(
+                        text = feedCard.location,
+                        style = TextComponent.CAPTION_2_M_12,
+                        color = NeutralColor.GRAY_500,
+                        modifier = Modifier.padding(start = 2.dp)
+                    )
+                }
+
+
                 Text(
                     text = feedCard.writeTime,
                     style = TextComponent.CAPTION_2_M_12,
@@ -739,11 +742,6 @@ object FeedUi {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(206.dp)
-                .border(
-                    width = 1.dp,
-                    color = NeutralColor.GRAY_100,
-                    shape = RoundedCornerShape(size = 16.dp)
-                )
                 .clip(RoundedCornerShape(size = 16.dp))
         ) {
             Box(
@@ -772,7 +770,7 @@ object FeedUi {
                 ) {
                     Text(
                         text = feedCard.content,
-                        style = TextComponent.BODY_1_M_14,
+                        style = getTextStyleForFont(feedCard.font),
                         color = NeutralColor.WHITE,
                         textAlign = TextAlign.Center
                     )
@@ -1145,4 +1143,62 @@ object NotificationUi {
             )
         }
     }
+}
+
+@Preview
+@Composable
+private fun BoombTypeCardPreview() {
+    val sampleBoombCard = FeedCardType.BoombType(
+        cardId = "boom_preview_1",
+        storyExpirationTime = "01:30:45",
+        content = "🔥 30분 후 사라지는 피드입니다!\n지금 확인하세요",
+        imageUrl = "",
+        imageName = "",
+        font = "bold",
+        location = "150m",
+        writeTime = "2025-01-15T10:30:00",
+        commentValue = "12",
+        likeValue = "45"
+    )
+
+    FeedUi.TypedFeedCardView(
+        feedCard = sampleBoombCard,
+        onRemoveCard = { }
+    )
+}
+
+@Preview
+@Composable
+private fun AdminTypeCardPreview() {
+    val sampleAdminCard = FeedCardType.AdminType(
+        cardId = "admin_preview_1",
+        content = "📢 [관리자 공지] 앱 업데이트 안내\n새로운 기능이 추가되었습니다",
+        imageUrl = "",
+        imageName = "",
+        font = "bold",
+        location = "100m",
+        writeTime = "2025-01-15T09:00:00",
+        commentValue = "25",
+        likeValue = "78"
+    )
+
+    FeedUi.TypedFeedCardView(feedCard = sampleAdminCard)
+}
+
+@Preview
+@Composable
+private fun NormalTypeCardPreview() {
+    val sampleNormalCard = FeedCardType.NormalType(
+        cardId = "normal_preview_1",
+        content = "오늘 날씨가 정말 좋네요! ☀️\n산책하기 딱 좋은 날씨입니다",
+        imageUrl = "",
+        imageName = "",
+        font = "medium",
+        location = "100m",
+        writeTime = "2025-01-15T11:00:00",
+        commentValue = "8",
+        likeValue = "23"
+    )
+
+    FeedUi.TypedFeedCardView(feedCard = sampleNormalCard)
 }

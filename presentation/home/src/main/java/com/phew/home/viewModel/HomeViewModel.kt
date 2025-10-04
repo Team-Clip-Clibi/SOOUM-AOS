@@ -21,6 +21,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -52,6 +55,29 @@ class HomeViewModel @Inject constructor(
     init {
         // 홈 화면 진입 시 최신 피드 자동 로딩
         loadInitialFeeds()
+        
+        // 탭 변경 감지하여 필요시 데이터 로딩
+        viewModelScope.launch {
+            uiState.map { it.currentTab }
+                .distinctUntilChanged()
+                .drop(1) // 초기값 무시
+                .collect { currentTab ->
+                    when (currentTab) {
+                        FeedType.Latest -> {
+                            if (_uiState.value.latestPagingState is FeedPagingState.None) {
+                                _uiState.update { it.copy(latestPagingState = FeedPagingState.Loading) }
+                                loadLatestFeeds(isInitial = true)
+                            }
+                        }
+                        FeedType.Popular -> {
+                            if (_uiState.value.popularPagingState is FeedPagingState.None) {
+                                _uiState.update { it.copy(popularPagingState = FeedPagingState.Loading) }
+                                loadPopularFeeds(isInitial = true)
+                            }
+                        }
+                    }
+                }
+        }
     }
     
     private fun loadInitialFeeds() {
@@ -123,12 +149,14 @@ class HomeViewModel @Inject constructor(
 
     private fun loadLatestFeeds(isInitial: Boolean) {
         viewModelScope.launch {
+            println("!! loadLatest")
             try {
                 val currentState = _uiState.value.latestPagingState
                 
                 if (!isInitial) {
+                    val existingCards = (currentState as? FeedPagingState.Success)?.feedCards ?: emptyList()
                     _uiState.update { 
-                        it.copy(latestPagingState = FeedPagingState.LoadingMore) 
+                        it.copy(latestPagingState = FeedPagingState.LoadingMore(existingCards)) 
                     }
                 }
                 
@@ -186,12 +214,14 @@ class HomeViewModel @Inject constructor(
 
     private fun loadPopularFeeds(isInitial: Boolean) {
         viewModelScope.launch {
+            println("!! loadPopular")
             try {
                 val currentState = _uiState.value.popularPagingState
                 
                 if (!isInitial) {
+                    val existingCards = (currentState as? FeedPagingState.Success)?.feedCards ?: emptyList()
                     _uiState.update { 
-                        it.copy(popularPagingState = FeedPagingState.LoadingMore) 
+                        it.copy(popularPagingState = FeedPagingState.LoadingMore(existingCards)) 
                     }
                 }
                 
@@ -244,21 +274,6 @@ class HomeViewModel @Inject constructor(
 
     fun switchTab(feedType: FeedType) {
         _uiState.update { it.copy(currentTab = feedType) }
-
-        when (feedType) {
-            FeedType.Latest -> {
-                if (_uiState.value.latestPagingState is FeedPagingState.None) {
-                    _uiState.update { it.copy(latestPagingState = FeedPagingState.Loading) }
-                    loadLatestFeeds(isInitial = true)
-                }
-            }
-            FeedType.Popular -> {
-                if (_uiState.value.popularPagingState is FeedPagingState.None) {
-                    _uiState.update { it.copy(popularPagingState = FeedPagingState.Loading) }
-                    loadPopularFeeds(isInitial = true)
-                }
-            }
-        }
     }
 
     fun loadMoreFeeds() {
@@ -433,7 +448,7 @@ sealed interface UiState<out T> {
 sealed interface FeedPagingState {
     data object None : FeedPagingState
     data object Loading : FeedPagingState
-    data object LoadingMore : FeedPagingState
+    data class LoadingMore(val existingData: List<FeedCardType>) : FeedPagingState
     data class Success(
         val feedCards: List<FeedCardType>,
         val hasNextPage: Boolean,
