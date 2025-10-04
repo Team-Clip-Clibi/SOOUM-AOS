@@ -52,21 +52,21 @@ class MockCardFeedRepositoryImpl @Inject constructor() : CardFeedRepository {
                 likeCount = 89,
                 commentCardCount = 25,
                 cardImgUrl = "",
-                cardImagName = "",
+                cardImageName = "",
                 font = "default",
-                distance = "200m",
+                distance = null,
                 createAt = "2025-01-15T08:00:00"
             ),
             
             Popular(
                 cardId = "popular_normal_1",
                 cardContent = "💕 가장 인기 있는 글입니다\n정말 많은 사람들이 좋아해주셨어요!",
-                storyExpirationTime = "",
+                storyExpirationTime = null,
                 isAdminCard = false,
                 likeCount = 156,
                 commentCardCount = 47,
                 cardImgUrl = "",
-                cardImagName = "",
+                cardImageName = "",
                 font = "default",
                 distance = "150m",
                 createAt = "2025-01-15T07:30:00"
@@ -75,12 +75,12 @@ class MockCardFeedRepositoryImpl @Inject constructor() : CardFeedRepository {
             Popular(
                 cardId = "popular_admin_1",
                 cardContent = "📢 [공지] 앱 업데이트 완료\n새로운 기능들을 확인해보세요!",
-                storyExpirationTime = "",
+                storyExpirationTime = null,
                 isAdminCard = true,
                 likeCount = 234,
                 commentCardCount = 89,
                 cardImgUrl = "",
-                cardImagName = "",
+                cardImageName = "",
                 font = "bold",
                 distance = "공지",
                 createAt = "2025-01-15T06:00:00"
@@ -94,7 +94,7 @@ class MockCardFeedRepositoryImpl @Inject constructor() : CardFeedRepository {
                 likeCount = 67,
                 commentCardCount = 18,
                 cardImgUrl = "",
-                cardImagName = "",
+                cardImageName = "",
                 font = "default",
                 distance = "300m",
                 createAt = "2025-01-15T09:15:00"
@@ -108,7 +108,7 @@ class MockCardFeedRepositoryImpl @Inject constructor() : CardFeedRepository {
                 likeCount = 112,
                 commentCardCount = 33,
                 cardImgUrl = "",
-                cardImagName = "",
+                cardImageName = "",
                 font = "default",
                 distance = "120m",
                 createAt = "2025-01-15T10:20:00"
@@ -127,7 +127,7 @@ class MockCardFeedRepositoryImpl @Inject constructor() : CardFeedRepository {
                 likeCount = 15,
                 commentCardCount = 3,
                 cardImgUrl = "",
-                cardImagName = "",
+                cardImageName = "",
                 font = "default",
                 distance = "100m",
                 createAt = "2025-01-15T10:30:00"
@@ -141,7 +141,7 @@ class MockCardFeedRepositoryImpl @Inject constructor() : CardFeedRepository {
                 likeCount = 50,
                 commentCardCount = 12,
                 cardImgUrl = "",
-                cardImagName = "",
+                cardImageName = "",
                 font = "bold",
                 distance = "공지",
                 createAt = "2025-01-15T09:00:00"
@@ -155,7 +155,7 @@ class MockCardFeedRepositoryImpl @Inject constructor() : CardFeedRepository {
                 likeCount = 8,
                 commentCardCount = 2,
                 cardImgUrl = "",
-                cardImagName = "",
+                cardImageName = "",
                 font = "default",
                 distance = "50m",
                 createAt = "2025-01-15T11:00:00"
@@ -170,7 +170,7 @@ class MockCardFeedRepositoryImpl @Inject constructor() : CardFeedRepository {
                 likeCount = 23,
                 commentCardCount = 7,
                 cardImgUrl = "",
-                cardImagName = "",
+                cardImageName = "",
                 font = "default",
                 distance = "75m",
                 createAt = "2025-01-15T11:30:00"
@@ -184,7 +184,7 @@ class MockCardFeedRepositoryImpl @Inject constructor() : CardFeedRepository {
                 likeCount = 31,
                 commentCardCount = 14,
                 cardImgUrl = "",
-                cardImagName = "",
+                cardImageName = "",
                 font = "default",
                 distance = "200m",
                 createAt = "2025-01-15T12:00:00"
@@ -198,7 +198,7 @@ class MockCardFeedRepositoryImpl @Inject constructor() : CardFeedRepository {
                 likeCount = 78,
                 commentCardCount = 25,
                 cardImgUrl = "",
-                cardImagName = "",
+                cardImageName = "",
                 font = "bold",
                 distance = "가이드",
                 createAt = "2025-01-15T08:30:00"
@@ -213,7 +213,7 @@ class MockCardFeedRepositoryImpl @Inject constructor() : CardFeedRepository {
                 likeCount = 45,
                 commentCardCount = 11,
                 cardImgUrl = "",
-                cardImagName = "",
+                cardImageName = "",
                 font = "default",
                 distance = "150m",
                 createAt = "2025-01-15T12:30:00"
@@ -227,7 +227,7 @@ class MockCardFeedRepositoryImpl @Inject constructor() : CardFeedRepository {
                 likeCount = 19,
                 commentCardCount = 5,
                 cardImgUrl = "",
-                cardImagName = "",
+                cardImageName = "",
                 font = "default",
                 distance = "80m",
                 createAt = "2025-01-15T13:00:00"
@@ -241,7 +241,7 @@ class MockCardFeedRepositoryImpl @Inject constructor() : CardFeedRepository {
                 likeCount = 27,
                 commentCardCount = 8,
                 cardImgUrl = "",
-                cardImagName = "",
+                cardImageName = "",
                 font = "default",
                 distance = "250m",
                 createAt = "2025-01-15T13:30:00"

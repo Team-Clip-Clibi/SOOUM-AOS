@@ -149,7 +149,6 @@ class HomeViewModel @Inject constructor(
 
     private fun loadLatestFeeds(isInitial: Boolean) {
         viewModelScope.launch {
-            println("!! loadLatest")
             try {
                 val currentState = _uiState.value.latestPagingState
                 
@@ -214,7 +213,6 @@ class HomeViewModel @Inject constructor(
 
     private fun loadPopularFeeds(isInitial: Boolean) {
         viewModelScope.launch {
-            println("!! loadPopular")
             try {
                 val currentState = _uiState.value.popularPagingState
                 
@@ -298,23 +296,23 @@ class HomeViewModel @Inject constructor(
 
     private fun classifyLatestFeedType(item: Latest): FeedCardType {
         return when {
-            item.storyExpirationTime.isNotEmpty() -> FeedCardType.BoombType(
+            !item.storyExpirationTime.isNullOrEmpty() -> FeedCardType.BoombType(
                 cardId = item.cardId,
                 storyExpirationTime = item.storyExpirationTime,
                 content = item.cardContent,
                 imageUrl = item.cardImgUrl,
-                imageName = item.cardImagName,
+                likeValue = item.likeCount.toString(),
+                imageName = item.cardImageName,
                 font = item.font,
                 location = item.distance,
                 writeTime = item.createAt,
-                commentValue = item.commentCardCount.toString(),
-                likeValue = item.likeCount.toString()
+                commentValue = item.commentCardCount.toString()
             )
             item.isAdminCard -> FeedCardType.AdminType(
                 cardId = item.cardId,
                 content = item.cardContent,
                 imageUrl = item.cardImgUrl,
-                imageName = item.cardImagName,
+                imageName = item.cardImageName,
                 font = item.font,
                 location = item.distance,
                 writeTime = item.createAt,
@@ -325,7 +323,7 @@ class HomeViewModel @Inject constructor(
                 cardId = item.cardId,
                 content = item.cardContent,
                 imageUrl = item.cardImgUrl,
-                imageName = item.cardImagName,
+                imageName = item.cardImageName,
                 font = item.font,
                 location = item.distance,
                 writeTime = item.createAt,
@@ -337,12 +335,12 @@ class HomeViewModel @Inject constructor(
 
     private fun classifyPopularFeedType(item: Popular): FeedCardType {
         return when {
-            item.storyExpirationTime.isNotEmpty() -> FeedCardType.BoombType(
+            !item.storyExpirationTime.isNullOrEmpty() -> FeedCardType.BoombType(
                 cardId = item.cardId,
                 storyExpirationTime = item.storyExpirationTime,
                 content = item.cardContent,
                 imageUrl = item.cardImgUrl,
-                imageName = item.cardImagName,
+                imageName = item.cardImageName,
                 font = item.font,
                 location = item.distance,
                 writeTime = item.createAt,
@@ -353,7 +351,7 @@ class HomeViewModel @Inject constructor(
                 cardId = item.cardId,
                 content = item.cardContent,
                 imageUrl = item.cardImgUrl,
-                imageName = item.cardImagName,
+                imageName = item.cardImageName,
                 font = item.font,
                 location = item.distance,
                 writeTime = item.createAt,
@@ -364,7 +362,7 @@ class HomeViewModel @Inject constructor(
                 cardId = item.cardId,
                 content = item.cardContent,
                 imageUrl = item.cardImgUrl,
-                imageName = item.cardImagName,
+                imageName = item.cardImageName,
                 font = item.font,
                 location = item.distance,
                 writeTime = item.createAt,

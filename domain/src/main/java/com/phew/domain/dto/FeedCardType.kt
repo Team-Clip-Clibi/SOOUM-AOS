@@ -3,12 +3,12 @@ package com.phew.domain.dto
 sealed class FeedCardType {
     data class BoombType(
         val cardId: String,
-        val storyExpirationTime: String,
+        val storyExpirationTime: String?,
         val content: String,
         val imageUrl: String,
         val imageName: String,
         val font: String,
-        val location: String,
+        val location: String?,
         val writeTime: String,
         val commentValue: String,
         val likeValue: String
@@ -20,7 +20,7 @@ sealed class FeedCardType {
         val imageUrl: String,
         val imageName: String,
         val font: String,
-        val location: String,
+        val location: String?,
         val writeTime: String,
         val commentValue: String,
         val likeValue: String
@@ -32,7 +32,7 @@ sealed class FeedCardType {
         val imageUrl: String,
         val imageName: String,
         val font: String,
-        val location: String,
+        val location: String?,
         val writeTime: String,
         val commentValue: String,
         val likeValue: String

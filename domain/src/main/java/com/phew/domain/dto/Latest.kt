@@ -5,11 +5,11 @@ data class Latest(
     val likeCount: Int,
     val commentCardCount: Int,
     val cardImgUrl: String,
-    val cardImagName: String,
+    val cardImageName: String,
     val cardContent: String,
     val font: String,
-    val distance: String,
+    val distance: String?,
     val createAt: String,
-    val storyExpirationTime: String,
+    val storyExpirationTime: String?,
     val isAdminCard: Boolean
 )

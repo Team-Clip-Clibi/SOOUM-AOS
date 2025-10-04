@@ -39,11 +39,13 @@ abstract class RepositoryModule {
             realImpl: CardFeedRepositoryImpl,
             mockImpl: MockCardFeedRepositoryImpl
         ): CardFeedRepository {
-            return if (isDebug) {
-                mockImpl
-            } else {
-                realImpl
-            }
+            return realImpl
+            // 임시로 mock 데이터로 확인하고 싶을떄 사용
+//            return if (isDebug) {
+//                mockImpl
+//            } else {
+//                realImpl
+//            }
         }
     }
 }

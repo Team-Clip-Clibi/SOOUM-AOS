@@ -65,13 +65,15 @@ import com.phew.domain.dto.UserCommentLike
 import com.phew.domain.dto.UserCommentWrite
 import com.phew.domain.dto.UserDeleteNotification
 import androidx.compose.ui.tooling.preview.Preview
+import com.phew.home.FeedUi.TypedFeedCardView
+import com.phew.home.FeedUi.getTextStyleForFont
 
 object FeedUi {
     // TODO 임시.. 어떤 데이터가 오는지 어떻게 매칭 해야할지 모르겠음..
     @Composable
-    private fun getTextStyleForFont(font: String) = when (font.lowercase()) {
+    internal fun getTextStyleForFont(font: String) = when (font.lowercase()) {
         "bold", "pretendard-bold" -> TextComponent.TITLE_2_SB_16
-        "semi_bold", "semibold", "pretendard-semibold" -> TextComponent.SUBTITLE_1_M_16  
+        "semi_bold", "semibold", "pretendard-semibold" -> TextComponent.SUBTITLE_1_M_16
         "medium", "pretendard-medium" -> TextComponent.BODY_1_M_14
         "regular", "pretendard-regular", "default" -> TextComponent.BODY_1_M_14
         "light", "pretendard-light" -> TextComponent.CAPTION_2_M_12
@@ -79,7 +81,7 @@ object FeedUi {
         "black", "pretendard-black" -> TextComponent.HEAD_2_B_24
         else -> TextComponent.BODY_1_M_14 // fallback to default
     }
-    
+
     @Composable
     internal fun AnimatedFeedTabLayout(
         selectTabData: Int,
@@ -210,7 +212,7 @@ object FeedUi {
 
 
     @Composable
-    internal fun TemporaryCard(
+    fun TemporaryCard(
         limitedTime: String,
         location: String,
         writeTime: String,
@@ -338,7 +340,7 @@ object FeedUi {
     }
 
     @Composable
-    internal fun FeedCardView(
+    fun FeedCardView(
         location: String,
         writeTime: String,
         commentValue: String,
@@ -409,41 +411,41 @@ object FeedUi {
                     color = NeutralColor.GRAY_500,
                     modifier = Modifier.padding(start = 2.dp)
                 )
-                Spacer(modifier = Modifier.width(4.dp))
-                Image(
-                    painter = painterResource(com.phew.core_design.R.drawable.ic_spot),
-                    contentDescription = "Time Limit card : $location",
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = writeTime,
-                    style = TextComponent.CAPTION_2_M_12,
-                    color = NeutralColor.GRAY_500,
-                    modifier = Modifier.weight(1f)
-                )
-                Image(
-                    painter = painterResource(com.phew.core_design.R.drawable.ic_message_stoke),
-                    contentDescription = "comment $commentValue",
-                    modifier = Modifier.size(14.dp)
-                )
-                Text(
-                    text = commentValue,
-                    style = TextComponent.CAPTION_2_M_12,
-                    color = NeutralColor.GRAY_500,
-                    modifier = Modifier.padding(horizontal = 2.dp)
-                )
-                Image(
-                    painter = painterResource(com.phew.core_design.R.drawable.ic_heart_stoke),
-                    contentDescription = "like $likeValue",
-                    modifier = Modifier.size(14.dp)
-                )
-                Text(
-                    text = likeValue,
-                    style = TextComponent.CAPTION_2_M_12,
-                    color = NeutralColor.GRAY_500,
-                    modifier = Modifier.padding(horizontal = 2.dp)
-                )
             }
+            Spacer(modifier = Modifier.width(4.dp))
+            Image(
+                painter = painterResource(com.phew.core_design.R.drawable.ic_spot),
+                contentDescription = "Time Limit card : $location",
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = writeTime,
+                style = TextComponent.CAPTION_2_M_12,
+                color = NeutralColor.GRAY_500,
+                modifier = Modifier.weight(1f)
+            )
+            Image(
+                painter = painterResource(com.phew.core_design.R.drawable.ic_message_stoke),
+                contentDescription = "comment $commentValue",
+                modifier = Modifier.size(14.dp)
+            )
+            Text(
+                text = commentValue,
+                style = TextComponent.CAPTION_2_M_12,
+                color = NeutralColor.GRAY_500,
+                modifier = Modifier.padding(horizontal = 2.dp)
+            )
+            Image(
+                painter = painterResource(com.phew.core_design.R.drawable.ic_heart_stoke),
+                contentDescription = "like $likeValue",
+                modifier = Modifier.size(14.dp)
+            )
+            Text(
+                text = likeValue,
+                style = TextComponent.CAPTION_2_M_12,
+                color = NeutralColor.GRAY_500,
+                modifier = Modifier.padding(horizontal = 2.dp)
+            )
         }
     }
 
@@ -454,7 +456,7 @@ object FeedUi {
     ) {
         when (feedCard) {
             is FeedCardType.BoombType -> BoombTypeCard(
-                feedCard = feedCard, 
+                feedCard = feedCard,
                 onRemoveCard = onRemoveCard
             )
             is FeedCardType.AdminType -> AdminTypeCard(feedCard)
@@ -463,335 +465,345 @@ object FeedUi {
     }
 
     @Composable
-    private fun BoombTypeCard(
-        feedCard: FeedCardType.BoombType,
-        onRemoveCard: (String) -> Unit
+    internal fun BoombTypeCard(
+    feedCard: FeedCardType.BoombType,
+    onRemoveCard: (String) -> Unit
     ) {
-        var remainingTimeMillis by remember { 
-            mutableLongStateOf(TimeUtils.parseTimerToMillis(feedCard.storyExpirationTime)) 
-        }
-        var isExpired by remember { mutableStateOf(false) }
+    var remainingTimeMillis by remember {
+        mutableLongStateOf(TimeUtils.parseTimerToMillis(feedCard.storyExpirationTime ?: ""))
+    }
+    var isExpired by remember { mutableStateOf(false) }
 
-        // 타이머 실행
-        LaunchedEffect(feedCard.cardId) {
-            while (remainingTimeMillis > 0) {
-                delay(1000L)
-                remainingTimeMillis -= 1000L
-            }
-            isExpired = true
+    // 타이머 실행
+    LaunchedEffect(feedCard.cardId) {
+        while (remainingTimeMillis > 0) {
+            delay(1000L)
+            remainingTimeMillis -= 1000L
         }
-        Column(
+        isExpired = true
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(if (isExpired) 240.dp else 206.dp)
+            .clip(RoundedCornerShape(size = 16.dp))
+    ) {
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(if (isExpired) 240.dp else 206.dp)
-                .clip(RoundedCornerShape(size = 16.dp))
+                .height(172.dp)
         ) {
-            Box(
+            AsyncImage(
+                model = feedCard.imageUrl,
+                contentDescription = "SOOUM FEED ${feedCard.content}",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(172.dp)
+                    .padding(start = 32.dp, top = 32.dp, end = 32.dp, bottom = 32.dp)
+                    .height(82.dp)
+                    .background(
+                        color = OpacityColor.blackSmallColor,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    .align(Alignment.Center),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                AsyncImage(
-                    model = feedCard.imageUrl,
-                    contentDescription = "SOOUM FEED ${feedCard.content}",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 32.dp, top = 32.dp, end = 32.dp, bottom = 32.dp)
-                        .height(82.dp)
-                        .background(
-                            color = OpacityColor.blackSmallColor,
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .align(Alignment.Center),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = feedCard.content,
-                        style = getTextStyleForFont(feedCard.font),
-                        color = NeutralColor.WHITE,
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(34.dp)
-                    .background(color = NeutralColor.WHITE)
-                    .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 8.dp),
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Image(
-                    painter = painterResource(com.phew.core_design.R.drawable.ic_bomb),
-                    contentDescription = "Time Limit card",
-                    modifier = Modifier.size(16.dp)
-                )
-                if (isExpired) {
-                    Text(
-                        text = "00:00:00",
-                        style = TextComponent.CAPTION_2_M_12,
-                        color = NeutralColor.GRAY_400,
-                        modifier = Modifier.padding(start = 2.dp)
-                    )
-                } else {
-                    Text(
-                        text = TimeUtils.formatMillisToTimer(remainingTimeMillis),
-                        style = TextComponent.CAPTION_2_M_12,
-                        color = Primary.DARK,
-                        modifier = Modifier.padding(start = 2.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(4.dp))
-                Image(
-                    painter = painterResource(com.phew.core_design.R.drawable.ic_spot),
-                    contentDescription = "Spot separator",
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Image(
-                    painter = painterResource(com.phew.core_design.R.drawable.ic_location_stoke),
-                    modifier = Modifier.size(14.dp),
-                    contentDescription = "location ${feedCard.location}",
-                )
                 Text(
-                    text = feedCard.location,
-                    style = TextComponent.CAPTION_2_M_12,
-                    color = NeutralColor.GRAY_500,
-                    modifier = Modifier.padding(start = 2.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Image(
-                    painter = painterResource(com.phew.core_design.R.drawable.ic_spot),
-                    contentDescription = "Spot separator",
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = feedCard.writeTime,
-                    style = TextComponent.CAPTION_2_M_12,
-                    color = NeutralColor.GRAY_500,
-                    modifier = Modifier.weight(1f)
-                )
-                Image(
-                    painter = painterResource(com.phew.core_design.R.drawable.ic_message_stoke),
-                    contentDescription = "comment ${feedCard.commentValue}",
-                    modifier = Modifier.size(14.dp)
-                )
-                Text(
-                    text = feedCard.commentValue,
-                    style = TextComponent.CAPTION_2_M_12,
-                    color = NeutralColor.GRAY_500,
-                    modifier = Modifier.padding(horizontal = 2.dp)
-                )
-                Image(
-                    painter = painterResource(com.phew.core_design.R.drawable.ic_heart_stoke),
-                    contentDescription = "like ${feedCard.likeValue}",
-                    modifier = Modifier.size(14.dp)
-                )
-                Text(
-                    text = feedCard.likeValue,
-                    style = TextComponent.CAPTION_2_M_12,
-                    color = NeutralColor.GRAY_500,
-                    modifier = Modifier.padding(horizontal = 2.dp)
+                    text = feedCard.content,
+                    style = getTextStyleForFont(feedCard.font),
+                    color = NeutralColor.WHITE,
+                    textAlign = TextAlign.Center
                 )
             }
-            
-            // 만료된 경우 삭제 메시지 표시
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(34.dp)
+                .background(color = NeutralColor.WHITE)
+                .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 8.dp),
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Image(
+                painter = painterResource(com.phew.core_design.R.drawable.ic_bomb),
+                contentDescription = "Time Limit card",
+                modifier = Modifier.size(16.dp)
+            )
             if (isExpired) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(color = NeutralColor.GRAY_100)
-                        .clickable { onRemoveCard(feedCard.cardId) }
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "카드가 삭제되었습니다. 삭제되었어요",
-                        style = TextComponent.CAPTION_2_M_12,
-                        color = NeutralColor.GRAY_500,
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
-        }
-    }
-
-    @Composable
-    private fun AdminTypeCard(feedCard: FeedCardType.AdminType) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(206.dp)
-                .clip(RoundedCornerShape(size = 16.dp))
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(172.dp)
-            ) {
-                AsyncImage(
-                    model = feedCard.imageUrl,
-                    contentDescription = "SOOUM ADMIN FEED ${feedCard.content}",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 32.dp, top = 32.dp, end = 32.dp, bottom = 32.dp)
-                        .height(82.dp)
-                        .background(
-                            color = OpacityColor.blackSmallColor,
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .align(Alignment.Center),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = feedCard.content,
-                        style = getTextStyleForFont(feedCard.font),
-                        color = NeutralColor.WHITE,
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(34.dp)
-                    .background(color = Primary.LIGHT_1)
-                    .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 8.dp),
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Image(
-                    painter = painterResource(com.phew.core_design.R.drawable.ic_official_filled),
-                    contentDescription = "Time Limit card",
-                    modifier = Modifier.size(16.dp)
-                )
                 Text(
-                    text = "sooum",
+                    text = "00:00:00",
                     style = TextComponent.CAPTION_2_M_12,
-                    color = NeutralColor.BLACK,
+                    color = NeutralColor.GRAY_400,
+                    modifier = Modifier.padding(start = 2.dp)
+                )
+            } else {
+                Text(
+                    text = TimeUtils.formatMillisToTimer(remainingTimeMillis),
+                    style = TextComponent.CAPTION_2_M_12,
+                    color = Primary.DARK,
+                    modifier = Modifier.padding(start = 2.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(4.dp))
+            Image(
+                painter = painterResource(com.phew.core_design.R.drawable.ic_spot),
+                contentDescription = "Spot separator",
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+
+            if (!feedCard.location.isNullOrEmpty()) {
+                // TODO 분리 필요
+                Image(
+                    painter = painterResource(com.phew.core_design.R.drawable.ic_location_stoke),
+                    modifier = Modifier.size(14.dp),
+                    contentDescription = "location ${feedCard.location}",
+                )
+
+                Text(
+                    text = feedCard.location ?: "",
+                    style = TextComponent.CAPTION_2_M_12,
+                    color = NeutralColor.GRAY_500,
                     modifier = Modifier.padding(start = 2.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
-                Image(
-                    painter = painterResource(com.phew.core_design.R.drawable.ic_spot),
-                    contentDescription = "Spot separator",
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                // TODO Location 처리 여부에 따른 분기 View 하도록 분리 필요
-                if (feedCard.location.isNotEmpty()) {
-                    Image(
-                        painter = painterResource(com.phew.core_design.R.drawable.ic_location_stoke),
-                        modifier = Modifier.size(14.dp),
-                        contentDescription = "location ${feedCard.location}",
-                    )
-                    Text(
-                        text = feedCard.location,
-                        style = TextComponent.CAPTION_2_M_12,
-                        color = NeutralColor.GRAY_500,
-                        modifier = Modifier.padding(start = 2.dp)
-                    )
-                }
+            }
+            Image(
+                painter = painterResource(com.phew.core_design.R.drawable.ic_spot),
+                contentDescription = "Spot separator",
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = feedCard.writeTime,
+                style = TextComponent.CAPTION_2_M_12,
+                color = NeutralColor.GRAY_500,
+                modifier = Modifier.weight(1f)
+            )
+            Image(
+                painter = painterResource(com.phew.core_design.R.drawable.ic_message_stoke),
+                contentDescription = "comment ${feedCard.commentValue}",
+                modifier = Modifier.size(14.dp)
+            )
+            Text(
+                text = feedCard.commentValue,
+                style = TextComponent.CAPTION_2_M_12,
+                color = NeutralColor.GRAY_500,
+                modifier = Modifier.padding(horizontal = 2.dp)
+            )
+            Image(
+                painter = painterResource(com.phew.core_design.R.drawable.ic_heart_stoke),
+                contentDescription = "like ${feedCard.likeValue}",
+                modifier = Modifier.size(14.dp)
+            )
+            Text(
+                text = feedCard.likeValue,
+                style = TextComponent.CAPTION_2_M_12,
+                color = NeutralColor.GRAY_500,
+                modifier = Modifier.padding(horizontal = 2.dp)
+            )
+        }
 
-
+        // 만료된 경우 삭제 메시지 표시
+        if (isExpired) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(color = NeutralColor.GRAY_100)
+                    .clickable { onRemoveCard(feedCard.cardId) }
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
-                    text = feedCard.writeTime,
+                    text = "카드가 삭제되었습니다. 삭제되었어요",
                     style = TextComponent.CAPTION_2_M_12,
                     color = NeutralColor.GRAY_500,
-                    modifier = Modifier.weight(1f)
-                )
-                Image(
-                    painter = painterResource(com.phew.core_design.R.drawable.ic_message_stoke),
-                    contentDescription = "comment ${feedCard.commentValue}",
-                    modifier = Modifier.size(14.dp)
-                )
-                Text(
-                    text = feedCard.commentValue,
-                    style = TextComponent.CAPTION_2_M_12,
-                    color = NeutralColor.GRAY_500,
-                    modifier = Modifier.padding(horizontal = 2.dp)
-                )
-                Image(
-                    painter = painterResource(com.phew.core_design.R.drawable.ic_heart_stoke),
-                    contentDescription = "like ${feedCard.likeValue}",
-                    modifier = Modifier.size(14.dp)
-                )
-                Text(
-                    text = feedCard.likeValue,
-                    style = TextComponent.CAPTION_2_M_12,
-                    color = NeutralColor.GRAY_500,
-                    modifier = Modifier.padding(horizontal = 2.dp)
+                    textAlign = TextAlign.Center
                 )
             }
         }
     }
+    }
 
     @Composable
-    private fun NormalTypeCard(feedCard: FeedCardType.NormalType) {
-        Column(
+    internal fun AdminTypeCard(feedCard: FeedCardType.AdminType) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(206.dp)
+            .clip(RoundedCornerShape(size = 16.dp))
+    ) {
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(206.dp)
-                .clip(RoundedCornerShape(size = 16.dp))
+                .height(172.dp)
         ) {
-            Box(
+            AsyncImage(
+                model = feedCard.imageUrl,
+                contentDescription = "SOOUM ADMIN FEED ${feedCard.content}",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(172.dp)
-            ) {
-                AsyncImage(
-                    model = feedCard.imageUrl,
-                    contentDescription = "SOOUM FEED ${feedCard.content}",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 32.dp, top = 32.dp, end = 32.dp, bottom = 32.dp)
-                        .height(82.dp)
-                        .background(
-                            color = OpacityColor.blackSmallColor,
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .align(Alignment.Center),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = feedCard.content,
-                        style = getTextStyleForFont(feedCard.font),
-                        color = NeutralColor.WHITE,
-                        textAlign = TextAlign.Center
+                    .padding(start = 32.dp, top = 32.dp, end = 32.dp, bottom = 32.dp)
+                    .height(82.dp)
+                    .background(
+                        color = OpacityColor.blackSmallColor,
+                        shape = RoundedCornerShape(12.dp)
                     )
-                }
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(34.dp)
-                    .background(color = NeutralColor.WHITE)
-                    .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 8.dp),
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically,
+                    .align(Alignment.Center),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Text(
+                    text = feedCard.content,
+                    style = getTextStyleForFont(feedCard.font),
+                    color = NeutralColor.WHITE,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(34.dp)
+                .background(color = Primary.LIGHT_1)
+                .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 8.dp),
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Image(
+                painter = painterResource(com.phew.core_design.R.drawable.ic_official_filled),
+                contentDescription = "Time Limit card",
+                modifier = Modifier.size(16.dp)
+            )
+            Text(
+                text = "sooum",
+                style = TextComponent.CAPTION_2_M_12,
+                color = NeutralColor.BLACK,
+                modifier = Modifier.padding(start = 2.dp)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Image(
+                painter = painterResource(com.phew.core_design.R.drawable.ic_spot),
+                contentDescription = "Spot separator",
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            // TODO Location 처리 여부에 따른 분기 View 하도록 분리 필요
+            if (!feedCard.location.isNullOrEmpty()) {
                 Image(
                     painter = painterResource(com.phew.core_design.R.drawable.ic_location_stoke),
                     modifier = Modifier.size(14.dp),
                     contentDescription = "location ${feedCard.location}",
                 )
                 Text(
-                    text = feedCard.location,
+                    text = feedCard.location ?: "",
+                    style = TextComponent.CAPTION_2_M_12,
+                    color = NeutralColor.GRAY_500,
+                    modifier = Modifier.padding(start = 2.dp)
+                )
+            }
+
+
+            Text(
+                text = feedCard.writeTime,
+                style = TextComponent.CAPTION_2_M_12,
+                color = NeutralColor.GRAY_500,
+                modifier = Modifier.weight(1f)
+            )
+            Image(
+                painter = painterResource(com.phew.core_design.R.drawable.ic_message_stoke),
+                contentDescription = "comment ${feedCard.commentValue}",
+                modifier = Modifier.size(14.dp)
+            )
+            Text(
+                text = feedCard.commentValue,
+                style = TextComponent.CAPTION_2_M_12,
+                color = NeutralColor.GRAY_500,
+                modifier = Modifier.padding(horizontal = 2.dp)
+            )
+            Image(
+                painter = painterResource(com.phew.core_design.R.drawable.ic_heart_stoke),
+                contentDescription = "like ${feedCard.likeValue}",
+                modifier = Modifier.size(14.dp)
+            )
+            Text(
+                text = feedCard.likeValue,
+                style = TextComponent.CAPTION_2_M_12,
+                color = NeutralColor.GRAY_500,
+                modifier = Modifier.padding(horizontal = 2.dp)
+            )
+        }
+    }
+    }
+
+    @Composable
+    internal fun NormalTypeCard(feedCard: FeedCardType.NormalType) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(206.dp)
+            .clip(RoundedCornerShape(size = 16.dp))
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(172.dp)
+        ) {
+            AsyncImage(
+                model = feedCard.imageUrl,
+                contentDescription = "SOOUM FEED ${feedCard.content}",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 32.dp, top = 32.dp, end = 32.dp, bottom = 32.dp)
+                    .height(82.dp)
+                    .background(
+                        color = OpacityColor.blackSmallColor,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    .align(Alignment.Center),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = feedCard.content,
+                    style = getTextStyleForFont(feedCard.font),
+                    color = NeutralColor.WHITE,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(34.dp)
+                .background(color = NeutralColor.WHITE)
+                .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 8.dp),
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            println("!! write Time = ${feedCard.writeTime} , transfer = ${TimeUtils.getRelativeTimeString(feedCard.writeTime)}")
+
+            if (!feedCard.location.isNullOrEmpty()) {
+                // TODO 분리 필요
+                Image(
+                    painter = painterResource(com.phew.core_design.R.drawable.ic_location_stoke),
+                    modifier = Modifier.size(14.dp),
+                    contentDescription = "location ${feedCard.location}",
+                )
+
+                Text(
+                    text = feedCard.location ?: "",
                     style = TextComponent.CAPTION_2_M_12,
                     color = NeutralColor.GRAY_500,
                     modifier = Modifier.padding(start = 2.dp)
@@ -802,36 +814,38 @@ object FeedUi {
                     contentDescription = "Spot separator",
                 )
                 Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = TimeUtils.getRelativeTimeString(feedCard.writeTime),
-                    style = TextComponent.CAPTION_2_M_12,
-                    color = NeutralColor.GRAY_500,
-                    modifier = Modifier.weight(1f)
-                )
-                Image(
-                    painter = painterResource(com.phew.core_design.R.drawable.ic_message_stoke),
-                    contentDescription = "comment ${feedCard.commentValue}",
-                    modifier = Modifier.size(14.dp)
-                )
-                Text(
-                    text = feedCard.commentValue,
-                    style = TextComponent.CAPTION_2_M_12,
-                    color = NeutralColor.GRAY_500,
-                    modifier = Modifier.padding(horizontal = 2.dp)
-                )
-                Image(
-                    painter = painterResource(com.phew.core_design.R.drawable.ic_heart_stoke),
-                    contentDescription = "like ${feedCard.likeValue}",
-                    modifier = Modifier.size(14.dp)
-                )
-                Text(
-                    text = feedCard.likeValue,
-                    style = TextComponent.CAPTION_2_M_12,
-                    color = NeutralColor.GRAY_500,
-                    modifier = Modifier.padding(horizontal = 2.dp)
-                )
             }
+
+            Text(
+                text = TimeUtils.getRelativeTimeString(feedCard.writeTime),
+                style = TextComponent.CAPTION_2_M_12,
+                color = NeutralColor.GRAY_500,
+                modifier = Modifier.weight(1f)
+            )
+            Image(
+                painter = painterResource(com.phew.core_design.R.drawable.ic_message_stoke),
+                contentDescription = "comment ${feedCard.commentValue}",
+                modifier = Modifier.size(14.dp)
+            )
+            Text(
+                text = feedCard.commentValue,
+                style = TextComponent.CAPTION_2_M_12,
+                color = NeutralColor.GRAY_500,
+                modifier = Modifier.padding(horizontal = 2.dp)
+            )
+            Image(
+                painter = painterResource(com.phew.core_design.R.drawable.ic_heart_stoke),
+                contentDescription = "like ${feedCard.likeValue}",
+                modifier = Modifier.size(14.dp)
+            )
+            Text(
+                text = feedCard.likeValue,
+                style = TextComponent.CAPTION_2_M_12,
+                color = NeutralColor.GRAY_500,
+                modifier = Modifier.padding(horizontal = 2.dp)
+            )
         }
+    }
     }
 }
 
@@ -1161,7 +1175,7 @@ private fun BoombTypeCardPreview() {
         likeValue = "45"
     )
 
-    FeedUi.TypedFeedCardView(
+    TypedFeedCardView(
         feedCard = sampleBoombCard,
         onRemoveCard = { }
     )
@@ -1182,7 +1196,7 @@ private fun AdminTypeCardPreview() {
         likeValue = "78"
     )
 
-    FeedUi.TypedFeedCardView(feedCard = sampleAdminCard)
+    TypedFeedCardView(feedCard = sampleAdminCard)
 }
 
 @Preview
@@ -1200,5 +1214,5 @@ private fun NormalTypeCardPreview() {
         likeValue = "23"
     )
 
-    FeedUi.TypedFeedCardView(feedCard = sampleNormalCard)
+    TypedFeedCardView(feedCard = sampleNormalCard)
 }
