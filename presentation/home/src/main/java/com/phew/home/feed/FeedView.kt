@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
@@ -45,6 +46,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.airbnb.lottie.LottieComposition
@@ -55,6 +57,7 @@ import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.TextComponent
+import com.phew.domain.dto.FeedCardType
 import com.phew.domain.dto.FeedData
 import com.phew.domain.dto.Notice
 import com.phew.domain.dto.Notification
@@ -63,9 +66,18 @@ import com.phew.home.NAV_HOME_FEED_INDEX
 import com.phew.home.NAV_HOME_NEAR_INDEX
 import com.phew.home.NAV_HOME_POPULAR_INDEX
 import com.phew.home.R
+import com.phew.home.viewModel.FeedType
 import com.phew.home.viewModel.Home
 import com.phew.home.viewModel.UiState
 
+// TODO : Feed Route로 바꾸면서 네비게이션 처리 필요
+//@Composable
+//fun FeedRoute(
+//    modifier: Modifier = Modifier,
+//    viewModel: HomeViewModel = hiltViewModel()
+//) {
+//
+//}
 
 @Composable
 fun FeedView(
@@ -111,10 +123,10 @@ fun FeedView(
     ) {
         TopLayout(
             recentClick = {
-                //TODO 최신 카드
+                viewModel.switchTab(FeedType.Latest)
             },
             popularClick = {
-                //TODO 인기 카드
+                viewModel.switchTab(FeedType.Popular)
             },
             nearClick = viewModel::checkLocationPermission,
             isTabsVisible = isTabsVisible,
@@ -127,12 +139,13 @@ fun FeedView(
             uiState = uiState,
             isRefreshing = isRefreshing,
             onRefresh = {
-
+                viewModel::refreshCurrentTab
             },
             lazyListState = lazyListState,
             nestedScrollConnection = nestedScrollConnection,
             composition = composition,
-            progress = progress
+            progress = progress,
+            onRemoveCard = viewModel::removeFeedCard
         )
         if (uiState.shouldShowPermissionRationale) {
             DialogComponent.DefaultButtonTwo(
@@ -203,17 +216,19 @@ private fun FeedContent(
     nestedScrollConnection: NestedScrollConnection,
     composition: LottieComposition?,
     progress: Float,
+    onRemoveCard: (String) -> Unit,
 ) {
     when {
-        uiState.feedItem.isEmpty() -> EmptyFeedView()
+        uiState.feedCards.isEmpty() -> EmptyFeedView()
         else -> FeedListView(
-            feedItems = uiState.feedItem,
+            feedCards = uiState.feedCards,
             isRefreshing = isRefreshing,
             onRefresh = onRefresh,
             lazyListState = lazyListState,
             nestedScrollConnection = nestedScrollConnection,
             composition = composition,
-            progress = progress
+            progress = progress,
+            onRemoveCard = onRemoveCard
         )
     }
 }
@@ -245,13 +260,14 @@ private fun EmptyFeedView() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FeedListView(
-    feedItems: List<FeedData>,
+    feedCards: List<FeedCardType>,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
     lazyListState: LazyListState,
     nestedScrollConnection: NestedScrollConnection,
     composition: LottieComposition?,
     progress: Float,
+    onRemoveCard: (String) -> Unit,
 ) {
     val refreshingOffset = 56.dp
     val refreshState = rememberPullToRefreshState()
@@ -294,14 +310,19 @@ private fun FeedListView(
                 },
             state = lazyListState
         ) {
-            items(feedItems) { feedItem ->
-                FeedUi.FeedCardView(
-                    location = feedItem.location,
-                    writeTime = feedItem.writeTime,
-                    commentValue = feedItem.commentValue,
-                    likeValue = feedItem.likeValue,
-                    uri = feedItem.uri,
-                    content = feedItem.content
+            itemsIndexed(
+                items = feedCards,
+                key = { _, feedCard ->
+                    when (feedCard) {
+                        is FeedCardType.BoombType -> feedCard.cardId
+                        is FeedCardType.AdminType -> feedCard.cardId
+                        is FeedCardType.NormalType -> feedCard.cardId
+                    }
+                }
+            ) { index, feedCard ->
+                FeedUi.TypedFeedCardView(
+                    feedCard = feedCard,
+                    onRemoveCard = onRemoveCard
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }

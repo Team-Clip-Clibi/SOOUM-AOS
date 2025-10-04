@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.phew.domain.dto.FeedData
+import com.phew.domain.dto.FeedCardType
 import com.phew.domain.dto.Latest
 import com.phew.domain.dto.Notice
 import com.phew.domain.dto.Notification
@@ -47,6 +48,11 @@ class HomeViewModel @Inject constructor(
      * 공지사항(notice)
      * 활동알림(unRead , read)
      */
+
+    init {
+        // 홈 화면 진입 시 최신 피드 자동 로딩
+        loadLatestFeeds()
+    }
     val notice: Flow<PagingData<Notice>> = getNotificationPage().cachedIn(viewModelScope)
     val unReadNotification: Flow<PagingData<Notification>> =
         getUnReadNotification().cachedIn(viewModelScope)
@@ -70,9 +76,18 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    private suspend fun getLocationSafely(): Location {
+        return try {
+            deviceRepository.requestLocation()
+        } catch (e: Exception) {
+            // 위치 정보 가져오기 실패 시 빈 위치 반환
+            Location.EMPTY
+        }
+    }
+
     private fun getLocation() {
         viewModelScope.launch {
-            val location = deviceRepository.requestLocation()
+            val location = getLocationSafely()
             _uiState.update { state ->
                 state.copy(location = location)
             }
@@ -108,8 +123,13 @@ class HomeViewModel @Inject constructor(
             _uiState.update { it.copy(latestState = UiState.Loading) }
 
             try {
-                val latitude = _uiState.value.location.latitude
-                val longitude = _uiState.value.location.longitude
+                // 위치 정보 가져오기 완료 대기 (오류 무시)
+                val location = getLocationSafely()
+                _uiState.update { it.copy(location = location) }
+
+                // 위치 정보 유무와 관계없이 피드 로딩 진행
+                val latitude = location.latitude.takeIf { it != 0.0 }
+                val longitude = location.longitude.takeIf { it != 0.0 }
 
                 when (val result = cardFeedRepository.requestFeedLatest(
                     latitude = latitude,
@@ -117,7 +137,13 @@ class HomeViewModel @Inject constructor(
                     lastId = null
                 )) {
                     is DataResult.Success -> {
-                        _uiState.update { it.copy(latestState = UiState.Success(result.data)) }
+                        val feedCards = mapLatestToFeedCards(result.data)
+                        _uiState.update { 
+                            it.copy(
+                                latestState = UiState.Success(result.data),
+                                feedCards = feedCards
+                            ) 
+                        }
                     }
                     is DataResult.Fail -> {
                         _uiState.update {
@@ -142,15 +168,26 @@ class HomeViewModel @Inject constructor(
             _uiState.update { it.copy(popularState = UiState.Loading) }
 
             try {
-                val latitude = _uiState.value.location.latitude
-                val longitude = _uiState.value.location.longitude
+                // 위치 정보 가져오기 완료 대기 (오류 무시)
+                val location = getLocationSafely()
+                _uiState.update { it.copy(location = location) }
+
+                // 위치 정보 유무와 관계없이 피드 로딩 진행
+                val latitude = location.latitude.takeIf { it != 0.0 }
+                val longitude = location.longitude.takeIf { it != 0.0 }
 
                 when (val result = cardFeedRepository.requestFeedPopular(
                     latitude = latitude,
                     longitude = longitude
                 )) {
                     is DataResult.Success -> {
-                        _uiState.update { it.copy(popularState = UiState.Success(result.data)) }
+                        val feedCards = mapPopularToFeedCards(result.data)
+                        _uiState.update { 
+                            it.copy(
+                                popularState = UiState.Success(result.data),
+                                feedCards = feedCards
+                            ) 
+                        }
                     }
                     is DataResult.Fail -> {
                         _uiState.update {
@@ -190,6 +227,105 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    private fun classifyLatestFeedType(item: Latest): FeedCardType {
+        return when {
+            item.storyExpirationTime.isNotEmpty() -> FeedCardType.BoombType(
+                cardId = item.cardId,
+                storyExpirationTime = item.storyExpirationTime,
+                content = item.cardContent,
+                imageUrl = item.cardImgUrl,
+                imageName = item.cardImagName,
+                font = item.font,
+                location = item.distance,
+                writeTime = item.createAt,
+                commentValue = item.commentCardCount.toString(),
+                likeValue = item.likeCount.toString()
+            )
+            item.isAdminCard -> FeedCardType.AdminType(
+                cardId = item.cardId,
+                content = item.cardContent,
+                imageUrl = item.cardImgUrl,
+                imageName = item.cardImagName,
+                font = item.font,
+                location = item.distance,
+                writeTime = item.createAt,
+                commentValue = item.commentCardCount.toString(),
+                likeValue = item.likeCount.toString()
+            )
+            else -> FeedCardType.NormalType(
+                cardId = item.cardId,
+                content = item.cardContent,
+                imageUrl = item.cardImgUrl,
+                imageName = item.cardImagName,
+                font = item.font,
+                location = item.distance,
+                writeTime = item.createAt,
+                commentValue = item.commentCardCount.toString(),
+                likeValue = item.likeCount.toString()
+            )
+        }
+    }
+
+    private fun classifyPopularFeedType(item: Popular): FeedCardType {
+        return when {
+            item.storyExpirationTime.isNotEmpty() -> FeedCardType.BoombType(
+                cardId = item.cardId,
+                storyExpirationTime = item.storyExpirationTime,
+                content = item.cardContent,
+                imageUrl = item.cardImgUrl,
+                imageName = item.cardImagName,
+                font = item.font,
+                location = item.distance,
+                writeTime = item.createAt,
+                commentValue = item.commentCardCount.toString(),
+                likeValue = item.likeCount.toString()
+            )
+            item.isAdminCard -> FeedCardType.AdminType(
+                cardId = item.cardId,
+                content = item.cardContent,
+                imageUrl = item.cardImgUrl,
+                imageName = item.cardImagName,
+                font = item.font,
+                location = item.distance,
+                writeTime = item.createAt,
+                commentValue = item.commentCardCount.toString(),
+                likeValue = item.likeCount.toString()
+            )
+            else -> FeedCardType.NormalType(
+                cardId = item.cardId,
+                content = item.cardContent,
+                imageUrl = item.cardImgUrl,
+                imageName = item.cardImagName,
+                font = item.font,
+                location = item.distance,
+                writeTime = item.createAt,
+                commentValue = item.commentCardCount.toString(),
+                likeValue = item.likeCount.toString()
+            )
+        }
+    }
+
+    private fun mapLatestToFeedCards(items: List<Latest>): List<FeedCardType> {
+        return items.map { classifyLatestFeedType(it) }
+    }
+
+    private fun mapPopularToFeedCards(items: List<Popular>): List<FeedCardType> {
+        return items.map { classifyPopularFeedType(it) }
+    }
+
+    fun removeFeedCard(cardId: String) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                feedCards = currentState.feedCards.filter { feedCard ->
+                    when (feedCard) {
+                        is FeedCardType.BoombType -> feedCard.cardId != cardId
+                        is FeedCardType.AdminType -> feedCard.cardId != cardId
+                        is FeedCardType.NormalType -> feedCard.cardId != cardId
+                    }
+                }
+            )
+        }
+    }
 
 }
 
@@ -199,6 +335,7 @@ data class Home(
     val popularState: UiState<List<Popular>> = UiState.None,
     val refresh: UiState<Boolean> = UiState.None,
     val feedItem: List<FeedData> = emptyList(),
+    val feedCards: List<FeedCardType> = emptyList(),
     val notifyItem: List<Notify> = emptyList(),
     val location: Location = Location.EMPTY,
     val shouldShowPermissionRationale: Boolean = false,
