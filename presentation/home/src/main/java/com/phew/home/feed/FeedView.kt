@@ -17,25 +17,24 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import com.phew.core_design.AppBar
-import com.phew.core_design.NeutralColor
-import com.phew.home.viewModel.HomeViewModel
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
@@ -45,6 +44,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.airbnb.lottie.LottieComposition
@@ -53,9 +53,11 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
+import com.phew.core_design.AppBar
 import com.phew.core_design.DialogComponent
+import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
-import com.phew.domain.dto.FeedData
+import com.phew.domain.dto.FeedCardType
 import com.phew.domain.dto.Notice
 import com.phew.domain.dto.Notification
 import com.phew.home.FeedUi
@@ -63,9 +65,20 @@ import com.phew.home.NAV_HOME_FEED_INDEX
 import com.phew.home.NAV_HOME_NEAR_INDEX
 import com.phew.home.NAV_HOME_POPULAR_INDEX
 import com.phew.home.R
-import com.phew.home.viewModel.Home
+import com.phew.home.viewModel.FeedPagingState
+import com.phew.home.viewModel.FeedType
+import com.phew.home.viewModel.HomeViewModel
 import com.phew.home.viewModel.UiState
+import kotlinx.coroutines.flow.debounce
 
+// TODO : Feed Route로 바꾸면서 네비게이션 처리 필요
+//@Composable
+//fun FeedRoute(
+//    modifier: Modifier = Modifier,
+//    viewModel: HomeViewModel = hiltViewModel()
+//) {
+//
+//}
 
 @Composable
 fun FeedView(
@@ -103,6 +116,30 @@ fun FeedView(
         finish()
     }
 
+    // 리컴포지션 최적화: 페이징 상태 직접 참조
+    val currentPagingState = uiState.currentPagingState
+
+    // 무한 스크롤 감지
+    val isLoadingMore = currentPagingState is FeedPagingState.LoadingMore
+
+    LaunchedEffect(lazyListState) {
+        snapshotFlow { lazyListState.layoutInfo.visibleItemsInfo }
+            .debounce(100)
+            .collect { visibleItems ->
+                val lastVisibleIndex = visibleItems.lastOrNull()?.index ?: 0
+                val totalItems = lazyListState.layoutInfo.totalItemsCount
+
+                val state = currentPagingState
+                if (lastVisibleIndex >= totalItems - 5 &&
+                    state is FeedPagingState.Success &&
+                    state.hasNextPage &&
+                    totalItems > 0
+                ) {
+                    viewModel.loadMoreFeeds()
+                }
+            }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -110,11 +147,12 @@ fun FeedView(
             .systemBarsPadding()
     ) {
         TopLayout(
+            currentTab = uiState.currentTab,
             recentClick = {
-                //TODO 최신 카드
+                viewModel.switchTab(FeedType.Latest)
             },
             popularClick = {
-                //TODO 인기 카드
+                viewModel.switchTab(FeedType.Popular)
             },
             nearClick = viewModel::checkLocationPermission,
             isTabsVisible = isTabsVisible,
@@ -124,15 +162,15 @@ fun FeedView(
         )
 
         FeedContent(
-            uiState = uiState,
+            currentPagingState = currentPagingState,
             isRefreshing = isRefreshing,
-            onRefresh = {
-
-            },
+            isLoadingMore = isLoadingMore,
+            onRefresh = viewModel::refreshCurrentTab,
             lazyListState = lazyListState,
             nestedScrollConnection = nestedScrollConnection,
             composition = composition,
-            progress = progress
+            progress = progress,
+            onRemoveCard = viewModel::removeFeedCard
         )
         if (uiState.shouldShowPermissionRationale) {
             DialogComponent.DefaultButtonTwo(
@@ -154,6 +192,7 @@ fun FeedView(
 
 @Composable
 private fun TopLayout(
+    currentTab: FeedType,
     recentClick: () -> Unit,
     popularClick: () -> Unit,
     nearClick: () -> Unit,
@@ -162,7 +201,10 @@ private fun TopLayout(
     noticeClick: () -> Unit,
     activate: LazyPagingItems<Notification>,
 ) {
-    var selectIndex by remember { mutableIntStateOf(NAV_HOME_FEED_INDEX) }
+    val selectIndex = when (currentTab) {
+        FeedType.Latest -> NAV_HOME_FEED_INDEX
+        FeedType.Popular -> NAV_HOME_POPULAR_INDEX
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -174,18 +216,9 @@ private fun TopLayout(
         )
         FeedUi.AnimatedFeedTabLayout(
             selectTabData = selectIndex,
-            recentClick = {
-                recentClick()
-                selectIndex = NAV_HOME_FEED_INDEX
-            },
-            popularClick = {
-                popularClick()
-                selectIndex = NAV_HOME_POPULAR_INDEX
-            },
-            nearClick = {
-                nearClick()
-                selectIndex = NAV_HOME_NEAR_INDEX
-            },
+            recentClick = recentClick,
+            popularClick = popularClick,
+            nearClick = nearClick,
             isTabsVisible = isTabsVisible,
             onDistanceClick = { value ->
 
@@ -196,25 +229,68 @@ private fun TopLayout(
 
 @Composable
 private fun FeedContent(
-    uiState: Home,
+    currentPagingState: FeedPagingState,
     isRefreshing: Boolean,
+    isLoadingMore: Boolean,
     onRefresh: () -> Unit,
     lazyListState: LazyListState,
     nestedScrollConnection: NestedScrollConnection,
     composition: LottieComposition?,
     progress: Float,
+    onRemoveCard: (String) -> Unit,
 ) {
-    when {
-        uiState.feedItem.isEmpty() -> EmptyFeedView()
-        else -> FeedListView(
-            feedItems = uiState.feedItem,
-            isRefreshing = isRefreshing,
-            onRefresh = onRefresh,
-            lazyListState = lazyListState,
-            nestedScrollConnection = nestedScrollConnection,
-            composition = composition,
-            progress = progress
-        )
+    when (currentPagingState) {
+        is FeedPagingState.None,
+        is FeedPagingState.Loading -> {
+            if (isRefreshing || currentPagingState is FeedPagingState.Loading) {
+                // 로딩 UI는 PullToRefresh에서 처리 또는 초기 로딩
+            }
+        }
+
+        is FeedPagingState.LoadingMore -> {
+            // LoadingMore일 때도 성공 상태의 데이터를 표시하고 로딩 인디케이터를 추가
+            // 하지만 현재 상태에서는 기존 데이터가 없으므로 빈 화면 표시
+            if (currentPagingState.existingData.isEmpty()) {
+                EmptyFeedView()
+            } else {
+                FeedListView(
+                    feedCards = currentPagingState.existingData,
+                    isRefreshing = isRefreshing,
+                    isLoadingMore = isLoadingMore,
+                    onRefresh = onRefresh,
+                    lazyListState = lazyListState,
+                    nestedScrollConnection = nestedScrollConnection,
+                    composition = composition,
+                    progress = progress,
+                    onRemoveCard = onRemoveCard
+                )
+            }
+        }
+
+        is FeedPagingState.Success -> {
+            if (currentPagingState.feedCards.isEmpty()) {
+                EmptyFeedView()
+            } else {
+                FeedListView(
+                    feedCards = currentPagingState.feedCards,
+                    isRefreshing = isRefreshing,
+                    isLoadingMore = isLoadingMore,
+                    onRefresh = onRefresh,
+                    lazyListState = lazyListState,
+                    nestedScrollConnection = nestedScrollConnection,
+                    composition = composition,
+                    progress = progress,
+                    onRemoveCard = onRemoveCard
+                )
+            }
+        }
+
+        is FeedPagingState.Error -> {
+            ErrorView(
+                message = currentPagingState.message,
+                onRetry = onRefresh
+            )
+        }
     }
 }
 
@@ -245,13 +321,15 @@ private fun EmptyFeedView() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FeedListView(
-    feedItems: List<FeedData>,
+    feedCards: List<FeedCardType>,
     isRefreshing: Boolean,
+    isLoadingMore: Boolean,
     onRefresh: () -> Unit,
     lazyListState: LazyListState,
     nestedScrollConnection: NestedScrollConnection,
     composition: LottieComposition?,
     progress: Float,
+    onRemoveCard: (String) -> Unit,
 ) {
     val refreshingOffset = 56.dp
     val refreshState = rememberPullToRefreshState()
@@ -289,22 +367,69 @@ private fun FeedListView(
                 .nestedScroll(nestedScrollConnection)
                 .padding(horizontal = 16.dp)
                 .graphicsLayer {
-                    translationY =
+                    translationY = if (isRefreshing) {
                         refreshState.distanceFraction * with(density) { refreshingOffset.toPx() }
+                    } else {
+                        0f
+                    }
                 },
             state = lazyListState
         ) {
-            items(feedItems) { feedItem ->
-                FeedUi.FeedCardView(
-                    location = feedItem.location,
-                    writeTime = feedItem.writeTime,
-                    commentValue = feedItem.commentValue,
-                    likeValue = feedItem.likeValue,
-                    uri = feedItem.uri,
-                    content = feedItem.content
+            itemsIndexed(
+                items = feedCards,
+                key = { _, feedCard ->
+                    when (feedCard) {
+                        is FeedCardType.BoombType -> feedCard.cardId
+                        is FeedCardType.AdminType -> feedCard.cardId
+                        is FeedCardType.NormalType -> feedCard.cardId
+                    }
+                }
+            ) { index, feedCard ->
+                FeedUi.TypedFeedCardView(
+                    feedCard = feedCard,
+                    onRemoveCard = onRemoveCard
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
+
+            // 더 로딩 중일 때 로딩 인디케이터
+            if (isLoadingMore) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        androidx.compose.material3.CircularProgressIndicator()
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ErrorView(
+    message: String,
+    onRetry: () -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = message,
+            style = TextComponent.BODY_1_M_14,
+            color = NeutralColor.GRAY_400,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        androidx.compose.material3.Button(
+            onClick = onRetry
+        ) {
+            Text("다시 시도")
         }
     }
 }

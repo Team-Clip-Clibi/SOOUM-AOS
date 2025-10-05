@@ -30,8 +30,8 @@ interface Http {
      */
     @GET(BuildConfig.API_URL)
     suspend fun getVersion(
-        @Path(BuildConfig.API_URL_TYPE) type: String,
-        @Query(BuildConfig.API_URL_QUERY) data: String,
+        @Path("type") type: String,
+        @Query("version") data: String,
     ): Response<AppVersionDTO>
 
     /**
@@ -121,7 +121,7 @@ interface Http {
     @GET(BuildConfig.API_URL_NOTICE)
     suspend fun requestNoticePatch(
         @Header("Authorization") bearerToken: String,
-        @Path("lastId") lastId: Int,
+        @Query("lastId") lastId: Int,
     ): Response<NoticeDto>
 
     /**
@@ -135,7 +135,7 @@ interface Http {
     @GET(BuildConfig.API_URL_NOTIFICATION_UN_READ)
     suspend fun requestNotificationUnReadPatch(
         @Header("Authorization") bearerToken: String,
-        @Path("lastId") lastId: Long,
+        @Query("lastId") lastId: Long,
     ): Response<List<NotificationDTO>>
 
     @GET(BuildConfig.API_URL_NOTIFICATION_READ)
@@ -146,7 +146,7 @@ interface Http {
     @GET(BuildConfig.API_URL_NOTIFICATION_READ)
     suspend fun requestNotificationReadPatch(
         @Header("Authorization") bearerToken: String,
-        @Path("lastId") lastId: Long,
+        @Query("lastId") lastId: Long,
     ): Response<List<NotificationDTO>>
 
 }

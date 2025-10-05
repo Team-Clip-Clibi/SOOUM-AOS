@@ -95,9 +95,9 @@ class ApplicationConvention : Plugin<Project> {
             add("implementation", project(":data:device:device_info"))
             add("implementation", project(":data:token"))
             add("implementation", project(":data:paging"))
-            add("implementation", project(":core"))
             add("implementation", project(":core:core-design"))
             add("implementation", project(":core:core-common"))
+            add("implementation", project(":core:ui"))
         }
     }
 }

@@ -49,6 +49,10 @@ class NetworkConvention : Plugin<Project> {
                 val notificationRead: String =
                     properties.getProperty("api_url_notification_read", "")
 
+                val popularUrl: String = properties.getProperty("api_url_card_feed_popular", "")
+                val latestUrl: String = properties.getProperty("api_url_card_feed_latest", "")
+
+
                 buildConfigField("String", "BASE_URL", baseUrl)
                 buildConfigField("String", "API_URL", apiUrl)
                 buildConfigField("String", "API_URL_TYPE", apiUrlType)
@@ -65,6 +69,8 @@ class NetworkConvention : Plugin<Project> {
                 buildConfigField("String", "API_URL_NOTICE", noticeUrl)
                 buildConfigField("String", "API_URL_NOTIFICATION_UN_READ", notificationUnRead)
                 buildConfigField("String", "API_URL_NOTIFICATION_READ", notificationRead)
+                buildConfigField("String", "API_URL_CARD_FEED_POPULAR", popularUrl)
+                buildConfigField("String", "API_URL_CARD_FEED_LATEST", latestUrl)
             }
             buildFeatures.buildConfig = true
             compileOptions {

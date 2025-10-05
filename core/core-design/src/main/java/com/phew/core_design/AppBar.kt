@@ -68,8 +68,8 @@ object AppBar {
             )
 
             Icon(
-                painter = if (newAlarm) painterResource(R.drawable.ic_bell_new) else painterResource(
-                    R.drawable.ic_bell
+                painter = if (newAlarm) painterResource(R.drawable.ic_bell_stoke) else painterResource(
+                    R.drawable.ic_bell_no_badge_stoke
                 ),
                 contentDescription = if (newAlarm) "new alarm" else "no new alarm",
                 modifier = Modifier
@@ -85,7 +85,7 @@ object AppBar {
     @Composable
     fun IconBothAppBar(
         @DrawableRes startImage: Int = R.drawable.ic_left,
-        @DrawableRes endImage: Int = R.drawable.ic_home,
+        @DrawableRes endImage: Int = R.drawable.ic_home_stoke,
         appBarText: String = "Title",
         startClick: () -> Unit,
         endClick: () -> Unit,

@@ -14,6 +14,10 @@ class CheckAppVersion @Inject constructor(private val networkRepository: Network
     )
 
     suspend operator fun invoke(data: Param): DomainResult<Boolean, Unit> {
+        if (data.isDebugMode) {
+            return DomainResult.Success(true)
+        }
+        
         val result = networkRepository.requestAppVersion(
             type = BuildConfig.APP_TYPE,
             appVersion = data.appVersion

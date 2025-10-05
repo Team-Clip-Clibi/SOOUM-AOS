@@ -1,8 +1,8 @@
 package com.phew.sooum.di
 
 import com.phew.sooum.BuildConfig
-import com.phew.splash.AppVersion
-import com.phew.splash.IsDebug
+import com.phew.core_common.AppVersion
+import com.phew.core_common.IsDebug
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

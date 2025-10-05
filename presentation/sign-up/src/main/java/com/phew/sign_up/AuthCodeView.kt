@@ -27,7 +27,6 @@ import com.phew.core_design.Primary
 import androidx.compose.material3.Text
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.tooling.preview.Preview
 import com.phew.core_design.LargeButton
 import com.phew.core_design.TextComponent
 import com.phew.core_design.TextFiledComponent
@@ -116,7 +115,7 @@ private fun ExplainContent(onClick: () -> Unit, isEnable: Boolean) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                painter = painterResource(com.phew.core_design.R.drawable.ic_info_circle),
+                painter = painterResource(com.phew.core_design.R.drawable.ic_info_filled),
                 contentDescription = stringResource(R.string.authCode_txt_code_content),
             )
             Text(
