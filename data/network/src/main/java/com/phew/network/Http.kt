@@ -10,6 +10,8 @@ import com.phew.network.dto.SignUpRequest
 import com.phew.network.dto.TokenDTO
 import com.phew.network.dto.NickNameAvailableDTO
 import com.phew.network.dto.UploadImageUrlDTO
+import com.phew.network.dto.NoticeDto
+import com.phew.network.dto.NotificationDTO
 import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
@@ -28,8 +30,8 @@ interface Http {
      */
     @GET(BuildConfig.API_URL)
     suspend fun getVersion(
-        @Path(BuildConfig.API_URL_TYPE) type: String,
-        @Query(BuildConfig.API_URL_QUERY) data: String,
+        @Path("type") type: String,
+        @Query("version") data: String,
     ): Response<AppVersionDTO>
 
     /**
@@ -49,7 +51,7 @@ interface Http {
     /**
      * Login url
      */
-    @GET(BuildConfig.API_URL_LOGIN)
+    @POST(BuildConfig.API_URL_LOGIN)
     suspend fun requestLogin(
         @Body body: InfoDTO,
     ): Response<TokenDTO>
@@ -60,7 +62,7 @@ interface Http {
     @PATCH(BuildConfig.API_URL_FCM_UPDATE)
     suspend fun requestUpdateFcm(
         @Header("Authorization") bearerToken: String,
-        @Body body: FCMToken
+        @Body body: FCMToken,
     ): Response<Unit>
 
     /**
@@ -68,7 +70,7 @@ interface Http {
      */
     @POST(BuildConfig.API_URL_SIGN_UP)
     suspend fun requestSignUp(
-        @Body body: SignUpRequest
+        @Body body: SignUpRequest,
     ): Response<TokenDTO>
 
     /**
@@ -82,14 +84,14 @@ interface Http {
      */
     @POST(BuildConfig.API_URL_CHECK_NICKNAME_AVAILABLE)
     suspend fun requestCheckNickName(
-        @Body body : NickNameDTO
-    ) : Response<NickNameAvailableDTO>
+        @Body body: NickNameDTO,
+    ): Response<NickNameAvailableDTO>
 
     /**
      * get Upload Image Url
      */
     @POST(BuildConfig.API_URL_UPLOAD_IMAGE)
-    suspend fun requestUploadImageUrl() : Response<UploadImageUrlDTO>
+    suspend fun requestUploadImageUrl(): Response<UploadImageUrlDTO>
 
     /**
      * upload image url
@@ -97,6 +99,54 @@ interface Http {
     @PUT
     suspend fun requestUploadImage(
         @Url url: String,
-        @Body body: RequestBody
+        @Body body: RequestBody,
     ): Response<Unit>
+
+    /**
+     * Refresh Token url
+     */
+    @POST(BuildConfig.API_URL_REFRESH_TOKEN)
+    suspend fun requestRefreshToken(
+        @Body body: TokenDTO,
+    ): Response<TokenDTO>
+
+    /**
+     * Notice url
+     */
+    @GET(BuildConfig.API_URL_NOTICE)
+    suspend fun requestNotice(
+        @Header("Authorization") bearerToken: String,
+    ): Response<NoticeDto>
+
+    @GET(BuildConfig.API_URL_NOTICE)
+    suspend fun requestNoticePatch(
+        @Header("Authorization") bearerToken: String,
+        @Query("lastId") lastId: Int,
+    ): Response<NoticeDto>
+
+    /**
+     * Notification url
+     */
+    @GET(BuildConfig.API_URL_NOTIFICATION_UN_READ)
+    suspend fun requestNotificationUnRead(
+        @Header("Authorization") bearerToken: String,
+    ): Response<List<NotificationDTO>>
+
+    @GET(BuildConfig.API_URL_NOTIFICATION_UN_READ)
+    suspend fun requestNotificationUnReadPatch(
+        @Header("Authorization") bearerToken: String,
+        @Query("lastId") lastId: Long,
+    ): Response<List<NotificationDTO>>
+
+    @GET(BuildConfig.API_URL_NOTIFICATION_READ)
+    suspend fun requestNotificationRead(
+        @Header("Authorization") bearerToken: String,
+    ): Response<List<NotificationDTO>>
+
+    @GET(BuildConfig.API_URL_NOTIFICATION_READ)
+    suspend fun requestNotificationReadPatch(
+        @Header("Authorization") bearerToken: String,
+        @Query("lastId") lastId: Long,
+    ): Response<List<NotificationDTO>>
+
 }

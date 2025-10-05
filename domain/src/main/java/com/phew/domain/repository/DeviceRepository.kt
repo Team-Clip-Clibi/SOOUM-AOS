@@ -1,11 +1,13 @@
 package com.phew.domain.repository
 
+import com.phew.domain.dto.Location
+import com.phew.domain.dto.Token
 import com.phew.domain.dto.UserInfo
 
 interface DeviceRepository {
     suspend fun requestDeviceId(): String
     suspend fun requestToken(key: String): Pair<String, String>
-    suspend fun saveToken(key: String, data: Pair<String, String>): Boolean
+    suspend fun saveToken(key: String, data: Token): Boolean
     suspend fun firebaseToken(): String
     suspend fun requestGetSaveFirebaseToken(key: String): String
     suspend fun requestSaveFirebaseToken(key: String, data: String): Boolean
@@ -21,4 +23,5 @@ interface DeviceRepository {
     ): Boolean
 
     suspend fun getUserInfo(key: String): UserInfo?
+    suspend fun requestLocation() : Location
 }

@@ -47,7 +47,7 @@ class ApplicationConvention : Plugin<Project> {
                 buildConfig = true
             }
             composeOptions.kotlinCompilerExtensionVersion = "1.5.13"
-            packaging.resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            packaging.resources.excludes += "/META-INF/{AL2.0,LGPL2.1,LICENSE.md,LICENSE-notice.md}"
         }
         extensions.getByType<KotlinAndroidProjectExtension>().apply {
             jvmToolchain(21)
@@ -74,7 +74,9 @@ class ApplicationConvention : Plugin<Project> {
             "debugImplementation"(libs.findLibrary("androidx-ui-test-manifest").get())
             // hilt
             "implementation"(libs.findLibrary("hilt-android").get())
+            "implementation"(libs.findLibrary("hilt-navigation-compose").get())
             "ksp"(libs.findLibrary("hilt-compiler").get())
+            //nav
             "implementation"(libs.findLibrary("compose-nav").get())
             //firebase
             "implementation"(libs.findLibrary("firebase-bom").get())
@@ -82,14 +84,20 @@ class ApplicationConvention : Plugin<Project> {
             add("implementation", project(":presentation"))
             add("implementation", project(":presentation:splash"))
             add("implementation", project(":presentation:sign-up"))
+            add("implementation", project(":presentation:home"))
             add("implementation", project(":domain"))
             add("implementation", project(":data"))
             add("implementation", project(":data:repository"))
             add("implementation", project(":data:network"))
             add("implementation", project(":data:device"))
-            add("implementation", project(":core"))
+            add("implementation", project(":data:device:datastore_local"))
+            add("implementation", project(":data:device:location_provider"))
+            add("implementation", project(":data:device:device_info"))
+            add("implementation", project(":data:token"))
+            add("implementation", project(":data:paging"))
             add("implementation", project(":core:core-design"))
             add("implementation", project(":core:core-common"))
+            add("implementation", project(":core:ui"))
         }
     }
 }

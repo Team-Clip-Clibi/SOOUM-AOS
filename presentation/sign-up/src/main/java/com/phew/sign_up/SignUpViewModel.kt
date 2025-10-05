@@ -36,6 +36,7 @@ class SignUpViewModel @Inject constructor(
     val uiState: StateFlow<SignUp> = _uiState.asStateFlow()
     init {
         generateNickName()
+        checkRegister()
     }
 
     /**
@@ -167,7 +168,7 @@ class SignUpViewModel @Inject constructor(
     /**
      * 회원 가입 가능 여부 확인
      */
-    fun checkRegister() {
+    private fun checkRegister() {
         viewModelScope.launch(Dispatchers.IO) {
             when (val result = checkSignUp()) {
                 is DomainResult.Failure -> {
@@ -217,14 +218,6 @@ class SignUpViewModel @Inject constructor(
         }
     }
 
-    /**
-     * 회원 가입 여부 초기화
-     */
-    fun initCheckSignUp() {
-        _uiState.update { state ->
-            state.copy(checkSignUp = UiState.Loading)
-        }
-    }
 
     /**
      * 닉네임 중복 검사 여부 초기화

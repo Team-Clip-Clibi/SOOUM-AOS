@@ -51,12 +51,15 @@ class PresentationConvention : Plugin<Project> {
             add("implementation", libs.findLibrary("coil-compose").get())
             add("implementation", libs.findLibrary("coil-network").get())
             add("implementation", libs.findLibrary("hilt-android").get())
+            add("implementation", libs.findLibrary("lottie-compose").get())
+            add("implementation", libs.findLibrary("hilt-navigation-compose").get())
             add("ksp", libs.findLibrary("hilt-compiler").get())
             add("debugImplementation", libs.findLibrary("androidx-ui-tooling").get())
             add("debugImplementation", libs.findLibrary("androidx-ui-test-manifest").get())
             add("implementation", project(":core:core-design"))
             add("implementation", project(":core:core-common"))
             add("implementation", project(":domain"))
+            add("implementation",project(":core:ui"))
         }
     }
 }

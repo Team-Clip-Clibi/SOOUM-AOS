@@ -1,12 +1,14 @@
 package com.phew.repository.di
 
-import com.phew.device.dataStore.DataStore
-import com.phew.device.device.Device
 import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.NetworkRepository
-import com.phew.network.Http
+import com.phew.domain.repository.network.CardFeedRepository
 import com.phew.repository.DeviceRepositoryImpl
 import com.phew.repository.NetworkRepositoryImpl
+import dagger.Binds
+import com.phew.repository.network.CardFeedRepositoryImpl
+import com.phew.repository.network.MockCardFeedRepositoryImpl
+import com.phew.core_common.IsDebug
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -15,22 +17,35 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-class RepositoryModule {
-    @Provides
-    @Singleton
-    fun provideNetworkRepository(
-        http: Http,
-    ): NetworkRepository {
-        return NetworkRepositoryImpl(http)
-    }
+abstract class RepositoryModule {
 
-    @Provides
+    @Binds
     @Singleton
-    fun provideDeviceRepository(
-        device: Device,
-        dataStore: DataStore,
-    ): DeviceRepository {
-        return DeviceRepositoryImpl(device, dataStore)
-    }
+    abstract fun bindNetworkRepository(
+        impl: NetworkRepositoryImpl,
+    ): NetworkRepository
 
+    @Binds
+    @Singleton
+    abstract fun bindDeviceRepository(
+        impl: DeviceRepositoryImpl,
+    ): DeviceRepository
+
+    companion object {
+        @Provides
+        @Singleton
+        fun provideCardFeedRepository(
+            @IsDebug isDebug: Boolean,
+            realImpl: CardFeedRepositoryImpl,
+            mockImpl: MockCardFeedRepositoryImpl
+        ): CardFeedRepository {
+            return realImpl
+            // 임시로 mock 데이터로 확인하고 싶을떄 사용
+//            return if (isDebug) {
+//                mockImpl
+//            } else {
+//                realImpl
+//            }
+        }
+    }
 }

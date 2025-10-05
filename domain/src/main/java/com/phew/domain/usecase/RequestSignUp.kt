@@ -14,6 +14,7 @@ import com.phew.core_common.ERROR
 import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.domain.BuildConfig
+import com.phew.domain.dto.Token
 import com.phew.domain.repository.DeviceRepository
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -91,6 +92,13 @@ class RequestSignUp @Inject constructor(
                     isNotifyAgree = notifyStatus
                 )
                 if (!saveUserInfo) return DomainResult.Failure(ERROR_FAIL_JOB)
+                val refreshToken = request.data.first
+                val accessToken = request.data.second
+                val saveToken = deviceRepository.saveToken(
+                    key = BuildConfig.TOKEN_KEY,
+                    data = Token(refreshToken = refreshToken, accessToken = accessToken)
+                )
+                if(!saveToken) return DomainResult.Failure(ERROR_FAIL_JOB)
                 return DomainResult.Success(Unit)
             }
         }
@@ -100,12 +108,12 @@ class RequestSignUp @Inject constructor(
         val cleanedKey = key.replace("\\s".toRegex(), "")
         val keyBytes = java.util.Base64.getDecoder().decode(cleanedKey)
         val spec = X509EncodedKeySpec(keyBytes)
-        val keyFactory = KeyFactory.getInstance("RSA")
+        val keyFactory = KeyFactory.getInstance(BuildConfig.DECODE_ALGORITHM)
         return keyFactory.generatePublic(spec)
     }
 
     private fun encrypt(data: String, key: PublicKey): String {
-        val cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding")
+        val cipher = Cipher.getInstance(BuildConfig.ENCRYPT_ALGORITHM)
         cipher.init(Cipher.ENCRYPT_MODE, key)
         val encryptedBytes = cipher.doFinal(data.toByteArray(Charsets.UTF_8))
         return java.util.Base64.getEncoder().encodeToString(encryptedBytes)

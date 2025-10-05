@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,6 +39,7 @@ import com.phew.core_design.TextComponent
 import androidx.compose.ui.unit.dp
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.LargeButton
+import com.phew.domain.SIGN_UP_ALREADY_SIGN_UP
 import com.phew.domain.SIGN_UP_BANNED
 import com.phew.domain.SIGN_UP_OKAY
 import com.phew.domain.SIGN_UP_REGISTERED
@@ -50,59 +52,49 @@ fun OnBoarding(
     signUp: () -> Unit,
     alreadySignUp: () -> Unit,
     back: () -> Unit,
+    home : () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
+    val dialogShow = remember { mutableStateOf(false) }
     val context = LocalContext.current
     BackHandler {
         back()
     }
     LaunchedEffect(uiState) {
-        when (val result = uiState.checkSignUp) {
-            is UiState.Fail -> {
-                snackBarHostState.showSnackbar(
-                    message = context.getString(com.phew.core_design.R.string.error_network),
-                    duration = SnackbarDuration.Short
-                )
-            }
-
-            is UiState.Success -> {
-                when (result.data.result) {
-                    SIGN_UP_OKAY -> {
-                        signUp()
-                        viewModel.initCheckSignUp()
-                    }
-
-                    SIGN_UP_REGISTERED -> {
-                        viewModel.login()
-                    }
-                }
-            }
-
-            else -> Unit
+        if (uiState.checkSignUp is UiState.Fail || uiState.login is UiState.Fail) {
+            snackBarHostState.showSnackbar(
+                message = context.getString(com.phew.core_design.R.string.error_network),
+                duration = SnackbarDuration.Short
+            )
         }
-    }
-    LaunchedEffect(uiState) {
-        when (uiState.login) {
-            is UiState.Fail -> {
-                snackBarHostState.showSnackbar(
-                    message = context.getString(com.phew.core_design.R.string.error_network),
-                    duration = SnackbarDuration.Short
-                )
-            }
-
-            is UiState.Success -> {
-                //TODO HOME 화면 포팅
-            }
-
-            else -> Unit
+        if (uiState.login is UiState.Success) {
+            home()
         }
     }
     Scaffold(
         bottomBar = {
             BottomView(
                 onClickStart = {
-                    viewModel.checkRegister()
+                    when (val checkSignUpResult = uiState.checkSignUp) {
+                        is UiState.Success -> {
+                            when (checkSignUpResult.data.result) {
+                                SIGN_UP_OKAY -> {
+                                    signUp()
+                                }
+
+                                SIGN_UP_REGISTERED -> {
+                                    viewModel.login()
+                                }
+                                SIGN_UP_ALREADY_SIGN_UP -> {
+                                    viewModel.login()
+                                }
+                                else -> dialogShow.value = true
+                            }
+                        }
+
+                        else -> UInt
+                    }
                 },
                 onClickAlreadySignUp = {
                     alreadySignUp()
@@ -129,9 +121,9 @@ fun OnBoarding(
         ) {
             TitleView()
             ContentView()
-            if (uiState.checkSignUp is UiState.Success) {
+            if (dialogShow.value) {
                 DialogView((uiState.checkSignUp as UiState.Success<SignUpResult>).data, onclick = {
-                    viewModel.initCheckSignUp()
+                    dialogShow.value = false
                 })
             }
         }
@@ -217,7 +209,7 @@ private fun BottomView(
             .fillMaxWidth()
             .background(color = NeutralColor.WHITE)
             .navigationBarsPadding()
-            .padding(start = 16.dp, end = 16.dp , bottom = 12.dp)
+            .padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
     ) {
         LargeButton.NoIconPrimary(
             buttonText = stringResource(R.string.onBoarding_btn_start),

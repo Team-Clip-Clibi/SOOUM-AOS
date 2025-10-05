@@ -5,20 +5,15 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatDelegate
-import com.phew.splash.SplashViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import com.phew.sooum.ui.Nav
 import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import com.phew.sign_up.SignUpViewModel
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private val splashViewModel: SplashViewModel by viewModels()
-    private val signUpViewModel: SignUpViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,14 +25,12 @@ class MainActivity : ComponentActivity() {
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
         setContent {
             Nav(
-                splashViewModel = splashViewModel,
                 finish = {
                     finish()
                 },
                 update = {
                     playStore()
-                },
-                signUpViewModel = signUpViewModel
+                }
             )
         }
     }
