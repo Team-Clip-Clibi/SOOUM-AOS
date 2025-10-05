@@ -47,7 +47,7 @@ class ApplicationConvention : Plugin<Project> {
                 buildConfig = true
             }
             composeOptions.kotlinCompilerExtensionVersion = "1.5.13"
-            packaging.resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            packaging.resources.excludes += "/META-INF/{AL2.0,LGPL2.1,LICENSE.md,LICENSE-notice.md}"
         }
         extensions.getByType<KotlinAndroidProjectExtension>().apply {
             jvmToolchain(21)
@@ -90,9 +90,14 @@ class ApplicationConvention : Plugin<Project> {
             add("implementation", project(":data:repository"))
             add("implementation", project(":data:network"))
             add("implementation", project(":data:device"))
-            add("implementation", project(":core"))
+            add("implementation", project(":data:device:datastore_local"))
+            add("implementation", project(":data:device:location_provider"))
+            add("implementation", project(":data:device:device_info"))
+            add("implementation", project(":data:token"))
+            add("implementation", project(":data:paging"))
             add("implementation", project(":core:core-design"))
             add("implementation", project(":core:core-common"))
+            add("implementation", project(":core:ui"))
         }
     }
 }

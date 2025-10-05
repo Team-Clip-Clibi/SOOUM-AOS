@@ -7,7 +7,9 @@ android {
 }
 
 dependencies {
-    implementation(project(":data:device"))
+    implementation(project(":data:device:datastore_local"))
+    implementation(project(":data:device:device_info"))
+    implementation(project(":data:device:location_provider"))
     implementation(project(":data:network"))
     implementation(project(":domain"))
     implementation(project(":core:core-common"))

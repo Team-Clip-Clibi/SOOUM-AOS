@@ -2,6 +2,7 @@ package com.phew.network.di
 
 import com.phew.network.Http
 import com.phew.network.RetrofitFactory
+import com.phew.network.retrofit.FeedHttp
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -20,4 +21,8 @@ object NetworkModule {
     @Singleton
     @Provides
     fun provideHttp(retrofit: Retrofit): Http = retrofit.create(Http::class.java)
+
+    @Singleton
+    @Provides
+    fun provideFeedHttp(retrofit: Retrofit): FeedHttp = retrofit.create(FeedHttp::class.java)
 }

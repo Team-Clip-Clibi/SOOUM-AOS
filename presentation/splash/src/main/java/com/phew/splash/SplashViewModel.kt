@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR
+import com.phew.core_common.IsDebug
+import com.phew.core_common.AppVersion
 import com.phew.domain.usecase.CheckAppVersion
 import com.phew.domain.usecase.GetFirebaseToken
 import com.phew.domain.usecase.SaveNotify
@@ -21,7 +23,7 @@ class SplashViewModel @Inject constructor(
     @IsDebug private val isDebug: Boolean,
     @AppVersion private val appVersion: String,
     private val updateFcm: GetFirebaseToken,
-    private val notify : SaveNotify
+    private val notify : SaveNotify,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
     val usState: StateFlow<UiState> = _uiState.asStateFlow()
