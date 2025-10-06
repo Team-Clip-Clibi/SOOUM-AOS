@@ -6,3 +6,6 @@ android {
     namespace = "com.phew.core_design"
 }
 
+dependencies {
+    implementation(libs.androidx.material3)
+}

@@ -45,7 +45,7 @@ import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
 
 @Composable
-fun BottomAppBar(
+fun SooumNavigationBar(
     modifier: Modifier = Modifier,
     content: @Composable RowScope. () -> Unit
 ) {
@@ -59,7 +59,7 @@ fun BottomAppBar(
 }
 
 @Composable
-fun RowScope.NavigationBarItem(
+fun RowScope.SooumNavigationBarItem(
     selected: Boolean,
     onClick: () -> Unit,
     icon: @Composable () -> Unit,
