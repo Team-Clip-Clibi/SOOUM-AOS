@@ -792,8 +792,6 @@ object FeedUi {
             horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            println("!! write Time = ${feedCard.writeTime} , transfer = ${TimeUtils.getRelativeTimeString(feedCard.writeTime)}")
-
             if (!feedCard.location.isNullOrEmpty()) {
                 // TODO 분리 필요
                 Image(
