@@ -48,50 +48,60 @@ fun SooumBottomBar(
     // lifecycle-aware composable 로 등록
     LifecycleAwareComposableRegister(uniqueId = TAG, type = ComposableType.BOTTOM_APP_BAR, visibleState = visibleState)
 
-    SooumNavigationBar(
-        modifier = modifier
-    ) {
-        homeTaps.forEach { tab ->
-            val selected = navBackStackEntry?.destination.isHomeLevelTab(tab)
+    if (shouldShowBottomBar) {
+        SooumNavigationBar(
+            modifier = modifier
+        ) {
+            homeTaps.forEach { tab ->
+                val selected = navBackStackEntry?.destination.isHomeLevelTab(tab)
 
-            SooumNavigationBarItem(
-                selected = selected,
-                icon = {
-                    Icon(
-                        painter = painterResource(id = tab.unselectedIconId),
-                        tint = Color.Unspecified,
-                        contentDescription = null
-                    )
-                },
-                selectedIcon = {
-                    Icon(
-                        painter = painterResource(id = tab.selectedIconId),
-                        tint = Color.Unspecified,
-                        contentDescription = null
-                    )
-                },
-                label = {
-                    Text(
-                        text = stringResource(tab.iconTextId),
-                        style = TextComponent.CAPTION_1_SB_12,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        textAlign = TextAlign.Center
-                    )
-                },
-                onClick = {
-                    //  현재 선택이 되어 있는 탭을 제외한 클릭만 동작하도록
-                    if (!selected) {
-                        navController.navigate(tab.graph) {
-                            popUpTo(HomeTabType.FEED.route)
-                            launchSingleTop = true
+                SooumNavigationBarItem(
+                    selected = selected,
+                    icon = {
+                        Icon(
+                            painter = painterResource(id = tab.unselectedIconId),
+                            tint = Color.Unspecified,
+                            contentDescription = null
+                        )
+                    },
+                    selectedIcon = {
+                        Icon(
+                            painter = painterResource(id = tab.selectedIconId),
+                            tint = Color.Unspecified,
+                            contentDescription = null
+                        )
+                    },
+                    label = {
+                        Text(
+                            text = stringResource(tab.iconTextId),
+                            style = TextComponent.CAPTION_1_SB_12,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            textAlign = TextAlign.Center
+                        )
+                    },
+                    onClick = {
+                        //  현재 선택이 되어 있는 탭을 제외한 클릭만 동작하도록
+                        if (!selected) {
+                            when(tab) {
+                                HomeTabType.FEED -> {
+                                    navController.navigate(tab.graph) {
+                                        popUpTo(HomeTabType.FEED.route)
+                                        launchSingleTop = true
+                                    }
+                                }
+                                HomeTabType.WRITE,
+                                    HomeTabType.TAG,
+                                    HomeTabType.MY -> {
+
+                                    }
+                            }
                         }
                     }
-                }
-            )
+                )
+            }
         }
     }
-
 }
 
 private const val TAG = "SooumBottomBar"
