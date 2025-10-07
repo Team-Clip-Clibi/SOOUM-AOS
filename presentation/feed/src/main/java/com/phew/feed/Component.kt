@@ -1,4 +1,4 @@
-package com.phew.home
+package com.phew.feed
 
 import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
@@ -61,8 +61,7 @@ import com.phew.domain.dto.UserBlockNotification
 import com.phew.domain.dto.UserCommentLike
 import com.phew.domain.dto.UserCommentWrite
 import com.phew.domain.dto.UserDeleteNotification
-import com.phew.feed.R
-import com.phew.home.FeedUi.TypedFeedCardView
+import com.phew.feed.FeedUi.TypedFeedCardView
 import kotlinx.coroutines.delay
 
 object FeedUi {
