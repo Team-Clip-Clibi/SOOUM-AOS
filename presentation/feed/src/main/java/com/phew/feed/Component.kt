@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
@@ -52,6 +53,8 @@ import com.phew.core_design.NeutralColor
 import com.phew.core_design.OpacityColor
 import com.phew.core_design.Primary
 import com.phew.core_design.TextComponent
+import com.phew.core_design.component.SooumTab
+import com.phew.core_design.component.SooumTabRow
 import com.phew.domain.dto.FeedCardType
 import com.phew.domain.dto.FeedLikeNotification
 import com.phew.domain.dto.FollowNotification
@@ -110,28 +113,13 @@ object FeedUi {
                     .wrapContentHeight()
                     .background(color = NeutralColor.WHITE)
             ) {
-                TabRow(
+                SooumTabRow(
                     selectedTabIndex = selectTabData,
-                    modifier = Modifier
-                        .wrapContentWidth(align = Alignment.Start)
-                        .height(56.dp)
-                        .padding(start = 16.dp, end = 16.dp),
-                    containerColor = NeutralColor.WHITE,
-                    contentColor = NeutralColor.BLACK,
-                    indicator = { tabPositions ->
-                        TabRowDefaults.SecondaryIndicator(
-                            Modifier
-                                .tabIndicatorOffset(tabPositions[selectTabData]),
-                            height = 2.dp,
-                            color = NeutralColor.BLACK
-                        )
-                    },
-                    divider = {}
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     tabItem.forEachIndexed { index, title ->
-                        val isSelected = selectTabData == index
-                        Tab(
-                            selected = isSelected,
+                        SooumTab(
+                            selected = selectTabData == index,
                             onClick = {
                                 when (index) {
                                     NAV_HOME_FEED_INDEX -> recentClick()
@@ -142,10 +130,9 @@ object FeedUi {
                             text = {
                                 Text(
                                     text = title,
-                                    style = TextComponent.TITLE_2_SB_16,
-                                    color = if (isSelected) NeutralColor.BLACK else NeutralColor.GRAY_400
+                                    color = LocalContentColor.current
                                 )
-                            },
+                            }
                         )
                     }
                 }

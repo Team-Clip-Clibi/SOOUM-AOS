@@ -1,4 +1,4 @@
-package com.phew.feed.screen
+package com.phew.feed.feed
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
