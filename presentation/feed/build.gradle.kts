@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "com.phew.home"
+    namespace = "com.phew.feed"
 }
 
 dependencies {

@@ -27,12 +27,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.SubcomposeLayout
-import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -77,7 +75,10 @@ fun SooumTabRow(
         }
     },
     divider: @Composable () -> Unit = @Composable {
-        HorizontalDivider()
+        HorizontalDivider(
+            color = NeutralColor.GRAY_200,
+            thickness = SooumTabRowDefaults.ActiveIndicatorHeight
+        )
     },
     tabs: @Composable () -> Unit
 ) {
@@ -126,13 +127,14 @@ private fun SooumScrollableTabRowImpl(
         Box(
             contentAlignment = Alignment.BottomCenter
         ) {
-            // Full-width background indicator line
+            //  Tab Indicator line fill max width
             Box(
                 modifier = Modifier
                     .height(2.dp)
+                    .background(NeutralColor.GRAY_200)
                     .fillMaxWidth()
-                    .background(NeutralColor.GRAY_200),
             )
+
             SubcomposeLayout(
                 Modifier
                     .fillMaxWidth()
@@ -215,7 +217,6 @@ private fun SooumScrollableTabRowImpl(
                     )
                 }
             }
-
         }
     }
 }
@@ -247,30 +248,6 @@ class SooumTabPosition internal constructor(val left: Dp, val width: Dp, val con
         return "TabPosition(left=$left, right=$right, width=$width, contentWidth=$contentWidth)"
     }
 }
-
-
-fun Modifier.apTabIndicatorOffset(
-    currentTabPosition: SooumTabPosition
-): Modifier = composed(
-    inspectorInfo = debugInspectorInfo {
-        name = "tabIndicatorOffset"
-        value = currentTabPosition
-    }
-) {
-    val currentTabWidth by animateDpAsState(
-        targetValue = currentTabPosition.width,
-        animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing), label = ""
-    )
-    val indicatorOffset by animateDpAsState(
-        targetValue = currentTabPosition.left,
-        animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing), label = ""
-    )
-    fillMaxWidth()
-        .wrapContentSize(Alignment.BottomStart)
-        .offset(x = indicatorOffset)
-        .width(currentTabWidth)
-}
-
 
 object SooumTabRowDefaults {
     /**
