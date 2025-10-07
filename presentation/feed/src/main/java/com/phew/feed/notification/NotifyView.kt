@@ -1,4 +1,4 @@
-package com.phew.home.notification
+package com.phew.feed.notification
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -46,7 +46,7 @@ import com.phew.core_design.AppBar
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
 import com.phew.domain.dto.Notice
-import com.phew.home.viewModel.HomeViewModel
+import com.phew.feed.viewModel.HomeViewModel
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -56,10 +56,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.paging.LoadState
 import com.phew.domain.dto.Notification
-import com.phew.home.NAV_NOTICE_ACTIVATE
-import com.phew.home.NAV_NOTICE_NOTIFY_INDEX
-import com.phew.home.NotificationUi
-import com.phew.home.R
+import com.phew.feed.NAV_NOTICE_ACTIVATE
+import com.phew.feed.NAV_NOTICE_NOTIFY_INDEX
+import com.phew.feed.NotificationUi
+import com.phew.feed.R
 import kotlinx.coroutines.launch
 
 

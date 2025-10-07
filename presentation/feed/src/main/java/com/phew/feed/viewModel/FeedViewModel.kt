@@ -1,4 +1,4 @@
-package com.phew.home.viewModel
+package com.phew.feed.viewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -28,7 +28,6 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.update
 import com.phew.core_common.DataResult
 import com.phew.domain.dto.Location

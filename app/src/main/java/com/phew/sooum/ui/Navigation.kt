@@ -39,9 +39,9 @@ import com.phew.core_common.NAV_SPLASH
 import com.phew.core_design.BottomBarComponent
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.slideComposable
-import com.phew.home.feed.FeedView
-import com.phew.home.notification.NotifyView
-import com.phew.home.viewModel.HomeViewModel
+import com.phew.feed.screen.FeedView
+import com.phew.feed.notification.NotifyView
+import com.phew.feed.viewModel.HomeViewModel
 import com.phew.sign_up.AuthCodeView
 import com.phew.sign_up.NickNameView
 import com.phew.sign_up.OnBoarding
