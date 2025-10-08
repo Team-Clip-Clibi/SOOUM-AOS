@@ -7,7 +7,7 @@ import com.phew.core_common.ERROR_NETWORK
 import com.phew.domain.BuildConfig
 import com.phew.domain.dto.Token
 import com.phew.domain.repository.DeviceRepository
-import com.phew.domain.repository.NetworkRepository
+import com.phew.domain.repository.network.SignUpRepository
 import java.security.KeyFactory
 import java.security.PublicKey
 import java.security.spec.X509EncodedKeySpec
@@ -16,28 +16,26 @@ import javax.inject.Inject
 
 class Login @Inject constructor(
     private val deviceRepository: DeviceRepository,
-    private val networkRepository: NetworkRepository,
+    private val repository: SignUpRepository,
 ) {
     suspend operator fun invoke(): DomainResult<Unit, String> {
         val deviceId = deviceRepository.requestDeviceId()
-        val requestKey = networkRepository.requestSecurityKey()
+        val requestKey = repository.requestSecurityKey()
         if (requestKey is DataResult.Fail) {
             return DomainResult.Failure(ERROR_NETWORK)
         }
         val securityKey = (requestKey as DataResult.Success).data
         val key = makeSecurityKey(securityKey)
         val encryptedInfo = encrypt(data = deviceId, key = key)
-        when (val requestLogin = networkRepository.requestLogin(encryptedInfo)) {
+        when (val requestLogin = repository.requestLogin(encryptedInfo)) {
             is DataResult.Fail -> {
                 return DomainResult.Failure(ERROR_NETWORK)
             }
 
             is DataResult.Success -> {
-                val refreshToken = requestLogin.data.first
-                val accessToken = requestLogin.data.second
                 val saveToken = deviceRepository.saveToken(
                     key = BuildConfig.TOKEN_KEY,
-                    data = Token(refreshToken = refreshToken, accessToken = accessToken)
+                    data = Token(refreshToken = requestLogin.data.refreshToken, accessToken = requestLogin.data.accessToken)
                 )
                 if (!saveToken) {
                     return DomainResult.Failure(ERROR_FAIL_JOB)
