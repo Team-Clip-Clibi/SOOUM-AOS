@@ -14,7 +14,6 @@ interface FeedHttp {
      */
     @GET(BuildConfig.API_URL_CARD_FEED_POPULAR)
     suspend fun requestPopularFeed(
-        @Header("Authorization") bearerToken: String,
         @Query("latitude") latitude: Double? = null,
         @Query("longitude") longitude: Double? = null
     ): Response<List<PopularDto>>
@@ -24,7 +23,6 @@ interface FeedHttp {
      */
     @GET(BuildConfig.API_URL_CARD_FEED_LATEST)
     suspend fun requestLatestFeed(
-        @Header("Authorization") bearerToken: String,
         @Query("latitude") latitude: Double? = null,
         @Query("longitude") longitude: Double? = null,
         @Query("lastId") lastId: Int? = null
