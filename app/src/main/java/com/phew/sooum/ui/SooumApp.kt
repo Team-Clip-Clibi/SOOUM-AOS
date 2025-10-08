@@ -10,13 +10,13 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.phew.core.ui.component.back.SooumBackHandler
 import com.phew.core.ui.component.home.SooumBottomBar
 import com.phew.core.ui.state.SooumAppState
 import com.phew.core.ui.state.rememberSooumAppState
 import com.phew.sooum.navigation.SooumNavHost
 
 //  TODO AppState NetworkMonitor 추가
-//  TODO BackHandler 분리
 @Composable
 fun SooumApp(
     appVersionUpdate: () -> Unit,
@@ -38,6 +38,8 @@ fun SooumApp(
         SooumBottomBar(
             navController = appState.navController
         )
+
+        SooumBackHandler(appState = appState)
     }
 
 }

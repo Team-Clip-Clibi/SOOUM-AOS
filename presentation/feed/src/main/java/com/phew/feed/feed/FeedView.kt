@@ -430,3 +430,5 @@ private fun ErrorView(
         }
     }
 }
+
+private const val TAG = "FeedView"

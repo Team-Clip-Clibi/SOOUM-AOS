@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.navOptions
+import com.phew.core.ui.component.back.SooumOnBackPressed
 import com.phew.core.ui.state.SooumAppState
 import com.phew.core.ui.state.rememberSooumAppState
 import com.phew.home.navigation.homeGraph
@@ -33,6 +34,30 @@ fun SooumNavHost(
             startDestination = SPLASH_GRAPH,
             modifier = modifier
         ) {
+            signUpGraph(
+                navController = navController,
+                navToHome = {
+                    navController.navigateToHomeGraph(
+                        navOptions = navOptions {
+                            popUpTo(SIGN_UP_GRAPH) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    )
+                },
+                finish = finish
+            )
+
+            homeGraph(
+                appState = homeAppState,
+                navController = navController,
+                finish = finish,
+                onBackPressed = {
+                    SooumOnBackPressed(appState = appState)
+                }
+            )
+
             splashNavGraph(
                 navToOnBoarding = {
                     navController.navigateToSignUpGraph(
@@ -57,28 +82,6 @@ fun SooumNavHost(
                 },
                 appVersionUpdate = appVersionUpdate,
                 finish = finish
-            )
-
-            signUpGraph(
-                navController = navController,
-                navToHome = {
-                    navController.navigateToHomeGraph(
-                        navOptions = navOptions {
-                            popUpTo(SIGN_UP_GRAPH) {
-                                inclusive = true
-                            }
-                            launchSingleTop = true
-                        }
-                    )
-                },
-                finish = finish
-            )
-
-            homeGraph(
-                appState = homeAppState,
-                navController = navController,
-                finish = finish,
-                onBackPressed = finish // TODO BackHandler 구현
             )
         }
     }

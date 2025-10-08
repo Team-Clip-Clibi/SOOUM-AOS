@@ -54,9 +54,9 @@ fun NavGraphBuilder.feedGraph(
         startDestination = FEED_HOME_ROUTE
     ) {
         slideComposable(FEED_HOME_ROUTE) { nav ->
-            val navBackStackEntry =
-                remember(nav) { navController.getBackStackEntry(FEED_GRAPH) }
-            val homeViewModel: HomeViewModel = hiltViewModel(navBackStackEntry)
+//            val navBackStackEntry =
+//                remember(nav) { navController.getBackStackEntry(FEED_GRAPH) }
+            val homeViewModel: HomeViewModel = hiltViewModel()
             remember { SnackbarHostState() }
             val locationPermission = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.RequestMultiplePermissions(),
@@ -75,7 +75,7 @@ fun NavGraphBuilder.feedGraph(
 
             FeedView(
                 viewModel = homeViewModel,
-                finish = finish,
+                finish = onBackPressed,
                 requestPermission = {
                     homeViewModel.onPermissionRequest(
                         arrayOf(

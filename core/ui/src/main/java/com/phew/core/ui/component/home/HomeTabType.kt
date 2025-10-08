@@ -2,6 +2,7 @@ package com.phew.core.ui.component.home
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import com.phew.core_common.log.SooumLog
 import com.phew.core_design.R
 import com.phew.core_design.icon.SooumIcon
 
@@ -69,6 +70,7 @@ enum class HomeTabType(
             }
         }
         fun isFeedHome(value: String?): Boolean {
+            SooumLog.d("HomeTabType", "FEED.route: ${FEED.route}")
             return FEED.route == value
         }
     }
