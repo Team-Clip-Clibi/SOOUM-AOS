@@ -7,14 +7,13 @@ import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.ERROR_NO_DATA
 import com.phew.domain.BuildConfig
-import com.phew.domain.TOKEN_FORM
 import com.phew.domain.repository.DeviceRepository
-import com.phew.domain.repository.NetworkRepository
+import com.phew.domain.repository.network.SplashRepository
 import javax.inject.Inject
 
 class GetFirebaseToken @Inject constructor(
     private val deviceRepository: DeviceRepository,
-    private val networkRepository: NetworkRepository
+    private val repository: SplashRepository
 ) {
 
     suspend operator fun invoke(): DomainResult<Unit, String> {
@@ -35,8 +34,7 @@ class GetFirebaseToken @Inject constructor(
         }
         val token = deviceRepository.requestToken(BuildConfig.TOKEN_KEY)
         if (token.first == ERROR_NO_DATA) return DomainResult.Success(Unit)
-        val requestUpdateFcmToken = networkRepository.requestUpdateFcm(
-            token = TOKEN_FORM + token.second,
+        val requestUpdateFcmToken = repository.requestUpdateFcm(
             fcmToken = requestFirebaseToken
         )
         return when (requestUpdateFcmToken) {
