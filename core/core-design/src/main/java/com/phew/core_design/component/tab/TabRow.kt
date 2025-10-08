@@ -1,4 +1,4 @@
-package com.phew.core_design.component
+package com.phew.core_design.component.tab
 
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.FastOutSlowInEasing

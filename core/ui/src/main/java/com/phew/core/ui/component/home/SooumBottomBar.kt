@@ -13,7 +13,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.phew.core.ui.compose.ComposableType
@@ -22,8 +21,8 @@ import com.phew.core.ui.compose.LifecycleAwareComposableRegister
 import com.phew.core.ui.util.extension.isHomeLevelTab
 import com.phew.core.ui.util.extension.shouldShowBottomBar
 import com.phew.core_design.TextComponent
-import com.phew.core_design.component.SooumNavigationBar
-import com.phew.core_design.component.SooumNavigationBarItem
+import com.phew.core_design.component.bottomappbar.SooumNavigationBar
+import com.phew.core_design.component.bottomappbar.SooumNavigationBarItem
 
 @Composable
 fun SooumBottomBar(

@@ -13,7 +13,6 @@ import androidx.compose.ui.Modifier
 import com.phew.core.ui.component.home.SooumBottomBar
 import com.phew.core.ui.state.SooumAppState
 import com.phew.core.ui.state.rememberSooumAppState
-import com.phew.core_design.component.SooumNavigationBar
 import com.phew.sooum.navigation.SooumNavHost
 
 //  TODO AppState NetworkMonitor 추가

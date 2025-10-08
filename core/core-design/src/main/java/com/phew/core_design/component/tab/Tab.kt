@@ -1,4 +1,4 @@
-package com.phew.core_design.component
+package com.phew.core_design.component.tab
 
 import androidx.compose.animation.animateColor
 import androidx.compose.animation.core.LinearEasing
@@ -9,12 +9,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -32,8 +32,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastFirst
-import com.phew.core_design.component.SooumTabRowDefaults.contentEnabledColor
-import com.phew.core_design.component.SooumTabRowDefaults.contentSelectedColor
+import com.phew.core_design.component.tab.SooumTabRowDefaults.contentEnabledColor
+import com.phew.core_design.component.tab.SooumTabRowDefaults.contentSelectedColor
 import com.phew.core_design.theme.SooumTheme
 import kotlin.math.max
 
@@ -203,7 +203,7 @@ private const val TabFadeOutAnimationDuration = 100
 @Preview(showBackground = true, name = "TabRow with Indicators")
 @Composable
 private fun TabRowWithIndicatorsPreview() {
-    var selectedTab by androidx.compose.runtime.remember { mutableIntStateOf(1) }
+    var selectedTab by remember { mutableIntStateOf(1) }
 
     val tabs = listOf(
         TabSelectType("최신카드", false),
@@ -218,7 +218,7 @@ private fun TabRowWithIndicatorsPreview() {
         ) {
             Text(
                 text = "TabRow Preview",
-                style = androidx.compose.material3.MaterialTheme.typography.headlineSmall
+                style = MaterialTheme.typography.headlineSmall
             )
 
             // With Indicator
@@ -227,7 +227,7 @@ private fun TabRowWithIndicatorsPreview() {
             ) {
                 Text(
                     text = "With Indicator",
-                    style = androidx.compose.material3.MaterialTheme.typography.labelLarge
+                    style = MaterialTheme.typography.labelLarge
                 )
                 SooumTabRow(
                     selectedTabIndex = selectedTab,

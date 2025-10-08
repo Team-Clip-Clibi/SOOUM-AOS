@@ -53,8 +53,8 @@ import com.phew.core_design.NeutralColor
 import com.phew.core_design.OpacityColor
 import com.phew.core_design.Primary
 import com.phew.core_design.TextComponent
-import com.phew.core_design.component.SooumTab
-import com.phew.core_design.component.SooumTabRow
+import com.phew.core_design.component.tab.SooumTab
+import com.phew.core_design.component.tab.SooumTabRow
 import com.phew.domain.dto.FeedCardType
 import com.phew.domain.dto.FeedLikeNotification
 import com.phew.domain.dto.FollowNotification
