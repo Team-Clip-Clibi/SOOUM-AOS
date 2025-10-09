@@ -1,15 +1,25 @@
 package com.phew.repository.mapper
 
+import com.phew.core_common.APP_ERROR_CODE
+import com.phew.core_common.DataResult
+import com.phew.domain.dto.CheckSignUp
 import com.phew.domain.dto.FeedLikeNotification
 import com.phew.domain.dto.FollowNotification
 import com.phew.domain.dto.Latest
+import com.phew.domain.dto.Notice
 import com.phew.domain.dto.Notification
 import com.phew.domain.dto.Popular
+import com.phew.domain.dto.Token
+import com.phew.domain.dto.UploadImageUrl
 import com.phew.domain.dto.UserBlockNotification
 import com.phew.domain.dto.UserCommentLike
 import com.phew.domain.dto.UserCommentWrite
 import com.phew.domain.dto.UserDeleteNotification
+import com.phew.network.dto.CheckSignUpDTO
+import com.phew.network.dto.NoticeData
 import com.phew.network.dto.NotificationDTO
+import com.phew.network.dto.TokenDTO
+import com.phew.network.dto.UploadImageUrlDTO
 import com.phew.network.dto.response.LatestDto
 import com.phew.network.dto.response.PopularDto
 import com.phew.repository.TYPE_BLOCK
@@ -18,6 +28,7 @@ import com.phew.repository.TYPE_COMMENT_WRITE
 import com.phew.repository.TYPE_DELETE
 import com.phew.repository.TYPE_FEED_LIKE
 import com.phew.repository.TYPE_FOLLOW
+import retrofit2.Response
 
 internal fun NotificationDTO.toDomain(): Notification {
     return when (this.notificationType) {
@@ -95,6 +106,15 @@ internal fun PopularDto.toDomain(): Popular {
     )
 }
 
+internal fun NoticeData.toDomain(): Notice {
+    return Notice(
+        title = this.title,
+        url = this.url,
+        createdAt = this.createdAt,
+        id = this.id
+    )
+}
+
 internal fun LatestDto.toDomain(): Latest {
     return Latest(
         cardId = this.cardId,
@@ -109,4 +129,52 @@ internal fun LatestDto.toDomain(): Latest {
         storyExpirationTime = this.storyExpirationTime,
         isAdminCard = this.isAdminCard
     )
+}
+
+internal fun CheckSignUpDTO.toDomain(): CheckSignUp {
+    return CheckSignUp(
+        time = this.rejoinAvailableAt ?: "",
+        banned = this.banned,
+        withdrawn = this.withdrawn,
+        registered = this.registered
+    )
+}
+
+internal fun TokenDTO.toDomain(): Token {
+    return Token(
+        refreshToken = this.refreshToken,
+        accessToken = this.accessToken
+    )
+}
+
+internal fun UploadImageUrlDTO.toDomain(): UploadImageUrl {
+    return UploadImageUrl(
+        imgUrl = this.imgUrl,
+        imgName = this.imgName
+    )
+}
+
+internal fun Token.toNetworkModule(): TokenDTO {
+    return TokenDTO(
+        refreshToken = this.refreshToken,
+        accessToken = this.accessToken
+    )
+}
+
+suspend fun <T, R> apiCall(
+    apiCall: suspend () -> Response<T>,
+    mapper: (T) -> R
+): DataResult<R> {
+    try {
+        val response = apiCall()
+        if (!response.isSuccessful || response.body() == null) return DataResult.Fail(
+            code = response.code(),
+            message = response.message()
+        )
+        val body = response.body()!!
+        return DataResult.Success(mapper(body))
+    } catch (e: Exception) {
+        e.printStackTrace()
+        return DataResult.Fail(code = APP_ERROR_CODE, message = e.message, throwable = e)
+    }
 }

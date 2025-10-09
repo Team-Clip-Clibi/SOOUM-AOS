@@ -4,7 +4,6 @@ import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
-import com.phew.domain.repository.NetworkRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import androidx.core.net.toUri
@@ -16,6 +15,7 @@ import com.phew.core_common.ERROR_NETWORK
 import com.phew.domain.BuildConfig
 import com.phew.domain.dto.Token
 import com.phew.domain.repository.DeviceRepository
+import com.phew.domain.repository.network.SignUpRepository
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
@@ -27,7 +27,7 @@ import java.security.spec.X509EncodedKeySpec
 import javax.crypto.Cipher
 
 class RequestSignUp @Inject constructor(
-    private val networkRepository: NetworkRepository,
+    private val repository: SignUpRepository,
     private val deviceRepository: DeviceRepository,
     @ApplicationContext private val context: Context,
 ) {
@@ -46,7 +46,7 @@ class RequestSignUp @Inject constructor(
             return DomainResult.Failure(ERROR_FAIL_JOB)
         }
         val deviceId = deviceRepository.requestDeviceId()
-        val requestKey = networkRepository.requestSecurityKey()
+        val requestKey = repository.requestSecurityKey()
         if (requestKey is DataResult.Fail) {
             return DomainResult.Failure(ERROR_NETWORK)
         }
@@ -54,12 +54,12 @@ class RequestSignUp @Inject constructor(
         val encryptedDeviceId = encrypt(data = deviceId, key = makeKey)
         val fileName : String?
         if (data.profileImage.isNotEmpty()) {
-            val requestImageUploadUrl = networkRepository.requestUploadImageUrl()
+            val requestImageUploadUrl = repository.requestUploadImageUrl()
             if (requestImageUploadUrl is DataResult.Fail) return DomainResult.Failure(ERROR_NETWORK)
             fileName = (requestImageUploadUrl as DataResult.Success).data.imgName
             val uploadImageUrl = requestImageUploadUrl.data.imgUrl
             val file = context.contentResolver.readAsRequestBody(uri = data.profileImage.toUri())
-            val requestImageUpload = networkRepository.requestUploadImage(
+            val requestImageUpload = repository.requestUploadImage(
                 data = file,
                 url = uploadImageUrl
             )
@@ -67,7 +67,7 @@ class RequestSignUp @Inject constructor(
         } else {
             fileName = null
         }
-        val request = networkRepository.requestSignUp(
+        val request = repository.requestSignUp(
             encryptedDeviceId = encryptedDeviceId,
             fcmToken = fcmToken,
             isNotificationAgreed = notifyStatus,
@@ -92,11 +92,9 @@ class RequestSignUp @Inject constructor(
                     isNotifyAgree = notifyStatus
                 )
                 if (!saveUserInfo) return DomainResult.Failure(ERROR_FAIL_JOB)
-                val refreshToken = request.data.first
-                val accessToken = request.data.second
                 val saveToken = deviceRepository.saveToken(
                     key = BuildConfig.TOKEN_KEY,
-                    data = Token(refreshToken = refreshToken, accessToken = accessToken)
+                    data = Token(refreshToken = request.data.refreshToken, accessToken = request.data.accessToken)
                 )
                 if(!saveToken) return DomainResult.Failure(ERROR_FAIL_JOB)
                 return DomainResult.Success(Unit)

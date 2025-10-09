@@ -1,7 +1,9 @@
 package com.phew.domain.token
 
-import com.phew.domain.dto.Token
-
 interface TokenManger {
-    suspend fun requestUpdateToken(data: Token): Boolean
+    suspend fun getAccessToken(): String
+    suspend fun getRefreshToken() : String
+    suspend fun saveTokens(refreshToken: String, accessToken: String)
+    suspend fun clearToken()
+    suspend fun refreshAndGetNewToken(): String
 }

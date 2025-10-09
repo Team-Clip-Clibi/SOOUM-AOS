@@ -90,4 +90,8 @@ class DeviceRepositoryImpl @Inject constructor(
             longitude = location.location().longitude
         )
     }
+
+    override suspend fun deleteDataStoreInfo(key: String): Boolean {
+        return dataStoreLocal.remove(key)
+    }
 }

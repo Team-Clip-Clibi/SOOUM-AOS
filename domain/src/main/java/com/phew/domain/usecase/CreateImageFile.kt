@@ -11,7 +11,7 @@ import com.phew.core_common.DomainResult
 
 class CreateImageFile @Inject constructor(@ApplicationContext private val context: Context) {
 
-    suspend operator fun invoke(): DomainResult<Uri, String> {
+    operator fun invoke(): DomainResult<Uri, String> {
         val values = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, "IMG_${System.currentTimeMillis()}.jpeg")
             put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")

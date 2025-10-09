@@ -15,7 +15,7 @@ class FinishTakePicture @Inject constructor(@ApplicationContext private val cont
         val uri: Uri
     )
 
-    suspend operator fun invoke(data: Param): DomainResult<Uri, String> {
+    operator fun invoke(data: Param): DomainResult<Uri, String> {
         try {
             val contentValues = ContentValues().apply {
                 put(MediaStore.Images.Media.IS_PENDING, 0)
