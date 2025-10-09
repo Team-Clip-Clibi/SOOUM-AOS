@@ -1,11 +1,14 @@
 package com.phew.network.retrofit
 
 import com.phew.network.BuildConfig
+import com.phew.network.dto.TagRequestDTO
+import com.phew.network.dto.request.feed.TagInfoListDTO
 import com.phew.network.dto.response.LatestDto
 import com.phew.network.dto.response.PopularDto
 import retrofit2.Response
+import retrofit2.http.Body
 import retrofit2.http.GET
-import retrofit2.http.Header
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface FeedHttp {
@@ -27,4 +30,13 @@ interface FeedHttp {
         @Query("longitude") longitude: Double? = null,
         @Query("lastId") lastId: Int? = null
     ): Response<List<LatestDto>>
+
+    /**
+     * related Tag url
+     */
+    @GET(BuildConfig.API_URL_TAG_RELATED)
+    suspend fun requestRelatedTag(
+        @Path("resultCnt") resultCnt: Int,
+        @Body request: TagRequestDTO
+    ): Response<TagInfoListDTO>
 }

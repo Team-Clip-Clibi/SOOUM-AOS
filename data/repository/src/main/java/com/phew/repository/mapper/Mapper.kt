@@ -9,6 +9,7 @@ import com.phew.domain.dto.Latest
 import com.phew.domain.dto.Notice
 import com.phew.domain.dto.Notification
 import com.phew.domain.dto.Popular
+import com.phew.domain.dto.TagInfo
 import com.phew.domain.dto.Token
 import com.phew.domain.dto.UploadImageUrl
 import com.phew.domain.dto.UserBlockNotification
@@ -20,6 +21,7 @@ import com.phew.network.dto.NoticeData
 import com.phew.network.dto.NotificationDTO
 import com.phew.network.dto.TokenDTO
 import com.phew.network.dto.UploadImageUrlDTO
+import com.phew.network.dto.request.feed.TagInfoDTO
 import com.phew.network.dto.response.LatestDto
 import com.phew.network.dto.response.PopularDto
 import com.phew.repository.TYPE_BLOCK
@@ -28,6 +30,7 @@ import com.phew.repository.TYPE_COMMENT_WRITE
 import com.phew.repository.TYPE_DELETE
 import com.phew.repository.TYPE_FEED_LIKE
 import com.phew.repository.TYPE_FOLLOW
+import okhttp3.internal.userAgent
 import retrofit2.Response
 
 internal fun NotificationDTO.toDomain(): Notification {
@@ -158,6 +161,14 @@ internal fun Token.toNetworkModule(): TokenDTO {
     return TokenDTO(
         refreshToken = this.refreshToken,
         accessToken = this.accessToken
+    )
+}
+
+internal fun TagInfoDTO.toDomain(): TagInfo {
+    return TagInfo(
+        id = this.id,
+        name = this.name,
+        usageCnt = this.usageCnt
     )
 }
 

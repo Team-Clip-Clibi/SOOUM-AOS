@@ -3,9 +3,12 @@ package com.phew.repository.network
 import com.phew.core_common.DataResult
 import com.phew.domain.dto.Latest
 import com.phew.domain.dto.Popular
+import com.phew.domain.dto.TagInfo
 import com.phew.domain.repository.network.CardFeedRepository
+import com.phew.network.dto.TagRequestDTO
 import com.phew.network.dto.request.feed.CardFeedDto
 import com.phew.network.retrofit.FeedHttp
+import com.phew.repository.mapper.apiCall
 import com.phew.repository.mapper.toDomain
 import javax.inject.Inject
 
@@ -89,5 +92,17 @@ class CardFeedRepositoryImpl @Inject constructor(
                 message = e.message
             )
         }
+    }
+
+    override suspend fun requestRelatedTag(resultCnt: Int, tag: String): DataResult<List<TagInfo>> {
+        return apiCall(
+            apiCall = {
+                feedHttp.requestRelatedTag(
+                    resultCnt = resultCnt,
+                    request = TagRequestDTO(tag)
+                )
+            },
+            mapper = { result -> result.tagInfo.map { data -> data.toDomain() } }
+        )
     }
 }
