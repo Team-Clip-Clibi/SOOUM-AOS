@@ -1,4 +1,4 @@
-package com.phew.home
+package com.phew.feed
 
 const val NAV_HOME_FEED_INDEX = 0
 const val NAV_HOME_POPULAR_INDEX = 1

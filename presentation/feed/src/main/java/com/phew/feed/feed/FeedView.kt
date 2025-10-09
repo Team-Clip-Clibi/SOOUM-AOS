@@ -1,4 +1,4 @@
-package com.phew.home.feed
+package com.phew.feed.feed
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -26,9 +26,7 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -60,15 +58,14 @@ import com.phew.core_design.TextComponent
 import com.phew.domain.dto.FeedCardType
 import com.phew.domain.dto.Notice
 import com.phew.domain.dto.Notification
-import com.phew.home.FeedUi
-import com.phew.home.NAV_HOME_FEED_INDEX
-import com.phew.home.NAV_HOME_NEAR_INDEX
-import com.phew.home.NAV_HOME_POPULAR_INDEX
-import com.phew.home.R
-import com.phew.home.viewModel.FeedPagingState
-import com.phew.home.viewModel.FeedType
-import com.phew.home.viewModel.HomeViewModel
-import com.phew.home.viewModel.UiState
+import com.phew.feed.FeedUi
+import com.phew.feed.NAV_HOME_FEED_INDEX
+import com.phew.feed.NAV_HOME_POPULAR_INDEX
+import com.phew.feed.R
+import com.phew.feed.viewModel.FeedPagingState
+import com.phew.feed.viewModel.FeedType
+import com.phew.feed.viewModel.HomeViewModel
+import com.phew.feed.viewModel.UiState
 import kotlinx.coroutines.flow.debounce
 
 // TODO : Feed Route로 바꾸면서 네비게이션 처리 필요
@@ -433,3 +430,5 @@ private fun ErrorView(
         }
     }
 }
+
+private const val TAG = "FeedView"

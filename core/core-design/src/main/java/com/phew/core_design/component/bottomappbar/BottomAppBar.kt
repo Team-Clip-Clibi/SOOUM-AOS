@@ -1,4 +1,4 @@
-package com.phew.core_design.component
+package com.phew.core_design.component.bottomappbar
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -7,6 +7,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,9 +16,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.LocalContentColor
@@ -32,8 +33,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -45,7 +44,7 @@ import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
 
 @Composable
-fun BottomAppBar(
+fun SooumNavigationBar(
     modifier: Modifier = Modifier,
     content: @Composable RowScope. () -> Unit
 ) {
@@ -59,7 +58,7 @@ fun BottomAppBar(
 }
 
 @Composable
-fun RowScope.NavigationBarItem(
+fun RowScope.SooumNavigationBarItem(
     selected: Boolean,
     onClick: () -> Unit,
     icon: @Composable () -> Unit,
@@ -88,33 +87,24 @@ private fun NavigationBarLayout(
     windowInsets: WindowInsets = NavigationBarDefaults.windowInsets,
     content: @Composable RowScope.() -> Unit
 ) {
+    val cornerShape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+
     Surface(
+        modifier = modifier,
         color = containerColor,
+        shape = cornerShape,
         contentColor = contentColor,
         tonalElevation = tonalElevation,
-        modifier = modifier.drawBehind {
-            val width = size.width
-            val height = 1.dp.toPx()
-
-            drawLine(
-                color = NeutralColor.GRAY_200,
-                start = Offset(x = 0f, y = 0f),
-                end = Offset(x = width, y = 0f),
-                strokeWidth = height
-            )
-        }
+        border = BorderStroke(1.dp, NeutralColor.GRAY_200)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .windowInsetsPadding(windowInsets)
-                .heightIn(min = NavigationDefaults.barHeight)
-                .selectableGroup()
-                .padding(horizontal = NavigationDefaults.horizontalPadding)
-                .padding(
-                    vertical = NavigationDefaults.verticalPadding
-                ),
-            horizontalArrangement = Arrangement.spacedBy(NavigationDefaults.horizontalPadding),
+                .height(NavigationDefaults.barHeight)
+                .padding(start = 16.dp, bottom = 8.dp, top = 8.dp, end = 16.dp)
+                .selectableGroup(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
             content = content
         )
     }
@@ -195,7 +185,7 @@ object NavigationDefaults {
     internal val horizontalPadding = 16.dp
     internal val verticalPadding = 8.dp
 
-    val barHeight = 76.dp
+    val barHeight = 62.dp
 
     val navigationBarPadding = (barHeight + verticalPadding) * 0.7f
 
