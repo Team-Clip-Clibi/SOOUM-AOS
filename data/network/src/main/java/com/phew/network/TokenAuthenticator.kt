@@ -14,7 +14,7 @@ class TokenAuthenticator @Inject constructor(
 ) : Authenticator {
     override fun authenticate(route: Route?, response: Response): Request? {
         val newAccessToken = runBlocking { tokenManger.refreshAndGetNewToken() }
-        if (newAccessToken == null) return null
+        if (newAccessToken.isEmpty()) return null
         return response.request
             .newBuilder()
             .header("Authorization", "Bearer $newAccessToken")

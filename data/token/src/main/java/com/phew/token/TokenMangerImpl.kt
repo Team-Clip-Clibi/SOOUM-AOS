@@ -13,19 +13,43 @@ class TokenMangerImpl @Inject constructor(
     private val deviceRepository: DeviceRepository,
     private val tokenRefreshApi: TokenRefreshHttp
 ) : TokenManger {
-    private val mutex = Mutex()
+
+    private val cacheMutex = Mutex()
+    private val refreshMutex = Mutex()
+
+    @Volatile
+    private var cachedAccessToken: String = ""
+
+    @Volatile
+    private var cachedRefreshToken: String = ""
 
     override suspend fun getAccessToken(): String {
-        val token = deviceRepository.requestToken(BuildConfig.TOKEN_KEY)
-        return token.second
+        if (cachedAccessToken.isNotEmpty()) return cachedAccessToken
+        cacheMutex.withLock {
+            if(cachedAccessToken.isEmpty()) {
+                val token = deviceRepository.requestToken(BuildConfig.TOKEN_KEY)
+                cachedAccessToken = token.second
+            }
+        }
+        return cachedAccessToken
     }
 
     override suspend fun getRefreshToken(): String {
-        val token = deviceRepository.requestToken(BuildConfig.TOKEN_KEY)
-        return token.first
+        if (cachedRefreshToken.isNotEmpty()) return cachedRefreshToken
+        cacheMutex.withLock {
+            if(cachedRefreshToken.isEmpty()) {
+                val token = deviceRepository.requestToken(BuildConfig.TOKEN_KEY)
+                cachedRefreshToken = token.first
+            }
+        }
+        return cachedRefreshToken
     }
 
     override suspend fun saveTokens(refreshToken: String, accessToken: String) {
+        cacheMutex.withLock {
+            cachedRefreshToken = refreshToken
+            cachedAccessToken = accessToken
+        }
         deviceRepository.saveToken(
             BuildConfig.TOKEN_KEY,
             Token(refreshToken = refreshToken, accessToken = accessToken)
@@ -33,20 +57,24 @@ class TokenMangerImpl @Inject constructor(
     }
 
     override suspend fun clearToken() {
+        cacheMutex.withLock {
+            cachedRefreshToken = ""
+            cachedAccessToken = ""
+        }
         deviceRepository.deleteDataStoreInfo(BuildConfig.TOKEN_KEY)
     }
 
-    override suspend fun refreshAndGetNewToken(): String? {
+    override suspend fun refreshAndGetNewToken(): String {
         val oldAccessToken = getAccessToken()
-
-        return mutex.withLock {
+        return refreshMutex.withLock {
             val currentAccessToken = getAccessToken()
             if (oldAccessToken != currentAccessToken) {
                 return@withLock currentAccessToken
             }
             val refreshToken = getRefreshToken()
             if (refreshToken.isEmpty()) {
-                return@withLock null
+                clearToken()
+                return@withLock ""
             }
             val response = tokenRefreshApi.requestRefreshToken(
                 body = TokenDTO(refreshToken, oldAccessToken)
@@ -57,7 +85,7 @@ class TokenMangerImpl @Inject constructor(
                 newToken.accessToken
             } else {
                 clearToken()
-                null
+                ""
             }
         }
     }
