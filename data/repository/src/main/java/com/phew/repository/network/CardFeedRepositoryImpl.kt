@@ -1,16 +1,23 @@
 package com.phew.repository.network
 
+import com.phew.core_common.APP_ERROR_CODE
 import com.phew.core_common.DataResult
+import com.phew.core_common.HTTP_NOT_FOUND
+import com.phew.core_common.HTTP_SUCCESS
 import com.phew.domain.dto.CardImageDefault
+import com.phew.domain.dto.CheckedBaned
 import com.phew.domain.dto.Latest
 import com.phew.domain.dto.Popular
 import com.phew.domain.dto.TagInfo
 import com.phew.domain.repository.network.CardFeedRepository
 import com.phew.network.dto.TagRequestDTO
 import com.phew.network.dto.request.feed.CardFeedDto
+import com.phew.network.dto.request.feed.RequestUploadCardAnswerDTO
+import com.phew.network.dto.request.feed.RequestUploadCardDTO
 import com.phew.network.retrofit.FeedHttp
 import com.phew.repository.mapper.apiCall
 import com.phew.repository.mapper.toDomain
+import okhttp3.RequestBody
 import javax.inject.Inject
 
 class CardFeedRepositoryImpl @Inject constructor(
@@ -117,6 +124,104 @@ class CardFeedRepositoryImpl @Inject constructor(
                     imageInfoList.map { it.toDomain() }
                 }
             }
+        )
+    }
+
+    override suspend fun requestUploadCardImage(): DataResult<CardImageDefault> {
+        return apiCall(
+            apiCall = {
+                feedHttp.requestUploadCardUrl()
+            },
+            mapper = { result -> result.toDomain() }
+        )
+    }
+
+    override suspend fun requestCheckUploadCard(): DataResult<CheckedBaned> {
+        return apiCall(
+            apiCall = {
+                feedHttp.requestCheckUploadCard()
+            },
+            mapper = { result -> result.toDomain() }
+        )
+    }
+
+    override suspend fun requestUploadCard(
+        isDistanceShared: Boolean,
+        latitude: Double?,
+        longitude: Double?,
+        content: String,
+        font: String,
+        imageType: String,
+        imageName: String,
+        isStory: Boolean,
+        tag: List<String>
+    ): Int {
+        try {
+            val request = feedHttp.requestUploadCard(
+                RequestUploadCardDTO(
+                    isDistanceShared = isDistanceShared,
+                    latitude = latitude,
+                    longitude = longitude,
+                    content = content,
+                    font = font,
+                    imgType = imageType,
+                    imgName = imageName,
+                    isStory = isStory,
+                    tags = tag
+                )
+            )
+            if (!request.isSuccessful || request.code() != 200) {
+                return HTTP_NOT_FOUND
+            }
+            return HTTP_SUCCESS
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return APP_ERROR_CODE
+        }
+    }
+
+    override suspend fun requestUploadCardAnswer(
+        cardId: Int,
+        isDistanceShared: Boolean,
+        latitude: Double?,
+        longitude: Double?,
+        content: String,
+        font: String,
+        imageType: String,
+        imageName: String,
+        tag: List<String>
+    ): Int {
+        try {
+            val request = feedHttp.requestUploadAnswerCard(
+                cardId = cardId,
+                request = RequestUploadCardAnswerDTO(
+                    content = content,
+                    font = font,
+                    imgName = imageName,
+                    imgType = imageType,
+                    isDistanceShared = isDistanceShared,
+                    latitude = latitude,
+                    longitude = longitude,
+                    tags = tag
+                )
+            )
+            if (!request.isSuccessful || request.code() != 200) {
+                return HTTP_NOT_FOUND
+            }
+            return HTTP_SUCCESS
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return APP_ERROR_CODE
+        }
+    }
+
+    override suspend fun requestUploadImage(
+        data: RequestBody,
+        url: String
+    ): DataResult<Unit> {
+        return apiCall(
+            apiCall = { feedHttp.requestUploadImage(url = url, body = data) },
+            mapper = { result -> result }
         )
     }
 }

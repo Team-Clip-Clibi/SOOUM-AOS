@@ -54,6 +54,11 @@ class NetworkConvention : Plugin<Project> {
                 val relatedTag: String = properties.getProperty("api_url_tag_related", "")
                 val cardBackgroundImageDefault =
                     properties.getProperty("api_url_card_background_image_default", "")
+                val cardBackgroundUpload: String =
+                    properties.getProperty("api_url_upload_card_background", "")
+                val uploadCard: String = properties.getProperty("api_url_upload_card", "")
+                val banedChecked: String = properties.getProperty("api_url_upload_baned", "")
+                val answerCard: String = properties.getProperty("api_url_upload_card_answer", "")
 
                 buildConfigField("String", "BASE_URL", baseUrl)
                 buildConfigField("String", "API_URL", apiUrl)
@@ -75,6 +80,10 @@ class NetworkConvention : Plugin<Project> {
                 buildConfigField("String", "API_URL_CARD_FEED_LATEST", latestUrl)
                 buildConfigField("String", "API_URL_TAG_RELATED", relatedTag)
                 buildConfigField("String", "API_URL_CARD_IMAGE_DEFAULT", cardBackgroundImageDefault)
+                buildConfigField("String", "API_URL_UPLOAD_CARD_IMAGE", cardBackgroundUpload)
+                buildConfigField("String", "API_URL_UPLOAD_CARD", uploadCard)
+                buildConfigField("String", "API_URL_CHECKED_BANED", banedChecked)
+                buildConfigField("String", "API_URL_UPLOAD_CARD_ANSWER", answerCard)
             }
             buildFeatures.buildConfig = true
             compileOptions {

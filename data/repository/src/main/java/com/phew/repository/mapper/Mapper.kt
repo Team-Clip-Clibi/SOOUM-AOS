@@ -4,6 +4,7 @@ import com.phew.core_common.APP_ERROR_CODE
 import com.phew.core_common.DataResult
 import com.phew.domain.dto.CardImageDefault
 import com.phew.domain.dto.CheckSignUp
+import com.phew.domain.dto.CheckedBaned
 import com.phew.domain.dto.FeedLikeNotification
 import com.phew.domain.dto.FollowNotification
 import com.phew.domain.dto.Latest
@@ -22,6 +23,7 @@ import com.phew.network.dto.NoticeData
 import com.phew.network.dto.NotificationDTO
 import com.phew.network.dto.TokenDTO
 import com.phew.network.dto.UploadImageUrlDTO
+import com.phew.network.dto.request.feed.CheckBanedDTO
 import com.phew.network.dto.request.feed.ImageInfoDTO
 import com.phew.network.dto.request.feed.TagInfoDTO
 import com.phew.network.dto.response.LatestDto
@@ -170,6 +172,13 @@ internal fun ImageInfoDTO.toDomain(): CardImageDefault {
     return CardImageDefault(
         imageName = this.imgName,
         url = this.url
+    )
+}
+
+internal fun CheckBanedDTO.toDomain(): CheckedBaned {
+    return CheckedBaned(
+        isBaned = this.isBaned,
+        expiredAt = this.expiredAt
     )
 }
 

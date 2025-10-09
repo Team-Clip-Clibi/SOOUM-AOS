@@ -94,4 +94,8 @@ class DeviceRepositoryImpl @Inject constructor(
     override suspend fun deleteDataStoreInfo(key: String): Boolean {
         return dataStoreLocal.remove(key)
     }
+
+    override suspend fun getLocationPermission(): Boolean {
+        return location.locationPermissionCheck()
+    }
 }
