@@ -2,6 +2,7 @@ package com.phew.network.retrofit
 
 import com.phew.network.BuildConfig
 import com.phew.network.dto.TagRequestDTO
+import com.phew.network.dto.request.feed.DefaultImageDTO
 import com.phew.network.dto.request.feed.TagInfoListDTO
 import com.phew.network.dto.response.LatestDto
 import com.phew.network.dto.response.PopularDto
@@ -39,4 +40,7 @@ interface FeedHttp {
         @Path("resultCnt") resultCnt: Int,
         @Body request: TagRequestDTO
     ): Response<TagInfoListDTO>
+
+    @GET(BuildConfig.API_URL_CARD_IMAGE_DEFAULT)
+    suspend fun requestCardImageDefault(): Response<DefaultImageDTO>
 }

@@ -1,6 +1,7 @@
 package com.phew.domain.repository.network
 
 import com.phew.core_common.DataResult
+import com.phew.domain.dto.CardImageDefault
 import com.phew.domain.dto.Latest
 import com.phew.domain.dto.Popular
 import com.phew.domain.dto.TagInfo
@@ -17,5 +18,6 @@ interface CardFeedRepository {
         lastId: Int? = null
     ): DataResult<List<Latest>>
 
-    suspend fun requestRelatedTag(resultCnt: Int = 8 , tag : String): DataResult<List<TagInfo>>
+    suspend fun requestRelatedTag(resultCnt: Int = 8, tag: String): DataResult<List<TagInfo>>
+    suspend fun requestCardImageDefault(): DataResult<List<CardImageDefault>>
 }

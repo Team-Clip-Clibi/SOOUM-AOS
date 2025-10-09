@@ -1,6 +1,7 @@
 package com.phew.repository.network
 
 import com.phew.core_common.DataResult
+import com.phew.domain.dto.CardImageDefault
 import com.phew.domain.dto.Latest
 import com.phew.domain.dto.Popular
 import com.phew.domain.dto.TagInfo
@@ -103,6 +104,19 @@ class CardFeedRepositoryImpl @Inject constructor(
                 )
             },
             mapper = { result -> result.tagInfo.map { data -> data.toDomain() } }
+        )
+    }
+
+    override suspend fun requestCardImageDefault(): DataResult<List<CardImageDefault>> {
+        return apiCall(
+            apiCall = {
+                feedHttp.requestCardImageDefault()
+            },
+            mapper = { result ->
+                result.defaultImages.values.flatMap { imageInfoList ->
+                    imageInfoList.map { it.toDomain() }
+                }
+            }
         )
     }
 }

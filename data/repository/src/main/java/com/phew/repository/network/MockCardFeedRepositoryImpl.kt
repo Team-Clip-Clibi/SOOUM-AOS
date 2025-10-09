@@ -1,8 +1,10 @@
 package com.phew.repository.network
 
 import com.phew.core_common.DataResult
+import com.phew.domain.dto.CardImageDefault
 import com.phew.domain.dto.Latest
 import com.phew.domain.dto.Popular
+import com.phew.domain.dto.TagInfo
 import com.phew.domain.repository.network.CardFeedRepository
 import kotlinx.coroutines.delay
 import javax.inject.Inject
@@ -41,7 +43,18 @@ class MockCardFeedRepositoryImpl @Inject constructor() : CardFeedRepository {
         
         return DataResult.Success(createMockLatestData(page))
     }
-    
+
+    override suspend fun requestRelatedTag(
+        resultCnt: Int,
+        tag: String
+    ): DataResult<List<TagInfo>> {
+        return DataResult.Success(emptyList())
+    }
+
+    override suspend fun requestCardImageDefault(): DataResult<List<CardImageDefault>> {
+        return DataResult.Success(emptyList())
+    }
+
     private fun createMockPopularData(): List<Popular> {
         return listOf(
             Popular(

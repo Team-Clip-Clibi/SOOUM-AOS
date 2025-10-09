@@ -25,7 +25,7 @@ const val ERROR = "error"
 const val ERROR_LOGOUT = "errorLogout"
 //server api error code
 const val HTTP_NO_MORE_CONTENT = 204
-const val HTTP_INVALID_TOKEN = 401
+const val HTTP_INVALID_TOKEN = 403
 const val HTTP_NOT_FOUND = 404
 const val APP_ERROR_CODE = 505
 

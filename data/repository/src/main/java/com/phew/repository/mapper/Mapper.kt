@@ -2,6 +2,7 @@ package com.phew.repository.mapper
 
 import com.phew.core_common.APP_ERROR_CODE
 import com.phew.core_common.DataResult
+import com.phew.domain.dto.CardImageDefault
 import com.phew.domain.dto.CheckSignUp
 import com.phew.domain.dto.FeedLikeNotification
 import com.phew.domain.dto.FollowNotification
@@ -21,6 +22,7 @@ import com.phew.network.dto.NoticeData
 import com.phew.network.dto.NotificationDTO
 import com.phew.network.dto.TokenDTO
 import com.phew.network.dto.UploadImageUrlDTO
+import com.phew.network.dto.request.feed.ImageInfoDTO
 import com.phew.network.dto.request.feed.TagInfoDTO
 import com.phew.network.dto.response.LatestDto
 import com.phew.network.dto.response.PopularDto
@@ -30,7 +32,6 @@ import com.phew.repository.TYPE_COMMENT_WRITE
 import com.phew.repository.TYPE_DELETE
 import com.phew.repository.TYPE_FEED_LIKE
 import com.phew.repository.TYPE_FOLLOW
-import okhttp3.internal.userAgent
 import retrofit2.Response
 
 internal fun NotificationDTO.toDomain(): Notification {
@@ -157,18 +158,18 @@ internal fun UploadImageUrlDTO.toDomain(): UploadImageUrl {
     )
 }
 
-internal fun Token.toNetworkModule(): TokenDTO {
-    return TokenDTO(
-        refreshToken = this.refreshToken,
-        accessToken = this.accessToken
-    )
-}
-
 internal fun TagInfoDTO.toDomain(): TagInfo {
     return TagInfo(
         id = this.id,
         name = this.name,
         usageCnt = this.usageCnt
+    )
+}
+
+internal fun ImageInfoDTO.toDomain(): CardImageDefault {
+    return CardImageDefault(
+        imageName = this.imgName,
+        url = this.url
     )
 }
 
