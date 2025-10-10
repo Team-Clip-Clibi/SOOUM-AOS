@@ -97,7 +97,6 @@ fun FeedDeletedCard(
 ) {
     Surface(
         modifier = Modifier
-            .padding(horizontal = 16.dp)
             .fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         color = NeutralColor.GRAY_200,
@@ -189,7 +188,6 @@ private fun FeedCardImpl(
 ) {
     Surface(
         modifier = Modifier
-            .padding(horizontal = 16.dp)
             .fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         color = Primary.MAIN,
@@ -211,8 +209,8 @@ private fun FeedCardImpl(
 
             BottomContent(
                 distance = distance,
-                likeCount = likeCount.toString(),
-                commentCount = commentCount.toString(),
+                likeCount = likeCount,
+                commentCount = commentCount,
                 timeAgo = timeAgo,
                 remainingTimeMillis = remainingTimeMillis.toString()
             )
@@ -233,7 +231,6 @@ private fun FeedAdminCardImpl(
 ) {
     Surface(
         modifier = Modifier
-            .padding(horizontal = 16.dp)
             .fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         color = Primary.MAIN,

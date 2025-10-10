@@ -167,6 +167,9 @@ fun FeedView(
             nestedScrollConnection = nestedScrollConnection,
             composition = composition,
             progress = progress,
+            onClick = {
+                //   TODO 상세 보기 화면으로 이동 필요
+            },
             onRemoveCard = viewModel::removeFeedCard
         )
         if (uiState.shouldShowPermissionRationale) {
@@ -234,6 +237,7 @@ private fun FeedContent(
     nestedScrollConnection: NestedScrollConnection,
     composition: LottieComposition?,
     progress: Float,
+    onClick: (String) -> Unit,
     onRemoveCard: (String) -> Unit,
 ) {
     when (currentPagingState) {
@@ -259,6 +263,7 @@ private fun FeedContent(
                     nestedScrollConnection = nestedScrollConnection,
                     composition = composition,
                     progress = progress,
+                    onClick = onClick,
                     onRemoveCard = onRemoveCard
                 )
             }
@@ -277,6 +282,7 @@ private fun FeedContent(
                     nestedScrollConnection = nestedScrollConnection,
                     composition = composition,
                     progress = progress,
+                    onClick = onClick,
                     onRemoveCard = onRemoveCard
                 )
             }
@@ -326,6 +332,7 @@ private fun FeedListView(
     nestedScrollConnection: NestedScrollConnection,
     composition: LottieComposition?,
     progress: Float,
+    onClick: (String) -> Unit,
     onRemoveCard: (String) -> Unit,
 ) {
     val refreshingOffset = 56.dp
@@ -384,6 +391,7 @@ private fun FeedListView(
             ) { index, feedCard ->
                 FeedUi.TypedFeedCardView(
                     feedCard = feedCard,
+                    onClick = onClick,
                     onRemoveCard = onRemoveCard
                 )
                 Spacer(modifier = Modifier.height(16.dp))

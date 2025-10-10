@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.phew.core_common.TimeUtils
+import com.phew.core_common.log.SooumLog
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.Primary
 import com.phew.core_design.R
@@ -192,9 +193,11 @@ internal fun BottomContent(
     isAdminManger: Boolean = false
 ) {
     val remaining = remainingTimeMillis?.toLongOrNull() ?: 0L
-    val showTimer = !remainingTimeMillis.isNullOrEmpty()
+    val showTimer = !remainingTimeMillis.isNullOrEmpty() && remaining > 0L
     val isExpired = remaining <= 0L
 
+    SooumLog.d(TAG, "remainingTimeMillis : $remainingTimeMillis, " +
+            "likeCount : $likeCount, commentCount : $commentCount, isExpired : $isExpired, showTimer: $showTimer")
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -222,7 +225,8 @@ internal fun BottomContent(
                 writeTime = timeAgo?.takeIf { it.isNotEmpty() }
             )
         }
-        if (!isExpired) {
+        if (!showTimer) {
+            SooumLog.d(TAG, "LikeAndComment")
             LikeAndComment(
                 likeValue = likeCount,
                 commentValue = commentCount
@@ -258,3 +262,5 @@ private fun BottomContentPreview_NoTimer() {
         )
     }
 }
+
+private const val TAG = "BottomContent"
