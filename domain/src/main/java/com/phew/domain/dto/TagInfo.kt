@@ -18,9 +18,9 @@ data class TagInfo(
                 val million = this / 10000
                 val thousand = (this % 10000) / 1000
                 if (thousand == 0) {
-                    "${million}만"
+                    "$million"
                 } else {
-                    "${million}.${thousand}만"
+                    "${million}.${thousand}"
                 }
             }
         }
