@@ -12,4 +12,5 @@
     <string name="bottom_view_tag">태그</string>
     <string name="bottom_view_my">마이</string>
     <string name="tag_add_new">태그 추가</string>
+    <string name="card_deleted">삭제된 카드예요</string>
 </resources>

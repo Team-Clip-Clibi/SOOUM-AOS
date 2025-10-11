@@ -282,7 +282,7 @@ private fun BodyContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 32.dp, horizontal = 32.dp)
-                .heightIn(min = 103.dp) // height를 heightIn으로 변경하여 유연성 확보
+                .heightIn(min = 103.dp)
                 .width(264.dp)
                 .background(
                     color = OpacityColor.blackSmallColor,

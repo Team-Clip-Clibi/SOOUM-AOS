@@ -10,6 +10,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +25,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -139,6 +141,56 @@ fun Tag(
         TagState.Default -> TagDefault(text = text, onClick = onClick, modifier = modifier)
 
         TagState.Number -> TagNumber(text = text, number = number, onClick = onClick, modifier = modifier)
+    }
+}
+
+@Composable
+internal fun TagRow(
+    tags: List<String>,
+    enableAdd: Boolean,
+    onAdd: (String) -> Unit,
+    onRemove: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var input by remember { mutableStateOf("") }
+    var state by remember { mutableStateOf(TagState.AddNew) }
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        tags.forEach { tag ->
+            Tag(
+                state = TagState.Default,
+                text = tag,
+                onClick = { onRemove(tag) }
+            )
+        }
+
+        if (enableAdd) {
+            Tag(
+                state = state,
+                text = input,
+                onTextChange = {
+                    input = it
+                    state = if (it.isBlank()) TagState.Focus else TagState.Typing
+                },
+                onComplete = {
+                    if (input.isNotBlank()) {
+                        onAdd(input)
+                        input = ""
+                        state = TagState.AddNew
+                    }
+                },
+                onRemove = {
+                    input = ""
+                    state = TagState.AddNew
+                },
+                onClick = { state = TagState.Focus }
+            )
+        }
     }
 }
 

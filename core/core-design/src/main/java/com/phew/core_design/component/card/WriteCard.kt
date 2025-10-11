@@ -1,30 +1,54 @@
 package com.phew.core_design.component.card
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isFinite
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import coil3.compose.AsyncImage
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.OpacityColor
 import com.phew.core_design.Primary
 import com.phew.core_design.R
+import com.phew.core_design.TextComponent
+import com.phew.core_design.component.tag.TagRow
 
 // ===== 디자인 토큰 =====
 object CardDesignTokens {
@@ -50,24 +74,47 @@ object CardDesignTokens {
     val ContentBoxRadius = 8.dp
     val TagRadius = 4.dp
     val AvatarSize = 40.dp
+    val CornerRadius = 12.dp
 
     // 패딩
     val CardPadding = 16.dp
     val ContentPadding = 16.dp
+
+    // Typography
+    val BodyFontSize = 14.sp
+    val BodyLineHeight = 20.sp
 }
 
-// ===== 1. WriteCard (작성 카드) =====
+enum class CardType {
+    WRITE, REPLY, DELETED
+}
 
-enum class WriteCardType {
-    DEFAULT,      // 기본
-    MAXIMUM,      // 텍스트 많음
-    SCROLL,       // 스크롤 필요
-    THUMBNAIL     // 썸네일 포함
+sealed class BaseCardData(open val id: String, open val type: CardType) {
+    data class Write(
+        override val id: String,
+        val content: String,
+        val tags: List<String> = emptyList(),
+        val hasAddButton: Boolean = true,
+        val hasThumbnail: Boolean = false
+    ) : BaseCardData(id, CardType.WRITE)
+
+    data class Reply(
+        override val id: String,
+        val authorName: String,
+        val authorProfileUrl: String? = null,
+        val content: String,
+        val tags: List<String> = emptyList(),
+        val timeAgo: String = ""
+    ) : BaseCardData(id, CardType.REPLY)
+
+    data class Deleted(
+        override val id: String,
+        val reason: String = "삭제된 카드예요"
+    ) : BaseCardData(id, CardType.DELETED)
 }
 
 data class WriteCardData(
     val id: String,
-    val type: WriteCardType = WriteCardType.DEFAULT,
     val content: String,
     val tags: List<String> = emptyList(),
     val hasAddButton: Boolean = true,
@@ -75,155 +122,194 @@ data class WriteCardData(
 )
 
 @Composable
-fun WriteCard(
-    data: WriteCardData,
-    modifier: Modifier = Modifier,
-    onCardClick: () -> Unit = {},
-    onTagClick: (String) -> Unit = {},
-    onAddTagClick: () -> Unit = {}
-) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(
-                when (data.type) {
-                    WriteCardType.MAXIMUM, WriteCardType.SCROLL -> 320.dp
-                    else -> 240.dp
-                }
-            ),
-        shape = RoundedCornerShape(CardDesignTokens.CardRadius),
-        colors = CardDefaults.cardColors(
-            containerColor = CardDesignTokens.CardBackgroundCyan
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(CardDesignTokens.CardPadding),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            // 썸네일 아이콘 (옵션)
-            if (data.hasThumbnail) {
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .background(
-                            CardDesignTokens.ContentBoxDark,
-                            RoundedCornerShape(6.dp)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painterResource(R.drawable.ic_info_filled),
-                        contentDescription = "이미지 첨부됨",
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-
-            // 콘텐츠 박스
-            WriteContentBox(
-                content = data.content,
-                type = data.type,
-                modifier = Modifier.weight(1f)
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // 태그 영역
-            TagRow(
-                tags = data.tags,
-                hasAddButton = data.hasAddButton,
-                onTagClick = onTagClick,
-                onAddTagClick = onAddTagClick
-            )
-        }
+fun CardView(data: BaseCardData) {
+    when (data.type) {
+        CardType.WRITE -> WriteCard(data as BaseCardData.Write)
+        CardType.REPLY -> ReplyCard(data as BaseCardData.Reply)
+        CardType.DELETED -> DeletedCard(data as BaseCardData.Deleted)
     }
 }
 
+
 @Composable
-private fun WriteContentBox(
-    content: String,
-    type: WriteCardType,
-    modifier: Modifier = Modifier
+private fun BaseCard(
+    modifier: Modifier = Modifier,
+    backgroundColor: Color,
+    imgUrl: String? = null,
+    content: @Composable ColumnScope.() -> Unit
 ) {
     Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = 328.dp)
+            .widthIn(min = 328.dp)
+            .clip(RoundedCornerShape(CardDesignTokens.CardRadius))
+    ) {
+        Surface(
+            modifier = Modifier.matchParentSize(),
+            color = backgroundColor,
+            shape = RoundedCornerShape(CardDesignTokens.CardRadius),
+            shadowElevation = 2.dp
+        ) {}
+
+        if (imgUrl != null) {
+            AsyncImage(
+                model = imgUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .matchParentSize()
+                    .clip(RoundedCornerShape(CardDesignTokens.CardRadius))
+            )
+        }
+
+        // wrapContentHeight로 안전하게
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .padding(CardDesignTokens.CardPadding),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            content = content
+        )
+    }
+}
+
+
+
+@SuppressLint("UnusedBoxWithConstraintsScope")
+@Composable
+private fun WriteContentBox(content: String, modifier: Modifier = Modifier) {
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
             .background(
                 color = CardDesignTokens.ContentBoxDark,
                 shape = RoundedCornerShape(CardDesignTokens.ContentBoxRadius)
             )
-            .padding(CardDesignTokens.ContentPadding),
-        contentAlignment = Alignment.Center
+            .padding(CardDesignTokens.ContentPadding)
     ) {
         val scrollState = rememberScrollState()
+        val boundedHeight = maxHeight.takeIf { it.isFinite } ?: 200.dp
 
-        Text(
-            text = content,
-            color = CardDesignTokens.TextPrimary,
-            fontSize = 14.sp,
-            lineHeight = 20.sp,
-            modifier = if (type == WriteCardType.SCROLL) {
-                Modifier.verticalScroll(scrollState)
-            } else {
-                Modifier
-            },
-            maxLines = if (type == WriteCardType.SCROLL) Int.MAX_VALUE else 7,
-            overflow = if (type == WriteCardType.SCROLL) TextOverflow.Visible else TextOverflow.Ellipsis
+        Box(
+            modifier = Modifier
+                .heightIn(min = 61.dp, max = boundedHeight)
+                .verticalScroll(scrollState),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = content.ifBlank { " " },
+                style = TextComponent.BODY_1_M_14.copy(color = CardDesignTokens.TextPrimary),
+                maxLines = Int.MAX_VALUE
+            )
+        }
+    }
+}
+
+@Composable
+private fun WriteCard(data: BaseCardData.Write) {
+    BaseCard(backgroundColor = CardDesignTokens.CardBackgroundCyan) {
+        if (data.hasThumbnail) {
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .background(CardDesignTokens.ContentBoxDark, RoundedCornerShape(6.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_info_filled),
+                    contentDescription = "썸네일 있음",
+                    tint = CardDesignTokens.TextPrimary
+                )
+            }
+        }
+
+        WriteContentBox(content = data.content)
+
+        TagRow(
+            tags = data.tags,
+            enableAdd = data.hasAddButton,
+            onAdd = {},
+            onRemove = {}
         )
     }
 }
 
-// ===== 2. DeletedCard (삭제된 카드) =====
-
-data class DeletedCardData(
-    val id: String,
-    val reason: String = "커뮤니티에만 있어요"
-)
-
 @Composable
-fun DeletedCard(
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(240.dp),
-        shape = RoundedCornerShape(CardDesignTokens.CardRadius),
-        colors = CardDefaults.cardColors(
-            containerColor = CardDesignTokens.CardBackgroundGray
-        )
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(CardDesignTokens.CardPadding),
-            contentAlignment = Alignment.Center
+private fun ReplyCard(data: BaseCardData.Reply) {
+    BaseCard(backgroundColor = CardDesignTokens.CardBackgroundCyan) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 콘텐츠 박스
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        color = CardDesignTokens.ContentBoxGray,
-                        shape = RoundedCornerShape(CardDesignTokens.ContentBoxRadius)
-                    )
-                    .padding(CardDesignTokens.ContentPadding),
+                    .weight(1f)
+                    .fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
-                AsyncImage(
-                    model = R.drawable.ic_deleted_card,
-                    contentDescription = "profile image",
-                    modifier = Modifier.fillMaxSize()
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 32.dp, horizontal = 32.dp)
+                        .heightIn(min = 103.dp) // height를 heightIn으로 변경하여 유연성 확보
+                        .width(264.dp)
+                        .background(
+                            color = OpacityColor.blackSmallColor,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .align(Alignment.Center),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 20.dp), // 패딩 조정
+                        text = data.content,
+                        style = TextComponent.BODY_1_M_14,
+                        color = NeutralColor.WHITE,
+                        textAlign = TextAlign.Center,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+
+            if (data.tags.isNotEmpty()) {
+                TagRow(
+                    tags = data.tags,
+                    enableAdd = false,
+                    onAdd = {},
+                    onRemove = {}
                 )
+            }
+        }
+    }
+}
 
-                Spacer(modifier = Modifier.height(20.dp))
-
+@Composable
+private fun DeletedCard(data: BaseCardData.Deleted) {
+    BaseCard(backgroundColor = CardDesignTokens.CardBackgroundGray) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    color = CardDesignTokens.ContentBoxGray,
+                    shape = RoundedCornerShape(CardDesignTokens.ContentBoxRadius)
+                )
+                .padding(CardDesignTokens.ContentPadding),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Image(
+                    painter = painterResource(R.drawable.ic_deleted_card),
+                    contentDescription = null,
+                    modifier = Modifier.size(60.dp)
+                )
+                Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = "삭제된 카드에요",
+                    text = data.reason,
                     color = CardDesignTokens.TextDelete,
                     fontSize = 14.sp
                 )
@@ -232,380 +318,27 @@ fun DeletedCard(
     }
 }
 
-// ===== 3. ReplyCard (답변 카드) =====
-
-data class ReplyCardData(
-    val id: String,
-    val authorName: String,
-    val authorProfileUrl: String? = null,
-    val content: String,
-    val tags: List<String> = emptyList(),
-    val timeAgo: String = "방금 전"
-)
-
-@Composable
-fun ReplyCard(
-    data: ReplyCardData,
-    modifier: Modifier = Modifier,
-    onCardClick: () -> Unit = {},
-    onTagClick: (String) -> Unit = {}
-) {
-    Card(
-        onClick = onCardClick,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(240.dp),
-        shape = RoundedCornerShape(CardDesignTokens.CardRadius),
-        colors = CardDefaults.cardColors(
-            containerColor = CardDesignTokens.CardBackgroundCyan
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(CardDesignTokens.CardPadding)
-        ) {
-            // 콘텐츠 박스
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .background(
-                        color = CardDesignTokens.ContentBoxDark,
-                        shape = RoundedCornerShape(CardDesignTokens.ContentBoxRadius)
-                    )
-                    .padding(CardDesignTokens.ContentPadding),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = data.content,
-                    color = CardDesignTokens.TextPrimary,
-                    fontSize = 14.sp,
-                    lineHeight = 20.sp,
-                    maxLines = 5,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // 태그 영역
-            if (data.tags.isNotEmpty()) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    data.tags.forEach { tag ->
-                        TagChip(text = tag, onClick = { onTagClick(tag) })
-                    }
-                }
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-
-        }
-    }
-}
-
-// ===== 4. TagAddCard (태그 추가 카드) =====
-
-data class TagAddCardData(
-    val id: String,
-    val selectedTags: List<String> = emptyList(),
-    val maxTags: Int = 5
-)
-
-@Composable
-fun TagAddCard(
-    data: TagAddCardData,
-    modifier: Modifier = Modifier,
-    onTagRemove: (String) -> Unit = {},
-    onAddMoreClick: () -> Unit = {}
-) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(240.dp),
-        shape = RoundedCornerShape(CardDesignTokens.CardRadius),
-        colors = CardDefaults.cardColors(
-            containerColor = CardDesignTokens.CardBackgroundCyan
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(CardDesignTokens.CardPadding),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            // 상단: 선택된 태그들
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text(
-                    text = "태그 선택 (${data.selectedTags.size}/${data.maxTags})",
-                    color = CardDesignTokens.TextPrimary,
-                    fontSize = 14.sp,
-                )
-
-                // 선택된 태그 목록 (가로 스크롤)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    data.selectedTags.forEach { tag ->
-                        RemovableTagChip(
-                            text = tag,
-                            onRemove = { onTagRemove(tag) }
-                        )
-                    }
-                }
-            }
-
-            // 하단: 태그 추가 버튼
-            if (data.selectedTags.size < data.maxTags) {
-                Button(
-                    onClick = onAddMoreClick,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = CardDesignTokens.ContentBoxDark
-                    ),
-                    shape = RoundedCornerShape(CardDesignTokens.ContentBoxRadius)
-                ) {
-                    Text(
-                        text = "+ 태그 추가하기",
-                        color = CardDesignTokens.TextPrimary,
-                        fontSize = 14.sp
-                    )
-                }
-            } else {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            CardDesignTokens.ContentBoxDark,
-                            RoundedCornerShape(CardDesignTokens.ContentBoxRadius)
-                        )
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "최대 ${data.maxTags}개까지 선택 가능합니다",
-                        color = CardDesignTokens.TextSecondary,
-                        fontSize = 12.sp
-                    )
-                }
-            }
-        }
-    }
-}
-
-// ===== 공통 컴포넌트 =====
-
-@Composable
-private fun TagRow(
-    tags: List<String>,
-    hasAddButton: Boolean,
-    onTagClick: (String) -> Unit,
-    onAddTagClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        tags.forEach { tag ->
-            TagChip(text = tag, onClick = { onTagClick(tag) })
-        }
-
-        if (hasAddButton) {
-            AddTagButton(onClick = onAddTagClick)
-        }
-    }
-}
-
-@Composable
-private fun TagChip(
-    text: String,
-    onClick: () -> Unit
-) {
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(CardDesignTokens.TagRadius),
-        color = CardDesignTokens.TagBackground
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Icon(
-                painterResource(R.drawable.ic_hash_stoke),
-                contentDescription = "태그 제거",
-                tint = CardDesignTokens.TextBackTint,
-                modifier = Modifier.size(12.dp)
-            )
-            Text(
-                text = text,
-                color = CardDesignTokens.TextPrimary,
-                fontSize = 12.sp
-            )
-        }
-    }
-}
-
-@Composable
-private fun RemovableTagChip(
-    text: String,
-    onRemove: () -> Unit
-) {
-    Surface(
-        shape = RoundedCornerShape(CardDesignTokens.TagRadius),
-        color = CardDesignTokens.TagBackground
-    ) {
-        Row(
-            modifier = Modifier.padding(start = 12.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Text(
-                text = "#",
-                color = CardDesignTokens.TextPrimary,
-                fontSize = 12.sp
-            )
-            Text(
-                text = text,
-                color = CardDesignTokens.TextPrimary,
-                fontSize = 12.sp
-            )
-            IconButton(
-                onClick = onRemove,
-                modifier = Modifier.size(16.dp)
-            ) {
-                Icon(
-                    painterResource(R.drawable.ic_delete),
-                    contentDescription = "태그 제거",
-                    tint = CardDesignTokens.TextBackTint,
-                    modifier = Modifier.size(12.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun AddTagButton(onClick: () -> Unit) {
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(CardDesignTokens.TagRadius),
-        color = CardDesignTokens.TagBackground
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = "+",
-                color = CardDesignTokens.TextPrimary,
-                fontSize = 12.sp
-            )
-            Text(
-                text = "태그 추가",
-                color = CardDesignTokens.TextPrimary,
-                fontSize = 12.sp
-            )
-        }
-    }
-}
 
 // ===== 프리뷰 =====
-
 @Preview(showBackground = true, backgroundColor = 0xFFFFFFFF)
 @Composable
-fun AllCardsPreview() {
-    Column(
+fun CardViewPreview() {
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState()),
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text("WriteCard - Default", fontSize = 12.sp, color = Color.Gray)
-        WriteCard(
-            data = WriteCardData(
-                id = "1",
-                type = WriteCardType.DEFAULT,
-                content = "솔에서 편안한 이야기 나눠요",
-                tags = listOf("Tag"),
-                hasAddButton = true
-            )
-        )
-
-        Text("WriteCard - Maximum", fontSize = 12.sp, color = Color.Gray)
-        WriteCard(
-            data = WriteCardData(
-                id = "2",
-                type = WriteCardType.MAXIMUM,
-                content = "요즘 회사에서 제은 실수와 래도 나닌 크게 혼나는 것 같아요.\n그냥 편안한 마음으로 듣고 실천하며,\n그게 제 이영에 이어졌거나,\n실수하는 게 어쩐 큰 문 만천다",
-                tags = listOf("Tag"),
-                hasAddButton = true
-            )
-        )
-
-        Text("WriteCard - Thumbnail", fontSize = 12.sp, color = Color.Gray)
-        WriteCard(
-            data = WriteCardData(
-                id = "3",
-                type = WriteCardType.DEFAULT,
-                content = "임상",
-                tags = listOf("Tag", "Tag", "Tag", "Tag", "Tag"),
-                hasAddButton = false,
-                hasThumbnail = true
-            )
-        )
-
-        Text("DeletedCard", fontSize = 12.sp, color = Color.Gray)
-        DeletedCard( )
-
-        Text("ReplyCard", fontSize = 12.sp, color = Color.Gray)
-        ReplyCard(
-            data = ReplyCardData(
-                id = "5",
-                authorName = "soaum",
-                content = "안녕하세요. 솔이 다니는 서비스가 되기 위해 여러분의 의견을 듣고자 합니다.",
-                tags = listOf("Tag", "Tag", "Tag", "Tag", "Tag"),
-                timeAgo = "방금 전"
-            )
-        )
-
-        Text("TagAddCard - Empty", fontSize = 12.sp, color = Color.Gray)
-        TagAddCard(
-            data = TagAddCardData(
-                id = "6",
-                selectedTags = emptyList()
-            )
-        )
-
-        Text("TagAddCard - With Tags", fontSize = 12.sp, color = Color.Gray)
-        TagAddCard(
-            data = TagAddCardData(
-                id = "7",
-                selectedTags = listOf("일상", "회사", "고민")
-            )
-        )
-
-        Text("TagAddCard - Full", fontSize = 12.sp, color = Color.Gray)
-        TagAddCard(
-            data = TagAddCardData(
-                id = "8",
-                selectedTags = listOf("일상", "회사", "고민", "연애", "취미"),
-                maxTags = 5
-            )
-        )
+        item {
+            CardView(BaseCardData.Write("1", "짧은 글 예시입니다.\n스크롤 안전!", listOf("Tag1", "Tag2")))
+        }
+        item {
+            CardView(BaseCardData.Reply("2", "sol", content = "이건 ReplyCard 예시", tags = listOf("답변", "예시")))
+        }
+        item {
+            CardView(BaseCardData.Deleted("3", "삭제된 카드예요"))
+        }
     }
 }
+
+
