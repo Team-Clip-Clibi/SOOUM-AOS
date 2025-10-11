@@ -1,15 +1,29 @@
 package com.phew.core_common
 
+import com.phew.core_common.log.SooumLog
 import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.temporal.ChronoUnit
 import java.util.*
 import java.util.concurrent.TimeUnit
 
 object TimeUtils {
     
     /**
-     * ISO 8601 형식의 날짜 문자열을 파싱하는 DateFormat
+     * ISO 8601 형식의 날짜 문자열을 파싱하는 DateFormat (UTC 기준)
+     * 마이크로초까지 지원
      */
-    private val iso8601Format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+    private val iso8601Format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS", Locale.getDefault()).apply {
+        timeZone = TimeZone.getTimeZone("UTC")
+    }
+    
+    /**
+     * 백업용 ISO 8601 포맷 (밀리초만 있는 경우)
+     */
+    private val iso8601FormatFallback = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.getDefault()).apply {
+        timeZone = TimeZone.getTimeZone("UTC")
+    }
     
     /**
      * 타이머 문자열을 파싱하여 밀리초로 변환
@@ -64,14 +78,55 @@ object TimeUtils {
      */
     fun getRelativeTimeString(createAt: String): String {
         return try {
-            val createdTime = iso8601Format.parse(createAt)?.time ?: return createAt
+            // 여러 포맷으로 파싱 시도
+            // TODO 해당 부분 정리 필요 (서버와 다시 확인 필요)
+            val createdTime = try {
+                val time = iso8601Format.parse(createAt)?.time
+                SooumLog.d(TAG, "Parsed with main format (microseconds)")
+                time
+            } catch (e: Exception) {
+                try {
+                    val time = iso8601FormatFallback.parse(createAt)?.time
+                    SooumLog.d(TAG, "Parsed with fallback format (milliseconds)")
+                    time
+                } catch (e: Exception) {
+                    SooumLog.e(TAG, "Failed to parse date: $createAt ${e.message}")
+                    null
+                }
+            } ?: return createAt
+            // 현재 시간도 UTC 기준으로 계산
             val currentTime = System.currentTimeMillis()
             val diffMillis = currentTime - createdTime
             
             val diffMinutes = TimeUnit.MILLISECONDS.toMinutes(diffMillis)
             val diffHours = TimeUnit.MILLISECONDS.toHours(diffMillis)
-            val diffDays = TimeUnit.MILLISECONDS.toDays(diffMillis)
             
+            // --- FIX START ---
+            // 날짜만 비교하여 일(day) 차이 계산 (시간 무시)
+            val createdLocalDate = Instant.ofEpochMilli(createdTime)
+                .atZone(ZoneOffset.UTC) // UTC 기준으로 날짜만 추출
+                .toLocalDate()
+
+            val currentLocalDate = Instant.ofEpochMilli(currentTime)
+                .atZone(ZoneOffset.UTC) // UTC 기준으로 날짜만 추출
+                .toLocalDate()
+
+            val diffDaysBasedOnCalendar = ChronoUnit.DAYS.between(createdLocalDate, currentLocalDate)
+
+            // 상세 디버깅 로그 (필요 시 다시 주석 제거)
+//            SooumLog.d(TAG, "=== Time Calculation Debug ===")
+//            SooumLog.d(TAG, "createAt input: $createAt")
+//            SooumLog.d(TAG, "createdTime (UTC millis): $createdTime")
+//            SooumLog.d(TAG, "currentTime (local millis): $currentTime")
+//            SooumLog.d(TAG, "diffMillis: $diffMillis")
+//            SooumLog.d(TAG, "diffMinutes: $diffMinutes")
+//            SooumLog.d(TAG, "diffHours: $diffHours")
+//            SooumLog.d(TAG, "diffDays (calendar-based): $diffDaysBasedOnCalendar") // 새로운 디버그 로그
+//
+//            // 현재 시간과 생성 시간을 Date 객체로 출력
+//            SooumLog.d(TAG, "createdDate: ${Date(createdTime)}")
+//            SooumLog.d(TAG, "currentDate: ${Date(currentTime)}")
+//            SooumLog.d(TAG, "==============================")
             when {
                 // 1. ~1분: "방금전"
                 diffMinutes < 1 -> "방금전"
@@ -85,33 +140,33 @@ object TimeUtils {
                     "${roundedMinutes}분 전"
                 }
                 
-                // 4. 1-23시간 59분: "N시간 전"
+                // 4. 1-23시간: "N시간 전"
                 diffHours in 1..23 -> "${diffHours}시간 전"
                 
                 // 5. 1-6일: "N일 전"
-                diffDays in 1..6 -> "${diffDays}일 전"
+                diffDaysBasedOnCalendar in 1..6 -> "${diffDaysBasedOnCalendar}일 전"
                 
                 // 6. 7-29일: "N주 전" (특별 계산)
-                diffDays in 7..29 -> {
-                    val weeks = when (diffDays) {
+                diffDaysBasedOnCalendar in 7..29 -> {
+                    val weeks = when (diffDaysBasedOnCalendar) {
                         in 7..7 -> 1      // 7일: 1주 전
                         in 8..14 -> 2     // 8-14일: 2주 전
                         in 15..21 -> 3    // 15-21일: 3주 전
                         in 22..29 -> 4    // 22-29일: 4주 전
-                        else -> 1
+                        else -> 1 // 이 경우는 발생하지 않아야 함
                     }
                     "${weeks}주 전"
                 }
                 
                 // 7. 30-368일: "N개월 전"
-                diffDays in 30..368 -> {
-                    val months = diffDays / 30
+                diffDaysBasedOnCalendar in 30..368 -> {
+                    val months = diffDaysBasedOnCalendar / 30
                     "${months}개월 전"
                 }
                 
                 // 8. 369일 이후: "N년 전"
                 else -> {
-                    val years = diffDays / 365
+                    val years = diffDaysBasedOnCalendar / 365
                     "${years}년 전"
                 }
             }
@@ -120,3 +175,5 @@ object TimeUtils {
         }
     }
 }
+
+private const val TAG = "TimeUtils"

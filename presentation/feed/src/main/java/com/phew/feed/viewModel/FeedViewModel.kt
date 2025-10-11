@@ -172,6 +172,7 @@ class HomeViewModel @Inject constructor(
                     lastId = lastId
                 )) {
                     is DataResult.Success -> {
+                        // TODO 여기 수정 필요해보임 (신규 카드 요청하는데 기존 카드와 동일한 데이터를 요청해서 받아오는 원인 같아보임)
                         val newFeedCards = mapLatestToFeedCards(result.data)
                         val existingCards = if (isInitial) emptyList() else {
                             (currentState as? FeedPagingState.Success)?.feedCards ?: emptyList()

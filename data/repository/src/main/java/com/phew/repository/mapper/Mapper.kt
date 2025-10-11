@@ -2,6 +2,7 @@ package com.phew.repository.mapper
 
 import com.phew.core_common.APP_ERROR_CODE
 import com.phew.core_common.DataResult
+import com.phew.core_common.TimeUtils
 import com.phew.domain.dto.CheckSignUp
 import com.phew.domain.dto.FeedLikeNotification
 import com.phew.domain.dto.FollowNotification
@@ -100,7 +101,7 @@ internal fun PopularDto.toDomain(): Popular {
         cardContent = this.cardContent,
         font = this.font,
         distance = this.distance,
-        createAt = this.createAt,
+        createAt = TimeUtils.getRelativeTimeString(this.createAt),
         storyExpirationTime = this.storyExpirationTime,
         isAdminCard = this.isAdminCard
     )
@@ -125,7 +126,7 @@ internal fun LatestDto.toDomain(): Latest {
         cardContent = this.cardContent,
         font = this.font,
         distance = this.distance,
-        createAt = this.createAt,
+        createAt = TimeUtils.getRelativeTimeString(this.createAt),
         storyExpirationTime = this.storyExpirationTime,
         isAdminCard = this.isAdminCard
     )
