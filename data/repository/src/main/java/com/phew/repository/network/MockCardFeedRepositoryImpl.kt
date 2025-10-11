@@ -1,10 +1,14 @@
 package com.phew.repository.network
 
 import com.phew.core_common.DataResult
+import com.phew.domain.dto.CardImageDefault
+import com.phew.domain.dto.CheckedBaned
 import com.phew.domain.dto.Latest
 import com.phew.domain.dto.Popular
+import com.phew.domain.dto.TagInfo
 import com.phew.domain.repository.network.CardFeedRepository
 import kotlinx.coroutines.delay
+import okhttp3.RequestBody
 import javax.inject.Inject
 
 class MockCardFeedRepositoryImpl @Inject constructor() : CardFeedRepository {
@@ -41,7 +45,61 @@ class MockCardFeedRepositoryImpl @Inject constructor() : CardFeedRepository {
         
         return DataResult.Success(createMockLatestData(page))
     }
-    
+
+    override suspend fun requestRelatedTag(
+        resultCnt: Int,
+        tag: String
+    ): DataResult<List<TagInfo>> {
+        return DataResult.Success(emptyList())
+    }
+
+    override suspend fun requestCardImageDefault(): DataResult<List<CardImageDefault>> {
+        return DataResult.Success(emptyList())
+    }
+
+    override suspend fun requestUploadCardImage(): DataResult<CardImageDefault> {
+        return DataResult.Success(CardImageDefault("",""))
+    }
+
+    override suspend fun requestCheckUploadCard(): DataResult<CheckedBaned> {
+        return DataResult.Success(CheckedBaned(false , null))
+    }
+
+    override suspend fun requestUploadCard(
+        isDistanceShared: Boolean,
+        latitude: Double?,
+        longitude: Double?,
+        content: String,
+        font: String,
+        imageType: String,
+        imageName: String,
+        isStory: Boolean,
+        tag: List<String>
+    ): Int {
+        return 200
+    }
+
+    override suspend fun requestUploadCardAnswer(
+        cardId: Int,
+        isDistanceShared: Boolean,
+        latitude: Double?,
+        longitude: Double?,
+        content: String,
+        font: String,
+        imageType: String,
+        imageName: String,
+        tag: List<String>
+    ): Int {
+        return 200
+    }
+
+    override suspend fun requestUploadImage(
+        data: RequestBody,
+        url: String
+    ): DataResult<Unit> {
+        return DataResult.Success(Unit)
+    }
+
     private fun createMockPopularData(): List<Popular> {
         return listOf(
             Popular(
