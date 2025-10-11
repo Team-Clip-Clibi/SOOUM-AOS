@@ -282,7 +282,7 @@ private fun BodyContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 32.dp, horizontal = 32.dp)
-                .height(103.dp)
+                .heightIn(min = 103.dp) // height를 heightIn으로 변경하여 유연성 확보
                 .width(264.dp)
                 .background(
                     color = OpacityColor.blackSmallColor,
@@ -293,7 +293,7 @@ private fun BodyContent(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 24.dp),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 20.dp), // 패딩 조정
                 text = contentText,
                 style = TextComponent.BODY_1_M_14,
                 color = NeutralColor.WHITE,

@@ -369,7 +369,7 @@ private fun FeedListView(
             modifier = Modifier
                 .fillMaxSize()
                 .nestedScroll(nestedScrollConnection)
-                .padding(horizontal = 16.dp)
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 60.dp)
                 .graphicsLayer {
                     translationY = if (isRefreshing) {
                         refreshState.distanceFraction * with(density) { refreshingOffset.toPx() }
