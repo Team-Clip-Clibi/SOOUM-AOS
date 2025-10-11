@@ -64,6 +64,7 @@ enum class SooumIcon(
     LockFilled("lockFilled", R.drawable.ic_lock_filled),
     MailFilled("mailFilled", R.drawable.ic_mail_filled),
     OfficialFilled("officialFilled", R.drawable.ic_official_filled),
+    ToolFilled("toolFilled", R.drawable.ic_tool_filled)
 
 
 
