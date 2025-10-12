@@ -394,7 +394,7 @@ private fun FeedListView(
                     onClick = onClick,
                     onRemoveCard = onRemoveCard
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(10.dp))
             }
 
             // 더 로딩 중일 때 로딩 인디케이터
