@@ -6,6 +6,7 @@ import com.phew.core_common.HTTP_NOT_FOUND
 import com.phew.core_common.HTTP_SUCCESS
 import com.phew.domain.dto.CardImageDefault
 import com.phew.domain.dto.CheckedBaned
+import com.phew.domain.dto.DistanceCard
 import com.phew.domain.dto.Latest
 import com.phew.domain.dto.Popular
 import com.phew.domain.dto.TagInfo
@@ -98,6 +99,42 @@ class CardFeedRepositoryImpl @Inject constructor(
             DataResult.Fail(
                 throwable = e,
                 message = e.message
+            )
+        }
+    }
+
+    override suspend fun requestFeedDistance(
+        latitude: Double?,
+        longitude: Double?,
+        distance: Double?,
+        lastId: Int?
+    ): DataResult<List<DistanceCard>> {
+        try {
+            val response = if (lastId == null) {
+                feedHttp.requestDistanceFeed(
+                    latitude = latitude,
+                    longitude = longitude,
+                    distance = distance
+                )
+            } else {
+                feedHttp.requestDistanceFeed(
+                    latitude = latitude,
+                    longitude = longitude,
+                    distance = distance,
+                    lastId = lastId
+                )
+            }
+            if (!response.isSuccessful) {
+                return DataResult.Fail(code = response.code(), message = response.message())
+            }
+            val result = response.body()?.map { data -> data.toDomain() } ?: emptyList()
+            return DataResult.Success(result)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return DataResult.Fail(
+                throwable = e,
+                message = e.message,
+                code = APP_ERROR_CODE
             )
         }
     }

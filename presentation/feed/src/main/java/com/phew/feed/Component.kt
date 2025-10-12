@@ -9,6 +9,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,7 +34,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -70,6 +70,7 @@ import com.phew.domain.dto.UserCommentLike
 import com.phew.domain.dto.UserCommentWrite
 import com.phew.domain.dto.UserDeleteNotification
 import com.phew.feed.FeedUi.TypedFeedCardView
+import com.phew.feed.viewModel.DistanceType
 import kotlinx.coroutines.delay
 
 object FeedUi {
@@ -93,7 +94,8 @@ object FeedUi {
         popularClick: () -> Unit,
         nearClick: () -> Unit,
         isTabsVisible: Boolean,
-        onDistanceClick: (Int) -> Unit,
+        onDistanceClick: (DistanceType) -> Unit,
+        selectDistanceType: DistanceType
     ) {
         val tabItem = listOf(
             stringResource(R.string.home_feed_tab_recent_card),
@@ -148,7 +150,6 @@ object FeedUi {
                     color = NeutralColor.GRAY_200
                 )
                 if (selectTabData == NAV_HOME_NEAR_INDEX) {
-                    val selectDistance by remember { mutableIntStateOf(DISTANCE_1KM) }
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -160,23 +161,28 @@ object FeedUi {
                     ) {
                         DistanceText(
                             distance = stringResource(R.string.home_feed_1km_distance),
-                            onClick = { onDistanceClick(DISTANCE_1KM) },
-                            isSelect = selectDistance == DISTANCE_1KM
+                            onClick = { onDistanceClick(DistanceType.KM_1) },
+                            isSelect = selectDistanceType == DistanceType.KM_1
                         )
                         DistanceText(
                             distance = stringResource(R.string.home_feed_5km_distance),
-                            onClick = { onDistanceClick(DISTANCE_5KM) },
-                            isSelect = selectDistance == DISTANCE_5KM
+                            onClick = { onDistanceClick(DistanceType.KM_5) },
+                            isSelect = selectDistanceType == DistanceType.KM_5
                         )
                         DistanceText(
                             distance = stringResource(R.string.home_feed_10km_distance),
-                            onClick = { onDistanceClick(DISTANCE_10KM) },
-                            isSelect = selectDistance == DISTANCE_10KM
+                            onClick = { onDistanceClick(DistanceType.KM_10) },
+                            isSelect = selectDistanceType == DistanceType.KM_10
                         )
                         DistanceText(
                             distance = stringResource(R.string.home_feed_20km_distance),
-                            onClick = { onDistanceClick(DISTANCE_20KM) },
-                            isSelect = selectDistance == DISTANCE_20KM
+                            onClick = { onDistanceClick(DistanceType.KM_20) },
+                            isSelect = selectDistanceType == DistanceType.KM_20
+                        )
+                        DistanceText(
+                            distance = stringResource(R.string.home_feed_50km_distance),
+                            onClick = { onDistanceClick(DistanceType.KM_50) },
+                            isSelect = selectDistanceType == DistanceType.KM_50
                         )
                     }
                 }
@@ -185,16 +191,20 @@ object FeedUi {
     }
 
     @Composable
-    private fun DistanceText(distance: String, onClick: (String) -> Unit, isSelect: Boolean) {
+    private fun DistanceText(distance: String,  onClick: () -> Unit, isSelect: Boolean) {
         Text(
             text = distance,
             style = TextComponent.SUBTITLE_3_SB_14,
             color = if (isSelect) NeutralColor.BLACK else NeutralColor.GRAY_400,
             modifier = Modifier
-                .width(48.dp)
+                .wrapContentWidth()
                 .height(37.dp)
                 .padding(start = 10.dp, top = 8.dp, end = 10.dp, bottom = 8.dp)
-                .clickable { onClick(distance) }
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = { onClick() }
+                )
         )
     }
 

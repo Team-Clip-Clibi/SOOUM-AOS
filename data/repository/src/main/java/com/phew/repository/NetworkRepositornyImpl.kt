@@ -30,7 +30,7 @@ class NotifyRepositoryImpl @Inject constructor(private val notifyHttp: NotifyHtt
                 Pair(request.code(), body.notices.map { data ->
                     Notice(
                         title = data.title,
-                        url = data.url,
+                        url = data.url ?: "",
                         createdAt = data.createdAt,
                         id = data.id
                     )
