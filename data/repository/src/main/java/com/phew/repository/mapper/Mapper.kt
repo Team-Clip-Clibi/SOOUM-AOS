@@ -117,7 +117,7 @@ internal fun PopularDto.toDomain(): Popular {
 internal fun NoticeData.toDomain(): Notice {
     return Notice(
         title = this.title,
-        url = this.url,
+        url = this.url ?: "",
         createdAt = this.createdAt,
         id = this.id
     )
