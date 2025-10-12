@@ -5,7 +5,6 @@ import androidx.paging.PagingState
 import com.phew.core_common.DataResult
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.HTTP_INVALID_TOKEN
-import com.phew.core_common.HTTP_NO_MORE_CONTENT
 import com.phew.domain.dto.Notification
 import com.phew.domain.repository.network.NotifyRepository
 import javax.inject.Inject
@@ -35,14 +34,17 @@ class PagingNotificationUnRead @Inject constructor(
                 }
 
                 is DataResult.Success -> {
-                    val data = result.data
-                    if (data.second.isEmpty() && data.first == HTTP_NO_MORE_CONTENT) {
-                        return LoadResult.Page(data = emptyList(), prevKey = null, nextKey = null)
+                    val notificationList = result.data.second
+                    val isLastPage = notificationList.isEmpty()
+                    val nextKey = if (isLastPage) {
+                        null
+                    } else {
+                        notificationList.last().notificationId
                     }
                     return LoadResult.Page(
-                        data = data.second,
+                        data = notificationList,
                         prevKey = null,
-                        nextKey = data.second.last().notificationId
+                        nextKey = nextKey
                     )
                 }
             }
