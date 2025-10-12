@@ -3,13 +3,16 @@ package com.phew.repository.mapper
 import com.phew.core_common.APP_ERROR_CODE
 import com.phew.core_common.DataResult
 import com.phew.core_common.TimeUtils
+import com.phew.domain.dto.CardImageDefault
 import com.phew.domain.dto.CheckSignUp
+import com.phew.domain.dto.CheckedBaned
 import com.phew.domain.dto.FeedLikeNotification
 import com.phew.domain.dto.FollowNotification
 import com.phew.domain.dto.Latest
 import com.phew.domain.dto.Notice
 import com.phew.domain.dto.Notification
 import com.phew.domain.dto.Popular
+import com.phew.domain.dto.TagInfo
 import com.phew.domain.dto.Token
 import com.phew.domain.dto.UploadImageUrl
 import com.phew.domain.dto.UserBlockNotification
@@ -21,6 +24,9 @@ import com.phew.network.dto.NoticeData
 import com.phew.network.dto.NotificationDTO
 import com.phew.network.dto.TokenDTO
 import com.phew.network.dto.UploadImageUrlDTO
+import com.phew.network.dto.request.feed.CheckBanedDTO
+import com.phew.network.dto.request.feed.ImageInfoDTO
+import com.phew.network.dto.request.feed.TagInfoDTO
 import com.phew.network.dto.response.LatestDto
 import com.phew.network.dto.response.PopularDto
 import com.phew.repository.TYPE_BLOCK
@@ -155,10 +161,25 @@ internal fun UploadImageUrlDTO.toDomain(): UploadImageUrl {
     )
 }
 
-internal fun Token.toNetworkModule(): TokenDTO {
-    return TokenDTO(
-        refreshToken = this.refreshToken,
-        accessToken = this.accessToken
+internal fun TagInfoDTO.toDomain(): TagInfo {
+    return TagInfo(
+        id = this.id,
+        name = this.name,
+        usageCnt = this.usageCnt
+    )
+}
+
+internal fun ImageInfoDTO.toDomain(): CardImageDefault {
+    return CardImageDefault(
+        imageName = this.imgName,
+        url = this.url
+    )
+}
+
+internal fun CheckBanedDTO.toDomain(): CheckedBaned {
+    return CheckedBaned(
+        isBaned = this.isBaned,
+        expiredAt = this.expiredAt
     )
 }
 

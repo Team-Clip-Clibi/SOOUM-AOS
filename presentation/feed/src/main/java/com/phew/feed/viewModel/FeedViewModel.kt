@@ -32,6 +32,8 @@ import kotlinx.coroutines.flow.update
 import com.phew.core_common.DataResult
 import com.phew.domain.dto.Location
 import com.phew.domain.repository.DeviceRepository
+import com.phew.domain.usecase.CreateImageFile
+import com.phew.domain.usecase.FinishTakePicture
 
 
 @HiltViewModel
@@ -41,7 +43,9 @@ class HomeViewModel @Inject constructor(
     getUnReadNotification: GetUnReadNotification,
     getReadNotification: GetReadNotification,
     private val cardFeedRepository: CardFeedRepository,
-    private val deviceRepository: DeviceRepository
+    private val deviceRepository: DeviceRepository,
+    private val createFile: CreateImageFile, // 카메라를 통한 이미지 선택 시 호출
+    private val finishPhoto: FinishTakePicture, // 이미지 선택을 통한 이미지 선택 시 호출
 ) :
     ViewModel() {
     private val _uiState = MutableStateFlow(Home())
