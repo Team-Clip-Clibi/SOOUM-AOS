@@ -7,9 +7,9 @@ import com.phew.domain.dto.UploadImageUrl
 import okhttp3.RequestBody
 
 interface SignUpRepository {
-    suspend fun requestCheckSignUp(info: String): DataResult<CheckSignUp>
+    suspend fun requestCheckSignUp(info: String, osVersion: String, modelName: String): DataResult<CheckSignUp>
     suspend fun requestSecurityKey(): DataResult<String>
-    suspend fun requestLogin(info: String): DataResult<Token>
+    suspend fun requestLogin(info: String, osVersion: String, modelName: String): DataResult<Token>
     suspend fun requestNickName(): DataResult<String>
     suspend fun requestUploadImageUrl(): DataResult<UploadImageUrl>
     suspend fun requestUploadImage(data: RequestBody, url: String): DataResult<Unit>

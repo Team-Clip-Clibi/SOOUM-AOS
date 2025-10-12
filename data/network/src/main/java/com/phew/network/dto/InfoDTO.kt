@@ -6,4 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class InfoDTO(
     val encryptedDeviceId: String,
+    val deviceType: String,
+    val deviceOsVersion: String,
+    val deviceModel: String
 )
