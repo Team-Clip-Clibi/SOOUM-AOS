@@ -8,6 +8,7 @@ import com.phew.network.dto.request.feed.ImageInfoDTO
 import com.phew.network.dto.request.feed.RequestUploadCardAnswerDTO
 import com.phew.network.dto.request.feed.RequestUploadCardDTO
 import com.phew.network.dto.request.feed.TagInfoListDTO
+import com.phew.network.dto.response.DistanceDTO
 import com.phew.network.dto.response.LatestDto
 import com.phew.network.dto.response.PopularDto
 import okhttp3.RequestBody
@@ -39,6 +40,17 @@ interface FeedHttp {
         @Query("longitude") longitude: Double? = null,
         @Query("lastId") lastId: Int? = null
     ): Response<List<LatestDto>>
+
+    /**
+     * Distance Feed url
+     */
+    @GET(BuildConfig.API_URL_CARD_FEED_DISTANCE)
+    suspend fun requestDistanceFeed(
+        @Query("latitude") latitude: Double? = null,
+        @Query("longitude") longitude: Double? = null,
+        @Query("distance") distance: Double? = null,
+        @Query("lastId") lastId: Int? = null
+    ): Response<List<DistanceDTO>>
 
     /**
      * related Tag url

@@ -5,6 +5,7 @@ import com.phew.core_common.DataResult
 import com.phew.domain.dto.CardImageDefault
 import com.phew.domain.dto.CheckSignUp
 import com.phew.domain.dto.CheckedBaned
+import com.phew.domain.dto.DistanceCard
 import com.phew.domain.dto.FeedLikeNotification
 import com.phew.domain.dto.FollowNotification
 import com.phew.domain.dto.Latest
@@ -26,6 +27,7 @@ import com.phew.network.dto.UploadImageUrlDTO
 import com.phew.network.dto.request.feed.CheckBanedDTO
 import com.phew.network.dto.request.feed.ImageInfoDTO
 import com.phew.network.dto.request.feed.TagInfoDTO
+import com.phew.network.dto.response.DistanceDTO
 import com.phew.network.dto.response.LatestDto
 import com.phew.network.dto.response.PopularDto
 import com.phew.repository.TYPE_BLOCK
@@ -123,6 +125,22 @@ internal fun NoticeData.toDomain(): Notice {
 
 internal fun LatestDto.toDomain(): Latest {
     return Latest(
+        cardId = this.cardId,
+        likeCount = this.likeCount,
+        commentCardCount = this.commentCardCount,
+        cardImgUrl = this.cardImgUrl,
+        cardImageName = this.cardImageName,
+        cardContent = this.cardContent,
+        font = this.font,
+        distance = this.distance,
+        createAt = this.createAt,
+        storyExpirationTime = this.storyExpirationTime,
+        isAdminCard = this.isAdminCard
+    )
+}
+
+internal fun DistanceDTO.toDomain(): DistanceCard {
+    return DistanceCard(
         cardId = this.cardId,
         likeCount = this.likeCount,
         commentCardCount = this.commentCardCount,
