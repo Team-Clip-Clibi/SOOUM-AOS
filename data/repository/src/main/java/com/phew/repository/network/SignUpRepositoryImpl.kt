@@ -17,9 +17,14 @@ import okhttp3.RequestBody
 import javax.inject.Inject
 
 class SignUpRepositoryImpl @Inject constructor(private val signUpHttp : SignUpHttp) : SignUpRepository {
-    override suspend fun requestCheckSignUp(info: String): DataResult<CheckSignUp> {
+    override suspend fun requestCheckSignUp(info: String, osVersion: String, modelName: String): DataResult<CheckSignUp> {
         return apiCall(
-            apiCall = { signUpHttp.requestCheckSignUp(InfoDTO(info)) },
+            apiCall = { signUpHttp.requestCheckSignUp(InfoDTO(
+                encryptedDeviceId = info,
+                deviceType = "ANDROID",
+                deviceOsVersion = osVersion,
+                deviceModel = modelName
+            )) },
             mapper = { result -> result.toDomain() }
         )
     }
@@ -31,9 +36,18 @@ class SignUpRepositoryImpl @Inject constructor(private val signUpHttp : SignUpHt
         )
     }
 
-    override suspend fun requestLogin(info: String): DataResult<Token> {
+    override suspend fun requestLogin(
+        info: String,
+        osVersion: String,
+        modelName: String
+    ): DataResult<Token> {
         return apiCall(
-            apiCall = { signUpHttp.requestLogin(InfoDTO(encryptedDeviceId = info)) },
+            apiCall = { signUpHttp.requestLogin(InfoDTO(
+                encryptedDeviceId = info,
+                deviceType = "ANDROID",
+                deviceOsVersion = osVersion,
+                deviceModel = modelName
+            )) },
             mapper = { result -> result.toDomain() }
         )
     }
