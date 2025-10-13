@@ -254,11 +254,18 @@ class CardFeedRepositoryImpl @Inject constructor(
 
     override suspend fun requestUploadImage(
         data: RequestBody,
-        url: String
+        url: String,
     ): DataResult<Unit> {
         return apiCall(
             apiCall = { feedHttp.requestUploadImage(url = url, body = data) },
             mapper = { result -> result }
+        )
+    }
+
+    override suspend fun requestCheckImage(imageName: String): DataResult<Boolean> {
+        return apiCall(
+            apiCall = { feedHttp.requestCheckBackgroundImage(imgName = imageName) },
+            mapper = { result -> result.isAvailableImg }
         )
     }
 }

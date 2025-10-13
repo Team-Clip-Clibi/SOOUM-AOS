@@ -8,9 +8,9 @@ import androidx.core.net.toUri
 import com.phew.core_common.DataResult
 import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR_FAIL_JOB
+import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.ERROR_UN_GOOD_IMAGE
 import com.phew.core_common.HTTP_SUCCESS
-import com.phew.core_common.HTTP_UN_GOOD_IMAGE
 import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.network.CardFeedRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -24,7 +24,7 @@ import javax.inject.Inject
 class PostCard @Inject constructor(
     private val networkRepository: CardFeedRepository,
     @ApplicationContext private val context: Context,
-    private val deviceRepository: DeviceRepository
+    private val deviceRepository: DeviceRepository,
 ) {
     data class Param(
         val isFromDevice: Boolean, //핸드폰 디바이스에서 사진 선택했는지
@@ -35,7 +35,7 @@ class PostCard @Inject constructor(
         val font: String,
         var imgName: String?,
         val isStory: Boolean?,
-        val tags: List<String>
+        val tags: List<String>,
     )
 
     suspend operator fun invoke(data: Param): DomainResult<Unit, String> {
@@ -64,7 +64,7 @@ class PostCard @Inject constructor(
 
     private suspend fun uploadCardData(
         param: Param,
-        imageInfo: UploadImageInfo
+        imageInfo: UploadImageInfo,
     ): DomainResult<Unit, String> {
         val locationPermissionCheck = deviceRepository.getLocationPermission()
         val (latitude, longitude) = if (locationPermissionCheck) {
@@ -116,21 +116,27 @@ class PostCard @Inject constructor(
             is DataResult.Success -> {
                 val uploadInfo = requestUrl.data
                 val file = context.contentResolver.readAsRequestBody(uri = imageUrl.toUri())
-                when (val uploadResult =
-                    networkRepository.requestUploadImage(data = file, url = uploadInfo.url)) {
+                when (networkRepository.requestUploadImage(data = file, url = uploadInfo.url)) {
                     is DataResult.Fail -> {
-                        if (uploadResult.code == HTTP_UN_GOOD_IMAGE) {
-                            return DomainResult.Failure(ERROR_UN_GOOD_IMAGE)
-                        }
-                        return DomainResult.Failure(ERROR_FAIL_JOB)
+                        return DomainResult.Failure(ERROR_NETWORK)
                     }
 
-                    is DataResult.Success -> DomainResult.Success(
-                        UploadImageInfo(
-                            uploadInfo.imageName,
-                            "USER"
+                    is DataResult.Success -> {
+                        val checkBackgroundImage =
+                            networkRepository.requestCheckImage(uploadInfo.imageName)
+                        if (checkBackgroundImage is DataResult.Fail) {
+                            return DomainResult.Failure(ERROR_NETWORK)
+                        }
+                        if (checkBackgroundImage is DataResult.Success && !checkBackgroundImage.data) {
+                            return DomainResult.Failure(ERROR_UN_GOOD_IMAGE)
+                        }
+                        DomainResult.Success(
+                            UploadImageInfo(
+                                uploadInfo.imageName,
+                                "USER"
+                            )
                         )
-                    )
+                    }
                 }
             }
         }
