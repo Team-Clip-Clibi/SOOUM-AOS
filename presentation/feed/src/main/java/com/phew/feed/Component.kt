@@ -398,7 +398,7 @@ object NotificationUi {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(182.dp)
+                .height(102.dp)
                 .background(color = NeutralColor.WHITE)
                 .padding(start = 24.dp, top = 16.dp, end = 24.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Top),

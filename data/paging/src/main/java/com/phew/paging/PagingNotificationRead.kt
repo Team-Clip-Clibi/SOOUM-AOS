@@ -33,17 +33,22 @@ class PagingNotificationRead @Inject constructor(
 
             when (result) {
                 is DataResult.Success -> {
-                    val notificationList = result.data.second
-                    val isLastPage = notificationList.isEmpty()
+                    val uniqueList = result.data.second
+                        .distinctBy { it.notificationId }
+                    val notificationList = if(key != -1L){
+                        uniqueList.filter { data -> data.notificationId != key }
+                    }else{
+                        uniqueList
+                    }
+                    val lastItemId = notificationList.lastOrNull()?.notificationId
 
-                    val nextKey = if (isLastPage) {
+                    val nextKey = if (notificationList.isEmpty() || lastItemId == key) {
                         null
                     } else {
                         notificationList.last().notificationId
                     }
-
                     LoadResult.Page(
-                        data = notificationList,
+                        data = notificationList.sortedBy { data ->data.notificationId },
                         prevKey = null,
                         nextKey = nextKey
                     )
