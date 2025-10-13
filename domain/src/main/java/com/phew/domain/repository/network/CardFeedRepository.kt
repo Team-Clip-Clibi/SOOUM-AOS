@@ -12,21 +12,21 @@ import okhttp3.RequestBody
 interface CardFeedRepository {
     suspend fun requestFeedPopular(
         latitude: Double? = null,
-        longitude: Double? = null
+        longitude: Double? = null,
     ): DataResult<List<Popular>>
 
     suspend fun requestFeedLatest(
         latitude: Double? = null,
         longitude: Double? = null,
-        lastId: Int? = null
+        lastId: Int? = null,
     ): DataResult<List<Latest>>
 
     suspend fun requestFeedDistance(
         latitude: Double? = null,
         longitude: Double? = null,
-        distance : Double? = null,
-        lastId: Int? = null
-    ) : DataResult<List<DistanceCard>>
+        distance: Double? = null,
+        lastId: Int? = null,
+    ): DataResult<List<DistanceCard>>
 
     suspend fun requestRelatedTag(resultCnt: Int = 8, tag: String): DataResult<List<TagInfo>>
     suspend fun requestCardImageDefault(): DataResult<List<CardImageDefault>>
@@ -41,11 +41,11 @@ interface CardFeedRepository {
         imageType: String,
         imageName: String,
         isStory: Boolean,
-        tag: List<String>
+        tag: List<String>,
     ): Int
 
     suspend fun requestUploadCardAnswer(
-        cardId : Int,
+        cardId: Int,
         isDistanceShared: Boolean,
         latitude: Double?,
         longitude: Double?,
@@ -53,8 +53,9 @@ interface CardFeedRepository {
         font: String,
         imageType: String,
         imageName: String,
-        tag: List<String>
+        tag: List<String>,
     ): Int
 
     suspend fun requestUploadImage(data: RequestBody, url: String): DataResult<Unit>
+    suspend fun requestCheckImage(imageName: String): DataResult<Boolean>
 }

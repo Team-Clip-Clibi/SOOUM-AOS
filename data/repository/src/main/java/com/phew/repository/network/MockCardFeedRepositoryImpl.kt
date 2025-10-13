@@ -125,6 +125,10 @@ class MockCardFeedRepositoryImpl @Inject constructor() : CardFeedRepository {
         return DataResult.Success(Unit)
     }
 
+    override suspend fun requestCheckImage(imageName: String): DataResult<Boolean> {
+        return DataResult.Success(true)
+    }
+
     private fun createMockPopularData(): List<Popular> {
         return listOf(
             Popular(
