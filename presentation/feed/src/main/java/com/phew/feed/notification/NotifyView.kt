@@ -282,7 +282,6 @@ private fun NoticeView(
             // 본문
             items(
                 count = data.itemCount,
-                key = { index -> data.peek(index)?.id ?: index }
             ) { index ->
                 val item = data[index] ?: return@items
                 NotificationUi.NoticeComponentView(data = item)
@@ -383,7 +382,6 @@ fun ActivateNotify(
         ) {
             items(
                 count = unRead.itemCount,
-                key = { index -> unRead.peek(index)?.notificationId ?: index }
             ) { index ->
                 val item = unRead[index] ?: return@items
                 NotificationUi.NotifyViewUnread(item)
@@ -428,7 +426,6 @@ fun ActivateNotify(
             }
             items(
                 count = read.itemCount,
-                key = { index -> read.peek(index)?.notificationId ?: index }
             ) { index ->
                 val item = read[index] ?: return@items
                 NotificationUi.NotifyViewRead(item)

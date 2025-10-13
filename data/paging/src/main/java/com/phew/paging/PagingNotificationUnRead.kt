@@ -14,7 +14,10 @@ class PagingNotificationUnRead @Inject constructor(
 ) : PagingSource<Long, Notification>() {
 
     override fun getRefreshKey(state: PagingState<Long, Notification>): Long? {
-        return -1
+        return state.anchorPosition?.let { anchorPosition ->
+            state.closestPageToPosition(anchorPosition)?.prevKey
+                ?: state.closestPageToPosition(anchorPosition)?.nextKey
+        }
     }
 
     override suspend fun load(params: LoadParams<Long>): LoadResult<Long, Notification> {
@@ -34,9 +37,14 @@ class PagingNotificationUnRead @Inject constructor(
                 }
 
                 is DataResult.Success -> {
-                    val notificationList = result.data.second
-                    val isLastPage = notificationList.isEmpty()
-                    val nextKey = if (isLastPage) {
+                    val originalNotificationList = result.data.second.sortedBy { data -> data.notificationId }
+                    val notificationList = if(key != -1L){
+                        originalNotificationList.filter { data -> data.notificationId != key }
+                    }else{
+                        originalNotificationList
+                    }
+                    val lastItemId = notificationList.lastOrNull()?.notificationId
+                    val nextKey = if (notificationList.isEmpty() || lastItemId == key) {
                         null
                     } else {
                         notificationList.last().notificationId

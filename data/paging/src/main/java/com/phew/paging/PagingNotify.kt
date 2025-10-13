@@ -11,7 +11,7 @@ import java.io.IOException
 import javax.inject.Inject
 
 class PagingNotify @Inject constructor(
-    private val notifyRepository: NotifyRepository
+    private val notifyRepository: NotifyRepository,
 ) : PagingSource<Int, Notice>() {
 
     override fun getRefreshKey(state: PagingState<Int, Notice>): Int? {
@@ -33,17 +33,17 @@ class PagingNotify @Inject constructor(
 
             when (result) {
                 is DataResult.Success -> {
-                    val noticeList = result.data.second
-                    val isLastPage = noticeList.isEmpty()
+                    val originalNotifyList = result.data.second.sortedBy { data -> data.id }
+                    val lastItemId = originalNotifyList.lastOrNull()?.id
 
-                    val nextKey = if (isLastPage) {
+                    val nextKey = if (originalNotifyList.isEmpty() || lastItemId == key) {
                         null
                     } else {
-                        noticeList.last().id
+                        originalNotifyList.last().id
                     }
 
                     LoadResult.Page(
-                        data = noticeList,
+                        data = originalNotifyList,
                         prevKey = null,
                         nextKey = nextKey
                     )
