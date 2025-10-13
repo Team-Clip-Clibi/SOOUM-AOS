@@ -209,7 +209,7 @@ private fun BottomView(
             .fillMaxWidth()
             .background(color = NeutralColor.WHITE)
             .navigationBarsPadding()
-            .padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
+            .padding(start = 16.dp, end = 16.dp, bottom = 15.dp)
     ) {
         LargeButton.NoIconPrimary(
             buttonText = stringResource(R.string.onBoarding_btn_start),
