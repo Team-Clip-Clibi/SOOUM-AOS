@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -166,8 +167,8 @@ private fun ContentView() {
             modifier = Modifier
                 .width(239.dp)
                 .height(218.dp)
-                .padding(bottom = 48.dp)
         )
+        Spacer(modifier = Modifier.height(48.dp))
         ExplainView(stringResource(R.string.onBoarding_explain_no_personal))
         ExplainView(stringResource(R.string.onBoarding_explain_nick_name))
         ExplainView(stringResource(R.string.onBoarding_explain_annoy))
@@ -179,7 +180,7 @@ private fun ExplainView(data: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(24.dp)
+            .height(32.dp)
             .padding(bottom = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
         verticalAlignment = Alignment.CenterVertically
