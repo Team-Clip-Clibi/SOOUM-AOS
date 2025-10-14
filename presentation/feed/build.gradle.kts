@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "com.phew.feed"
+    namespace = "com.phew.presentation.feed"
 }
 
 dependencies {

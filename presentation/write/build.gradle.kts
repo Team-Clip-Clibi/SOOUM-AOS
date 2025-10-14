@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "com.phew.write"
+    namespace = "com.phew.presentation.write"
 }
 
 
