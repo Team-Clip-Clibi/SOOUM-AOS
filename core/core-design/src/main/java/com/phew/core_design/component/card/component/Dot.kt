@@ -29,8 +29,8 @@ internal fun IndicatorDot(
                 modifier = Modifier
                     .padding(2.dp)
                     .clip(RoundedCornerShape(80.dp))
-                    .background(NeutralColor.GRAY_600.copy(alpha = if (pagerState.currentPage == interation) 0.6f else 0.2f))
-                    .size(6.dp)
+                    .background(NeutralColor.GRAY_600.copy(alpha = if (pagerState.currentPage == interation) 0.8f else 0.2f))
+                    .size(4.dp)
             )
         }
     }

@@ -54,8 +54,6 @@ fun NavGraphBuilder.feedGraph(
         startDestination = FEED_HOME_ROUTE
     ) {
         slideComposable(FEED_HOME_ROUTE) { nav ->
-//            val navBackStackEntry =
-//                remember(nav) { navController.getBackStackEntry(FEED_GRAPH) }
             val homeViewModel: HomeViewModel = hiltViewModel()
             remember { SnackbarHostState() }
             val locationPermission = rememberLauncherForActivityResult(
