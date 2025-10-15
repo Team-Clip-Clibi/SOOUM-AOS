@@ -4,6 +4,8 @@ import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -28,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import kotlinx.coroutines.delay
@@ -51,45 +54,28 @@ object LargeButton {
         onClick: () -> Unit,
         content: @Composable RowScope.() -> Unit,
     ) {
-        val latestOnClick by rememberUpdatedState(newValue = onClick)
-
-        val targetBaseColor by remember(enabled, baseColor, disabledColor) {
-            mutableStateOf(if (enabled) baseColor else disabledColor)
-        }
-
-
-        var background by remember { mutableStateOf(targetBaseColor) }
-        var clicked by remember { mutableStateOf(false) }
-        var animating by remember { mutableStateOf(false) }
-
-        LaunchedEffect(enabled) {
-            animating = false
-            clicked = false
-            background = if (enabled) baseColor else disabledColor
-        }
-
-        LaunchedEffect(clicked) {
-            if (!enabled) return@LaunchedEffect
-            if (clicked && !animating) {
-                animating = true
-                background = blinkColor
-                delay(blinkTime.toLong())
-                background = baseColor
-                latestOnClick()
-                animating = false
-                clicked = false
-            }
-        }
+        val interactionSource = remember { MutableInteractionSource() }
+        val isPressed by interactionSource.collectIsPressedAsState()
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
                 .clip(shape = RoundedCornerShape(10.dp))
-                .background(color = background, shape = RoundedCornerShape(10.dp))
+                .drawBehind {
+                    val color = when {
+                        !enabled -> disabledColor
+                        isPressed -> blinkColor
+                        else -> baseColor
+                    }
+                    drawRect(color)
+                }
                 .clickable(
-                    enabled = enabled && !animating,
-                ) { clicked = true },
+                    interactionSource = interactionSource,
+                    indication = null,
+                    enabled = enabled,
+                    onClick = onClick
+                ),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
@@ -349,40 +335,29 @@ object MediumButton {
         onClick: () -> Unit,
         content: @Composable RowScope.() -> Unit,
     ) {
-        val latestOnClick by rememberUpdatedState(newValue = onClick)
-        val targetBaseColor by remember(enabled, baseColor, disabledColor) {
-            mutableStateOf(if (enabled) baseColor else disabledColor)
-        }
-        var background by remember { mutableStateOf(targetBaseColor) }
-        var clicked by remember { mutableStateOf(false) }
-        var animating by remember { mutableStateOf(false) }
-        LaunchedEffect(enabled) {
-            animating = false
-            clicked = false
-            background = if (enabled) baseColor else disabledColor
-        }
-        LaunchedEffect(clicked) {
-            if (!enabled) return@LaunchedEffect
-            if (clicked && !animating) {
-                animating = true
-                background = blinkColor
-                delay(blinkTime.toLong())
-                background = baseColor
-                latestOnClick()
-                animating = false
-                clicked = false
-            }
-        }
+        val interactionSource = remember { MutableInteractionSource() }
+        val isPressed by interactionSource.collectIsPressedAsState()
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp)
                 .clip(shape = RoundedCornerShape(10.dp))
                 .border(width = 1.dp, color = borderColor, shape = RoundedCornerShape(10.dp))
-                .background(color = background, shape = RoundedCornerShape(10.dp))
+                .drawBehind {
+                    val color = when {
+                        !enabled -> disabledColor
+                        isPressed -> blinkColor
+                        else -> baseColor
+                    }
+                    drawRect(color)
+                }
                 .clickable(
-                    enabled = enabled && !animating,
-                ) { clicked = true },
+                    interactionSource = interactionSource,
+                    indication = null,
+                    enabled = enabled,
+                    onClick = onClick
+                ),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
@@ -685,39 +660,28 @@ object SmallButton {
         onClick: () -> Unit,
         content: @Composable RowScope.() -> Unit,
     ) {
-        val latestOnClick by rememberUpdatedState(newValue = onClick)
-        val targetBaseColor by remember(enabled, baseColor, disabledColor) {
-            mutableStateOf(if (enabled) baseColor else disabledColor)
-        }
-        var background by remember { mutableStateOf(targetBaseColor) }
-        var clicked by remember { mutableStateOf(false) }
-        var animating by remember { mutableStateOf(false) }
-        LaunchedEffect(enabled) {
-            animating = false
-            clicked = false
-            background = if (enabled) baseColor else disabledColor
-        }
-        LaunchedEffect(clicked) {
-            if (!enabled) return@LaunchedEffect
-            if (clicked && !animating) {
-                animating = true
-                background = blinkColor
-                delay(blinkTime.toLong())
-                background = baseColor
-                latestOnClick()
-                animating = false
-                clicked = false
-            }
-        }
+        val interactionSource = remember { MutableInteractionSource() }
+        val isPressed by interactionSource.collectIsPressedAsState()
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(32.dp)
                 .clip(shape = RoundedCornerShape(8.dp))
-                .background(color = background, shape = RoundedCornerShape(8.dp))
+                .drawBehind {
+                    val color = when {
+                        !enabled -> disabledColor
+                        isPressed -> blinkColor
+                        else -> baseColor
+                    }
+                    drawRect(color)
+                }
                 .clickable(
-                    enabled = enabled && !animating,
-                ) { clicked = true },
+                    interactionSource = interactionSource,
+                    indication = null,
+                    enabled = enabled,
+                    onClick = onClick
+                ),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {

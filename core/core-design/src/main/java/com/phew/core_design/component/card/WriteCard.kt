@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -145,7 +146,7 @@ fun CardView(
 private fun BaseCard(
     modifier: Modifier = Modifier,
     backgroundColor: Color,
-    content: @Composable BoxScope.() -> Unit
+    content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
         modifier = modifier
@@ -158,7 +159,7 @@ private fun BaseCard(
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Box(
+        Column(
             modifier = Modifier.fillMaxSize(),
             content = content
         )
@@ -272,33 +273,45 @@ private fun WriteCard(
     modifier: Modifier = Modifier
 ) {
     BaseCard(
-        modifier = modifier,
+        modifier = modifier.fillMaxWidth(),
         backgroundColor = CardDesignTokens.CardBackgroundCyan
     ) {
-        EditableWriteContentBox(
-            modifier = Modifier
-                .align(Alignment.Center),
-            content = data.content,
-            onContentChange = data.onContentChange,
-            onEnterPressed = data.onContentEnter
-        )
-
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .height(60.dp), // 이 Box의 높이를 60.dp로 고정합니다.
-            contentAlignment = Alignment.Center
+        Column(
+            modifier = Modifier.fillMaxSize()
         ) {
-            // 하단 60.dp 영역의 중앙에 TagRow를 배치합니다.
+            // 상단 여백
+            Spacer(modifier = Modifier.weight(1f))
+            
+            // 중앙 컨텐츠 영역
+            EditableWriteContentBox(
+                modifier = Modifier.fillMaxWidth(),
+                content = data.content,
+                onContentChange = data.onContentChange,
+                onEnterPressed = data.onContentEnter
+            )
+            
+            // 중간 여백 (태그와 컨텐츠 사이)
+            Spacer(modifier = Modifier.weight(1f))
+            
+            // 하단 태그 영역
             if (data.tags.isNotEmpty() || data.showAddButton) {
-                TagRow(
-                    tags = data.tags,
-                    enableAdd = data.showAddButton,
-                    onAdd = data.onAddTag,
-                    onRemove = data.onRemoveTag
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .height(60.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    TagRow(
+                        tags = data.tags,
+                        enableAdd = data.showAddButton,
+                        onAdd = data.onAddTag,
+                        onRemove = data.onRemoveTag
+                    )
+                }
+            } else {
+                // 태그가 없을 때도 동일한 높이 유지
+                Spacer(modifier = Modifier.height(60.dp))
             }
         }
     }
@@ -313,74 +326,90 @@ private fun ReplyCard(
         modifier = modifier,
         backgroundColor = CardDesignTokens.CardBackgroundCyan
     ) {
-        if (data.hasThumbnail) {
-            //  TODO 해당 영역 라운드 처리가 안됨 수정 필요
-            Box(
-                modifier = Modifier
-                    .padding(10.dp)
-                    .size(32.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Surface(
-                    modifier = Modifier.matchParentSize(),
-                    color = CardDesignTokens.TextPrimary,
-                ) { }
-
-                if (data.thumbnailUri.isNotBlank()) {
-                    AsyncImage(
-                        model = data.thumbnailUri,
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .matchParentSize()
-                            .clip(RoundedCornerShape(CardDesignTokens.CardRadius))
-                    )
-                }
-
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            // 썸네일 영역 (상단)
+            if (data.hasThumbnail) {
                 Box(
                     modifier = Modifier
-                        .size(24.dp),
-                    contentAlignment = Alignment.Center
+                        .fillMaxWidth()
+                        .padding(10.dp),
+                    contentAlignment = Alignment.TopStart
                 ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_back_thumbnail),
-                        contentDescription = "썸네일 있음",
-                        tint = CardDesignTokens.TextSecondary
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Surface(
+                            modifier = Modifier.matchParentSize(),
+                            color = CardDesignTokens.TextPrimary,
+                            shape = RoundedCornerShape(CardDesignTokens.CardRadius)
+                        ) { }
+
+                        if (data.thumbnailUri.isNotBlank()) {
+                            AsyncImage(
+                                model = data.thumbnailUri,
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .clip(RoundedCornerShape(CardDesignTokens.CardRadius))
+                            )
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .size(24.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_back_thumbnail),
+                                contentDescription = "썸네일 있음",
+                                tint = CardDesignTokens.TextSecondary
+                            )
+                        }
+                    }
                 }
             }
-        }
-
-        ReadOnlyContentBox(
-            modifier = Modifier
-                .align(Alignment.Center),
-            content = data.content,
-        )
-
-        if (data.tags.isNotEmpty()) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .height(60.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                TagRow(
-                    tags = data.tags,
-                    enableAdd = false,
-                    onAdd = {},
-                    onRemove = {}
-                )
-
+            
+            // 상단 여백
+            Spacer(modifier = Modifier.weight(1f))
+            
+            // 중앙 컨텐츠 영역
+            ReadOnlyContentBox(
+                modifier = Modifier.fillMaxWidth(),
+                content = data.content,
+            )
+            
+            // 중간 여백 (태그와 컨텐츠 사이)
+            Spacer(modifier = Modifier.weight(1f))
+            
+            // 하단 태그 영역
+            if (data.tags.isNotEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .height(60.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    TagRow(
+                        tags = data.tags,
+                        enableAdd = false,
+                        onAdd = {},
+                        onRemove = {}
+                    )
+                }
+            } else {
+                // 태그가 없을 때도 동일한 높이 유지
+                Spacer(modifier = Modifier.height(60.dp))
             }
         }
     }
 }
 
-/**
- *  TODO 이미지 파일이 중앙 정렬이 안됨
- */
 @Composable
 private fun DeletedCard(
     data: BaseCardData.Deleted,
@@ -390,30 +419,28 @@ private fun DeletedCard(
         modifier = modifier,
         backgroundColor = CardDesignTokens.CardBackgroundGray
     ) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-           
-            Column(
-                modifier = Modifier.fillMaxHeight(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.img_no_card),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .height(130.dp)
-                        .width(220.dp)
-                )
-                Spacer(modifier = Modifier.height(20.dp))
-                Text(
-                    text = data.reason,
-                    color = CardDesignTokens.TextDelete,
-                    style = TextComponent.BODY_1_M_14.copy(color = NeutralColor.GRAY_400)
-                )
-            }
+            Image(
+                painter = painterResource(R.drawable.img_no_card),
+                contentDescription = null,
+                modifier = Modifier
+                    .height(130.dp)
+                    .width(220.dp),
+                contentScale = ContentScale.Fit
+            )
+            Spacer(modifier = Modifier.height(20.dp))
+            Text(
+                text = data.reason,
+                color = CardDesignTokens.TextDelete,
+                style = TextComponent.BODY_1_M_14.copy(color = NeutralColor.GRAY_400),
+                textAlign = TextAlign.Center
+            )
         }
     }
 }

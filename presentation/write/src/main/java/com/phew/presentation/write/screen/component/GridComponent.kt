@@ -50,8 +50,7 @@ internal fun FilteredImageGrid(
 ) {
     Column(
         modifier = modifier
-            .fillMaxWidth()
-            .padding(16.dp),
+            .fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         // 🔸 상단 필터 선택 영역
@@ -59,7 +58,7 @@ internal fun FilteredImageGrid(
             modifier = Modifier.fillMaxWidth(),
             filters = filters,
             selectedFilter = selectedFilter,
-            onFilterSelected = { onFilterSelected }
+            onFilterSelected = onFilterSelected
         )
 
         val images = imagesByFilter[selectedFilter].orEmpty()

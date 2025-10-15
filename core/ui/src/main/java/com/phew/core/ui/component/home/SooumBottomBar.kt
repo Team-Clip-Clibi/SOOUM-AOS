@@ -82,18 +82,28 @@ fun SooumBottomBar(
                     onClick = {
                         //  현재 선택이 되어 있는 탭을 제외한 클릭만 동작하도록
                         if (!selected) {
-                            when(tab) {
+                            when (tab) {
                                 HomeTabType.FEED -> {
                                     navController.navigate(tab.graph) {
                                         popUpTo(HomeTabType.FEED.route)
                                         launchSingleTop = true
                                     }
                                 }
-                                HomeTabType.WRITE,
-                                    HomeTabType.TAG,
-                                    HomeTabType.MY -> {
 
+                                HomeTabType.WRITE -> {
+                                    navController.navigate(tab.graph) {
+                                        popUpTo(HomeTabType.FEED.route) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
                                     }
+                                }
+
+                                HomeTabType.TAG,
+                                HomeTabType.MY -> {
+                                    // TODO 나머지 탭 구현 시 라우팅 처리
+                                }
                             }
                         }
                     }

@@ -33,7 +33,7 @@ import com.phew.core_design.TextComponent
 fun SignUpAgreementView(
     viewModel: SignUpViewModel,
     nextPage: () -> Unit,
-    back: () -> Unit
+    back: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
     BackHandler {
@@ -126,7 +126,7 @@ private fun ContentView(uiState: SignUp, onClick: (String) -> Unit) {
         onClick = {
             onClick(AGREEMENT_SERVICE)
         },
-        isSelected = uiState.agreedToTermsOfService,
+        isSelected = uiState.agreedToTermsOfService || uiState.agreementAll,
         endClick = {
             //TODO 추후 노션 연결
         }
@@ -136,7 +136,7 @@ private fun ContentView(uiState: SignUp, onClick: (String) -> Unit) {
         onClick = {
             onClick(AGREEMENT_LOCATION)
         },
-        isSelected = uiState.agreedToLocationTerms,
+        isSelected = uiState.agreedToLocationTerms || uiState.agreementAll,
         endClick = {
             //TODO 추후 노션 연결
         }
@@ -146,7 +146,7 @@ private fun ContentView(uiState: SignUp, onClick: (String) -> Unit) {
         onClick = {
             onClick(AGREEMENT_PERSONAL)
         },
-        isSelected = uiState.agreedToPrivacyPolicy,
+        isSelected = uiState.agreedToPrivacyPolicy || uiState.agreementAll,
         endClick = {
             //TODO 추후 노션 연결
         }

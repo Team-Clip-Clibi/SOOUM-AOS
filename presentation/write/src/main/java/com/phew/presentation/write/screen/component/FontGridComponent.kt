@@ -1,12 +1,12 @@
 package com.phew.presentation.write.screen.component
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.Font
@@ -26,28 +26,40 @@ internal fun FontSelectorGrid(
     modifier: Modifier = Modifier
 ) {
 
-    // TODO Lazy 보다는 일반 Vertical로 고민 필요
-    Column(modifier = modifier.padding(16.dp)) {
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            items(fonts) { font ->
-                val isSelected = font.name == selectedFont
-                if (isSelected){
-                    SelectedSecondary(
-                        buttonText = font.name,
-                        onClick = { font.previewTypeface?.let { onFontSelected(it) } },
-                        isEnable = true
-                    )
-                } else {
-                    DisabledSecondary(
-                        buttonText = font.name,
-                        onClick = { font.previewTypeface?.let { onFontSelected(it) } },
-                        isEnable = false
-                    )
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        fonts.chunked(2).forEach { rowFonts ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                rowFonts.forEach { font ->
+                    val isSelected = font.name == selectedFont
+                    Box(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        if (isSelected) {
+                            SelectedSecondary(
+                                buttonText = font.name,
+                                onClick = { font.previewTypeface?.let { onFontSelected(it) } },
+                                isEnable = true
+                            )
+                        } else {
+                            DisabledSecondary(
+                                buttonText = font.name,
+                                onClick = { font.previewTypeface?.let { onFontSelected(it) } },
+                                isEnable = false
+                            )
+                        }
+                    }
+                }
+
+                if (rowFonts.size == 1) {
+                    Spacer(modifier = Modifier.weight(1f))
                 }
             }
         }

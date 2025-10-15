@@ -188,56 +188,45 @@ object AppBar {
         buttonText: String = "Button",
         onButtonClick: () -> Unit,
         buttonTextStyle: TextStyle = TextComponent.SUBTITLE_1_M_16,
-        buttonTextColor: Color
+        buttonTextColor: Color = NeutralColor.GRAY_400
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .windowInsetsPadding(WindowInsets.statusBars)
                 .height(48.dp)
-                .statusBarsPadding()
                 .background(NeutralColor.WHITE)
-                .padding(start = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Box(
+            // 왼쪽 아이콘
+            Icon(
+                painter = painterResource(image),
+                contentDescription = "back",
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(20.dp)
                     .clickable { onClick() },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(image),
-                    contentDescription = "left icon",
-                    modifier = Modifier
-                        .size(24.dp)
-                        .padding(6.dp)
-                )
-            }
+                tint = NeutralColor.BLACK
+            )
+
+            // 중앙 제목
             Text(
                 text = appBarText,
                 style = TextComponent.TITLE_1_SB_18,
                 color = NeutralColor.BLACK,
-                modifier = Modifier.weight(1f),
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                modifier = Modifier.weight(1f)
             )
-            Spacer(modifier = Modifier.size(48.dp))
 
-            Box(
+            // 오른쪽 텍스트 버튼
+            Text(
+                text = buttonText,
+                style = buttonTextStyle.copy(color = buttonTextColor),
                 modifier = Modifier
-                    .size(48.dp)
-                    .clickable { onButtonClick() },
-                contentAlignment = Alignment.Center
-            ) {
-                Button(
-                    content ={ Text(
-                        text = buttonText,
-                        style = buttonTextStyle.copy(color = buttonTextColor)
-                    )},
-                    onClick = onButtonClick,
-                    modifier = Modifier.size(48.dp)
-                )
-            }
+                    .clickable { onButtonClick() }
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+            )
         }
     }
 
