@@ -24,6 +24,7 @@ const val ERROR_NETWORK = "error_network"
 const val ERROR = "error"
 const val ERROR_LOGOUT = "errorLogout"
 const val ERROR_UN_GOOD_IMAGE = "unGoodImage"
+const val ERROR_FAIL_PACKAGE_IMAGE = "errorPackageImage"
 //server api error code
 const val HTTP_NO_MORE_CONTENT = 204
 const val HTTP_INVALID_TOKEN = 403

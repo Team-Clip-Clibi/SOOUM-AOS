@@ -2,23 +2,25 @@ package com.phew.domain.usecase
 
 import android.content.ContentResolver
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
-import android.provider.OpenableColumns
 import androidx.core.net.toUri
 import com.phew.core_common.DataResult
 import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR_FAIL_JOB
+import com.phew.core_common.ERROR_FAIL_PACKAGE_IMAGE
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.ERROR_UN_GOOD_IMAGE
 import com.phew.core_common.HTTP_SUCCESS
 import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.network.CardFeedRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
-import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
-import okio.BufferedSink
-import okio.source
+import okhttp3.RequestBody.Companion.toRequestBody
+import okio.IOException
+import java.io.ByteArrayOutputStream
 import javax.inject.Inject
 
 class PostCard @Inject constructor(
@@ -115,7 +117,14 @@ class PostCard @Inject constructor(
 
             is DataResult.Success -> {
                 val uploadInfo = requestUrl.data
-                val file = context.contentResolver.readAsRequestBody(uri = imageUrl.toUri())
+                val file =
+                    try {
+                        context.contentResolver.readAsCompressedJpegRequestBody(uri = imageUrl.toUri())
+                    } catch (e: IOException) {
+                        return DomainResult.Failure(ERROR_FAIL_PACKAGE_IMAGE)
+                    } catch (e: OutOfMemoryError) {
+                        return DomainResult.Failure(ERROR_FAIL_JOB)
+                    }
                 when (networkRepository.requestUploadImage(data = file, url = uploadInfo.url)) {
                     is DataResult.Fail -> {
                         return DomainResult.Failure(ERROR_NETWORK)
@@ -144,21 +153,20 @@ class PostCard @Inject constructor(
 
     private data class UploadImageInfo(val name: String, val type: String)
 
-    private fun ContentResolver.readAsRequestBody(uri: Uri): RequestBody =
-        object : RequestBody() {
-            override fun contentType(): MediaType? =
-                this@readAsRequestBody.getType(uri)?.toMediaTypeOrNull()
+    private fun ContentResolver.readAsCompressedJpegRequestBody(
+        uri: Uri,
+    ): RequestBody {
+        val inputStream = openInputStream(uri)
+            ?: throw IOException("Failed to open InputStream for URI: $uri")
 
+        inputStream.use { stream ->
+            val bitmap = BitmapFactory.decodeStream(stream)
+                ?: throw IOException("Failed to decode bitmap from URI: $uri")
 
-            override fun writeTo(sink: BufferedSink) {
-                this@readAsRequestBody.openInputStream(uri)?.source()?.use(sink::writeAll)
-            }
-
-            override fun contentLength(): Long =
-                this@readAsRequestBody.query(uri, null, null, null, null)?.use { cursor ->
-                    val sizeColumnIndex: Int = cursor.getColumnIndex(OpenableColumns.SIZE)
-                    cursor.moveToFirst()
-                    cursor.getLong(sizeColumnIndex)
-                } ?: super.contentLength()
+            val byteArrayOutputStream = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 50, byteArrayOutputStream)
+            val byteArray = byteArrayOutputStream.toByteArray()
+            return byteArray.toRequestBody("image/jpeg".toMediaTypeOrNull())
         }
+    }
 }
