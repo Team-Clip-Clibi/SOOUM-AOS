@@ -61,6 +61,7 @@ class HomeViewModel @Inject constructor(
         loadInitialFeeds()
         
         // 탭 변경 감지하여 필요시 데이터 로딩
+        // TODO 개선 포인트 !! 수정해라 JG
         viewModelScope.launch {
             uiState.map { it.currentTab }
                 .distinctUntilChanged()
@@ -164,6 +165,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    // TODO 개선 작업 필요 포인트
     private fun loadLatestFeeds(isInitial: Boolean) {
         viewModelScope.launch {
             try {
@@ -229,6 +231,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    // TODO 개선 작업 필요 포인트
     private fun loadPopularFeeds(isInitial: Boolean) {
         viewModelScope.launch {
             try {
@@ -398,6 +401,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    // TODO 개선 작업 필요 포인트
     private fun classifyLatestFeedType(item: Latest): FeedCardType {
         return when {
             !item.storyExpirationTime.isNullOrEmpty() -> FeedCardType.BoombType(
@@ -476,6 +480,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    // TODO 개선 작업 필요 포인트
     private fun classifyPopularFeedType(item: Popular): FeedCardType {
         return when {
             !item.storyExpirationTime.isNullOrEmpty() -> FeedCardType.BoombType(
@@ -607,6 +612,7 @@ sealed interface UiState<out T> {
     data class Fail(val errorMessage: String) : UiState<Nothing>
 }
 
+// TODO 개선 작업 필요 포인트  State Interface가 많음. 정리 필요해 보임.
 sealed interface FeedPagingState {
     data object None : FeedPagingState
     data object Loading : FeedPagingState

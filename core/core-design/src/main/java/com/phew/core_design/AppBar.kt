@@ -27,6 +27,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,8 +38,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.zIndex
 import com.phew.core_common.BANNER_NEWS
@@ -171,6 +174,59 @@ object AppBar {
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.size(48.dp))
+        }
+    }
+
+    /**
+     *  TODO 추후 TopAppBar 에 통합 예정
+     */
+    @Composable
+    fun TextButtonAppBar(
+        @DrawableRes image: Int = R.drawable.ic_left,
+        onClick: () -> Unit,
+        appBarText: String = "Title",
+        buttonText: String = "Button",
+        onButtonClick: () -> Unit,
+        buttonTextStyle: TextStyle = TextComponent.SUBTITLE_1_M_16,
+        buttonTextColor: Color = NeutralColor.GRAY_400
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .height(48.dp)
+                .background(NeutralColor.WHITE)
+                .padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            // 왼쪽 아이콘
+            Icon(
+                painter = painterResource(image),
+                contentDescription = "back",
+                modifier = Modifier
+                    .size(20.dp)
+                    .clickable { onClick() },
+                tint = NeutralColor.BLACK
+            )
+
+            // 중앙 제목
+            Text(
+                text = appBarText,
+                style = TextComponent.TITLE_1_SB_18,
+                color = NeutralColor.BLACK,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.weight(1f)
+            )
+
+            // 오른쪽 텍스트 버튼
+            Text(
+                text = buttonText,
+                style = buttonTextStyle.copy(color = buttonTextColor),
+                modifier = Modifier
+                    .clickable { onButtonClick() }
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+            )
         }
     }
 

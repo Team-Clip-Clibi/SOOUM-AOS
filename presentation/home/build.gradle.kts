@@ -9,4 +9,5 @@ android {
 
 dependencies {
     implementation(project(":presentation:feed"))
+    implementation(project(":presentation:write"))
 }

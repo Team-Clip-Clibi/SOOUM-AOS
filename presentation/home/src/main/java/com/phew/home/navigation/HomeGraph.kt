@@ -7,6 +7,7 @@ import androidx.navigation.navigation
 import com.phew.core.ui.state.SooumAppState
 import com.phew.feed.navigation.FEED_GRAPH
 import com.phew.feed.navigation.feedGraph
+import com.phew.presentation.write.navigation.writeGraph
 
 private const val HOME_GRAPH = "home_graph"
 
@@ -34,7 +35,12 @@ fun NavGraphBuilder.homeGraph(
             onBackPressed = onBackPressed
         )
 
-        // TODO 카드 그래프 추가
+        writeGraph(
+            appState = appState,
+            navController = navController,
+            onBackPressed = onBackPressed
+        )
+
         // TODO Tag 그래프 추가
         // TODO My 그래프 추가
 
