@@ -66,7 +66,7 @@ interface SignUpHttp {
      * get Upload Image Url
      */
     @NoAuth
-    @POST(BuildConfig.API_URL_UPLOAD_IMAGE)
+    @GET(BuildConfig.API_URL_UPLOAD_IMAGE)
     suspend fun requestUploadImageUrl(): Response<UploadImageUrlDTO>
 
     /**
