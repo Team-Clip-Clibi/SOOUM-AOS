@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,11 +18,13 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -31,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
@@ -86,45 +90,53 @@ enum class CardType {
     WRITE, REPLY, DELETED
 }
 
+// TODO 사용이 어렵군.. 수정해..
 sealed class BaseCardData(open val id: String, open val type: CardType) {
     data class Write(
-        override val id: String,
         val content: String,
         val tags: List<String> = emptyList(),
-        val hasAddButton: Boolean = true
+        val showAddButton: Boolean = true,
+        val onContentChange: (String) -> Unit = {},
+        val onContentEnter: () -> Unit = {},
+        val onAddTag: (String) -> Unit = {},
+        val onRemoveTag: (String) -> Unit = {},
+        override val id: String = ""
     ) : BaseCardData(id, CardType.WRITE)
 
     data class Reply(
-        override val id: String,
         val authorName: String,
         val authorProfileUrl: String? = null,
         val content: String,
         val tags: List<String> = emptyList(),
         val timeAgo: String = "",
         val hasThumbnail: Boolean = false,
-        val thumbnailUri: String = ""
+        val thumbnailUri: String = "",
+        override val id: String = ""
     ) : BaseCardData(id, CardType.REPLY)
 
     data class Deleted(
-        override val id: String,
-        val reason: String = "삭제된 카드예요"
+        val reason: String = "삭제된 카드예요",
+        override val id: String = ""
     ) : BaseCardData(id, CardType.DELETED)
 }
 
 data class WriteCardData(
-    val id: String,
     val content: String,
     val tags: List<String> = emptyList(),
-    val hasAddButton: Boolean = true,
-    val hasThumbnail: Boolean = false
+    val showAddButton: Boolean = true,
+    val hasThumbnail: Boolean = false,
+    val id: String = ""
 )
 
 @Composable
-fun CardView(data: BaseCardData) {
+fun CardView(
+    data: BaseCardData,
+    modifier: Modifier = Modifier
+) {
     when (data.type) {
-        CardType.WRITE -> WriteCard(data as BaseCardData.Write)
-        CardType.REPLY -> ReplyCard(data as BaseCardData.Reply)
-        CardType.DELETED -> DeletedCard(data as BaseCardData.Deleted)
+        CardType.WRITE -> WriteCard(data as BaseCardData.Write, modifier)
+        CardType.REPLY -> ReplyCard(data as BaseCardData.Reply, modifier)
+        CardType.DELETED -> DeletedCard(data as BaseCardData.Deleted, modifier)
     }
 }
 
@@ -133,45 +145,96 @@ fun CardView(data: BaseCardData) {
 private fun BaseCard(
     modifier: Modifier = Modifier,
     backgroundColor: Color,
-    imgUrl: String? = null,
     content: @Composable BoxScope.() -> Unit
 ) {
-
-    Box(
+    Card(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 328.dp)
-            .widthIn(min = 328.dp)
-            .clip(RoundedCornerShape(CardDesignTokens.CardRadius)),
-        content = {
-            Surface(
-                modifier = Modifier.matchParentSize(),
-                color = backgroundColor,
-                shape = RoundedCornerShape(CardDesignTokens.CardRadius),
-                shadowElevation = 2.dp
-            ) {}
-
-            if (imgUrl != null) {
-                AsyncImage(
-                    model = imgUrl,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .matchParentSize()
-                        .clip(RoundedCornerShape(CardDesignTokens.CardRadius))
-                )
-            }
-
-            // content 람다를 호출하여 WriteCard의 내용을 이 BoxScope 안으로 가져옵니다.
-            content()
-        }
-    )
+            .defaultMinSize(
+                minWidth = 328.dp,
+                minHeight = 328.dp
+            ),
+        shape = RoundedCornerShape(CardDesignTokens.CardRadius),
+        colors = CardDefaults.cardColors(containerColor = backgroundColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            content = content
+        )
+    }
 }
 
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
-private fun WriteContentBox(content: String, modifier: Modifier = Modifier) {
+private fun EditableWriteContentBox(
+    content: String,
+    modifier: Modifier = Modifier,
+    onContentChange: (String) -> Unit,
+    onEnterPressed: () -> Unit
+) {
+    BoxWithConstraints(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 32.dp)
+            .background(
+                color = OpacityColor.blackSmallColor,
+                shape = RoundedCornerShape(12.dp)
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        val scrollState = rememberScrollState()
+        val boundedHeight = maxHeight.takeIf { it.isFinite } ?: 200.dp
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 61.dp, max = boundedHeight)
+                .verticalScroll(scrollState),
+            contentAlignment = Alignment.Center
+        ) {
+            BasicTextField(
+                value = content,
+                onValueChange = { newValue ->
+                    if (newValue.count { it == '\n' } > content.count { it == '\n' }) {
+                        onEnterPressed()
+                    }
+                    onContentChange(newValue)
+                },
+                textStyle = TextComponent.BODY_1_M_14.copy(
+                    color = CardDesignTokens.TextPrimary,
+                    textAlign = TextAlign.Center
+                ),
+                cursorBrush = SolidColor(CardDesignTokens.TextPrimary),
+                modifier = Modifier.fillMaxWidth(),
+                maxLines = Int.MAX_VALUE,
+                decorationBox = { innerTextField ->
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (content.isBlank()) {
+                            Text(
+                                text = " ",
+                                style = TextComponent.BODY_1_M_14.copy(color = CardDesignTokens.TextPrimary),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                        innerTextField()
+                    }
+                }
+            )
+        }
+    }
+}
+
+@SuppressLint("UnusedBoxWithConstraintsScope")
+@Composable
+private fun ReadOnlyContentBox(
+    content: String,
+    modifier: Modifier = Modifier
+) {
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
@@ -204,14 +267,20 @@ private fun WriteContentBox(content: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun WriteCard(data: BaseCardData.Write) {
+private fun WriteCard(
+    data: BaseCardData.Write,
+    modifier: Modifier = Modifier
+) {
     BaseCard(
+        modifier = modifier,
         backgroundColor = CardDesignTokens.CardBackgroundCyan
     ) {
-        WriteContentBox(
+        EditableWriteContentBox(
             modifier = Modifier
                 .align(Alignment.Center),
-            content = data.content
+            content = data.content,
+            onContentChange = data.onContentChange,
+            onEnterPressed = data.onContentEnter
         )
 
         Box(
@@ -223,12 +292,12 @@ private fun WriteCard(data: BaseCardData.Write) {
             contentAlignment = Alignment.Center
         ) {
             // 하단 60.dp 영역의 중앙에 TagRow를 배치합니다.
-            if (data.tags.isNotEmpty()) {
+            if (data.tags.isNotEmpty() || data.showAddButton) {
                 TagRow(
                     tags = data.tags,
-                    enableAdd = data.hasAddButton,
-                    onAdd = {},
-                    onRemove = {}
+                    enableAdd = data.showAddButton,
+                    onAdd = data.onAddTag,
+                    onRemove = data.onRemoveTag
                 )
             }
         }
@@ -236,8 +305,14 @@ private fun WriteCard(data: BaseCardData.Write) {
 }
 
 @Composable
-private fun ReplyCard(data: BaseCardData.Reply) {
-    BaseCard(backgroundColor = CardDesignTokens.CardBackgroundCyan) {
+private fun ReplyCard(
+    data: BaseCardData.Reply,
+    modifier: Modifier = Modifier
+) {
+    BaseCard(
+        modifier = modifier,
+        backgroundColor = CardDesignTokens.CardBackgroundCyan
+    ) {
         if (data.hasThumbnail) {
             //  TODO 해당 영역 라운드 처리가 안됨 수정 필요
             Box(
@@ -276,10 +351,10 @@ private fun ReplyCard(data: BaseCardData.Reply) {
             }
         }
 
-        WriteContentBox(
+        ReadOnlyContentBox(
             modifier = Modifier
                 .align(Alignment.Center),
-            content = data.content
+            content = data.content,
         )
 
         if (data.tags.isNotEmpty()) {
@@ -307,15 +382,22 @@ private fun ReplyCard(data: BaseCardData.Reply) {
  *  TODO 이미지 파일이 중앙 정렬이 안됨
  */
 @Composable
-private fun DeletedCard(data: BaseCardData.Deleted) {
-    BaseCard(backgroundColor = CardDesignTokens.CardBackgroundGray) {
+private fun DeletedCard(
+    data: BaseCardData.Deleted,
+    modifier: Modifier = Modifier
+) {
+    BaseCard(
+        modifier = modifier,
+        backgroundColor = CardDesignTokens.CardBackgroundGray
+    ) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            // 2. 이 Column이 Box의 정중앙에 완벽하게 위치하게 됩니다.
+           
             Column(
                 modifier = Modifier.fillMaxHeight(),
+                verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Image(
@@ -348,7 +430,7 @@ fun CardViewPreview() {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
-            CardView(BaseCardData.Write("1", "짧은 글 예시입니다.\n스크롤 안전!", listOf("Tag1", "Tag2")))
+            CardView(BaseCardData.Write("짧은 글 예시입니다.\n스크롤 안전!", listOf("Tag1", "Tag2")))
         }
         item {
             CardView(
@@ -362,9 +444,7 @@ fun CardViewPreview() {
             )
         }
         item {
-            CardView(BaseCardData.Deleted("3", "삭제된 카드예요"))
+            CardView(BaseCardData.Deleted("삭제된 카드예요"))
         }
     }
 }
-
-

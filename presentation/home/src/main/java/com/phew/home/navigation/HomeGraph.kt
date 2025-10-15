@@ -7,6 +7,7 @@ import androidx.navigation.navigation
 import com.phew.core.ui.state.SooumAppState
 import com.phew.feed.navigation.FEED_GRAPH
 import com.phew.feed.navigation.feedGraph
+import com.phew.presentation.write.navigation.writeGraph
 
 private const val HOME_GRAPH = "home_graph"
 
@@ -31,6 +32,12 @@ fun NavGraphBuilder.homeGraph(
             appState = appState,
             navController = navController,
             finish = finish,
+            onBackPressed = onBackPressed
+        )
+
+        writeGraph(
+            appState = appState,
+            navController = navController,
             onBackPressed = onBackPressed
         )
 

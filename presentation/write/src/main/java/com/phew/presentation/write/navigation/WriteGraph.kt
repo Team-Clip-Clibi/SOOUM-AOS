@@ -7,6 +7,7 @@ import androidx.navigation.navigation
 import com.phew.core.ui.component.home.HomeTabType
 import com.phew.core.ui.state.SooumAppState
 import com.phew.core_design.slideComposable
+import com.phew.presentation.write.screen.WriteRoute
 
 
 val WRITE_GRAPH = HomeTabType.WRITE.graph
@@ -35,7 +36,9 @@ fun NavGraphBuilder.writeGraph(
         startDestination = WRITE_ROUTE
     ) {
         slideComposable(WRITE_ROUTE) { nav ->
-
+            WriteRoute(
+                onBackPressed = onBackPressed
+            )
         }
     }
 }

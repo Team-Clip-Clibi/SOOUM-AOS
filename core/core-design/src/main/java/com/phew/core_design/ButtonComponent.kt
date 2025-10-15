@@ -2,6 +2,7 @@ package com.phew.core_design
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -344,6 +345,7 @@ object MediumButton {
         baseColor: Color = NeutralColor.BLACK,
         blinkColor: Color = NeutralColor.GRAY_600,
         disabledColor: Color = NeutralColor.GRAY_200,
+        borderColor: Color = baseColor,
         onClick: () -> Unit,
         content: @Composable RowScope.() -> Unit,
     ) {
@@ -376,6 +378,7 @@ object MediumButton {
                 .fillMaxWidth()
                 .height(48.dp)
                 .clip(shape = RoundedCornerShape(10.dp))
+                .border(width = 1.dp, color = borderColor, shape = RoundedCornerShape(10.dp))
                 .background(color = background, shape = RoundedCornerShape(10.dp))
                 .clickable(
                     enabled = enabled && !animating,
@@ -471,6 +474,49 @@ object MediumButton {
             baseColor = NeutralColor.GRAY_100,
             blinkColor = NeutralColor.GRAY_200,
             disabledColor = NeutralColor.GRAY_200,
+            onClick = onClick,
+            enabled = isEnable
+        ) {
+            Text(
+                text = buttonText,
+                style = TextComponent.SUBTITLE_1_M_16,
+                color = if (isEnable) NeutralColor.GRAY_600 else NeutralColor.GRAY_400
+            )
+        }
+    }
+
+    @Composable
+    fun SelectedSecondary(
+        buttonText: String,
+        onClick: () -> Unit,
+        isEnable: Boolean = true,
+    ) {
+        BlinkMediumButton(
+            baseColor = Primary.LIGHT_1,
+            blinkColor = Primary.DARK,
+            disabledColor = NeutralColor.GRAY_100,
+            borderColor = Primary.DARK,
+            onClick = onClick,
+            enabled = isEnable
+        ) {
+            Text(
+                text = buttonText,
+                style = TextComponent.SUBTITLE_1_M_16,
+                color = if (isEnable) NeutralColor.GRAY_600 else NeutralColor.GRAY_400
+            )
+        }
+    }
+
+    @Composable
+    fun DisabledSecondary(
+        buttonText: String,
+        onClick: () -> Unit,
+        isEnable: Boolean = true,
+    ) {
+        BlinkMediumButton(
+            baseColor = NeutralColor.GRAY_200,
+            disabledColor = NeutralColor.GRAY_200,
+            borderColor = NeutralColor.GRAY_200,
             onClick = onClick,
             enabled = isEnable
         ) {

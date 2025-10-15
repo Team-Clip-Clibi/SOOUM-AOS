@@ -61,11 +61,11 @@ import com.phew.domain.dto.Notification
 import com.phew.feed.FeedUi
 import com.phew.feed.NAV_HOME_FEED_INDEX
 import com.phew.feed.NAV_HOME_POPULAR_INDEX
-import com.phew.feed.R
 import com.phew.feed.viewModel.FeedPagingState
 import com.phew.feed.viewModel.FeedType
 import com.phew.feed.viewModel.HomeViewModel
 import com.phew.feed.viewModel.UiState
+import com.phew.presentation.feed.R
 import kotlinx.coroutines.flow.debounce
 
 // TODO : Feed Route로 바꾸면서 네비게이션 처리 필요

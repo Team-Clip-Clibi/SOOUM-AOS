@@ -70,6 +70,7 @@ import com.phew.domain.dto.UserCommentLike
 import com.phew.domain.dto.UserCommentWrite
 import com.phew.domain.dto.UserDeleteNotification
 import com.phew.feed.FeedUi.TypedFeedCardView
+import com.phew.presentation.feed.R
 import kotlinx.coroutines.delay
 
 object FeedUi {

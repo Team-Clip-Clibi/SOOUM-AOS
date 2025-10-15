@@ -27,6 +27,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,8 +38,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.zIndex
 import com.phew.core_common.BANNER_NEWS
@@ -171,6 +174,70 @@ object AppBar {
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.size(48.dp))
+        }
+    }
+
+    /**
+     *  TODO 추후 TopAppBar 에 통합 예정
+     */
+    @Composable
+    fun TextButtonAppBar(
+        @DrawableRes image: Int = R.drawable.ic_left,
+        onClick: () -> Unit,
+        appBarText: String = "Title",
+        buttonText: String = "Button",
+        onButtonClick: () -> Unit,
+        buttonTextStyle: TextStyle = TextComponent.SUBTITLE_1_M_16,
+        buttonTextColor: Color
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .height(48.dp)
+                .statusBarsPadding()
+                .background(NeutralColor.WHITE)
+                .padding(start = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clickable { onClick() },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(image),
+                    contentDescription = "left icon",
+                    modifier = Modifier
+                        .size(24.dp)
+                        .padding(6.dp)
+                )
+            }
+            Text(
+                text = appBarText,
+                style = TextComponent.TITLE_1_SB_18,
+                color = NeutralColor.BLACK,
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.size(48.dp))
+
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clickable { onButtonClick() },
+                contentAlignment = Alignment.Center
+            ) {
+                Button(
+                    content ={ Text(
+                        text = buttonText,
+                        style = buttonTextStyle.copy(color = buttonTextColor)
+                    )},
+                    onClick = onButtonClick,
+                    modifier = Modifier.size(48.dp)
+                )
+            }
         }
     }
 
