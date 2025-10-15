@@ -8,6 +8,8 @@ import com.phew.network.dto.request.feed.ImageInfoDTO
 import com.phew.network.dto.request.feed.RequestUploadCardAnswerDTO
 import com.phew.network.dto.request.feed.RequestUploadCardDTO
 import com.phew.network.dto.request.feed.TagInfoListDTO
+import com.phew.network.dto.response.BackgroundImageDTO
+import com.phew.network.dto.response.DistanceDTO
 import com.phew.network.dto.response.LatestDto
 import com.phew.network.dto.response.PopularDto
 import okhttp3.RequestBody
@@ -27,7 +29,7 @@ interface FeedHttp {
     @GET(BuildConfig.API_URL_CARD_FEED_POPULAR)
     suspend fun requestPopularFeed(
         @Query("latitude") latitude: Double? = null,
-        @Query("longitude") longitude: Double? = null
+        @Query("longitude") longitude: Double? = null,
     ): Response<List<PopularDto>>
 
     /**
@@ -37,8 +39,19 @@ interface FeedHttp {
     suspend fun requestLatestFeed(
         @Query("latitude") latitude: Double? = null,
         @Query("longitude") longitude: Double? = null,
-        @Query("lastId") lastId: Int? = null
+        @Query("lastId") lastId: Int? = null,
     ): Response<List<LatestDto>>
+
+    /**
+     * Distance Feed url
+     */
+    @GET(BuildConfig.API_URL_CARD_FEED_DISTANCE)
+    suspend fun requestDistanceFeed(
+        @Query("latitude") latitude: Double? = null,
+        @Query("longitude") longitude: Double? = null,
+        @Query("distance") distance: Double? = null,
+        @Query("lastId") lastId: Int? = null,
+    ): Response<List<DistanceDTO>>
 
     /**
      * related Tag url
@@ -46,7 +59,7 @@ interface FeedHttp {
     @GET(BuildConfig.API_URL_TAG_RELATED)
     suspend fun requestRelatedTag(
         @Path("resultCnt") resultCnt: Int,
-        @Body request: TagRequestDTO
+        @Body request: TagRequestDTO,
     ): Response<TagInfoListDTO>
 
     /**
@@ -66,7 +79,7 @@ interface FeedHttp {
      */
     @POST(BuildConfig.API_URL_UPLOAD_CARD)
     suspend fun requestUploadCard(
-        @Body request: RequestUploadCardDTO
+        @Body request: RequestUploadCardDTO,
     ): Response<Unit>
 
     /**
@@ -75,7 +88,7 @@ interface FeedHttp {
     @POST(BuildConfig.API_URL_UPLOAD_CARD_ANSWER)
     suspend fun requestUploadAnswerCard(
         @Path("cardId") cardId: Int,
-        @Body request: RequestUploadCardAnswerDTO
+        @Body request: RequestUploadCardAnswerDTO,
     ): Response<Unit>
 
     /**
@@ -93,4 +106,11 @@ interface FeedHttp {
         @Body body: RequestBody,
     ): Response<Unit>
 
+    /**
+     * Check upload background image
+     */
+    @GET(BuildConfig.API_URL_UPLOAD_BACKGROUND_IMAGE_CHECK)
+    suspend fun requestCheckBackgroundImage(
+        @Path("imgName") imgName: String,
+    ): Response<BackgroundImageDTO>
 }

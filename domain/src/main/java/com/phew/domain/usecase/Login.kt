@@ -8,6 +8,8 @@ import com.phew.domain.BuildConfig
 import com.phew.domain.dto.Token
 import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.network.SignUpRepository
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import java.security.KeyFactory
 import java.security.PublicKey
 import java.security.spec.X509EncodedKeySpec
@@ -18,18 +20,31 @@ class Login @Inject constructor(
     private val deviceRepository: DeviceRepository,
     private val repository: SignUpRepository,
 ) {
-    suspend operator fun invoke(): DomainResult<Unit, String> {
-        val deviceId = deviceRepository.requestDeviceId()
-        val requestKey = repository.requestSecurityKey()
+    suspend operator fun invoke(): DomainResult<Unit, String> = coroutineScope {
+        val deviceIdDeferred = async { deviceRepository.requestDeviceId() }
+        val osVersionDeferred = async { deviceRepository.requestDeviceOS() }
+        val modelNameDeferred = async { deviceRepository.requestDeviceModel() }
+        val requestKeyDeferred = async { repository.requestSecurityKey() }
+
+        val requestKey = requestKeyDeferred.await()
         if (requestKey is DataResult.Fail) {
-            return DomainResult.Failure(ERROR_NETWORK)
+            return@coroutineScope DomainResult.Failure(ERROR_NETWORK)
         }
+
+        val deviceId = deviceIdDeferred.await()
+        val osVersion = osVersionDeferred.await()
+        val modelName = modelNameDeferred.await()
+
         val securityKey = (requestKey as DataResult.Success).data
         val key = makeSecurityKey(securityKey)
         val encryptedInfo = encrypt(data = deviceId, key = key)
-        when (val requestLogin = repository.requestLogin(encryptedInfo)) {
+        when (val requestLogin = repository.requestLogin(
+            info = encryptedInfo,
+            osVersion = osVersion,
+            modelName = modelName
+        )) {
             is DataResult.Fail -> {
-                return DomainResult.Failure(ERROR_NETWORK)
+                return@coroutineScope DomainResult.Failure(ERROR_NETWORK)
             }
 
             is DataResult.Success -> {
@@ -38,9 +53,9 @@ class Login @Inject constructor(
                     data = Token(refreshToken = requestLogin.data.refreshToken, accessToken = requestLogin.data.accessToken)
                 )
                 if (!saveToken) {
-                    return DomainResult.Failure(ERROR_FAIL_JOB)
+                    return@coroutineScope DomainResult.Failure(ERROR_FAIL_JOB)
                 }
-                return DomainResult.Success(Unit)
+                return@coroutineScope DomainResult.Success(Unit)
             }
         }
     }

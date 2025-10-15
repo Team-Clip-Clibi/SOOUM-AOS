@@ -21,6 +21,14 @@ class DeviceRepositoryImpl @Inject constructor(
         return deviceInfo.deviceId()
     }
 
+    override suspend fun requestDeviceModel(): String {
+        return deviceInfo.modelName()
+    }
+
+    override suspend fun requestDeviceOS(): String {
+        return deviceInfo.osVersion()
+    }
+
     override suspend fun requestToken(key: String): Pair<String, String> {
         val data = dataStoreLocal.getToken(key)
         return Pair(data.refreshToken, data.accessToken)

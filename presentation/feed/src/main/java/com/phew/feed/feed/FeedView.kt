@@ -60,7 +60,9 @@ import com.phew.domain.dto.Notice
 import com.phew.domain.dto.Notification
 import com.phew.feed.FeedUi
 import com.phew.feed.NAV_HOME_FEED_INDEX
+import com.phew.feed.NAV_HOME_NEAR_INDEX
 import com.phew.feed.NAV_HOME_POPULAR_INDEX
+import com.phew.feed.viewModel.DistanceType
 import com.phew.feed.viewModel.FeedPagingState
 import com.phew.feed.viewModel.FeedType
 import com.phew.feed.viewModel.HomeViewModel
@@ -155,7 +157,11 @@ fun FeedView(
             isTabsVisible = isTabsVisible,
             notice = notice,
             noticeClick = noticeClick,
-            activate = unRead
+            activate = unRead,
+            distanceClick = { value ->
+                viewModel.switchDistanceTab(value)
+            },
+            selectDistance = uiState.distanceTab
         )
 
         FeedContent(
@@ -200,10 +206,13 @@ private fun TopLayout(
     notice: LazyPagingItems<Notice>,
     noticeClick: () -> Unit,
     activate: LazyPagingItems<Notification>,
+    distanceClick: (DistanceType) -> Unit,
+    selectDistance : DistanceType
 ) {
     val selectIndex = when (currentTab) {
         FeedType.Latest -> NAV_HOME_FEED_INDEX
         FeedType.Popular -> NAV_HOME_POPULAR_INDEX
+        FeedType.Distance -> NAV_HOME_NEAR_INDEX
     }
     Column(
         modifier = Modifier
@@ -221,8 +230,9 @@ private fun TopLayout(
             nearClick = nearClick,
             isTabsVisible = isTabsVisible,
             onDistanceClick = { value ->
-
-            }
+                distanceClick(value)
+            },
+            selectDistanceType = selectDistance
         )
     }
 }

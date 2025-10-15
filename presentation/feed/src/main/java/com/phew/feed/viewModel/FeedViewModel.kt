@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.update
 import com.phew.core_common.DataResult
+import com.phew.domain.dto.DistanceCard
 import com.phew.domain.dto.Location
 import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.usecase.CreateImageFile
@@ -79,6 +80,19 @@ class HomeViewModel @Inject constructor(
                                 loadPopularFeeds(isInitial = true)
                             }
                         }
+
+                        FeedType.Distance -> {
+                            val currentDistanceTab = _uiState.value.distanceTab
+                            val currentStateForTab = _uiState.value.distancePagingStates[currentDistanceTab]
+                            if (currentStateForTab == null || currentStateForTab is FeedPagingState.None) {
+                                _uiState.update { state ->
+                                    val newStates = state.distancePagingStates.toMutableMap()
+                                    newStates[currentDistanceTab] = FeedPagingState.Loading
+                                    state.copy(distancePagingStates = newStates)
+                                }
+                                loadDistanceFeeds(isInitial = true)
+                            }
+                        }
                     }
                 }
         }
@@ -104,7 +118,6 @@ class HomeViewModel @Inject constructor(
     fun checkLocationPermission() {
         val isGranted = locationAsk()
         if (isGranted) {
-            //TODO 근처 피드 게시물 가져오기
             getLocation()
             return
         }
@@ -118,6 +131,7 @@ class HomeViewModel @Inject constructor(
             deviceRepository.requestLocation()
         } catch (e: Exception) {
             // 위치 정보 가져오기 실패 시 빈 위치 반환
+            e.printStackTrace()
             Location.EMPTY
         }
     }
@@ -126,7 +140,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             val location = getLocationSafely()
             _uiState.update { state ->
-                state.copy(location = location)
+                state.copy(location = location, currentTab = FeedType.Distance)
             }
         }
     }
@@ -277,14 +291,91 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    private fun loadDistanceFeeds(isInitial: Boolean) {
+        viewModelScope.launch {
+            val currentDistanceTab = _uiState.value.distanceTab
+            val currentState = _uiState.value.distancePagingStates[currentDistanceTab]
+
+            try {
+                if (!isInitial) {
+                    val existingCards = (currentState as? FeedPagingState.Success)?.feedCards ?: emptyList()
+                    _uiState.update { state ->
+                        val newStates = state.distancePagingStates.toMutableMap()
+                        newStates[currentDistanceTab] = FeedPagingState.LoadingMore(existingData = existingCards)
+                        state.copy(distancePagingStates = newStates)
+                    }
+                } else {
+                    _uiState.update { state ->
+                        val newStates = state.distancePagingStates.toMutableMap()
+                        newStates[currentDistanceTab] = FeedPagingState.Loading
+                        state.copy(distancePagingStates = newStates)
+                    }
+                }
+
+                val location = getLocationSafely()
+                val lastId = if (isInitial) null else {
+                    (currentState as? FeedPagingState.Success)?.lastId
+                }
+
+                when (val result = cardFeedRepository.requestFeedDistance(
+                    latitude = location.latitude,
+                    longitude = location.longitude,
+                    distance = currentDistanceTab.value,
+                    lastId = lastId
+                )) {
+                    is DataResult.Fail -> {
+                        _uiState.update { state ->
+                            val newStates = state.distancePagingStates.toMutableMap()
+                            newStates[currentDistanceTab] = FeedPagingState.Error(message = result.message ?: "거리 피드 로딩 실패")
+                            state.copy(distancePagingStates = newStates)
+                        }
+                    }
+                    is DataResult.Success -> {
+                        val newFeedCard = mapDistanceToFeedCard(result.data)
+                        val existingCards = if (isInitial) emptyList() else {
+                            (currentState as? FeedPagingState.Success)?.feedCards ?: emptyList()
+                        }
+                        _uiState.update { state ->
+                            val newStates = state.distancePagingStates.toMutableMap()
+                            newStates[currentDistanceTab] = FeedPagingState.Success(
+                                feedCards = existingCards + newFeedCard,
+                                hasNextPage = result.data.isNotEmpty(),
+                                lastId = result.data.lastOrNull()?.cardId?.toIntOrNull()
+                            )
+                            state.copy(
+                                location = location,
+                                distancePagingStates = newStates
+                            )
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update { state ->
+                    val newStates = state.distancePagingStates.toMutableMap()
+                    newStates[currentDistanceTab] = FeedPagingState.Error(message = e.message ?: "거리 피드 로딩 실패")
+                    state.copy(distancePagingStates = newStates)
+                }
+            }
+        }
+    }
+
     fun switchTab(feedType: FeedType) {
         _uiState.update { it.copy(currentTab = feedType) }
+    }
+
+    fun switchDistanceTab(distanceTab: DistanceType) {
+        _uiState.update { state -> state.copy(distanceTab = distanceTab) }
+        val cachedState = _uiState.value.distancePagingStates[distanceTab]
+        if (cachedState == null || cachedState is FeedPagingState.Error) {
+            loadDistanceFeeds(isInitial = true)
+        }
     }
 
     fun loadMoreFeeds() {
         when (_uiState.value.currentTab) {
             FeedType.Latest -> loadLatestFeeds(isInitial = false)
             FeedType.Popular -> loadPopularFeeds(isInitial = false)
+            FeedType.Distance -> loadDistanceFeeds(isInitial = false)
         }
     }
 
@@ -298,11 +389,59 @@ class HomeViewModel @Inject constructor(
                 _uiState.update { it.copy(popularPagingState = FeedPagingState.Loading) }
                 loadPopularFeeds(isInitial = true)
             }
+            FeedType.Distance ->{
+                val currentDistanceTab = _uiState.value.distanceTab
+                _uiState.update { state ->
+                    val newStates = state.distancePagingStates.toMutableMap()
+                    newStates[currentDistanceTab] = FeedPagingState.Loading
+                    state.copy(distancePagingStates = newStates)
+                }
+                loadDistanceFeeds(isInitial = true)
+            }
         }
     }
 
     // TODO 개선 작업 필요 포인트
     private fun classifyLatestFeedType(item: Latest): FeedCardType {
+        return when {
+            !item.storyExpirationTime.isNullOrEmpty() -> FeedCardType.BoombType(
+                cardId = item.cardId,
+                storyExpirationTime = item.storyExpirationTime,
+                content = item.cardContent,
+                imageUrl = item.cardImgUrl,
+                likeValue = item.likeCount.toString(),
+                imageName = item.cardImageName,
+                font = item.font,
+                location = item.distance,
+                writeTime = item.createAt,
+                commentValue = item.commentCardCount.toString()
+            )
+            item.isAdminCard -> FeedCardType.AdminType(
+                cardId = item.cardId,
+                content = item.cardContent,
+                imageUrl = item.cardImgUrl,
+                imageName = item.cardImageName,
+                font = item.font,
+                location = item.distance,
+                writeTime = item.createAt,
+                commentValue = item.commentCardCount.toString(),
+                likeValue = item.likeCount.toString()
+            )
+            else -> FeedCardType.NormalType(
+                cardId = item.cardId,
+                content = item.cardContent,
+                imageUrl = item.cardImgUrl,
+                imageName = item.cardImageName,
+                font = item.font,
+                location = item.distance,
+                writeTime = item.createAt,
+                commentValue = item.commentCardCount.toString(),
+                likeValue = item.likeCount.toString()
+            )
+        }
+    }
+
+    private fun classifyDistanceFeedType(item: DistanceCard) :FeedCardType {
         return when {
             !item.storyExpirationTime.isNullOrEmpty() -> FeedCardType.BoombType(
                 cardId = item.cardId,
@@ -389,6 +528,10 @@ class HomeViewModel @Inject constructor(
         return items.map { classifyPopularFeedType(it) }
     }
 
+    private fun mapDistanceToFeedCard(items : List<DistanceCard>) : List<FeedCardType>{
+        return items.map { data -> classifyDistanceFeedType(data) }
+    }
+
     fun removeFeedCard(cardId: String) {
         _uiState.update { currentState ->
             val updatedLatestState = if (currentState.latestPagingState is FeedPagingState.Success) {
@@ -426,8 +569,10 @@ class HomeViewModel @Inject constructor(
 
 data class Home(
     val currentTab: FeedType = FeedType.Latest,
+    val distanceTab : DistanceType = DistanceType.KM_1,
     val latestPagingState: FeedPagingState = FeedPagingState.None,
     val popularPagingState: FeedPagingState = FeedPagingState.None,
+    val distancePagingStates: Map<DistanceType, FeedPagingState> = emptyMap(),
     val refresh: UiState<Boolean> = UiState.None,
     val feedItem: List<FeedData> = emptyList(),
     val notifyItem: List<Notify> = emptyList(),
@@ -438,11 +583,26 @@ data class Home(
         get() = when (currentTab) {
             FeedType.Latest -> latestPagingState
             FeedType.Popular -> popularPagingState
+            FeedType.Distance -> distancePagingStates[distanceTab] ?: FeedPagingState.None
         }
 }
 
 enum class FeedType {
-    Latest, Popular
+    Latest, Popular , Distance
+}
+
+enum class DistanceType(val value : Double) {
+    KM_1(1.0),
+    KM_5(5.0),
+    KM_10(10.0),
+    KM_15(15.0),
+    KM_20(20.0),
+    KM_50(50.0);
+    companion object {
+        fun fromValue(value : Double) : DistanceType {
+            return entries.find { distanceType -> distanceType.value == value } ?: KM_1
+        }
+    }
 }
 
 sealed interface UiState<out T> {
