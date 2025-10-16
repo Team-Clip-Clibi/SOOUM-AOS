@@ -1,7 +1,5 @@
 package com.phew.core_design.component.tag
 
-
-import android.graphics.drawable.Icon
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -42,6 +40,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
@@ -150,10 +149,20 @@ internal fun TagRow(
     enableAdd: Boolean,
     onAdd: (String) -> Unit,
     onRemove: (String) -> Unit,
+    shouldFocus: Boolean = false,
+    onFocusHandled: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var input by remember { mutableStateOf("") }
     var state by remember { mutableStateOf(TagState.AddNew) }
+    val focusHandled by rememberUpdatedState(onFocusHandled)
+
+    LaunchedEffect(shouldFocus) {
+        if (shouldFocus) {
+            state = TagState.Focus
+            focusHandled()
+        }
+    }
 
     Row(
         modifier = modifier

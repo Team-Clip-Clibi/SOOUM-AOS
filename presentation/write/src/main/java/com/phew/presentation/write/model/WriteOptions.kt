@@ -6,9 +6,12 @@ data class WriteOption(
 )
 
 object WriteOptions {
+    const val DISTANCE_OPTION_ID = "distance_sharing"
+    const val DEFAULT_OPTION_ID = DISTANCE_OPTION_ID
+
     val availableOptions = listOf(
         WriteOption(
-            id = "distance_sharing",
+            id = DISTANCE_OPTION_ID,
             displayName = "거리공유"
         ),
         WriteOption(
@@ -16,6 +19,10 @@ object WriteOptions {
             displayName = "24시간"
         )
     )
-    
-    val defaultOption = availableOptions.first()
+
+    val defaultOption: WriteOption =
+        availableOptions.first { it.id == DEFAULT_OPTION_ID }
+
+    fun findById(id: String): WriteOption? =
+        availableOptions.firstOrNull { it.id == id }
 }

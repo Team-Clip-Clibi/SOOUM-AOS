@@ -1,6 +1,7 @@
 package com.phew.core_design.component.card
 
 import android.annotation.SuppressLint
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -37,7 +38,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -96,11 +99,16 @@ sealed class BaseCardData(open val id: String, open val type: CardType) {
     data class Write(
         val content: String,
         val tags: List<String> = emptyList(),
+        val backgroundResId: Int? = null,
+        val backgroundUri: Uri? = null,
+        val fontFamily: FontFamily? = null,
         val showAddButton: Boolean = true,
         val onContentChange: (String) -> Unit = {},
         val onContentEnter: () -> Unit = {},
         val onAddTag: (String) -> Unit = {},
         val onRemoveTag: (String) -> Unit = {},
+        val shouldFocusTagInput: Boolean = false,
+        val onTagFocusHandled: () -> Unit = {},
         override val id: String = ""
     ) : BaseCardData(id, CardType.WRITE)
 
@@ -173,7 +181,8 @@ private fun EditableWriteContentBox(
     content: String,
     modifier: Modifier = Modifier,
     onContentChange: (String) -> Unit,
-    onEnterPressed: () -> Unit
+    onEnterPressed: () -> Unit,
+    fontFamily: FontFamily?
 ) {
     BoxWithConstraints(
         modifier = modifier
@@ -188,6 +197,9 @@ private fun EditableWriteContentBox(
         val scrollState = rememberScrollState()
         val boundedHeight = maxHeight.takeIf { it.isFinite } ?: 200.dp
 
+        val baseStyle = TextComponent.BODY_1_M_14
+        val textStyle = fontFamily?.let { baseStyle.copy(fontFamily = it) } ?: baseStyle
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -195,15 +207,19 @@ private fun EditableWriteContentBox(
                 .verticalScroll(scrollState),
             contentAlignment = Alignment.Center
         ) {
+            val focusManager = LocalFocusManager.current
             BasicTextField(
                 value = content,
                 onValueChange = { newValue ->
-                    if (newValue.count { it == '\n' } > content.count { it == '\n' }) {
+                    val containsNewLine = newValue.contains('\n')
+                    val sanitized = newValue.replace("\n", "")
+                    if (containsNewLine) {
+                        focusManager.clearFocus(force = true)
                         onEnterPressed()
                     }
-                    onContentChange(newValue)
+                    onContentChange(sanitized)
                 },
-                textStyle = TextComponent.BODY_1_M_14.copy(
+                textStyle = textStyle.copy(
                     color = CardDesignTokens.TextPrimary,
                     textAlign = TextAlign.Center
                 ),
@@ -218,7 +234,7 @@ private fun EditableWriteContentBox(
                         if (content.isBlank()) {
                             Text(
                                 text = " ",
-                                style = TextComponent.BODY_1_M_14.copy(color = CardDesignTokens.TextPrimary),
+                                style = textStyle.copy(color = CardDesignTokens.TextPrimary),
                                 textAlign = TextAlign.Center
                             )
                         }
@@ -274,44 +290,81 @@ private fun WriteCard(
 ) {
     BaseCard(
         modifier = modifier.fillMaxWidth(),
-        backgroundColor = CardDesignTokens.CardBackgroundCyan
+        backgroundColor = Color.Transparent
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // 상단 여백
-            Spacer(modifier = Modifier.weight(1f))
-            
-            // 중앙 컨텐츠 영역
-            EditableWriteContentBox(
-                modifier = Modifier.fillMaxWidth(),
-                content = data.content,
-                onContentChange = data.onContentChange,
-                onEnterPressed = data.onContentEnter
-            )
-            
-            // 중간 여백 (태그와 컨텐츠 사이)
-            Spacer(modifier = Modifier.weight(1f))
-            
-            // 하단 태그 영역
-            if (data.tags.isNotEmpty() || data.showAddButton) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .height(60.dp),
-                    contentAlignment = Alignment.Center
-                ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            val backgroundModifier = Modifier
+                .matchParentSize()
+                .clip(RoundedCornerShape(CardDesignTokens.CardRadius))
+
+            when {
+                data.backgroundUri != null -> {
+                    AsyncImage(
+                        model = data.backgroundUri,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = backgroundModifier
+                    )
+                }
+
+                data.backgroundResId != null -> {
+                    Image(
+                        painter = painterResource(id = data.backgroundResId),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = backgroundModifier
+                    )
+                }
+
+                else -> {
+                    Box(
+                        modifier = backgroundModifier.background(CardDesignTokens.CardBackgroundCyan)
+                    )
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Transparent)
+            ) {
+                // 상단 여백
+                Spacer(modifier = Modifier.weight(1f))
+
+                // 중앙 컨텐츠 영역
+                EditableWriteContentBox(
+                    modifier = Modifier.fillMaxWidth(),
+                    content = data.content,
+                    onContentChange = data.onContentChange,
+                    onEnterPressed = data.onContentEnter,
+                    fontFamily = data.fontFamily
+                )
+
+                // 중간 여백 (태그와 컨텐츠 사이)
+                Spacer(modifier = Modifier.weight(1f))
+
+                // 하단 태그 영역
+                if (data.tags.isNotEmpty() || data.showAddButton) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .height(60.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
                     TagRow(
                         tags = data.tags,
                         enableAdd = data.showAddButton,
                         onAdd = data.onAddTag,
-                        onRemove = data.onRemoveTag
+                        onRemove = data.onRemoveTag,
+                        shouldFocus = data.shouldFocusTagInput,
+                        onFocusHandled = data.onTagFocusHandled
                     )
                 }
             } else {
-                // 태그가 없을 때도 동일한 높이 유지
-                Spacer(modifier = Modifier.height(60.dp))
+                    // 태그가 없을 때도 동일한 높이 유지
+                    Spacer(modifier = Modifier.height(60.dp))
+                }
             }
         }
     }

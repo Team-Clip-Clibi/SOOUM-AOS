@@ -13,4 +13,6 @@
     <string name="bottom_view_my">마이</string>
     <string name="tag_add_new">태그 추가</string>
     <string name="card_deleted">삭제된 카드예요</string>
+    <string name="camera_picker_album">앨범에서 사진 선택</string>
+    <string name="camera_picker_camera">사진 찍기</string>
 </resources>
