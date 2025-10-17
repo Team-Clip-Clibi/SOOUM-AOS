@@ -32,10 +32,11 @@ class NotifyRepositoryImpl @Inject constructor(private val notifyHttp: NotifyHtt
             return DataResult.Success(
                 Pair(request.code(), body.notices.map { data ->
                     Notice(
-                        title = data.title,
+                        content = data.title,
                         url = data.url ?: "",
                         createdAt = data.createdAt,
-                        id = data.id
+                        id = data.id,
+                        noticeType =data.noticeType
                     )
                 })
             )

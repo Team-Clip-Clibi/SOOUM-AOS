@@ -43,8 +43,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.paging.compose.LazyPagingItems
-import androidx.paging.compose.collectAsLazyPagingItems
 import com.airbnb.lottie.LottieComposition
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
@@ -57,28 +55,21 @@ import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
 import com.phew.domain.dto.FeedCardType
 import com.phew.domain.dto.Notice
-import com.phew.domain.dto.Notification
 import com.phew.feed.FeedUi
 import com.phew.feed.NAV_HOME_FEED_INDEX
 import com.phew.feed.NAV_HOME_NEAR_INDEX
 import com.phew.feed.NAV_HOME_POPULAR_INDEX
+import com.phew.presentation.feed.R
 import com.phew.feed.viewModel.DistanceType
 import com.phew.feed.viewModel.FeedPagingState
 import com.phew.feed.viewModel.FeedType
 import com.phew.feed.viewModel.HomeViewModel
 import com.phew.feed.viewModel.UiState
-import com.phew.presentation.feed.R
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 
-// TODO : Feed Route로 바꾸면서 네비게이션 처리 필요
-//@Composable
-//fun FeedRoute(
-//    modifier: Modifier = Modifier,
-//    viewModel: HomeViewModel = hiltViewModel()
-//) {
-//
-//}
 
+@OptIn(FlowPreview::class)
 @Composable
 fun FeedView(
     viewModel: HomeViewModel,
@@ -86,11 +77,11 @@ fun FeedView(
     requestPermission: () -> Unit,
     closeDialog: () -> Unit,
     noticeClick: () -> Unit,
+    webViewClick: (String) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val notice = viewModel.notice.collectAsLazyPagingItems()
-    val unRead = viewModel.unReadNotification.collectAsLazyPagingItems()
     val isRefreshing = uiState.refresh is UiState.Loading
+    val feedNoticeState = uiState.feedNotification
     val lazyListState = rememberLazyListState()
     var isTabsVisible by remember { mutableStateOf(true) }
     val nestedScrollConnection = remember {
@@ -155,9 +146,8 @@ fun FeedView(
             },
             nearClick = viewModel::checkLocationPermission,
             isTabsVisible = isTabsVisible,
-            notice = notice,
+            notice = feedNoticeState is UiState.Success && feedNoticeState.data.isNotEmpty(),
             noticeClick = noticeClick,
-            activate = unRead,
             distanceClick = { value ->
                 viewModel.switchDistanceTab(value)
             },
@@ -176,7 +166,11 @@ fun FeedView(
             onClick = {
                 //   TODO 상세 보기 화면으로 이동 필요
             },
-            onRemoveCard = viewModel::removeFeedCard
+            onRemoveCard = viewModel::removeFeedCard,
+            feedNotice = if (feedNoticeState is UiState.Success) feedNoticeState.data else emptyList(),
+            feedNoticeClick = { url ->
+                webViewClick(url)
+            }
         )
         if (uiState.shouldShowPermissionRationale) {
             DialogComponent.DefaultButtonTwo(
@@ -203,9 +197,8 @@ private fun TopLayout(
     popularClick: () -> Unit,
     nearClick: () -> Unit,
     isTabsVisible: Boolean,
-    notice: LazyPagingItems<Notice>,
+    notice: Boolean,
     noticeClick: () -> Unit,
-    activate: LazyPagingItems<Notification>,
     distanceClick: (DistanceType) -> Unit,
     selectDistance : DistanceType
 ) {
@@ -221,7 +214,7 @@ private fun TopLayout(
     ) {
         AppBar.HomeAppBar(
             onClick = noticeClick,
-            newAlarm = notice.itemCount != 0 && activate.itemCount != 0,
+            newAlarm = notice,
         )
         FeedUi.AnimatedFeedTabLayout(
             selectTabData = selectIndex,
@@ -249,10 +242,13 @@ private fun FeedContent(
     progress: Float,
     onClick: (String) -> Unit,
     onRemoveCard: (String) -> Unit,
+    feedNotice: List<Notice>,
+    feedNoticeClick: (String) -> Unit,
 ) {
     when (currentPagingState) {
         is FeedPagingState.None,
-        is FeedPagingState.Loading -> {
+        is FeedPagingState.Loading,
+            -> {
             if (isRefreshing || currentPagingState is FeedPagingState.Loading) {
                 // 로딩 UI는 PullToRefresh에서 처리 또는 초기 로딩
             }
@@ -273,8 +269,10 @@ private fun FeedContent(
                     nestedScrollConnection = nestedScrollConnection,
                     composition = composition,
                     progress = progress,
-                    onClick = onClick,
-                    onRemoveCard = onRemoveCard
+                    cardClick = onClick,
+                    onRemoveCard = onRemoveCard,
+                    feedNotice = feedNotice,
+                    feedNoticeClick = feedNoticeClick
                 )
             }
         }
@@ -292,8 +290,10 @@ private fun FeedContent(
                     nestedScrollConnection = nestedScrollConnection,
                     composition = composition,
                     progress = progress,
-                    onClick = onClick,
-                    onRemoveCard = onRemoveCard
+                    cardClick = onClick,
+                    onRemoveCard = onRemoveCard,
+                    feedNotice = feedNotice,
+                    feedNoticeClick = feedNoticeClick
                 )
             }
         }
@@ -342,8 +342,10 @@ private fun FeedListView(
     nestedScrollConnection: NestedScrollConnection,
     composition: LottieComposition?,
     progress: Float,
-    onClick: (String) -> Unit,
+    cardClick: (String) -> Unit,
     onRemoveCard: (String) -> Unit,
+    feedNotice: List<Notice>,
+    feedNoticeClick: (String) -> Unit,
 ) {
     val refreshingOffset = 56.dp
     val refreshState = rememberPullToRefreshState()
@@ -389,6 +391,12 @@ private fun FeedListView(
                 },
             state = lazyListState
         ) {
+            item {
+                FeedUi.FeedNoticeView(
+                    feedNotice = feedNotice,
+                    feedNoticeClick = feedNoticeClick
+                )
+            }
             itemsIndexed(
                 items = feedCards,
                 key = { _, feedCard ->
@@ -398,10 +406,10 @@ private fun FeedListView(
                         is FeedCardType.NormalType -> feedCard.cardId
                     }
                 }
-            ) { index, feedCard ->
+            ) { _, feedCard ->
                 FeedUi.TypedFeedCardView(
                     feedCard = feedCard,
-                    onClick = onClick,
+                    onClick = cardClick,
                     onRemoveCard = onRemoveCard
                 )
                 Spacer(modifier = Modifier.height(10.dp))

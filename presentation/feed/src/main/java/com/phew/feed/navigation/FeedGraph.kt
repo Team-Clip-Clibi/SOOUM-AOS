@@ -47,7 +47,8 @@ fun NavGraphBuilder.feedGraph(
     appState: SooumAppState,
     navController: NavHostController,
     finish: () -> Unit,
-    onBackPressed: () -> Unit
+    onBackPressed: () -> Unit,
+    webView: (String) -> Unit,
 ) {
     navigation(
         route = FEED_GRAPH,
@@ -83,7 +84,8 @@ fun NavGraphBuilder.feedGraph(
                     )
                 },
                 closeDialog = homeViewModel::rationalDialogDismissed,
-                noticeClick = navController::navigateToNotify
+                noticeClick = navController::navigateToNotify,
+                webViewClick = webView
             )
         }
 
