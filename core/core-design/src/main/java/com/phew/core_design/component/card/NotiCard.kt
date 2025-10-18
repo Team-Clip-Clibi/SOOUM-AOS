@@ -10,9 +10,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.pager.PagerState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
@@ -30,7 +27,6 @@ import com.phew.core_design.NeutralColor
 import com.phew.core_design.Primary
 import com.phew.core_design.R
 import com.phew.core_design.TextComponent
-import com.phew.core_design.component.card.component.IndicatorDot
 import com.phew.core_design.theme.SooumTheme
 
 // NotiCard 데이터 모델
@@ -111,7 +107,6 @@ internal fun NotiCard(
 @Composable
 fun NotiCardPager(
     dataList: List<NotiCardData>,
-    pagerState: PagerState,
     onClick: (NotiCardData) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -124,13 +119,6 @@ fun NotiCardPager(
             NotiCard(
                 data = data,
                 onClick = { onClick(data) }
-            )
-        }
-        // 하단 인디케이터 도트 (카드가 1개 이상일 때만 표시)
-        if (dataList.size > 1) {
-            IndicatorDot(
-                pagerState = pagerState,
-                totalSize = dataList.size
             )
         }
     }

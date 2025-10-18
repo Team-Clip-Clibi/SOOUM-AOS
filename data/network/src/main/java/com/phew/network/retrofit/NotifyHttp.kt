@@ -13,11 +13,14 @@ interface NotifyHttp {
      * Notice url
      */
     @GET(BuildConfig.API_URL_NOTICE)
-    suspend fun requestNotice(): Response<NoticeDto>
+    suspend fun requestNotice(
+        @Query("pageSize") pageSize: Int,
+    ): Response<NoticeDto>
 
     @GET(BuildConfig.API_URL_NOTICE)
     suspend fun requestNoticePatch(
         @Query("lastId") lastId: Int,
+        @Query("pageSize") pageSize: Int,
     ): Response<NoticeDto>
 
     /**

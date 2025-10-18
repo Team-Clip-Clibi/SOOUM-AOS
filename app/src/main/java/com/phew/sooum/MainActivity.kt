@@ -8,7 +8,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.runtime.CompositionLocalProvider
 import dagger.hilt.android.AndroidEntryPoint
-import com.phew.sooum.ui.Nav
 import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -33,15 +32,6 @@ class MainActivity : ComponentActivity() {
         controller.isAppearanceLightNavigationBars = true
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
         setContent {
-            //  기존 코드
-//            Nav(
-//                finish = {
-//                    finish()
-//                },
-//                update = {
-//                    playStore()
-//                }
-//            )
             CompositionLocalProvider(
                 LocalLifecycleAwareComposables provides lifecycleAwareComposables
             ) {
@@ -52,6 +42,9 @@ class MainActivity : ComponentActivity() {
                         },
                         appVersionUpdate = {
                             playStore()
+                        },
+                        webView = { url ->
+                            openWebPage(url)
                         }
                     )
                 }
@@ -71,6 +64,16 @@ class MainActivity : ComponentActivity() {
         } catch (e: Exception) {
             e.printStackTrace()
             throw IllegalArgumentException(e)
+        }
+    }
+
+    private fun openWebPage(url: String) {
+        if (url.trim().isEmpty()) return
+        try {
+            val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+            startActivity(intent)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 }

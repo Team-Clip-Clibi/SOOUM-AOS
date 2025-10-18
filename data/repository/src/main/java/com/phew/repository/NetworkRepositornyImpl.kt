@@ -10,11 +10,14 @@ import com.phew.network.retrofit.NotifyHttp
 import com.phew.repository.mapper.toDomain
 import javax.inject.Inject
 
-class NotifyRepositoryImpl @Inject constructor(private val notifyHttp: NotifyHttp) : NotifyRepository {
+class NotifyRepositoryImpl @Inject constructor(private val notifyHttp: NotifyHttp) :
+    NotifyRepository {
 
-    override suspend fun requestNotice(): DataResult<Pair<Int, List<Notice>>> {
+    override suspend fun requestNotice(pageSize: Int): DataResult<Pair<Int, List<Notice>>> {
         try {
-            val request = notifyHttp.requestNotice()
+            val request = notifyHttp.requestNotice(
+                pageSize = pageSize
+            )
             if (!request.isSuccessful) return DataResult.Fail(
                 code = request.code(),
                 message = request.message()
@@ -29,10 +32,11 @@ class NotifyRepositoryImpl @Inject constructor(private val notifyHttp: NotifyHtt
             return DataResult.Success(
                 Pair(request.code(), body.notices.map { data ->
                     Notice(
-                        title = data.title,
+                        content = data.title,
                         url = data.url ?: "",
                         createdAt = data.createdAt,
-                        id = data.id
+                        id = data.id,
+                        noticeType =data.noticeType
                     )
                 })
             )
@@ -48,10 +52,12 @@ class NotifyRepositoryImpl @Inject constructor(private val notifyHttp: NotifyHtt
 
     override suspend fun requestNoticePatch(
         lastId: Int,
+        pageSize: Int,
     ): DataResult<Pair<Int, List<Notice>>> {
         try {
             val request = notifyHttp.requestNoticePatch(
-                lastId = lastId
+                lastId = lastId,
+                pageSize = pageSize
             )
             if (!request.isSuccessful) return DataResult.Fail(
                 code = request.code(),
@@ -92,8 +98,8 @@ class NotifyRepositoryImpl @Inject constructor(private val notifyHttp: NotifyHtt
             if (data.isEmpty()) {
                 return DataResult.Success(Pair(request.code(), emptyList()))
             }
-            val domainBody = data.map { data ->
-                data.toDomain()
+            val domainBody = data.map { response ->
+                response.toDomain()
             }
             return DataResult.Success(Pair(request.code(), domainBody))
         } catch (e: Exception) {
@@ -107,7 +113,7 @@ class NotifyRepositoryImpl @Inject constructor(private val notifyHttp: NotifyHtt
     }
 
     override suspend fun requestNotificationUnReadPatch(
-        lastId: Long
+        lastId: Long,
     ): DataResult<Pair<Int, List<Notification>>> {
         try {
             val request =
@@ -122,8 +128,8 @@ class NotifyRepositoryImpl @Inject constructor(private val notifyHttp: NotifyHtt
             if (data.isEmpty()) {
                 return DataResult.Success(Pair(request.code(), emptyList()))
             }
-            val domainBody = data.map { data ->
-                data.toDomain()
+            val domainBody = data.map { response ->
+                response.toDomain()
             }
             return DataResult.Success(Pair(request.code(), domainBody))
         } catch (e: Exception) {
@@ -150,8 +156,8 @@ class NotifyRepositoryImpl @Inject constructor(private val notifyHttp: NotifyHtt
             if (data.isEmpty()) {
                 return DataResult.Success(Pair(request.code(), emptyList()))
             }
-            val domainBody = data.map { data ->
-                data.toDomain()
+            val domainBody = data.map { response ->
+                response.toDomain()
             }
             return DataResult.Success(Pair(request.code(), domainBody))
         } catch (e: Exception) {
@@ -165,7 +171,7 @@ class NotifyRepositoryImpl @Inject constructor(private val notifyHttp: NotifyHtt
     }
 
     override suspend fun requestNotificationReadPatch(
-        lastId: Long
+        lastId: Long,
     ): DataResult<Pair<Int, List<Notification>>> {
         try {
             val request = notifyHttp.requestNotificationReadPatch(lastId = lastId)
@@ -179,8 +185,8 @@ class NotifyRepositoryImpl @Inject constructor(private val notifyHttp: NotifyHtt
             if (data.isEmpty()) {
                 return DataResult.Success(Pair(request.code(), emptyList()))
             }
-            val domainBody = data.map { data ->
-                data.toDomain()
+            val domainBody = data.map { response ->
+                response.toDomain()
             }
             return DataResult.Success(Pair(request.code(), domainBody))
         } catch (e: Exception) {

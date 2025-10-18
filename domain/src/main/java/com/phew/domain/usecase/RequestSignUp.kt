@@ -48,6 +48,8 @@ class RequestSignUp @Inject constructor(
             return DomainResult.Failure(ERROR_FAIL_JOB)
         }
         val deviceId = deviceRepository.requestDeviceId()
+        val deviceModel = deviceRepository.requestDeviceModel()
+        val androidOs = deviceRepository.requestDeviceOS()
         val requestKey = repository.requestSecurityKey()
         if (requestKey is DataResult.Fail) {
             return DomainResult.Failure(ERROR_NETWORK)
@@ -83,7 +85,9 @@ class RequestSignUp @Inject constructor(
             profileImage = fileName,
             agreedToTermsOfService = data.agreedToTermsOfService,
             agreedToLocationTerms = data.agreedToLocationTerms,
-            agreedToPrivacyPolicy = data.agreedToPrivacyPolicy
+            agreedToPrivacyPolicy = data.agreedToPrivacyPolicy,
+            deviceModel = deviceModel,
+            deviceOs = androidOs
         )
         when (request) {
             is DataResult.Fail -> {

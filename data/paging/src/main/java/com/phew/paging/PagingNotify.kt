@@ -26,9 +26,9 @@ class PagingNotify @Inject constructor(
 
         return try {
             val result = if (key == -1) {
-                notifyRepository.requestNotice()
+                notifyRepository.requestNotice(pageSize = 30)
             } else {
-                notifyRepository.requestNoticePatch(lastId = key)
+                notifyRepository.requestNoticePatch(lastId = key, pageSize = 30)
             }
 
             when (result) {

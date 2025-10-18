@@ -22,6 +22,8 @@ interface SignUpRepository {
         agreedToTermsOfService: Boolean,
         agreedToLocationTerms: Boolean,
         agreedToPrivacyPolicy: Boolean,
+        deviceModel: String,
+        deviceOs: String
     ): DataResult<Token>
 
     suspend fun requestCheckNickName(nickname: String): DataResult<Boolean>

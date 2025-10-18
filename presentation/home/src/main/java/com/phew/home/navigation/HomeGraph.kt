@@ -24,7 +24,8 @@ fun NavGraphBuilder.homeGraph(
     appState: SooumAppState,
     navController: NavHostController,
     finish: () -> Unit,
-    onBackPressed: () -> Unit
+    onBackPressed: () -> Unit,
+    webView: (String) -> Unit,
 ) {
     navigation(route = HOME_GRAPH, startDestination = FEED_GRAPH) {
         // Feed Card Graph
@@ -32,7 +33,8 @@ fun NavGraphBuilder.homeGraph(
             appState = appState,
             navController = navController,
             finish = finish,
-            onBackPressed = onBackPressed
+            onBackPressed = onBackPressed,
+            webView = webView
         )
 
         writeGraph(

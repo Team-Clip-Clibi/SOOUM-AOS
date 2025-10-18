@@ -15,4 +15,5 @@ class NoticeData(
     val url: String?,
     val createdAt: String,
     val id: Int,
+    val noticeType : String
 )
