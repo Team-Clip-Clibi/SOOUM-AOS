@@ -84,7 +84,9 @@ class SignUpRepositoryImpl @Inject constructor(private val signUpHttp : SignUpHt
         profileImage: String?,
         agreedToTermsOfService: Boolean,
         agreedToLocationTerms: Boolean,
-        agreedToPrivacyPolicy: Boolean
+        agreedToPrivacyPolicy: Boolean,
+        deviceModel: String,
+        deviceOs: String
     ): DataResult<Token> {
         val signUpRequest = SignUpRequest(
             memberInfo = MemberInfoDTO(
@@ -93,7 +95,9 @@ class SignUpRepositoryImpl @Inject constructor(private val signUpHttp : SignUpHt
                 isNotificationAgreed = isNotificationAgreed,
                 profileImage = profileImage,
                 nickname = nickname,
-                deviceType = "ANDROID"
+                deviceType = "ANDROID",
+                deviceModel = deviceModel,
+                deviceOsVersion = deviceOs
             ),
             policy = PolicyDTO(
                 agreedToLocationTerms = agreedToLocationTerms,

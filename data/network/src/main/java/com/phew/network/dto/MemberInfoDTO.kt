@@ -10,5 +10,7 @@ data class MemberInfoDTO(
     val fcmToken: String,
     val isNotificationAgreed: Boolean,
     val nickname: String,
-    val profileImage: String?
+    val profileImage: String?,
+    val deviceOsVersion: String,
+    val deviceModel: String
 )
