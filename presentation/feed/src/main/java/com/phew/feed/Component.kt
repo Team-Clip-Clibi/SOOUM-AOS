@@ -6,7 +6,6 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -16,14 +15,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LocalContentColor
@@ -42,7 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color.Companion.Red
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -51,8 +46,6 @@ import androidx.compose.ui.unit.dp
 import com.phew.core_common.TimeUtils
 import com.phew.core_common.log.SooumLog
 import com.phew.core_design.NeutralColor
-import com.phew.core_design.NeutralColor.GRAY_100
-import com.phew.core_design.NeutralColor.GRAY_300
 import com.phew.core_design.NeutralColor.GRAY_400
 import com.phew.core_design.NeutralColor.GRAY_600
 import com.phew.core_design.NeutralColor.WHITE
@@ -62,9 +55,13 @@ import com.phew.core_design.component.card.FeedAdminCard
 import com.phew.core_design.component.card.FeedDefaultCard
 import com.phew.core_design.component.card.FeedDeletedCard
 import com.phew.core_design.component.card.FeedPungCard
+import com.phew.core_design.component.card.NotiCardData
+import com.phew.core_design.component.card.NotiCardPager
+import com.phew.core_design.component.card.component.IndicatorDot
 import com.phew.core_design.component.tab.SooumTab
 import com.phew.core_design.component.tab.SooumTabRow
-import com.phew.core_design.theme.unknownColor
+import com.phew.core_design.theme.MAIN
+import com.phew.core_design.theme.M_YELLOW
 import com.phew.domain.dto.FeedCardType
 import com.phew.domain.dto.FeedLikeNotification
 import com.phew.domain.dto.FollowNotification
@@ -104,90 +101,45 @@ object FeedUi {
                     .height(71.dp)
                     .clip(shape = RoundedCornerShape(size = 16.dp))
             ) { page ->
-                FeedNoticeItem(
-                    notice = feedNotice[page % feedNotice.size],
-                    onClick = { url ->
-                        feedNoticeClick(url)
-                    }
-                )
-            }
-            NoticePageIndicator(
-                pagerState = pagerState,
-                modifier = Modifier.align(Alignment.TopEnd),
-                pageSize = feedNotice.size
-            )
-        }
-    }
-
-    @Composable
-    private fun FeedNoticeItem(notice: Notice, onClick: (String) -> Unit) {
-        Row(
-            modifier = Modifier
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) {
-                    onClick(notice.url)
-                }
-                .shadow(elevation = 16.dp, spotColor = unknownColor)
-                .border(width = 1.dp, color = GRAY_100, shape = RoundedCornerShape(size = 16.dp))
-                .width(328.dp)
-                .height(71.dp)
-                .background(color = WHITE, shape = RoundedCornerShape(size = 16.dp))
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.Start),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Image(
-                modifier = Modifier
-                    .size(28.dp)
-                    .padding(start = 4.dp, top = 4.5.dp, end = 4.dp, bottom = 3.5.dp),
-                painter = when (notice.type) {
-                    Notice.NoticeType.ANNOUNCEMENT -> painterResource(com.phew.core_design.R.drawable.ic_notification)
-                    Notice.NoticeType.NEWS -> painterResource(com.phew.core_design.R.drawable.ic_mail_filled_bule)
-                    Notice.NoticeType.MAINTENANCE -> painterResource(com.phew.core_design.R.drawable.ic_headset_filled_yellow)
-                },
-                contentDescription = notice.noticeType
-            )
-            Column {
-                Text(
-                    text = when (notice.type) {
-                        Notice.NoticeType.ANNOUNCEMENT -> stringResource(R.string.home_notice_notice)
-                        Notice.NoticeType.NEWS -> stringResource(R.string.home_notice_news)
-                        Notice.NoticeType.MAINTENANCE -> stringResource(R.string.home_notice_service)
-                    },
-                    style = TextComponent.CAPTION_2_M_12,
-                    color = GRAY_400
-                )
-                Text(
-                    text = notice.content,
-                    style = TextComponent.SUBTITLE_3_SB_14,
-                    color = GRAY_600
-                )
-            }
-        }
-    }
-
-    @Composable
-    private fun NoticePageIndicator(
-        pagerState: PagerState,
-        modifier: Modifier = Modifier,
-        pageSize: Int,
-    ) {
-        Row(
-            modifier = modifier.padding(top = 16.dp, end = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
-            repeat(pageSize) { iteration ->
+                val actualIndex = page % feedNotice.size
+                val currentNotice = feedNotice[actualIndex]
                 Box(
-                    modifier = Modifier
-                        .width(
-                            if (iteration == pagerState.currentPage % pageSize) 8.dp else 4.dp
-                        )
-                        .height(4.dp)
-                        .clip(CircleShape)
-                        .background(color = if (iteration == pagerState.currentPage % pageSize) GRAY_600 else GRAY_300)
-                )
+                    modifier = Modifier.fillMaxWidth().wrapContentHeight()
+                ){
+                    NotiCardPager(
+                        modifier = Modifier.fillMaxWidth().align(Alignment.CenterStart),
+                        dataList = feedNotice.map { data ->
+                            NotiCardData(
+                                title = when (currentNotice.type) {
+                                    Notice.NoticeType.ANNOUNCEMENT -> stringResource(R.string.home_notice_notice)
+                                    Notice.NoticeType.NEWS -> stringResource(R.string.home_notice_news)
+                                    Notice.NoticeType.MAINTENANCE -> stringResource(R.string.home_notice_service)
+                                },
+                                description = currentNotice.content,
+                                id = currentNotice.id.toString(),
+                                iconRes = when (currentNotice.type) {
+                                    Notice.NoticeType.ANNOUNCEMENT -> com.phew.core_design.R.drawable.ic_notification
+                                    Notice.NoticeType.NEWS -> com.phew.core_design.R.drawable.ic_mail_filled_bule
+                                    Notice.NoticeType.MAINTENANCE -> com.phew.core_design.R.drawable.ic_headset_filled_yellow
+                                },
+                                iconTint = when (currentNotice.type) {
+                                    Notice.NoticeType.ANNOUNCEMENT -> Red
+                                    Notice.NoticeType.NEWS -> MAIN
+                                    Notice.NoticeType.MAINTENANCE -> M_YELLOW
+                                },
+                                iconBackgroundColor = NeutralColor.GRAY_100,
+                            )
+                        },
+                        onClick = {
+                            feedNoticeClick(currentNotice.url)
+                        },
+                    )
+                    IndicatorDot(
+                        pagerState = pagerState,
+                        totalSize = feedNotice.size,
+                        modifier =  Modifier.padding(top = 16.dp, end = 16.dp).align(Alignment.TopEnd)
+                    )
+                }
             }
         }
     }
