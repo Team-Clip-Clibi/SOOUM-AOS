@@ -2,27 +2,31 @@ package com.phew.core.ui.component.camera
 
 import android.Manifest
 import android.net.Uri
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.phew.core.ui.model.CameraCaptureRequest
 import com.phew.core.ui.model.CameraPickerEffectState
-import kotlinx.coroutines.launch
+import com.phew.core_common.log.SooumLog
+
+private val DefaultAlbumPermissions: Array<String> =
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        arrayOf(Manifest.permission.READ_MEDIA_IMAGES)
+    } else {
+        arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+    }
 
 @Composable
 fun CameraPickerEffect(
     effectState: CameraPickerEffectState,
-    snackBarHostState: SnackbarHostState,
     onAlbumRequestConsumed: () -> Unit,
     onAlbumPicked: (Uri) -> Unit,
     onCameraPermissionRequestConsumed: () -> Unit,
@@ -30,13 +34,12 @@ fun CameraPickerEffect(
     onCameraCaptureLaunched: (CameraCaptureRequest) -> Unit,
     onCameraCaptureResult: (Boolean, Uri) -> Unit,
     cameraPermissions: Array<String> = arrayOf(Manifest.permission.CAMERA),
-    albumPermissions: Array<String> = emptyArray(),
-    albumDeniedMessage: String? = null,
-    cameraDeniedMessage: String? = null,
+    albumPermissions: Array<String> = DefaultAlbumPermissions,
+    onCameraPermissionDenied: () -> Unit = {},
+    onGalleryPermissionDenied: () -> Unit = {},
     mediaRequest: PickVisualMediaRequest = PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
 ) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     val anyAlbumPermission = albumPermissions.isNotEmpty()
     val anyCameraPermission = cameraPermissions.isNotEmpty()
 
@@ -57,15 +60,11 @@ fun CameraPickerEffect(
             val granted = albumPermissions.all { permission ->
                 result[permission] ?: false
             }
+            SooumLog.d(TAG, "album permission result : $granted")
             if (granted) {
                 albumLauncher.launch(mediaRequest)
-            } else if (!albumDeniedMessage.isNullOrEmpty()) {
-                scope.launch {
-                    snackBarHostState.showSnackbar(
-                        message = albumDeniedMessage,
-                        duration = SnackbarDuration.Short
-                    )
-                }
+            } else {
+                onGalleryPermissionDenied()
             }
         }
     )
@@ -77,13 +76,8 @@ fun CameraPickerEffect(
                 result[permission] ?: false
             }
             onCameraPermissionResult(granted)
-            if (!granted && !cameraDeniedMessage.isNullOrEmpty()) {
-                scope.launch {
-                    snackBarHostState.showSnackbar(
-                        message = cameraDeniedMessage,
-                        duration = SnackbarDuration.Short
-                    )
-                }
+            if (!granted) {
+                onCameraPermissionDenied()
             }
         }
     )
@@ -131,3 +125,5 @@ fun CameraPickerEffect(
         takePictureLauncher.launch(request.uri)
     }
 }
+
+private const val TAG = "CameraPickerEffect"

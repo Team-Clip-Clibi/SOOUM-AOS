@@ -78,7 +78,6 @@ fun ProfileImageView(viewModel: SignUpViewModel, onBack: () -> Unit, nexPage: ()
         }
     }
 
-    val permissionMessage = context.getString(com.phew.core_design.R.string.common_permission)
     val cameraPermissions = arrayOf(Manifest.permission.CAMERA)
     val albumPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         arrayOf(Manifest.permission.READ_MEDIA_IMAGES)
@@ -92,7 +91,6 @@ fun ProfileImageView(viewModel: SignUpViewModel, onBack: () -> Unit, nexPage: ()
             requestCameraPermission = uiState.shouldRequestProfileCameraPermission,
             pendingCapture = uiState.pendingProfileCameraCapture
         ),
-        snackBarHostState = snackBarHostState,
         onAlbumRequestConsumed = viewModel::onProfileAlbumRequestConsumed,
         onAlbumPicked = viewModel::onAlbumImagePicked,
         onCameraPermissionRequestConsumed = viewModel::onProfileCameraPermissionRequestConsumed,
@@ -102,9 +100,7 @@ fun ProfileImageView(viewModel: SignUpViewModel, onBack: () -> Unit, nexPage: ()
             viewModel.onProfileCameraCaptureResult(success, uri)
         },
         cameraPermissions = cameraPermissions,
-        albumPermissions = albumPermissions,
-        albumDeniedMessage = permissionMessage,
-        cameraDeniedMessage = permissionMessage
+        albumPermissions = albumPermissions
     )
 
     Scaffold(

@@ -35,14 +35,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -50,8 +48,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -63,6 +60,21 @@ import com.phew.core_design.Primary
 import com.phew.core_design.R
 import com.phew.core_design.TextComponent
 import com.phew.core_design.component.tag.TagDesignTokens.IconAndTextPadding
+
+object TagPolicy {
+    const val MIN_LENGTH = 1
+    const val MAX_LENGTH = 15
+
+    fun sanitize(input: String): String {
+        val filtered = input.filterNot { it.isWhitespace() }
+        return if (filtered.length <= MAX_LENGTH) filtered else filtered.take(MAX_LENGTH)
+    }
+
+    fun isValid(input: String): Boolean {
+        val length = input.length
+        return length in MIN_LENGTH..MAX_LENGTH
+    }
+}
 
 object TagDesignTokens {
 
@@ -118,11 +130,16 @@ fun Tag(
     state: TagState,
     text: String = "",
     number: String = "",
+    numberValue: String = number,
+    numberUnit: String = "",
     onTextChange: (String) -> Unit = {},
     onComplete: () -> Unit = {},
     onRemove: () -> Unit = {},
     onClick: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    requestFocusKey: Int = 0,
+    showRemoveIcon: Boolean = false,
+    onInputFocusChanged: (Boolean) -> Unit = {}
 ) {
     when (state) {
         TagState.AddNew -> TagAddNew(onClick = onClick, modifier = modifier)
@@ -134,12 +151,27 @@ fun Tag(
             onTextChange = onTextChange,
             onComplete = onComplete,
             onRemove = onRemove,
+            modifier = modifier,
+            requestFocusKey = requestFocusKey,
+            onFocusChanged = onInputFocusChanged
+        )
+
+        TagState.Default -> TagDefault(
+            text = text,
+            showRemoveIcon = showRemoveIcon,
+            onRemove = onRemove,
+            onClick = onClick,
             modifier = modifier
         )
 
-        TagState.Default -> TagDefault(text = text, onClick = onClick, modifier = modifier)
-
-        TagState.Number -> TagNumber(text = text, number = number, onClick = onClick, modifier = modifier)
+        TagState.Number -> TagNumber(
+            text = text, 
+            number = number, 
+            numberValue = numberValue,
+            numberUnit = numberUnit,
+            onClick = onClick, 
+            modifier = modifier
+        )
     }
 }
 
@@ -151,15 +183,26 @@ internal fun TagRow(
     onRemove: (String) -> Unit,
     shouldFocus: Boolean = false,
     onFocusHandled: () -> Unit = {},
+    currentInput: String = "",
+    onInputChange: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    var input by remember { mutableStateOf("") }
+    var input by remember { mutableStateOf(currentInput) }
     var state by remember { mutableStateOf(TagState.AddNew) }
     val focusHandled by rememberUpdatedState(onFocusHandled)
+    var focusTrigger by remember { mutableStateOf(0) }
+    var awaitingFocus by remember { mutableStateOf(false) }
+
+    // currentInput과 동기화
+    LaunchedEffect(currentInput) {
+        input = currentInput
+    }
 
     LaunchedEffect(shouldFocus) {
         if (shouldFocus) {
             state = TagState.Focus
+            awaitingFocus = true
+            focusTrigger++
             focusHandled()
         }
     }
@@ -174,6 +217,8 @@ internal fun TagRow(
             Tag(
                 state = TagState.Default,
                 text = tag,
+                showRemoveIcon = true,
+                onRemove = { onRemove(tag) },
                 onClick = { onRemove(tag) }
             )
         }
@@ -183,21 +228,45 @@ internal fun TagRow(
                 state = state,
                 text = input,
                 onTextChange = {
-                    input = it
-                    state = if (it.isBlank()) TagState.Focus else TagState.Typing
+                    val sanitized = TagPolicy.sanitize(it)
+                    if (input != sanitized) {
+                        input = sanitized
+                        onInputChange(sanitized)
+                    }
+                    state = if (sanitized.isBlank()) TagState.Focus else TagState.Typing
                 },
                 onComplete = {
-                    if (input.isNotBlank()) {
-                        onAdd(input)
+                    val candidate = TagPolicy.sanitize(input)
+                    if (TagPolicy.isValid(candidate)) {
+                        onAdd(candidate)
                         input = ""
-                        state = TagState.AddNew
+                        onInputChange("")
+                        state = TagState.Focus
+                        awaitingFocus = true
+                        focusTrigger++
                     }
                 },
                 onRemove = {
                     input = ""
+                    onInputChange("")
                     state = TagState.AddNew
                 },
-                onClick = { state = TagState.Focus }
+                onClick = {
+                    state = TagState.Focus
+                    awaitingFocus = true
+                    focusTrigger++
+                },
+                requestFocusKey = focusTrigger,
+                onInputFocusChanged = { focused ->
+                    if (!focused) {
+                        if (!awaitingFocus) {
+                            input = ""
+                            state = TagState.AddNew
+                        }
+                    } else {
+                        awaitingFocus = false
+                    }
+                }
             )
         }
     }
@@ -244,13 +313,15 @@ private fun TagInputField(
     onTextChange: (String) -> Unit,
     onComplete: () -> Unit = {},
     onRemove: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    requestFocusKey: Int = 0,
+    onFocusChanged: (Boolean) -> Unit = {}
 ) {
     var isFocused by remember { mutableStateOf(false) }
     var isCompleted by remember { mutableStateOf(false) }
 
     val focusRequester = remember { FocusRequester() }
-    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     // 커서 깜빡임 애니메이션
     val cursorAlpha by rememberInfiniteTransition(label = "cursor").animateFloat(
@@ -262,6 +333,14 @@ private fun TagInputField(
         ),
         label = "cursor"
     )
+
+    LaunchedEffect(requestFocusKey) {
+        if (requestFocusKey > 0) {
+            focusRequester.requestFocus()
+            isFocused = true
+            onFocusChanged(true)
+        }
+    }
 
     Surface(
         modifier = modifier.height(TagDesignTokens.TagHeight),
@@ -334,16 +413,27 @@ private fun TagInputField(
         }
     }
 
-    // 실제 입력을 담당하는 보이지 않는 BasicTextField
     BasicTextField(
         value = text,
-        onValueChange = onTextChange,
+        onValueChange = { raw ->
+            val sanitized = TagPolicy.sanitize(raw)
+            if (sanitized != text || raw != text) {
+                onTextChange(sanitized)
+            }
+        },
         modifier = Modifier
             .focusRequester(focusRequester)
             .onFocusChanged {
                 isFocused = it.isFocused
-                if (!it.isFocused && text.isNotEmpty()) {
-                    isCompleted = true
+                onFocusChanged(it.isFocused)
+                if (it.isFocused) {
+                    isCompleted = false
+                } else {
+                    // 포커스가 해제되면 키보드를 숨김
+                    keyboardController?.hide()
+                    if (text.isNotEmpty()) {
+                        isCompleted = true
+                    }
                 }
             }
             .alpha(0f)
@@ -356,7 +446,7 @@ private fun TagInputField(
                 if (text.isNotEmpty()) {
                     isCompleted = true
                     onComplete()
-                    focusManager.clearFocus()
+                    isCompleted = false
                 }
             }
         )
@@ -368,6 +458,8 @@ private fun TagInputField(
 @Composable
 private fun TagDefault(
     text: String,
+    showRemoveIcon: Boolean = false,
+    onRemove: () -> Unit = {},
     onClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -396,6 +488,20 @@ private fun TagDefault(
                 color = TagDesignTokens.TextTintColor,
                 style = TextComponent.CAPTION_2_M_12.copy(color = TagDesignTokens.TextTintColor)
             )
+
+            if (showRemoveIcon) {
+                IconButton(
+                    onClick = onRemove,
+                    modifier = Modifier.size(16.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_delete),
+                        contentDescription = "태그 제거",
+                        tint = TagDesignTokens.IconTint,
+                        modifier = Modifier.size(12.dp)
+                    )
+                }
+            }
         }
     }
 }
@@ -404,6 +510,8 @@ private fun TagDefault(
 private fun TagNumber(
     text: String,
     number: String,
+    numberValue: String = number,
+    numberUnit: String = "",
     onClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -428,11 +536,32 @@ private fun TagNumber(
                 modifier = Modifier.size(14.dp)
             )
 
-            Text(
-                text = "$text $number",
-                color = TagDesignTokens.NumberTextTinColor,
-                style = TextComponent.CAPTION_2_M_12
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = text,
+                    color = TagDesignTokens.NumberTextTinColor,
+                    style = TextComponent.CAPTION_2_M_12
+                )
+                Text(
+                    text = " ",
+                    color = TagDesignTokens.NumberTextTinColor,
+                    style = TextComponent.CAPTION_2_M_12
+                )
+                Text(
+                    text = numberValue,
+                    color = TagDesignTokens.NumberTextTinColor,
+                    style = TextComponent.CAPTION_2_M_12
+                )
+                if (numberUnit.isNotEmpty()) {
+                    Text(
+                        text = numberUnit,
+                        color = TagDesignTokens.NumberTextTinColor.copy(alpha = 0.7f),
+                        style = TextComponent.CAPTION_2_M_12.copy(fontSize = 10.sp)
+                    )
+                }
+            }
         }
     }
 }
@@ -515,9 +644,9 @@ fun TagList(
         item {
             TagInputField(
                 text = currentInput,
-                onTextChange = { currentInput = it },
+                onTextChange = { currentInput = TagPolicy.sanitize(it) },
                 onComplete = {
-                    if (currentInput.isNotBlank()) {
+                    if (TagPolicy.isValid(currentInput)) {
                         onTagsChange(tags + currentInput)
                         currentInput = ""
                     }

@@ -38,7 +38,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
@@ -102,13 +101,15 @@ sealed class BaseCardData(open val id: String, open val type: CardType) {
         val backgroundResId: Int? = null,
         val backgroundUri: Uri? = null,
         val fontFamily: FontFamily? = null,
+        val placeholder: String = "",
         val showAddButton: Boolean = true,
         val onContentChange: (String) -> Unit = {},
-        val onContentEnter: () -> Unit = {},
         val onAddTag: (String) -> Unit = {},
         val onRemoveTag: (String) -> Unit = {},
         val shouldFocusTagInput: Boolean = false,
         val onTagFocusHandled: () -> Unit = {},
+        val currentTagInput: String = "",
+        val onTagInputChange: (String) -> Unit = {},
         override val id: String = ""
     ) : BaseCardData(id, CardType.WRITE)
 
@@ -179,9 +180,9 @@ private fun BaseCard(
 @Composable
 private fun EditableWriteContentBox(
     content: String,
+    placeholder: String = "",
     modifier: Modifier = Modifier,
     onContentChange: (String) -> Unit,
-    onEnterPressed: () -> Unit,
     fontFamily: FontFamily?
 ) {
     BoxWithConstraints(
@@ -207,17 +208,10 @@ private fun EditableWriteContentBox(
                 .verticalScroll(scrollState),
             contentAlignment = Alignment.Center
         ) {
-            val focusManager = LocalFocusManager.current
             BasicTextField(
                 value = content,
                 onValueChange = { newValue ->
-                    val containsNewLine = newValue.contains('\n')
-                    val sanitized = newValue.replace("\n", "")
-                    if (containsNewLine) {
-                        focusManager.clearFocus(force = true)
-                        onEnterPressed()
-                    }
-                    onContentChange(sanitized)
+                    onContentChange(newValue)
                 },
                 textStyle = textStyle.copy(
                     color = CardDesignTokens.TextPrimary,
@@ -233,8 +227,8 @@ private fun EditableWriteContentBox(
                     ) {
                         if (content.isBlank()) {
                             Text(
-                                text = " ",
-                                style = textStyle.copy(color = CardDesignTokens.TextPrimary),
+                                text = placeholder,
+                                style = textStyle.copy(color = CardDesignTokens.TextBackTint),
                                 textAlign = TextAlign.Center
                             )
                         }
@@ -335,8 +329,8 @@ private fun WriteCard(
                 EditableWriteContentBox(
                     modifier = Modifier.fillMaxWidth(),
                     content = data.content,
+                    placeholder = data.placeholder,
                     onContentChange = data.onContentChange,
-                    onEnterPressed = data.onContentEnter,
                     fontFamily = data.fontFamily
                 )
 
@@ -358,7 +352,9 @@ private fun WriteCard(
                         onAdd = data.onAddTag,
                         onRemove = data.onRemoveTag,
                         shouldFocus = data.shouldFocusTagInput,
-                        onFocusHandled = data.onTagFocusHandled
+                        onFocusHandled = data.onTagFocusHandled,
+                        currentInput = data.currentTagInput,
+                        onInputChange = data.onTagInputChange
                     )
                 }
             } else {

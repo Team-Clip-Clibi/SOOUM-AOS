@@ -6,12 +6,15 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.phew.core_common.DomainResult
-import com.phew.core.ui.model.CameraCaptureRequest
 import com.phew.core.ui.model.CameraPickerAction
+import com.phew.core.ui.model.CameraCaptureRequest
 import com.phew.domain.dto.Location
 import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.usecase.CreateImageFile
 import com.phew.domain.usecase.FinishTakePicture
+import com.phew.domain.usecase.GetCardDefaultImage
+import com.phew.domain.usecase.GetRelatedTag
+import com.phew.domain.usecase.PostCard
 import com.phew.presentation.write.model.BackgroundConfig
 import com.phew.presentation.write.model.FontConfig
 import com.phew.presentation.write.model.WriteOptions
@@ -23,6 +26,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -32,6 +41,9 @@ class WriteViewModel @Inject constructor(
     private val deviceRepository: DeviceRepository,
     private val createImageFile: CreateImageFile,
     private val finishTakePicture: FinishTakePicture,
+    private val getRelatedTag: GetRelatedTag,
+    private val getCardDefaultImage: GetCardDefaultImage,
+    private val postCard: PostCard
 ) : ViewModel() {
 
     private val locationPermissions = arrayOf(
@@ -42,27 +54,60 @@ class WriteViewModel @Inject constructor(
     private val distanceOptionId = WriteOptions.DISTANCE_OPTION_ID
     private val initialFilter: String = BackgroundConfig.filterNames.firstOrNull() ?: ""
     private val initialImage: Int? = BackgroundConfig.imagesByFilter[initialFilter]?.firstOrNull()
-    private val initialSelections: Map<String, Int> =
-        if (initialFilter.isNotEmpty() && initialImage != null) {
-            mapOf(initialFilter to initialImage)
-        } else {
-            emptyMap()
-        }
 
     private val _uiState = MutableStateFlow(
         WriteUiState(
             selectedBackgroundFilter = initialFilter,
-            filterBackgroundSelections = initialSelections,
             activeBackgroundResId = initialImage
         )
     )
     val uiState: StateFlow<WriteUiState> = _uiState.asStateFlow()
+
+    init {
+        // 실시간 태그 검색 로직
+        viewModelScope.launch {
+            uiState
+                .map { it.currentTagInput }
+                .distinctUntilChanged()
+                .debounce(300L)
+                .filter { it.isNotBlank() }
+                .flatMapLatest { tagInput ->
+                    _uiState.update { it.copy(isLoadingRelatedTags = true) }
+                    try {
+                        when (val result = getRelatedTag(GetRelatedTag.Param(tag = tagInput, resultCnt = 8))) {
+                            is DomainResult.Success -> {
+                                flowOf(result.data)
+                            }
+                            is DomainResult.Failure -> {
+                                flowOf(emptyList())
+                            }
+                        }
+                    } catch (e: Exception) {
+                        flowOf(emptyList())
+                    }
+                }
+                .collect { relatedTags ->
+                    _uiState.update { 
+                        it.copy(
+                            relatedTags = relatedTags,
+                            isLoadingRelatedTags = false
+                        ) 
+                    }
+                }
+        }
+    }
 
     /**
      * 권한 요청
      */
     private val _requestPermissionEvent = MutableSharedFlow<Array<String>>()
     val requestPermissionEvent = _requestPermissionEvent.asSharedFlow()
+
+    /**
+     * 완료 이벤트
+     */
+    private val _writeCompleteEvent = MutableSharedFlow<Unit>()
+    val writeCompleteEvent = _writeCompleteEvent.asSharedFlow()
 
     private suspend fun getLocationSafely(): Location {
         return try {
@@ -120,12 +165,58 @@ class WriteViewModel @Inject constructor(
         }
     }
 
+    fun onCameraPermissionDenied() {
+        _uiState.update { it.copy(showCameraPermissionDialog = true) }
+    }
+
+    fun onGalleryPermissionDenied() {
+        _uiState.update { it.copy(showGalleryPermissionDialog = true) }
+    }
+
+    fun dismissCameraPermissionDialog() {
+        _uiState.update { it.copy(showCameraPermissionDialog = false) }
+    }
+
+    fun dismissGalleryPermissionDialog() {
+        _uiState.update { it.copy(showGalleryPermissionDialog = false) }
+    }
+
+    fun requestCameraPermissionFromSettings() {
+        _uiState.update { it.copy(showCameraPermissionDialog = false) }
+    }
+
+    fun requestGalleryPermissionFromSettings() {
+        _uiState.update { it.copy(showGalleryPermissionDialog = false) }
+    }
+
+    fun onGallerySettingsResult(granted: Boolean) {
+        _uiState.update { state ->
+            if (granted) {
+                state.copy(
+                    shouldLaunchBackgroundAlbum = true,
+                    showGalleryPermissionDialog = false
+                )
+            } else {
+                state.copy(showGalleryPermissionDialog = true)
+            }
+        }
+    }
+
+    fun onCameraSettingsResult(granted: Boolean) {
+        if (granted) {
+            requestCameraImageForBackground()
+            _uiState.update { it.copy(showCameraPermissionDialog = false) }
+        } else {
+            _uiState.update { it.copy(showCameraPermissionDialog = true) }
+        }
+    }
+
     fun updateContent(content: String) {
         _uiState.update { it.copy(content = content) }
     }
 
-    fun onContentEnter() {
-        _uiState.update { it.copy(focusTagInput = true) }
+    fun updateTagInput(input: String) {
+        _uiState.update { it.copy(currentTagInput = input) }
     }
 
     fun onTagInputFocusHandled() {
@@ -137,9 +228,13 @@ class WriteViewModel @Inject constructor(
         if (trimmed.isEmpty()) return
         _uiState.update { state ->
             if (state.tags.contains(trimmed)) {
-                state.copy(focusTagInput = false)
+                state.copy(focusTagInput = false, currentTagInput = "")
             } else {
-                state.copy(tags = state.tags + trimmed, focusTagInput = false)
+                state.copy(
+                    tags = state.tags + trimmed, 
+                    focusTagInput = false,
+                    currentTagInput = ""
+                )
             }
         }
     }
@@ -156,10 +251,7 @@ class WriteViewModel @Inject constructor(
 
     fun selectBackgroundImage(imageResId: Int) {
         _uiState.update { state ->
-            val updatedSelections =
-                state.filterBackgroundSelections + (state.selectedBackgroundFilter to imageResId)
             state.copy(
-                filterBackgroundSelections = updatedSelections,
                 activeBackgroundResId = imageResId,
                 activeBackgroundUri = null
             )
@@ -220,10 +312,7 @@ class WriteViewModel @Inject constructor(
                 when (val result = finishTakePicture(FinishTakePicture.Param(uri))) {
                     is DomainResult.Success -> {
                         _uiState.update { state ->
-                            val updatedSelections =
-                                state.filterBackgroundSelections - state.selectedBackgroundFilter
                             state.copy(
-                                filterBackgroundSelections = updatedSelections,
                                 activeBackgroundUri = result.data,
                                 activeBackgroundResId = null
                             )
@@ -240,10 +329,7 @@ class WriteViewModel @Inject constructor(
 
     fun onBackgroundAlbumImagePicked(uri: Uri) {
         _uiState.update { state ->
-            val updatedSelections =
-                state.filterBackgroundSelections - state.selectedBackgroundFilter
             state.copy(
-                filterBackgroundSelections = updatedSelections,
                 activeBackgroundUri = uri,
                 activeBackgroundResId = null
             )
@@ -295,8 +381,30 @@ private fun requestCameraImageForBackground() {
 
     fun onWriteComplete() {
         if (_uiState.value.canComplete) {
-            // TODO: Handle write completion logic
-            _uiState.update { it.copy(isWriteCompleted = true) }
+            viewModelScope.launch {
+                val state = _uiState.value
+                val param = PostCard.Param(
+                    isFromDevice = state.activeBackgroundUri != null,
+                    answerCard = false,
+                    cardId = null,
+                    imageUrl = state.activeBackgroundUri?.toString(),
+                    content = state.content,
+                    font = state.selectedFont,
+                    imgName = state.activeBackgroundResId?.toString(),
+                    isStory = state.selectedOptionId == "twenty_four_hours",
+                    tags = state.tags
+                )
+                
+                when (val result = postCard(param)) {
+                    is DomainResult.Success -> {
+                        _uiState.update { it.copy(isWriteCompleted = true) }
+                        _writeCompleteEvent.emit(Unit)
+                    }
+                    is DomainResult.Failure -> {
+                        // Handle error - could add error state to UI
+                    }
+                }
+            }
         }
     }
 

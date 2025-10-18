@@ -38,6 +38,7 @@ object BottomSheetComponent {
             skipPartiallyExpanded = false
         )
         ModalBottomSheet(
+            modifier = Modifier.padding(horizontal = 16.dp),
             sheetState = sheetState,
             onDismissRequest = onDismiss,
             dragHandle = {

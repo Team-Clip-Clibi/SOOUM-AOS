@@ -1,9 +1,12 @@
 package com.phew.presentation.write.screen
 
 import android.Manifest
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -33,12 +36,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.canhub.cropper.CropImageContract
+import com.canhub.cropper.CropImageContractOptions
+import com.canhub.cropper.CropImageOptions
 import com.phew.core_design.AppBar
 import androidx.compose.ui.platform.LocalContext
 import com.phew.core.ui.R
@@ -61,6 +68,8 @@ import com.phew.presentation.write.model.WriteOption
 import com.phew.presentation.write.model.WriteOptions
 import com.phew.presentation.write.screen.component.FilteredImageGrid
 import com.phew.presentation.write.screen.component.FontSelectorGrid
+import com.phew.presentation.write.component.NumberTagFlowLayout
+import com.phew.presentation.write.component.NumberTagItem
 import com.phew.presentation.write.viewmodel.WriteViewModel
 import androidx.compose.ui.res.stringResource
 
@@ -109,6 +118,14 @@ internal fun WriteRoute(
             locationPermission.launch(permissions)
         }
     }
+    
+    // 완료 이벤트 처리
+    LaunchedEffect(Unit) {
+        viewModel.writeCompleteEvent.collect {
+            // TODO: Show Toast and navigate to Feed Home
+            onBackPressed() // 임시로 뒤로가기
+        }
+    }
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     
@@ -116,19 +133,23 @@ internal fun WriteRoute(
         modifier = modifier,
         content = uiState.content,
         tags = uiState.tags,
+        currentTagInput = uiState.currentTagInput,
+        relatedTags = uiState.relatedNumberTags,
         isWriteCompleted = uiState.canComplete,
         activeBackgroundImageResId = uiState.activeBackgroundResId,
         activeBackgroundUri = uiState.activeBackgroundUri,
         selectedBackgroundFilter = uiState.selectedBackgroundFilter,
-        selectedGridImageResId = uiState.currentFilterSelection,
+        selectedGridImageResId = uiState.selectedGridImageResId,
         selectedFont = uiState.selectedFont,
         selectedFontFamily = uiState.selectedFontFamily,
         selectedOptionId = uiState.selectedOptionId,
         hasLocationPermission = uiState.hasLocationPermission,
         showLocationPermissionDialog = uiState.showLocationPermissionDialog,
+        showCameraPermissionDialog = uiState.showCameraPermissionDialog,
+        showGalleryPermissionDialog = uiState.showGalleryPermissionDialog,
         onBackPressed = onBackPressed,
         onContentChange = viewModel::updateContent,
-        onContentEnter = viewModel::onContentEnter,
+        onTagInputChange = viewModel::updateTagInput,
         onFilterChange = viewModel::selectBackgroundFilter,
         onImageSelected = viewModel::selectBackgroundImage,
         onCustomImageSelected = viewModel::onBackgroundAlbumImagePicked,
@@ -137,8 +158,15 @@ internal fun WriteRoute(
         onDistanceOptionWithoutPermission = viewModel::onDistanceOptionClickWithoutPermission,
         onDismissLocationDialog = viewModel::dismissLocationPermissionDialog,
         onRequestLocationPermission = viewModel::requestLocationPermission,
+        onCameraPermissionDenied = viewModel::onCameraPermissionDenied,
+        onGalleryPermissionDenied = viewModel::onGalleryPermissionDenied,
+        onDismissCameraDialog = viewModel::dismissCameraPermissionDialog,
+        onDismissGalleryDialog = viewModel::dismissGalleryPermissionDialog,
+        onRequestCameraPermissionFromSettings = viewModel::requestCameraPermissionFromSettings,
+        onRequestGalleryPermissionFromSettings = viewModel::requestGalleryPermissionFromSettings,
         onAddTag = viewModel::addTag,
         onRemoveTag = viewModel::removeTag,
+        onRelatedTagClick = { tagItem -> viewModel.addTag(tagItem.name) },
         focusTagInput = uiState.focusTagInput,
         onTagFocusHandled = viewModel::onTagInputFocusHandled,
         onWriteComplete = viewModel::onWriteComplete,
@@ -153,7 +181,9 @@ internal fun WriteRoute(
         onCameraPermissionRequestConsumed = viewModel::onBackgroundCameraPermissionRequestConsumed,
         onCameraPermissionResult = viewModel::onBackgroundCameraPermissionResult,
         onCameraCaptureLaunched = viewModel::onBackgroundCameraCaptureLaunched,
-        onCameraCaptureResult = viewModel::onBackgroundCameraCaptureResult
+        onCameraCaptureResult = viewModel::onBackgroundCameraCaptureResult,
+        onGallerySettingsResult = viewModel::onGallerySettingsResult,
+        onCameraSettingsResult = viewModel::onCameraSettingsResult
     )
 }
 
@@ -162,6 +192,8 @@ private fun WriteScreen(
     modifier: Modifier = Modifier,
     content: String,
     tags: List<String>,
+    currentTagInput: String,
+    relatedTags: List<NumberTagItem>,
     isWriteCompleted: Boolean,
     activeBackgroundImageResId: Int?,
     activeBackgroundUri: Uri?,
@@ -172,9 +204,11 @@ private fun WriteScreen(
     selectedOptionId: String,
     hasLocationPermission: Boolean,
     showLocationPermissionDialog: Boolean,
+    showCameraPermissionDialog: Boolean,
+    showGalleryPermissionDialog: Boolean,
     onBackPressed: () -> Unit,
     onContentChange: (String) -> Unit,
-    onContentEnter: () -> Unit,
+    onTagInputChange: (String) -> Unit,
     onFilterChange: (filter: String) -> Unit,
     onImageSelected: (Int) -> Unit,
     onCustomImageSelected: (Uri) -> Unit,
@@ -183,8 +217,14 @@ private fun WriteScreen(
     onDistanceOptionWithoutPermission: () -> Unit,
     onDismissLocationDialog: () -> Unit,
     onRequestLocationPermission: () -> Unit,
+    onCameraPermissionDenied: () -> Unit,
+    onGalleryPermissionDenied: () -> Unit,
+    onDismissCameraDialog: () -> Unit,
+    onDismissGalleryDialog: () -> Unit,
+    onRequestCameraPermissionFromSettings: () -> Unit,
     onAddTag: (String) -> Unit,
     onRemoveTag: (String) -> Unit,
+    onRelatedTagClick: (NumberTagItem) -> Unit,
     focusTagInput: Boolean,
     onTagFocusHandled: () -> Unit,
     onWriteComplete: () -> Unit,
@@ -199,7 +239,10 @@ private fun WriteScreen(
     onCameraPermissionRequestConsumed: () -> Unit,
     onCameraPermissionResult: (Boolean) -> Unit,
     onCameraCaptureLaunched: (CameraCaptureRequest) -> Unit,
-    onCameraCaptureResult: (Boolean, Uri) -> Unit
+    onCameraCaptureResult: (Boolean, Uri) -> Unit,
+    onRequestGalleryPermissionFromSettings: () -> Unit,
+    onGallerySettingsResult: (Boolean) -> Unit,
+    onCameraSettingsResult: (Boolean) -> Unit
 ) {
 
     val snackBarHostState = remember { SnackbarHostState() }
@@ -209,7 +252,37 @@ private fun WriteScreen(
     } else {
         arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
     }
-    val permissionMessage = stringResource(com.phew.core_design.R.string.common_permission)
+    val context = LocalContext.current
+    var settingsTarget by remember { mutableStateOf<SettingsTarget?>(null) }
+    val settingsLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) {
+        when (settingsTarget) {
+            SettingsTarget.Camera -> {
+                val granted = ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.CAMERA
+                ) == PackageManager.PERMISSION_GRANTED
+                onCameraSettingsResult(granted)
+            }
+
+            SettingsTarget.Gallery -> {
+                val granted = isGalleryPermissionGranted(context)
+                onGallerySettingsResult(granted)
+            }
+
+            null -> Unit
+        }
+        settingsTarget = null
+    }
+
+    val cropLauncher = rememberLauncherForActivityResult(
+        contract = CropImageContract(),
+        onResult = { result ->
+            val cropped = result.uriContent ?: return@rememberLauncherForActivityResult
+            onCustomImageSelected(cropped)
+        }
+    )
 
     CameraPickerEffect(
         effectState = CameraPickerEffectState(
@@ -217,17 +290,23 @@ private fun WriteScreen(
             requestCameraPermission = shouldRequestCameraPermission,
             pendingCapture = pendingCameraCapture
         ),
-        snackBarHostState = snackBarHostState,
         onAlbumRequestConsumed = onAlbumRequestConsumed,
-        onAlbumPicked = onCustomImageSelected,
+        onAlbumPicked = { uri ->
+            cropLauncher.launch(
+                CropImageContractOptions(
+                    uri = uri,
+                    cropImageOptions = CropImageOptions()
+                )
+            )
+        },
         onCameraPermissionRequestConsumed = onCameraPermissionRequestConsumed,
         onCameraPermissionResult = onCameraPermissionResult,
         onCameraCaptureLaunched = onCameraCaptureLaunched,
         onCameraCaptureResult = onCameraCaptureResult,
         cameraPermissions = cameraPermissions,
         albumPermissions = albumPermissions,
-        albumDeniedMessage = permissionMessage,
-        cameraDeniedMessage = permissionMessage
+        onCameraPermissionDenied = onCameraPermissionDenied,
+        onGalleryPermissionDenied = onGalleryPermissionDenied
     )
 
     Scaffold (
@@ -267,7 +346,6 @@ private fun WriteScreen(
                 .verticalScroll(scrollState),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            //  TODO content에서 Tag 포커스 이동 추가 수정
             CardView(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -278,15 +356,25 @@ private fun WriteScreen(
                     backgroundResId = activeBackgroundImageResId,
                     backgroundUri = activeBackgroundUri,
                     fontFamily = selectedFontFamily,
+                    placeholder = stringResource(com.phew.core_design.R.string.write_card_content_placeholder),
                     onContentChange = onContentChange,
-                    onContentEnter = onContentEnter,
                     onAddTag = onAddTag,
                     onRemoveTag = onRemoveTag,
                     shouldFocusTagInput = focusTagInput,
-                    onTagFocusHandled = onTagFocusHandled
+                    onTagFocusHandled = onTagFocusHandled,
+                    currentTagInput = currentTagInput,
+                    onTagInputChange = onTagInputChange
                 )
             )
-            // TODO 빠르게 누를시 이전 내용 남아 있음
+            
+            // 관련 태그 표시
+            if (relatedTags.isNotEmpty()) {
+                NumberTagFlowLayout(
+                    modifier = Modifier.fillMaxWidth(),
+                    tags = relatedTags,
+                    onTagClick = onRelatedTagClick
+                )
+            }
             BackgroundSelect(
                 modifier = Modifier.fillMaxWidth(),
                 selectedGridImageResId = selectedGridImageResId,
@@ -318,11 +406,62 @@ private fun WriteScreen(
         )
     }
 
+    if (showCameraPermissionDialog) {
+        DialogComponent.DefaultButtonTwo(
+            title = stringResource(R.string.camera_permission_title),
+            description = stringResource(R.string.camera_permission_description),
+            buttonTextStart = stringResource(com.phew.core_design.R.string.permission_settings_negative),
+            buttonTextEnd = stringResource(com.phew.core_design.R.string.permission_settings_positive),
+            onClick = {
+                onRequestCameraPermissionFromSettings()
+                settingsTarget = SettingsTarget.Camera
+                settingsLauncher.launch(appSettingsIntent(context))
+                onDismissCameraDialog()
+            },
+            onDismiss = onDismissCameraDialog
+        )
+    }
+
+    if (showGalleryPermissionDialog) {
+        DialogComponent.DefaultButtonTwo(
+            title = stringResource(R.string.gallery_permission_title),
+            description = stringResource(R.string.gallery_permission_description),
+            buttonTextStart = stringResource(com.phew.core_design.R.string.permission_settings_negative),
+            buttonTextEnd = stringResource(com.phew.core_design.R.string.permission_settings_positive),
+            onClick = {
+                onRequestGalleryPermissionFromSettings()
+                settingsTarget = SettingsTarget.Gallery
+                settingsLauncher.launch(appSettingsIntent(context))
+                onDismissGalleryDialog()
+            },
+            onDismiss = onDismissGalleryDialog
+        )
+    }
+
     CameraPickerBottomSheet(
         visible = showBackgroundPicker,
         onActionSelected = onCameraPickerAction,
         onDismiss = onCameraPickerDismissed
     )
+}
+
+private fun appSettingsIntent(context: Context): Intent =
+    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+        data = Uri.fromParts("package", context.packageName, null)
+    }
+
+private fun isGalleryPermissionGranted(context: Context): Boolean {
+    val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        Manifest.permission.READ_MEDIA_IMAGES
+    } else {
+        Manifest.permission.READ_EXTERNAL_STORAGE
+    }
+    return ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+}
+
+private enum class SettingsTarget {
+    Camera,
+    Gallery
 }
 
 @Composable
@@ -403,25 +542,17 @@ private fun OptionButtons(
         ) {
             options.forEach { option ->
                 val isDistanceOption = option.id == WriteOptions.DISTANCE_OPTION_ID
-                val enabled = !isDistanceOption || hasLocationPermission
-                Box {
-                    RoundButton(
-                        text = option.displayName,
-                        selected = option.id == selectedOptionId,
-                        enabled = enabled,
-                        onClick = {
+                RoundButton(
+                    text = option.displayName,
+                    selected = option.id == selectedOptionId,
+                    onClick = {
+                        if (isDistanceOption && !hasLocationPermission) {
+                            onDistancePermissionRequest()
+                        } else {
                             onOptionSelected(option)
                         }
-                    )
-                    if (!enabled) {
-                        Box(
-                            modifier = Modifier
-                                .matchParentSize()
-                                .clip(RoundedCornerShape(16.dp))
-                                .clickable { onDistancePermissionRequest() }
-                        )
                     }
-                }
+                )
             }
         }
     }

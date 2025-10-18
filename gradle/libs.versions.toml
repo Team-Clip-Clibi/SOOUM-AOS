@@ -31,6 +31,7 @@ firebase-messaging = "23.4.1"
 lottie = "6.6.9"
 paging-version = "3.3.6"
 play-services-location = "21.3.0"
+cropper = "4.5.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -74,6 +75,7 @@ lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", versio
 paging-runtime = { group = "androidx.paging", name = "paging-runtime", version.ref = "paging-version" }
 paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "paging-version" }
 google-play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "play-services-location" }
+cropper = { group = "com.vanniktech", name = "android-image-cropper", version.ref = "cropper" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
