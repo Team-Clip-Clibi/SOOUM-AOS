@@ -53,7 +53,6 @@ internal fun FilteredImageGrid(
             .fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // 🔸 상단 필터 선택 영역
         SooumFilter(
             modifier = Modifier.fillMaxWidth(),
             filters = filters,
@@ -249,11 +248,10 @@ private fun FilteredImageGridPreview() {
         onFilterSelected = { selectedFilter = it },
         onImageSelected = { resId ->
             selectedImage = resId
-            println("✅ 이미지 선택됨: $resId")
+            println("이미지 선택됨: $resId")
         },
         onCameraClick = {
-            selectedImage = null
-            println("📸 카메라 클릭 → 선택 해제됨")
+            println("카메라 클릭")
         }
     )
 }

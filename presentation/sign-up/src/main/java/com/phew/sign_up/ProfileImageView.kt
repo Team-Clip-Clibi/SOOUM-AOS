@@ -2,11 +2,8 @@ package com.phew.sign_up
 
 import android.Manifest
 import android.net.Uri
-import android.util.Log
+import android.os.Build
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,19 +33,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.phew.core_common.ERROR
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_design.AvatarComponent
-import com.phew.core_design.BottomSheetComponent
-import com.phew.core_design.BottomSheetItem
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.TextComponent
-import kotlinx.coroutines.launch
+import com.phew.core.ui.component.camera.CameraPickerBottomSheet
+import com.phew.core.ui.component.camera.CameraPickerEffect
+import com.phew.core.ui.model.CameraPickerEffectState
 
 
 @Composable
@@ -84,10 +78,29 @@ fun ProfileImageView(viewModel: SignUpViewModel, onBack: () -> Unit, nexPage: ()
         }
     }
 
-    ImagePickerEffect(
-        viewModel = viewModel,
-        uiState = uiState,
-        snackBarHostState = snackBarHostState
+    val cameraPermissions = arrayOf(Manifest.permission.CAMERA)
+    val albumPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        arrayOf(Manifest.permission.READ_MEDIA_IMAGES)
+    } else {
+        arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+    }
+
+    CameraPickerEffect(
+        effectState = CameraPickerEffectState(
+            launchAlbum = uiState.shouldLaunchProfileAlbum,
+            requestCameraPermission = uiState.shouldRequestProfileCameraPermission,
+            pendingCapture = uiState.pendingProfileCameraCapture
+        ),
+        onAlbumRequestConsumed = viewModel::onProfileAlbumRequestConsumed,
+        onAlbumPicked = viewModel::onAlbumImagePicked,
+        onCameraPermissionRequestConsumed = viewModel::onProfileCameraPermissionRequestConsumed,
+        onCameraPermissionResult = viewModel::onProfileCameraPermissionResult,
+        onCameraCaptureLaunched = viewModel::onProfileCameraCaptureLaunched,
+        onCameraCaptureResult = { success, uri ->
+            viewModel.onProfileCameraCaptureResult(success, uri)
+        },
+        cameraPermissions = cameraPermissions,
+        albumPermissions = albumPermissions
     )
 
     Scaffold(
@@ -145,73 +158,14 @@ fun ProfileImageView(viewModel: SignUpViewModel, onBack: () -> Unit, nexPage: ()
             )
         }
     }
-}
 
-@Composable
-private fun ImagePickerEffect(
-    viewModel: SignUpViewModel,
-    uiState: SignUp,
-    snackBarHostState: SnackbarHostState
-) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-
-    var cameraImageUri by remember { mutableStateOf<Uri?>(null) }
-
-    val pickSingleLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.PickVisualMedia()
-    ) { uri: Uri? ->
-        uri?.let { viewModel.updateProfile(it) }
-    }
-
-    val takePictureLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.TakePicture()
-    ) { success ->
-        Log.d("photo" , "TakePicture result: $success")
-        cameraImageUri?.let { uri ->
-            if (success) {
-                viewModel.closeFile(uri)
-            } else {
-                context.contentResolver.delete(uri, null, null)
-            }
-        }
-        cameraImageUri = null
-    }
-
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) {
-            viewModel.createImage()
-        } else {
-            scope.launch {
-                snackBarHostState.showSnackbar(
-                    message = context.getString(com.phew.core_design.R.string.common_permission),
-                    duration = SnackbarDuration.Short
-                )
-            }
-        }
-    }
-
-    LaunchedEffect(uiState.createImageFile) {
-        val result = uiState.createImageFile
-        if (result is UiState.Success) {
-            cameraImageUri = result.data
-            takePictureLauncher.launch(result.data)
-        }
-    }
-
-    if (uiState.profileBottom) {
-        ShowBottomSheet(
-            album = {
-                pickSingleLauncher.launch(
-                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                )
-            },
-            camera = { cameraPermissionLauncher.launch(Manifest.permission.CAMERA) },
-            onDismiss = viewModel::updateProfileBottom
-        )
-    }
+    CameraPickerBottomSheet(
+        visible = uiState.profileBottom,
+        onActionSelected = viewModel::onProfilePickerAction,
+        onDismiss = viewModel::updateProfileBottom,
+        albumTextRes = R.string.signUp_picture_bottom_item_album,
+        cameraTextRes = R.string.signUp_picture_bottom_item_camera
+    )
 }
 
 @Composable
@@ -249,31 +203,4 @@ private fun ContentView(onClick: () -> Unit, url: Uri) {
             url = url
         )
     }
-}
-
-@Composable
-private fun ShowBottomSheet(
-    album: () -> Unit,
-    camera: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    BottomSheetComponent.BottomSheet(
-        data = arrayListOf(
-            BottomSheetItem(
-                id = PROFILE_ALBUM,
-                title = stringResource(R.string.signUp_picture_bottom_item_album)
-            ),
-            BottomSheetItem(
-                id = PROFILE_PICTURE,
-                title = stringResource(R.string.signUp_picture_bottom_item_camera)
-            )
-        ),
-        onItemClick = { id ->
-            when (id) {
-                PROFILE_ALBUM -> album()
-                PROFILE_PICTURE -> camera()
-            }
-        },
-        onDismiss = onDismiss
-    )
 }

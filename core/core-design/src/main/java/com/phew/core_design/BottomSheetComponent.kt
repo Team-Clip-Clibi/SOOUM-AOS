@@ -1,6 +1,5 @@
 package com.phew.core_design
 
-import android.R.attr.contentDescription
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -39,6 +38,7 @@ object BottomSheetComponent {
             skipPartiallyExpanded = false
         )
         ModalBottomSheet(
+            modifier = Modifier.padding(horizontal = 16.dp),
             sheetState = sheetState,
             onDismissRequest = onDismiss,
             dragHandle = {
