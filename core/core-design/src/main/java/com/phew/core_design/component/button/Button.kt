@@ -24,17 +24,30 @@ fun RoundButton(
     text: String,
     selected: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
 ) {
-    val backgroundColor by animateColorAsState(
-        if (selected) Primary.LIGHT_1 else NeutralColor.GRAY_100
-    )
-    val borderColor by animateColorAsState(
-        if (selected) Primary.MAIN else NeutralColor.GRAY_100
-    )
-    val textColor by animateColorAsState(
-        if (selected) NeutralColor.GRAY_600 else NeutralColor.GRAY_400
-    )
+    val targetBackground = when {
+        !enabled -> NeutralColor.GRAY_100
+        selected -> Primary.LIGHT_1
+        else -> NeutralColor.GRAY_100
+    }
+
+    val targetBorder = when {
+        !enabled -> NeutralColor.GRAY_200
+        selected -> Primary.MAIN
+        else -> NeutralColor.GRAY_100
+    }
+
+    val targetText = when {
+        !enabled -> NeutralColor.GRAY_300
+        selected -> NeutralColor.GRAY_600
+        else -> NeutralColor.GRAY_400
+    }
+
+    val backgroundColor by animateColorAsState(targetBackground)
+    val borderColor by animateColorAsState(targetBorder)
+    val textColor by animateColorAsState(targetText)
 
     Box(
         modifier = modifier
@@ -42,7 +55,7 @@ fun RoundButton(
             .clip(RoundedCornerShape(16.dp))
             .background(backgroundColor)
             .border(1.dp, borderColor, RoundedCornerShape(16.dp))
-            .clickable { onClick() }
+            .clickable(enabled = enabled) { onClick() }
             .padding(horizontal = 10.dp),
         contentAlignment = Alignment.Center
     ) {

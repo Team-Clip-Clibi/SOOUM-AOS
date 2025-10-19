@@ -1,10 +1,17 @@
 package com.phew.presentation.write.screen
 
 import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,42 +23,61 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalDensity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import kotlinx.coroutines.launch
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.canhub.cropper.CropImageContract
+import com.canhub.cropper.CropImageContractOptions
+import com.canhub.cropper.CropImageOptions
 import com.phew.core_design.AppBar
+import androidx.compose.ui.platform.LocalContext
+import com.phew.core.ui.R
+import com.phew.core_design.DialogComponent
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.Primary
-import com.phew.core_design.R
 import com.phew.core_design.TextComponent
 import com.phew.core_design.component.button.RoundButton
 import com.phew.core_design.component.card.BaseCardData
 import com.phew.core_design.component.card.CardView
-import com.phew.core_design.component.filter.SooumFilter
+import com.phew.core.ui.model.CameraCaptureRequest
+import com.phew.core.ui.model.CameraPickerAction
+import com.phew.core.ui.component.camera.CameraPickerBottomSheet
+import com.phew.core.ui.component.camera.CameraPickerEffect
+import com.phew.core.ui.model.CameraPickerEffectState
 import com.phew.presentation.write.model.BackgroundConfig
 import com.phew.presentation.write.model.FontConfig
 import com.phew.presentation.write.model.FontItem
+import com.phew.presentation.write.model.WriteOption
 import com.phew.presentation.write.model.WriteOptions
 import com.phew.presentation.write.screen.component.FilteredImageGrid
 import com.phew.presentation.write.screen.component.FontSelectorGrid
+import com.phew.presentation.write.component.NumberTagFlowLayout
+import com.phew.presentation.write.component.NumberTagItem
 import com.phew.presentation.write.viewmodel.WriteViewModel
-import kotlin.collections.orEmpty
-import kotlin.io.path.Path
+import androidx.compose.ui.res.stringResource
 
 /**
  *  추후 작업
@@ -67,20 +93,43 @@ internal fun WriteRoute(
         onBackPressed()
     }
 
+    val context = LocalContext.current
+
     //   위치 권한
     val locationPermission = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions(),
         onResult = { permissionResult ->
-            val isGranted =
-                permissionResult[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
-            viewModel.onPermissionResult(isGranted = isGranted)
+            val isGranted = permissionResult.any { it.value }
+            viewModel.onLocationPermissionResult(isGranted)
         }
     )
+
+    LaunchedEffect(context) {
+        val fineGranted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        val coarseGranted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        viewModel.onInitialLocationPermissionCheck(fineGranted || coarseGranted)
+    }
     
     //  Effect Event로 수정
     LaunchedEffect(Unit) {
         viewModel.requestPermissionEvent.collect { permissions ->
             locationPermission.launch(permissions)
+        }
+    }
+    
+    // 완료 이벤트 처리
+    LaunchedEffect(Unit) {
+        viewModel.writeCompleteEvent.collect {
+            // TODO: Show Toast and navigate to Feed Home
+            onBackPressed() // 임시로 뒤로가기
         }
     }
 
@@ -90,17 +139,57 @@ internal fun WriteRoute(
         modifier = modifier,
         content = uiState.content,
         tags = uiState.tags,
+        currentTagInput = uiState.currentTagInput,
+        relatedTags = uiState.relatedNumberTags,
         isWriteCompleted = uiState.canComplete,
-        selectedImg = uiState.selectedBackgroundImage?.toString() ?: "",
+        activeBackgroundImageResId = uiState.activeBackgroundResId,
+        activeBackgroundUri = uiState.activeBackgroundUri,
         selectedBackgroundFilter = uiState.selectedBackgroundFilter,
+        selectedGridImageResId = uiState.selectedGridImageResId,
         selectedFont = uiState.selectedFont,
-        selectedOption = uiState.selectedOption,
+        selectedFontFamily = uiState.selectedFontFamily,
+        selectedOptionId = uiState.selectedOptionId,
+        hasLocationPermission = uiState.hasLocationPermission,
+        showLocationPermissionDialog = uiState.showLocationPermissionDialog,
+        showCameraPermissionDialog = uiState.showCameraPermissionDialog,
+        showGalleryPermissionDialog = uiState.showGalleryPermissionDialog,
         onBackPressed = onBackPressed,
+        onContentChange = viewModel::updateContent,
+        onTagInputChange = viewModel::updateTagInput,
         onFilterChange = viewModel::selectBackgroundFilter,
         onImageSelected = viewModel::selectBackgroundImage,
+        onCustomImageSelected = viewModel::onBackgroundAlbumImagePicked,
         onFontSelected = viewModel::selectFont,
         onOptionSelected = viewModel::selectOption,
-        onWriteComplete = viewModel::onWriteComplete
+        onDistanceOptionWithoutPermission = viewModel::onDistanceOptionClickWithoutPermission,
+        onDismissLocationDialog = viewModel::dismissLocationPermissionDialog,
+        onRequestLocationPermission = viewModel::requestLocationPermission,
+        onCameraPermissionDenied = viewModel::onCameraPermissionDenied,
+        onGalleryPermissionDenied = viewModel::onGalleryPermissionDenied,
+        onDismissCameraDialog = viewModel::dismissCameraPermissionDialog,
+        onDismissGalleryDialog = viewModel::dismissGalleryPermissionDialog,
+        onRequestCameraPermissionFromSettings = viewModel::requestCameraPermissionFromSettings,
+        onRequestGalleryPermissionFromSettings = viewModel::requestGalleryPermissionFromSettings,
+        onAddTag = viewModel::addTag,
+        onRemoveTag = viewModel::removeTag,
+        onRelatedTagClick = { tagItem -> viewModel.addTag(tagItem.name) },
+        focusTagInput = uiState.focusTagInput,
+        onTagFocusHandled = viewModel::onTagInputFocusHandled,
+        onWriteComplete = viewModel::onWriteComplete,
+        showBackgroundPicker = uiState.showBackgroundPickerSheet,
+        shouldLaunchAlbum = uiState.shouldLaunchBackgroundAlbum,
+        shouldRequestCameraPermission = uiState.shouldRequestBackgroundCameraPermission,
+        pendingCameraCapture = uiState.pendingBackgroundCameraCapture,
+        onCameraPickerRequested = viewModel::onBackgroundPickerRequested,
+        onCameraPickerDismissed = viewModel::onBackgroundPickerDismissed,
+        onCameraPickerAction = viewModel::onBackgroundPickerAction,
+        onAlbumRequestConsumed = viewModel::onBackgroundAlbumRequestConsumed,
+        onCameraPermissionRequestConsumed = viewModel::onBackgroundCameraPermissionRequestConsumed,
+        onCameraPermissionResult = viewModel::onBackgroundCameraPermissionResult,
+        onCameraCaptureLaunched = viewModel::onBackgroundCameraCaptureLaunched,
+        onCameraCaptureResult = viewModel::onBackgroundCameraCaptureResult,
+        onGallerySettingsResult = viewModel::onGallerySettingsResult,
+        onCameraSettingsResult = viewModel::onCameraSettingsResult
     )
 }
 
@@ -109,18 +198,122 @@ private fun WriteScreen(
     modifier: Modifier = Modifier,
     content: String,
     tags: List<String>,
+    currentTagInput: String,
+    relatedTags: List<NumberTagItem>,
     isWriteCompleted: Boolean,
-    selectedImg: String,
+    activeBackgroundImageResId: Int?,
+    activeBackgroundUri: Uri?,
     selectedBackgroundFilter: String,
+    selectedGridImageResId: Int?,
     selectedFont: String,
-    selectedOption: String,
+    selectedFontFamily: FontFamily?,
+    selectedOptionId: String,
+    hasLocationPermission: Boolean,
+    showLocationPermissionDialog: Boolean,
+    showCameraPermissionDialog: Boolean,
+    showGalleryPermissionDialog: Boolean,
     onBackPressed: () -> Unit,
+    onContentChange: (String) -> Unit,
+    onTagInputChange: (String) -> Unit,
     onFilterChange: (filter: String) -> Unit,
-    onImageSelected: (Int?) -> Unit,
+    onImageSelected: (Int) -> Unit,
+    onCustomImageSelected: (Uri) -> Unit,
     onFontSelected: (FontFamily) -> Unit,
     onOptionSelected: (String) -> Unit,
-    onWriteComplete: () -> Unit
+    onDistanceOptionWithoutPermission: () -> Unit,
+    onDismissLocationDialog: () -> Unit,
+    onRequestLocationPermission: () -> Unit,
+    onCameraPermissionDenied: () -> Unit,
+    onGalleryPermissionDenied: () -> Unit,
+    onDismissCameraDialog: () -> Unit,
+    onDismissGalleryDialog: () -> Unit,
+    onRequestCameraPermissionFromSettings: () -> Unit,
+    onAddTag: (String) -> Unit,
+    onRemoveTag: (String) -> Unit,
+    onRelatedTagClick: (NumberTagItem) -> Unit,
+    focusTagInput: Boolean,
+    onTagFocusHandled: () -> Unit,
+    onWriteComplete: () -> Unit,
+    showBackgroundPicker: Boolean,
+    shouldLaunchAlbum: Boolean,
+    shouldRequestCameraPermission: Boolean,
+    pendingCameraCapture: CameraCaptureRequest?,
+    onCameraPickerRequested: () -> Unit,
+    onCameraPickerDismissed: () -> Unit,
+    onCameraPickerAction: (CameraPickerAction) -> Unit,
+    onAlbumRequestConsumed: () -> Unit,
+    onCameraPermissionRequestConsumed: () -> Unit,
+    onCameraPermissionResult: (Boolean) -> Unit,
+    onCameraCaptureLaunched: (CameraCaptureRequest) -> Unit,
+    onCameraCaptureResult: (Boolean, Uri) -> Unit,
+    onRequestGalleryPermissionFromSettings: () -> Unit,
+    onGallerySettingsResult: (Boolean) -> Unit,
+    onCameraSettingsResult: (Boolean) -> Unit
 ) {
+
+    val snackBarHostState = remember { SnackbarHostState() }
+    val cameraPermissions = arrayOf(Manifest.permission.CAMERA)
+    val albumPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        arrayOf(Manifest.permission.READ_MEDIA_IMAGES)
+    } else {
+        arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+    }
+    val context = LocalContext.current
+    var settingsTarget by remember { mutableStateOf<SettingsTarget?>(null) }
+    val settingsLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) {
+        when (settingsTarget) {
+            SettingsTarget.Camera -> {
+                val granted = ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.CAMERA
+                ) == PackageManager.PERMISSION_GRANTED
+                onCameraSettingsResult(granted)
+            }
+
+            SettingsTarget.Gallery -> {
+                val granted = isGalleryPermissionGranted(context)
+                onGallerySettingsResult(granted)
+            }
+
+            null -> Unit
+        }
+        settingsTarget = null
+    }
+
+    val cropLauncher = rememberLauncherForActivityResult(
+        contract = CropImageContract(),
+        onResult = { result ->
+            val cropped = result.uriContent ?: return@rememberLauncherForActivityResult
+            onCustomImageSelected(cropped)
+        }
+    )
+
+    CameraPickerEffect(
+        effectState = CameraPickerEffectState(
+            launchAlbum = shouldLaunchAlbum,
+            requestCameraPermission = shouldRequestCameraPermission,
+            pendingCapture = pendingCameraCapture
+        ),
+        onAlbumRequestConsumed = onAlbumRequestConsumed,
+        onAlbumPicked = { uri ->
+            cropLauncher.launch(
+                CropImageContractOptions(
+                    uri = uri,
+                    cropImageOptions = CropImageOptions()
+                )
+            )
+        },
+        onCameraPermissionRequestConsumed = onCameraPermissionRequestConsumed,
+        onCameraPermissionResult = onCameraPermissionResult,
+        onCameraCaptureLaunched = onCameraCaptureLaunched,
+        onCameraCaptureResult = onCameraCaptureResult,
+        cameraPermissions = cameraPermissions,
+        albumPermissions = albumPermissions,
+        onCameraPermissionDenied = onCameraPermissionDenied,
+        onGalleryPermissionDenied = onGalleryPermissionDenied
+    )
 
     Scaffold (
         modifier = modifier,
@@ -135,14 +328,37 @@ private fun WriteScreen(
         },
         bottomBar = {
             OptionButtons(
-                options = WriteOptions.availableOptions.map { it.displayName },
-                selectedOption = selectedOption,
-                onOptionSelected = onOptionSelected
+                options = WriteOptions.availableOptions,
+                selectedOptionId = selectedOptionId,
+                hasLocationPermission = hasLocationPermission,
+                onOptionSelected = { option -> onOptionSelected(option.id) },
+                onDistancePermissionRequest = onDistanceOptionWithoutPermission
             )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackBarHostState) { data ->
+                DialogComponent.SnackBar(data)
+            }
         }
     ) { innerPadding ->
         val scrollState = rememberScrollState()
+        val coroutineScope = rememberCoroutineScope()
+        val view = LocalView.current
+        val density = LocalDensity.current
         
+        // 태그 입력 포커스 변화 감지하여 스크롤 조정
+        LaunchedEffect(focusTagInput) {
+            if (focusTagInput) {
+                // 키보드가 올라올 시간을 기다린 후 스크롤
+                kotlinx.coroutines.delay(300)
+                coroutineScope.launch {
+                    // CardView까지의 높이 + CardView 내부 태그 영역까지의 추정 높이
+                    val targetScrollPosition = with(density) { 250.dp.toPx() }.toInt()
+                    scrollState.animateScrollTo(targetScrollPosition)
+                }
+            }
+        }
+
         Column(
             modifier = Modifier
                 .background(NeutralColor.WHITE)
@@ -158,16 +374,36 @@ private fun WriteScreen(
                     .heightIn(min = 328.dp, max = 420.dp),
                 data = BaseCardData.Write(
                     content = content,
-                    tags = tags
+                    tags = tags,
+                    backgroundResId = activeBackgroundImageResId,
+                    backgroundUri = activeBackgroundUri,
+                    fontFamily = selectedFontFamily,
+                    placeholder = stringResource(com.phew.core_design.R.string.write_card_content_placeholder),
+                    onContentChange = onContentChange,
+                    onAddTag = onAddTag,
+                    onRemoveTag = onRemoveTag,
+                    shouldFocusTagInput = focusTagInput,
+                    onTagFocusHandled = onTagFocusHandled,
+                    currentTagInput = currentTagInput,
+                    onTagInputChange = onTagInputChange
                 )
             )
             
+            // 관련 태그 표시
+            if (relatedTags.isNotEmpty()) {
+                NumberTagFlowLayout(
+                    modifier = Modifier.fillMaxWidth(),
+                    tags = relatedTags,
+                    onTagClick = onRelatedTagClick
+                )
+            }
             BackgroundSelect(
                 modifier = Modifier.fillMaxWidth(),
-                selectedImg = selectedImg,
+                selectedGridImageResId = selectedGridImageResId,
                 selectedBackgroundFilter = selectedBackgroundFilter,
                 onFilterChange = onFilterChange,
-                onImageSelected = onImageSelected
+                onImageSelected = onImageSelected,
+                onCameraClick = onCameraPickerRequested
             )
 
             FontSelect(
@@ -177,29 +413,88 @@ private fun WriteScreen(
             )
         }
     }
+
+    if (showLocationPermissionDialog) {
+        DialogComponent.DefaultButtonTwo(
+            title = stringResource(R.string.location_permission_title),
+            description = stringResource(R.string.location_permission_description),
+            buttonTextStart = stringResource(R.string.location_permission_negative),
+            buttonTextEnd = stringResource(R.string.location_permission_positive),
+            onClick = {
+                onRequestLocationPermission()
+                onDismissLocationDialog()
+            },
+            onDismiss = onDismissLocationDialog
+        )
+    }
+
+    if (showCameraPermissionDialog) {
+        DialogComponent.DefaultButtonTwo(
+            title = stringResource(R.string.camera_permission_title),
+            description = stringResource(R.string.camera_permission_description),
+            buttonTextStart = stringResource(com.phew.core_design.R.string.permission_settings_negative),
+            buttonTextEnd = stringResource(com.phew.core_design.R.string.permission_settings_positive),
+            onClick = {
+                onRequestCameraPermissionFromSettings()
+                settingsTarget = SettingsTarget.Camera
+                settingsLauncher.launch(appSettingsIntent(context))
+                onDismissCameraDialog()
+            },
+            onDismiss = onDismissCameraDialog
+        )
+    }
+
+    if (showGalleryPermissionDialog) {
+        DialogComponent.DefaultButtonTwo(
+            title = stringResource(R.string.gallery_permission_title),
+            description = stringResource(R.string.gallery_permission_description),
+            buttonTextStart = stringResource(com.phew.core_design.R.string.permission_settings_negative),
+            buttonTextEnd = stringResource(com.phew.core_design.R.string.permission_settings_positive),
+            onClick = {
+                onRequestGalleryPermissionFromSettings()
+                settingsTarget = SettingsTarget.Gallery
+                settingsLauncher.launch(appSettingsIntent(context))
+                onDismissGalleryDialog()
+            },
+            onDismiss = onDismissGalleryDialog
+        )
+    }
+
+    CameraPickerBottomSheet(
+        visible = showBackgroundPicker,
+        onActionSelected = onCameraPickerAction,
+        onDismiss = onCameraPickerDismissed
+    )
+}
+
+private fun appSettingsIntent(context: Context): Intent =
+    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+        data = Uri.fromParts("package", context.packageName, null)
+    }
+
+private fun isGalleryPermissionGranted(context: Context): Boolean {
+    val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        Manifest.permission.READ_MEDIA_IMAGES
+    } else {
+        Manifest.permission.READ_EXTERNAL_STORAGE
+    }
+    return ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+}
+
+private enum class SettingsTarget {
+    Camera,
+    Gallery
 }
 
 @Composable
 private fun BackgroundSelect(
     modifier: Modifier,
-    selectedImg: String,
+    selectedGridImageResId: Int?,
     selectedBackgroundFilter: String,
     onFilterChange: (filter: String) -> Unit,
-    onImageSelected: (Int?) -> Unit
+    onImageSelected: (Int) -> Unit,
+    onCameraClick: () -> Unit
 ) {
-    var selectedImage by remember { mutableStateOf<Int?>(null) }
-
-    val currentImages by remember(selectedBackgroundFilter) {
-        derivedStateOf { BackgroundConfig.imagesByFilter[selectedBackgroundFilter].orEmpty() }
-    }
-
-    LaunchedEffect(currentImages) {
-        if (currentImages.isNotEmpty()) {
-            selectedImage = currentImages.first()
-            onImageSelected(selectedImage)
-        }
-    }
-
     Column {
         Text(
             text = "배경",
@@ -210,18 +505,12 @@ private fun BackgroundSelect(
             filters = BackgroundConfig.filterNames,
             imagesByFilter = BackgroundConfig.imagesByFilter,
             selectedFilter = selectedBackgroundFilter,
-            selectedImage = selectedImage,
+            selectedImage = selectedGridImageResId,
             onFilterSelected = { filter ->
                 onFilterChange(filter)
             },
-            onImageSelected = { resId ->
-                selectedImage = resId
-                onImageSelected(resId)
-            },
-            onCameraClick = {
-                selectedImage = null
-                onImageSelected(null)
-            }
+            onImageSelected = onImageSelected,
+            onCameraClick = onCameraClick
         )
     }
 }
@@ -248,9 +537,11 @@ private fun FontSelect(
 
 @Composable
 private fun OptionButtons(
-    options: List<String>,
-    selectedOption: String?,
-    onOptionSelected: (String) -> Unit,
+    options: List<WriteOption>,
+    selectedOptionId: String,
+    hasLocationPermission: Boolean,
+    onOptionSelected: (WriteOption) -> Unit,
+    onDistancePermissionRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column (
@@ -272,10 +563,17 @@ private fun OptionButtons(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             options.forEach { option ->
+                val isDistanceOption = option.id == WriteOptions.DISTANCE_OPTION_ID
                 RoundButton(
-                    text = option,
-                    selected = option == selectedOption,
-                    onClick = { onOptionSelected(option) }
+                    text = option.displayName,
+                    selected = option.id == selectedOptionId,
+                    onClick = {
+                        if (isDistanceOption && !hasLocationPermission) {
+                            onDistancePermissionRequest()
+                        } else {
+                            onOptionSelected(option)
+                        }
+                    }
                 )
             }
         }
@@ -285,14 +583,14 @@ private fun OptionButtons(
 @Preview(showBackground = true)
 @Composable
 private fun RoundButtonPreview() {
-    var selected by remember { mutableStateOf("거리공유") }
-
-    val options = listOf("거리공유", "24시간")
+    var selected by remember { mutableStateOf(WriteOptions.availableOptions.first().id) }
 
     OptionButtons(
-        options = options,
-        selectedOption = selected,
-        onOptionSelected = { selected = it }
+        options = WriteOptions.availableOptions,
+        selectedOptionId = selected,
+        hasLocationPermission = true,
+        onOptionSelected = { option -> selected = option.id },
+        onDistancePermissionRequest = {}
     )
 }
 

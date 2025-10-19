@@ -1,5 +1,6 @@
 package com.phew.presentation.write.screen.component
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -51,8 +52,15 @@ internal fun FontSelectorGrid(
                         } else {
                             DisabledSecondary(
                                 buttonText = font.name,
-                                onClick = { font.previewTypeface?.let { onFontSelected(it) } },
+                                onClick = {},
                                 isEnable = false
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .clickable {
+                                        font.previewTypeface?.let { onFontSelected(it) }
+                                    }
                             )
                         }
                     }
@@ -75,10 +83,10 @@ private fun FontSelectorGridPreview() {
     val kkokko = FontFamily(Font(R.font.kkokko))
 
     val fontList = listOf(
-        FontItem("프리텐다드", pretendard),
-        FontItem("리디바탕", ridibatang),
-        FontItem("윤우체", yoon),
-        FontItem("꼭꼭체", kkokko)
+        FontItem("프리텐다드", "PRETENDARD", pretendard),
+        FontItem("리디바탕", "RIDI", ridibatang),
+        FontItem("윤우체", "YOONWOO", yoon),
+        FontItem("꼭꼭체", "KKOOKKKOOK", kkokko)
     )
 
     FontSelectorGrid(

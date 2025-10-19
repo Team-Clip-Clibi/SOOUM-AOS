@@ -26,8 +26,4 @@
     <string name="home_notice_under_card_like_comment">%1$s님이 회원님의 답카드에 좋아요를 남겼어요.</string>
     <string name="home_notice_limit_card_comment">운영정책 위반으로 인해 %1$s까지 카드추가가 제한됩니다.</string>
     <string name="home_notice_delete_card">운영정책 위반으로 인해 작성된 카드가 삭제 처리되었습니다.</string>
-    <string name="home_feed_dialog_location_title">위치 정보 사용 설정</string>
-    <string name="home_feed_dialog_location_content">"내 위치 확인을 위해 설정에서 위치 정보 사용을 허용해 주세요.</string>
-    <string name="home_feed_dialog_location_positive">설정</string>
-    <string name="home_feed_dialog_location_negative">취소</string>
 </resources>

@@ -66,6 +66,7 @@ import com.phew.feed.viewModel.FeedType
 import com.phew.feed.viewModel.HomeViewModel
 import com.phew.feed.viewModel.UiState
 import kotlinx.coroutines.FlowPreview
+import com.phew.core.ui.R as CoreUiR
 import kotlinx.coroutines.flow.debounce
 
 
@@ -174,10 +175,10 @@ fun FeedView(
         )
         if (uiState.shouldShowPermissionRationale) {
             DialogComponent.DefaultButtonTwo(
-                title = stringResource(R.string.home_feed_dialog_location_title),
-                description = stringResource(R.string.home_feed_dialog_location_content),
-                buttonTextStart = stringResource(R.string.home_feed_dialog_location_negative),
-                buttonTextEnd = stringResource(R.string.home_feed_dialog_location_positive),
+                title = stringResource(CoreUiR.string.location_permission_title),
+                description = stringResource(CoreUiR.string.location_permission_description),
+                buttonTextStart = stringResource(CoreUiR.string.location_permission_negative),
+                buttonTextEnd = stringResource(CoreUiR.string.location_permission_positive),
                 onClick = {
                     requestPermission()
                     closeDialog()
