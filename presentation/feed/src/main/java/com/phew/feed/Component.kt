@@ -207,6 +207,7 @@ object FeedUi {
                             text = {
                                 Text(
                                     text = title,
+                                    style = TextComponent.TITLE_2_SB_16,
                                     color = LocalContentColor.current
                                 )
                             }
@@ -323,6 +324,7 @@ object FeedUi {
             }
             isExpired = true
         }
+        SooumLog.d(TAG, "isExpired=$isExpired")
         if (isExpired) {
             FeedDeletedCard(
                 id = feedCard.cardId,

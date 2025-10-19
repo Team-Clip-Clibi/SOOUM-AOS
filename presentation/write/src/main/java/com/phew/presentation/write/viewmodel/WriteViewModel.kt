@@ -127,11 +127,10 @@ class WriteViewModel @Inject constructor(
 
     fun onInitialLocationPermissionCheck(isGranted: Boolean) {
         _uiState.update { state ->
-            val adjusted = adjustOptionForPermission(state.selectedOptionId, isGranted)
-            val resolved = if (isGranted && adjusted.isBlank()) distanceOptionId else adjusted
+            val adjustedIds = adjustOptionForPermission(state.selectedOptionIds, isGranted)
             state.copy(
                 hasLocationPermission = isGranted,
-                selectedOptionId = resolved,
+                selectedOptionIds = adjustedIds,
                 shouldShowPermissionRationale = false
             )
         }
@@ -139,11 +138,10 @@ class WriteViewModel @Inject constructor(
 
     fun onLocationPermissionResult(isGranted: Boolean) {
         _uiState.update { state ->
-            val adjusted = adjustOptionForPermission(state.selectedOptionId, isGranted)
-            val resolved = if (isGranted && adjusted.isBlank()) distanceOptionId else adjusted
+            val adjustedIds = adjustOptionForPermission(state.selectedOptionIds, isGranted)
             state.copy(
                 hasLocationPermission = isGranted,
-                selectedOptionId = resolved,
+                selectedOptionIds = adjustedIds,
                 showLocationPermissionDialog = false,
                 shouldShowPermissionRationale = !isGranted
             )
@@ -351,10 +349,16 @@ class WriteViewModel @Inject constructor(
     fun selectOption(optionId: String) {
         _uiState.update { state ->
             if (optionId == distanceOptionId && !state.hasLocationPermission) {
-                state
-            } else {
-                state.copy(selectedOptionId = optionId)
+                return@update state
             }
+
+            val currentIds = state.selectedOptionIds
+            val newIds = if (currentIds.contains(optionId)) {
+                currentIds.filter { it != optionId }
+            } else {
+                currentIds + optionId
+            }
+            state.copy(selectedOptionIds = newIds)
         }
     }
 
@@ -379,6 +383,15 @@ private fun requestCameraImageForBackground() {
         }
     }
 
+    fun hideRelatedTags() {
+        _uiState.update {
+            it.copy(
+                relatedTags = emptyList(),
+                currentTagInput = ""
+            )
+        }
+    }
+
     fun onWriteComplete() {
         if (_uiState.value.canComplete) {
             viewModelScope.launch {
@@ -395,7 +408,7 @@ private fun requestCameraImageForBackground() {
                     content = state.content,
                     font = selectedFontServerName,
                     imgName = state.activeBackgroundResId?.toString(),
-                    isStory = state.selectedOptionId == "twenty_four_hours",
+                    isStory = state.selectedOptionIds.contains("twenty_four_hours"),
                     tags = state.tags
                 )
                 
@@ -412,8 +425,12 @@ private fun requestCameraImageForBackground() {
         }
     }
 
-    private fun adjustOptionForPermission(optionId: String, hasPermission: Boolean): String {
-        return if (!hasPermission && optionId == distanceOptionId) "" else optionId
+    private fun adjustOptionForPermission(optionIds: List<String>, hasPermission: Boolean): List<String> {
+        return if (!hasPermission) {
+            optionIds.filter { it != distanceOptionId }
+        } else {
+            optionIds
+        }
     }
 }
 

@@ -2,6 +2,9 @@ package com.phew.core_design.component.card
 
 import android.annotation.SuppressLint
 import android.net.Uri
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.runtime.remember
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -31,15 +34,20 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.platform.LocalTextToolbar
+import androidx.compose.ui.platform.TextToolbar
+import androidx.compose.ui.platform.TextToolbarStatus
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -104,6 +112,7 @@ sealed class BaseCardData(open val id: String, open val type: CardType) {
         val placeholder: String = "",
         val showAddButton: Boolean = true,
         val onContentChange: (String) -> Unit = {},
+        val onContentClick: () -> Unit = {},
         val onAddTag: (String) -> Unit = {},
         val onRemoveTag: (String) -> Unit = {},
         val shouldFocusTagInput: Boolean = false,
@@ -183,6 +192,7 @@ private fun EditableWriteContentBox(
     placeholder: String = "",
     modifier: Modifier = Modifier,
     onContentChange: (String) -> Unit,
+    onContentClick: () -> Unit,
     fontFamily: FontFamily?
 ) {
     BoxWithConstraints(
@@ -192,6 +202,11 @@ private fun EditableWriteContentBox(
             .background(
                 color = OpacityColor.blackSmallColor,
                 shape = RoundedCornerShape(12.dp)
+            )
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onContentClick
             ),
         contentAlignment = Alignment.Center
     ) {
@@ -201,41 +216,43 @@ private fun EditableWriteContentBox(
         val baseStyle = TextComponent.BODY_1_M_14
         val textStyle = fontFamily?.let { baseStyle.copy(fontFamily = it) } ?: baseStyle
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 61.dp, max = boundedHeight)
-                .verticalScroll(scrollState),
-            contentAlignment = Alignment.Center
-        ) {
-            BasicTextField(
-                value = content,
-                onValueChange = { newValue ->
-                    onContentChange(newValue)
-                },
-                textStyle = textStyle.copy(
-                    color = CardDesignTokens.TextPrimary,
-                    textAlign = TextAlign.Center
-                ),
-                cursorBrush = SolidColor(CardDesignTokens.TextPrimary),
-                modifier = Modifier.fillMaxWidth(),
-                maxLines = Int.MAX_VALUE,
-                decorationBox = { innerTextField ->
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (content.isBlank()) {
-                            Text(
-                                text = placeholder,
-                                style = textStyle.copy(color = CardDesignTokens.TextBackTint),
-                                textAlign = TextAlign.Center
-                            )
+        CompositionLocalProvider(LocalTextToolbar provides DisabledTextToolbar) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 61.dp, max = boundedHeight)
+                    .verticalScroll(scrollState),
+                contentAlignment = Alignment.Center
+            ) {
+                BasicTextField(
+                    value = content,
+                    onValueChange = { newValue ->
+                        onContentChange(newValue)
+                    },
+                    textStyle = textStyle.copy(
+                        color = CardDesignTokens.TextPrimary,
+                        textAlign = TextAlign.Center
+                    ),
+                    cursorBrush = SolidColor(CardDesignTokens.TextPrimary),
+                    modifier = Modifier.fillMaxWidth(),
+                    maxLines = Int.MAX_VALUE,
+                    decorationBox = { innerTextField ->
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (content.isBlank()) {
+                                Text(
+                                    text = placeholder,
+                                    style = textStyle.copy(color = CardDesignTokens.TextBackTint),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                            innerTextField()
                         }
-                        innerTextField()
                     }
-                }
-            )
+                )
+            }
         }
     }
 }
@@ -331,6 +348,7 @@ private fun WriteCard(
                     content = data.content,
                     placeholder = data.placeholder,
                     onContentChange = data.onContentChange,
+                    onContentClick = data.onContentClick,
                     fontFamily = data.fontFamily
                 )
 
@@ -523,4 +541,19 @@ fun CardViewPreview() {
             CardView(BaseCardData.Deleted("삭제된 카드예요"))
         }
     }
+}
+
+private object DisabledTextToolbar : TextToolbar {
+    override val status: TextToolbarStatus
+        get() = TextToolbarStatus.Hidden
+
+    override fun showMenu(
+        rect: Rect,
+        onCopyRequested: (() -> Unit)?,
+        onPasteRequested: (() -> Unit)?,
+        onCutRequested: (() -> Unit)?,
+        onSelectAllRequested: (() -> Unit)?
+    ) = Unit
+
+    override fun hide() = Unit
 }

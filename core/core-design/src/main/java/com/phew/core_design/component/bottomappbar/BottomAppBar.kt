@@ -201,7 +201,7 @@ object NavigationDefaults {
     @Composable
     fun colors() = NavigationDefaults.navigationItemColors(
         selectedTextColor = navigationSelectedTextColor(),
-        unselectedTextColor = navigationContentColor()
+        unselectedTextColor = NeutralColor.GRAY_300
     )
 }
 

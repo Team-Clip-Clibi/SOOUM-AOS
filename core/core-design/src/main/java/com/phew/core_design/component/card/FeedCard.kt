@@ -30,6 +30,7 @@ import com.phew.core_design.OpacityColor
 import com.phew.core_design.Primary
 import com.phew.core_design.TextComponent
 import com.phew.core_design.component.card.component.BottomContent
+import com.phew.core_design.component.card.component.FeedCardType
 
 
 /**
@@ -59,6 +60,7 @@ fun FeedDefaultCard(
         commentCount = commentCount,
         timeAgo = timeAgo,
         remainingTimeMillis = 0L,
+        cardType = FeedCardType.DEFAULT,
         onClick = onClick
     )
 }
@@ -86,6 +88,7 @@ fun FeedPungCard(
         commentCount = commentCount,
         timeAgo = timeAgo,
         remainingTimeMillis = remainingTimeMillis,
+        cardType = FeedCardType.PUNG,
         onClick = onClick
     )
 }
@@ -100,7 +103,7 @@ fun FeedDeletedCard(
             .fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         color = NeutralColor.GRAY_200,
-        shadowElevation = 8.dp,
+        shadowElevation = 6.dp,
         border = BorderStroke(1.dp, NeutralColor.GRAY_100)
     ) {
         Column(
@@ -115,21 +118,23 @@ fun FeedDeletedCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(2f)
-                    .padding(horizontal = 25.dp, vertical = 52.dp),
+                    .padding(vertical = 32.dp, horizontal = 32.dp)
+                    .width(264.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Box(
                     modifier = Modifier
                         .background(
-                            color = NeutralColor.GRAY_600,
+                            color = OpacityColor.blackSmallColor,
                             shape = RoundedCornerShape(12.dp)
                         )
-                        .width(279.dp)
                         .heightIn(min = 61.dp)
+                        .width(279.dp)
                         .padding(16.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
+                        modifier = Modifier.padding(horizontal = 16.dp),
                         text = "카드가 삭제되었어요",
                         style = TextComponent.BODY_1_M_14,
                         color = NeutralColor.WHITE,
@@ -141,10 +146,12 @@ fun FeedDeletedCard(
             // 하단 영역 (만료된 타이머 표시)
             BottomContent(
                 distance = "",
-                likeCount = "0",
-                commentCount = "0",
+                likeCount = null,
+                commentCount = null,
                 timeAgo = "",
-                remainingTimeMillis = "0" // 만료된 상태를 위해 0으로 설정
+                remainingTimeMillis = "0", // 만료된 상태를 위해 0으로 설정
+                showLocationAndTime = false,
+                cardType = FeedCardType.DELETED
             )
         }
     }
@@ -184,6 +191,7 @@ private fun FeedCardImpl(
     commentCount: String,
     timeAgo: String,
     remainingTimeMillis: Long,
+    cardType: FeedCardType,
     onClick: () -> Unit
 ) {
     Surface(
@@ -191,7 +199,7 @@ private fun FeedCardImpl(
             .fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         color = Primary.MAIN,
-        shadowElevation = 8.dp,
+        shadowElevation = 6.dp,
         border = BorderStroke(1.dp, NeutralColor.GRAY_200)
     ) {
         Column(
@@ -212,7 +220,8 @@ private fun FeedCardImpl(
                 likeCount = likeCount,
                 commentCount = commentCount,
                 timeAgo = timeAgo,
-                remainingTimeMillis = remainingTimeMillis.toString()
+                remainingTimeMillis = remainingTimeMillis.toString(),
+                cardType = cardType
             )
         }
     }
@@ -234,7 +243,7 @@ private fun FeedAdminCardImpl(
             .fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         color = Primary.MAIN,
-        shadowElevation = 8.dp,
+        shadowElevation = 6.dp,
         border = BorderStroke(1.dp, NeutralColor.GRAY_200)
     ) {
         Column(
@@ -254,7 +263,8 @@ private fun FeedAdminCardImpl(
                 likeCount = likeCount,
                 commentCount = commentCount,
                 isAdminManger = true,
-                timeAgo = timeAgo
+                timeAgo = timeAgo,
+                cardType = FeedCardType.ADMIN
             )
         }
     }
@@ -282,7 +292,6 @@ private fun BodyContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 32.dp, horizontal = 32.dp)
-                .heightIn(min = 103.dp)
                 .width(264.dp)
                 .background(
                     color = OpacityColor.blackSmallColor,

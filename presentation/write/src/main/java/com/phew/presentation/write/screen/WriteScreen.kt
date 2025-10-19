@@ -11,24 +11,26 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.ui.Alignment
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalDensity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import kotlinx.coroutines.launch
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.SnackbarHost
@@ -40,7 +42,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontFamily
@@ -53,7 +54,6 @@ import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
 import com.phew.core_design.AppBar
-import androidx.compose.ui.platform.LocalContext
 import com.phew.core.ui.R
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.NeutralColor
@@ -148,7 +148,7 @@ internal fun WriteRoute(
         selectedGridImageResId = uiState.selectedGridImageResId,
         selectedFont = uiState.selectedFont,
         selectedFontFamily = uiState.selectedFontFamily,
-        selectedOptionId = uiState.selectedOptionId,
+        selectedOptionIds = uiState.selectedOptionIds,
         hasLocationPermission = uiState.hasLocationPermission,
         showLocationPermissionDialog = uiState.showLocationPermissionDialog,
         showCameraPermissionDialog = uiState.showCameraPermissionDialog,
@@ -156,11 +156,27 @@ internal fun WriteRoute(
         onBackPressed = onBackPressed,
         onContentChange = viewModel::updateContent,
         onTagInputChange = viewModel::updateTagInput,
-        onFilterChange = viewModel::selectBackgroundFilter,
-        onImageSelected = viewModel::selectBackgroundImage,
-        onCustomImageSelected = viewModel::onBackgroundAlbumImagePicked,
-        onFontSelected = viewModel::selectFont,
-        onOptionSelected = viewModel::selectOption,
+        onFilterChange = {
+            viewModel.selectBackgroundFilter(it)
+            viewModel.hideRelatedTags()
+        },
+        onImageSelected = {
+            viewModel.selectBackgroundImage(it)
+            viewModel.hideRelatedTags()
+        },
+        onCustomImageSelected = {
+            viewModel.onBackgroundAlbumImagePicked(it)
+            viewModel.hideRelatedTags()
+        },
+        onContentClick = viewModel::hideRelatedTags, // Add this line
+        onFontSelected = {
+            viewModel.selectFont(it)
+            viewModel.hideRelatedTags()
+        },
+        onOptionSelected = {
+            viewModel.selectOption(it)
+            viewModel.hideRelatedTags()
+        },
         onDistanceOptionWithoutPermission = viewModel::onDistanceOptionClickWithoutPermission,
         onDismissLocationDialog = viewModel::dismissLocationPermissionDialog,
         onRequestLocationPermission = viewModel::requestLocationPermission,
@@ -207,7 +223,7 @@ private fun WriteScreen(
     selectedGridImageResId: Int?,
     selectedFont: String,
     selectedFontFamily: FontFamily?,
-    selectedOptionId: String,
+    selectedOptionIds: List<String>,
     hasLocationPermission: Boolean,
     showLocationPermissionDialog: Boolean,
     showCameraPermissionDialog: Boolean,
@@ -218,6 +234,7 @@ private fun WriteScreen(
     onFilterChange: (filter: String) -> Unit,
     onImageSelected: (Int) -> Unit,
     onCustomImageSelected: (Uri) -> Unit,
+    onContentClick: () -> Unit, // Add this line
     onFontSelected: (FontFamily) -> Unit,
     onOptionSelected: (String) -> Unit,
     onDistanceOptionWithoutPermission: () -> Unit,
@@ -329,7 +346,7 @@ private fun WriteScreen(
         bottomBar = {
             OptionButtons(
                 options = WriteOptions.availableOptions,
-                selectedOptionId = selectedOptionId,
+                selectedOptionIds = selectedOptionIds,
                 hasLocationPermission = hasLocationPermission,
                 onOptionSelected = { option -> onOptionSelected(option.id) },
                 onDistancePermissionRequest = onDistanceOptionWithoutPermission
@@ -342,54 +359,60 @@ private fun WriteScreen(
         }
     ) { innerPadding ->
         val scrollState = rememberScrollState()
-        val coroutineScope = rememberCoroutineScope()
-        val view = LocalView.current
-        val density = LocalDensity.current
-        
-        // 태그 입력 포커스 변화 감지하여 스크롤 조정
-        LaunchedEffect(focusTagInput) {
-            if (focusTagInput) {
-                // 키보드가 올라올 시간을 기다린 후 스크롤
-                kotlinx.coroutines.delay(300)
-                coroutineScope.launch {
-                    // CardView까지의 높이 + CardView 내부 태그 영역까지의 추정 높이
-                    val targetScrollPosition = with(density) { 250.dp.toPx() }.toInt()
-                    scrollState.animateScrollTo(targetScrollPosition)
-                }
-            }
-        }
 
         Column(
             modifier = Modifier
                 .background(NeutralColor.WHITE)
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-                .verticalScroll(scrollState),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .windowInsetsPadding(WindowInsets.ime.only(WindowInsetsSides.Bottom))
         ) {
-            CardView(
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 328.dp, max = 420.dp),
-                data = BaseCardData.Write(
-                    content = content,
-                    tags = tags,
-                    backgroundResId = activeBackgroundImageResId,
-                    backgroundUri = activeBackgroundUri,
-                    fontFamily = selectedFontFamily,
-                    placeholder = stringResource(com.phew.core_design.R.string.write_card_content_placeholder),
-                    onContentChange = onContentChange,
-                    onAddTag = onAddTag,
-                    onRemoveTag = onRemoveTag,
-                    shouldFocusTagInput = focusTagInput,
-                    onTagFocusHandled = onTagFocusHandled,
-                    currentTagInput = currentTagInput,
-                    onTagInputChange = onTagInputChange
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .verticalScroll(scrollState)
+                    .weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                CardView(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 328.dp, max = 420.dp),
+                    data = BaseCardData.Write(
+                        content = content,
+                        tags = tags,
+                        backgroundResId = activeBackgroundImageResId,
+                        backgroundUri = activeBackgroundUri,
+                        fontFamily = selectedFontFamily,
+                        placeholder = stringResource(com.phew.core_design.R.string.write_card_content_placeholder),
+                        onContentChange = onContentChange,
+                        onContentClick = onContentClick, // Add this line
+                        onAddTag = onAddTag,
+                        onRemoveTag = onRemoveTag,
+                        shouldFocusTagInput = focusTagInput,
+                        onTagFocusHandled = onTagFocusHandled,
+                        currentTagInput = currentTagInput,
+                        onTagInputChange = onTagInputChange
+                    )
                 )
-            )
-            
-            // 관련 태그 표시
+
+                BackgroundSelect(
+                    modifier = Modifier.fillMaxWidth(),
+                    selectedGridImageResId = selectedGridImageResId,
+                    selectedBackgroundFilter = selectedBackgroundFilter,
+                    onFilterChange = onFilterChange,
+                    onImageSelected = onImageSelected,
+                    onCameraClick = onCameraPickerRequested
+                )
+
+                FontSelect(
+                    fontItem = FontConfig.availableFonts,
+                    selectedFont = selectedFont,
+                    onFontSelected = onFontSelected
+                )
+            }
+
+            // 관련 태그를 키보드 위에 플로팅 표시
             if (relatedTags.isNotEmpty()) {
                 NumberTagFlowLayout(
                     modifier = Modifier.fillMaxWidth(),
@@ -397,20 +420,6 @@ private fun WriteScreen(
                     onTagClick = onRelatedTagClick
                 )
             }
-            BackgroundSelect(
-                modifier = Modifier.fillMaxWidth(),
-                selectedGridImageResId = selectedGridImageResId,
-                selectedBackgroundFilter = selectedBackgroundFilter,
-                onFilterChange = onFilterChange,
-                onImageSelected = onImageSelected,
-                onCameraClick = onCameraPickerRequested
-            )
-
-            FontSelect(
-                fontItem = FontConfig.availableFonts,
-                selectedFont = selectedFont,
-                onFontSelected = onFontSelected
-            )
         }
     }
 
@@ -538,7 +547,7 @@ private fun FontSelect(
 @Composable
 private fun OptionButtons(
     options: List<WriteOption>,
-    selectedOptionId: String,
+    selectedOptionIds: List<String>,
     hasLocationPermission: Boolean,
     onOptionSelected: (WriteOption) -> Unit,
     onDistancePermissionRequest: () -> Unit,
@@ -566,7 +575,7 @@ private fun OptionButtons(
                 val isDistanceOption = option.id == WriteOptions.DISTANCE_OPTION_ID
                 RoundButton(
                     text = option.displayName,
-                    selected = option.id == selectedOptionId,
+                    selected = selectedOptionIds.contains(option.id),
                     onClick = {
                         if (isDistanceOption && !hasLocationPermission) {
                             onDistancePermissionRequest()
@@ -583,13 +592,19 @@ private fun OptionButtons(
 @Preview(showBackground = true)
 @Composable
 private fun RoundButtonPreview() {
-    var selected by remember { mutableStateOf(WriteOptions.availableOptions.first().id) }
+    var selectedIds by remember { mutableStateOf(listOf(WriteOptions.availableOptions.first().id)) }
 
     OptionButtons(
         options = WriteOptions.availableOptions,
-        selectedOptionId = selected,
+        selectedOptionIds = selectedIds,
         hasLocationPermission = true,
-        onOptionSelected = { option -> selected = option.id },
+        onOptionSelected = { option ->
+            selectedIds = if (selectedIds.contains(option.id)) {
+                selectedIds.filter { it != option.id }
+            } else {
+                selectedIds + option.id
+            }
+        },
         onDistancePermissionRequest = {}
     )
 }
