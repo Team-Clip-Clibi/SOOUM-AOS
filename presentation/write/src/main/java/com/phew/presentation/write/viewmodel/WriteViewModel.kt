@@ -383,13 +383,17 @@ private fun requestCameraImageForBackground() {
         if (_uiState.value.canComplete) {
             viewModelScope.launch {
                 val state = _uiState.value
+                val selectedFontServerName = FontConfig.availableFonts
+                    .find { it.name == state.selectedFont }?.serverName 
+                    ?: FontConfig.defaultFont.serverName
+                
                 val param = PostCard.Param(
                     isFromDevice = state.activeBackgroundUri != null,
                     answerCard = false,
                     cardId = null,
                     imageUrl = state.activeBackgroundUri?.toString(),
                     content = state.content,
-                    font = state.selectedFont,
+                    font = selectedFontServerName,
                     imgName = state.activeBackgroundResId?.toString(),
                     isStory = state.selectedOptionId == "twenty_four_hours",
                     tags = state.tags

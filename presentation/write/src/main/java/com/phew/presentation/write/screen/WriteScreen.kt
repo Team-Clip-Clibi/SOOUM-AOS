@@ -23,6 +23,11 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalDensity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -37,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -336,6 +342,22 @@ private fun WriteScreen(
         }
     ) { innerPadding ->
         val scrollState = rememberScrollState()
+        val coroutineScope = rememberCoroutineScope()
+        val view = LocalView.current
+        val density = LocalDensity.current
+        
+        // 태그 입력 포커스 변화 감지하여 스크롤 조정
+        LaunchedEffect(focusTagInput) {
+            if (focusTagInput) {
+                // 키보드가 올라올 시간을 기다린 후 스크롤
+                kotlinx.coroutines.delay(300)
+                coroutineScope.launch {
+                    // CardView까지의 높이 + CardView 내부 태그 영역까지의 추정 높이
+                    val targetScrollPosition = with(density) { 250.dp.toPx() }.toInt()
+                    scrollState.animateScrollTo(targetScrollPosition)
+                }
+            }
+        }
 
         Column(
             modifier = Modifier

@@ -83,10 +83,10 @@ private fun FontSelectorGridPreview() {
     val kkokko = FontFamily(Font(R.font.kkokko))
 
     val fontList = listOf(
-        FontItem("프리텐다드", pretendard),
-        FontItem("리디바탕", ridibatang),
-        FontItem("윤우체", yoon),
-        FontItem("꼭꼭체", kkokko)
+        FontItem("프리텐다드", "PRETENDARD", pretendard),
+        FontItem("리디바탕", "RIDI", ridibatang),
+        FontItem("윤우체", "YOONWOO", yoon),
+        FontItem("꼭꼭체", "KKOOKKKOOK", kkokko)
     )
 
     FontSelectorGrid(
