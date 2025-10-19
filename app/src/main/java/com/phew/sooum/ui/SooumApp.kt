@@ -21,7 +21,8 @@ import com.phew.sooum.navigation.SooumNavHost
 fun SooumApp(
     appVersionUpdate: () -> Unit,
     finish: () -> Unit,
-    appState: SooumAppState = rememberSooumAppState()
+    appState: SooumAppState = rememberSooumAppState(),
+    webView: (String) -> Unit,
 ) {
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -32,7 +33,8 @@ fun SooumApp(
                 .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Vertical)),
             appState = appState,
             appVersionUpdate = appVersionUpdate,
-            finish = finish
+            finish = finish,
+            webView = webView
         )
 
         SooumBottomBar(

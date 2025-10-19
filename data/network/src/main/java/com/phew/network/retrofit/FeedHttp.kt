@@ -56,7 +56,7 @@ interface FeedHttp {
     /**
      * related Tag url
      */
-    @GET(BuildConfig.API_URL_TAG_RELATED)
+    @POST(BuildConfig.API_URL_TAG_RELATED)
     suspend fun requestRelatedTag(
         @Path("resultCnt") resultCnt: Int,
         @Body request: TagRequestDTO,

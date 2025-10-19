@@ -23,7 +23,8 @@ fun SooumNavHost(
     appState: SooumAppState,
     modifier: Modifier = Modifier,
     appVersionUpdate: () -> Unit,
-    finish: () -> Unit
+    finish: () -> Unit,
+    webView: (String) -> Unit,
 ) {
     val navController = appState.navController
     val homeAppState = rememberSooumAppState()
@@ -55,7 +56,8 @@ fun SooumNavHost(
                 finish = finish,
                 onBackPressed = {
                     SooumOnBackPressed(appState = appState)
-                }
+                },
+                webView = webView
             )
 
             splashNavGraph(
