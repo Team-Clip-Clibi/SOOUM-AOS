@@ -24,7 +24,7 @@ data class WriteUiState(
     val pendingBackgroundCameraCapture: CameraCaptureRequest? = null,
     val selectedFont: String = FontConfig.defaultFont.name,
     val selectedFontFamily: FontFamily? = FontConfig.defaultFont.previewTypeface,
-    val selectedOptionId: String = WriteOptions.defaultOption.id,
+    val selectedOptionIds: List<String> = listOf(WriteOptions.defaultOption.id),
     val hasLocationPermission: Boolean = false,
     val showLocationPermissionDialog: Boolean = false,
     val showCameraPermissionDialog: Boolean = false,
@@ -43,8 +43,7 @@ data class WriteUiState(
             return if (images.contains(active)) active else null
         }
 
-    val selectedOptionDisplayName: String
-        get() = WriteOptions.findById(selectedOptionId)?.displayName.orEmpty()
+
 
     val canComplete: Boolean
         get() = isContentValid && (activeBackgroundResId != null || activeBackgroundUri != null)

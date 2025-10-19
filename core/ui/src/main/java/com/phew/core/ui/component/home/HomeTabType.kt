@@ -25,7 +25,7 @@ enum class HomeTabType(
         graph = buildGraph(FEED_PREFIX),
         route = buildHomeRoute(FEED_PREFIX),
         selectedIconId = SooumIcon.HomeFilled.resId,
-        unselectedIconId = SooumIcon.HomeStoke.resId,
+        unselectedIconId = SooumIcon.HomeFilled.resId,
         iconTextId = R.string.bottom_view_home
     ),
 
@@ -34,7 +34,7 @@ enum class HomeTabType(
         graph = buildGraph(WRITE_PREFIX),
         route = buildHomeRoute(WRITE_PREFIX),
         selectedIconId = SooumIcon.WriteFilled.resId,
-        unselectedIconId = SooumIcon.WriteStoke.resId,
+        unselectedIconId = SooumIcon.WriteFilled.resId,
         iconTextId = R.string.bottom_view_add_card
     ),
 
@@ -43,7 +43,7 @@ enum class HomeTabType(
         graph = buildGraph(TAG_PREFIX),
         route = buildHomeRoute(TAG_PREFIX),
         selectedIconId = SooumIcon.TagFilled.resId,
-        unselectedIconId = SooumIcon.TagStoke.resId,
+        unselectedIconId = SooumIcon.TagFilled.resId,
         iconTextId = R.string.bottom_view_tag
     ),
 
@@ -52,7 +52,7 @@ enum class HomeTabType(
         graph = buildGraph(MY_PREFIX),
         route = buildHomeRoute(MY_PREFIX),
         selectedIconId = SooumIcon.UserFilled.resId,
-        unselectedIconId = SooumIcon.UserStoke.resId,
+        unselectedIconId = SooumIcon.UserFilled.resId,
         iconTextId = R.string.bottom_view_my
     );
 

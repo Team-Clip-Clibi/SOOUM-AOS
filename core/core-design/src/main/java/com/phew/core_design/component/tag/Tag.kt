@@ -56,6 +56,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.phew.core_design.NeutralColor
+import com.phew.core_design.OpacityColor
 import com.phew.core_design.Primary
 import com.phew.core_design.R
 import com.phew.core_design.TextComponent
@@ -78,7 +79,7 @@ object TagPolicy {
 
 object TagDesignTokens {
 
-    val BackgroundColor = NeutralColor.GRAY_600
+    val BackgroundColor = OpacityColor.blackSmallColor
     val BackgroundNumberColor = NeutralColor.WHITE
     val TextTintColor = NeutralColor.WHITE
     val NumberTextTinColor = NeutralColor.GRAY_600
