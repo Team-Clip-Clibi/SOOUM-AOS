@@ -51,8 +51,17 @@ class NetworkConvention : Plugin<Project> {
 
                 val popularUrl: String = properties.getProperty("api_url_card_feed_popular", "")
                 val latestUrl: String = properties.getProperty("api_url_card_feed_latest", "")
-                val latestLastUrl: String = properties.getProperty("api_url_card_feed_latest_last", "")
-
+                val relatedTag: String = properties.getProperty("api_url_tag_related", "")
+                val cardBackgroundImageDefault =
+                    properties.getProperty("api_url_card_background_image_default", "")
+                val cardBackgroundUpload: String =
+                    properties.getProperty("api_url_upload_card_background", "")
+                val uploadCard: String = properties.getProperty("api_url_upload_card", "")
+                val banedChecked: String = properties.getProperty("api_url_upload_baned", "")
+                val answerCard: String = properties.getProperty("api_url_upload_card_answer", "")
+                val cardDistance: String = properties.getProperty("api_url_card_distance", "")
+                val backgroundImageCheck: String =
+                    properties.getProperty("api_url_background_image_check", "")
 
                 buildConfigField("String", "BASE_URL", baseUrl)
                 buildConfigField("String", "API_URL", apiUrl)
@@ -72,7 +81,18 @@ class NetworkConvention : Plugin<Project> {
                 buildConfigField("String", "API_URL_NOTIFICATION_READ", notificationRead)
                 buildConfigField("String", "API_URL_CARD_FEED_POPULAR", popularUrl)
                 buildConfigField("String", "API_URL_CARD_FEED_LATEST", latestUrl)
-                buildConfigField("String", "API_URL_CARD_FEED_LATEST_LAST", latestLastUrl)
+                buildConfigField("String", "API_URL_CARD_FEED_DISTANCE", cardDistance)
+                buildConfigField("String", "API_URL_TAG_RELATED", relatedTag)
+                buildConfigField("String", "API_URL_CARD_IMAGE_DEFAULT", cardBackgroundImageDefault)
+                buildConfigField("String", "API_URL_UPLOAD_CARD_IMAGE", cardBackgroundUpload)
+                buildConfigField("String", "API_URL_UPLOAD_CARD", uploadCard)
+                buildConfigField("String", "API_URL_CHECKED_BANED", banedChecked)
+                buildConfigField("String", "API_URL_UPLOAD_CARD_ANSWER", answerCard)
+                buildConfigField(
+                    "String",
+                    "API_URL_UPLOAD_BACKGROUND_IMAGE_CHECK",
+                    backgroundImageCheck
+                )
             }
             buildFeatures.buildConfig = true
             compileOptions {

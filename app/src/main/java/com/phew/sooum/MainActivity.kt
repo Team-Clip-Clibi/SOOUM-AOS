@@ -6,14 +6,22 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.runtime.CompositionLocalProvider
 import dagger.hilt.android.AndroidEntryPoint
-import com.phew.sooum.ui.Nav
 import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import com.phew.core.ui.compose.LifecycleAwareComposables
+import com.phew.core.ui.util.extension.LocalLifecycleAwareComposables
+import com.phew.core_design.theme.SooumTheme
+import com.phew.sooum.ui.SooumApp
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var lifecycleAwareComposables: LifecycleAwareComposables
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,14 +32,23 @@ class MainActivity : ComponentActivity() {
         controller.isAppearanceLightNavigationBars = true
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
         setContent {
-            Nav(
-                finish = {
-                    finish()
-                },
-                update = {
-                    playStore()
+            CompositionLocalProvider(
+                LocalLifecycleAwareComposables provides lifecycleAwareComposables
+            ) {
+                SooumTheme {
+                    SooumApp(
+                        finish = {
+                            finish()
+                        },
+                        appVersionUpdate = {
+                            playStore()
+                        },
+                        webView = { url ->
+                            openWebPage(url)
+                        }
+                    )
                 }
-            )
+            }
         }
     }
 
@@ -47,6 +64,16 @@ class MainActivity : ComponentActivity() {
         } catch (e: Exception) {
             e.printStackTrace()
             throw IllegalArgumentException(e)
+        }
+    }
+
+    private fun openWebPage(url: String) {
+        if (url.trim().isEmpty()) return
+        try {
+            val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+            startActivity(intent)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 }

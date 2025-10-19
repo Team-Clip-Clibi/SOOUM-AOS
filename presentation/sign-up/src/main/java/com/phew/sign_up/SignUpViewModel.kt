@@ -4,6 +4,8 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.phew.core_common.DomainResult
+import com.phew.core.ui.model.CameraCaptureRequest
+import com.phew.core.ui.model.CameraPickerAction
 import com.phew.domain.usecase.CheckNickName
 import com.phew.domain.usecase.CheckSignUp
 import com.phew.domain.usecase.CreateImageFile
@@ -255,6 +257,62 @@ class SignUpViewModel @Inject constructor(
         }
     }
 
+    fun onProfilePickerAction(action: CameraPickerAction) {
+        when (action) {
+            CameraPickerAction.Album -> {
+                _uiState.update { state ->
+                    state.copy(
+                        profileBottom = false,
+                        shouldLaunchProfileAlbum = true
+                    )
+                }
+            }
+
+            CameraPickerAction.Camera -> {
+                _uiState.update { state ->
+                    state.copy(
+                        profileBottom = false,
+                        shouldRequestProfileCameraPermission = true
+                    )
+                }
+            }
+        }
+    }
+
+    fun onProfileAlbumRequestConsumed() {
+        _uiState.update { state ->
+            state.copy(shouldLaunchProfileAlbum = false)
+        }
+    }
+
+    fun onProfileCameraPermissionRequestConsumed() {
+        _uiState.update { state ->
+            state.copy(shouldRequestProfileCameraPermission = false)
+        }
+    }
+
+    fun onProfileCameraPermissionResult(granted: Boolean) {
+        if (granted) {
+            createImage()
+        }
+    }
+
+    fun onProfileCameraCaptureLaunched(request: CameraCaptureRequest) {
+        _uiState.update { state ->
+            state.copy(pendingProfileCameraCapture = null)
+        }
+    }
+
+    fun onProfileCameraCaptureResult(success: Boolean, uri: Uri) {
+        if (success) {
+            closeFile(uri)
+        }
+    }
+
+    fun onAlbumImagePicked(uri: Uri) {
+        updateProfile(uri)
+    }
+
 
     /**
      * 이미지 파일 생성기
@@ -263,14 +321,17 @@ class SignUpViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             when (val result = createFile()) {
                 is DomainResult.Failure -> {
-                    _uiState.update { state ->
-                        state.copy(createImageFile = UiState.Fail(result.error))
-                    }
+                    // 실패 시 별도 처리 없음
                 }
 
                 is DomainResult.Success -> {
                     _uiState.update { state ->
-                        state.copy(createImageFile = UiState.Success(result.data))
+                        state.copy(
+                            pendingProfileCameraCapture = CameraCaptureRequest(
+                                id = System.currentTimeMillis(),
+                                uri = result.data
+                            )
+                        )
                     }
                 }
             }
@@ -284,9 +345,7 @@ class SignUpViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             when (val result = finishPhoto(FinishTakePicture.Param(data))) {
                 is DomainResult.Failure -> {
-                    _uiState.update { state ->
-                        state.copy(createImageFile = UiState.Fail(result.error))
-                    }
+                    // 실패 시 별도 처리 없음
                 }
 
                 is DomainResult.Success -> {
@@ -310,8 +369,10 @@ data class SignUp(
     val nickNameHint: UiState<String> = UiState.Loading,
     val profile: Uri = Uri.EMPTY,
     val profileBottom: Boolean = false,
+    val shouldLaunchProfileAlbum: Boolean = false,
+    val shouldRequestProfileCameraPermission: Boolean = false,
+    val pendingProfileCameraCapture: CameraCaptureRequest? = null,
     val finalizePending: Boolean = false,
-    var createImageFile: UiState<Uri> = UiState.Loading,
     val checkSignUp: UiState<SignUpResult> = UiState.Loading,
     val checkNickName : UiState<Boolean> = UiState.Loading,
     val login: UiState<Unit> = UiState.Loading,

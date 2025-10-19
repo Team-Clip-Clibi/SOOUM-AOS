@@ -2,9 +2,9 @@ package com.phew.domain.usecase
 
 import android.content.ContentResolver
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
-import android.provider.OpenableColumns
-import com.phew.domain.repository.NetworkRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import androidx.core.net.toUri
@@ -12,22 +12,24 @@ import com.phew.core_common.DataResult
 import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR
 import com.phew.core_common.ERROR_FAIL_JOB
+import com.phew.core_common.ERROR_FAIL_PACKAGE_IMAGE
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.domain.BuildConfig
 import com.phew.domain.dto.Token
 import com.phew.domain.repository.DeviceRepository
-import okhttp3.MediaType
+import com.phew.domain.repository.network.SignUpRepository
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
-import okio.BufferedSink
-import okio.source
+import okhttp3.RequestBody.Companion.toRequestBody
+import okio.IOException
+import java.io.ByteArrayOutputStream
 import java.security.KeyFactory
 import java.security.PublicKey
 import java.security.spec.X509EncodedKeySpec
 import javax.crypto.Cipher
 
 class RequestSignUp @Inject constructor(
-    private val networkRepository: NetworkRepository,
+    private val repository: SignUpRepository,
     private val deviceRepository: DeviceRepository,
     @ApplicationContext private val context: Context,
 ) {
@@ -46,20 +48,28 @@ class RequestSignUp @Inject constructor(
             return DomainResult.Failure(ERROR_FAIL_JOB)
         }
         val deviceId = deviceRepository.requestDeviceId()
-        val requestKey = networkRepository.requestSecurityKey()
+        val deviceModel = deviceRepository.requestDeviceModel()
+        val androidOs = deviceRepository.requestDeviceOS()
+        val requestKey = repository.requestSecurityKey()
         if (requestKey is DataResult.Fail) {
             return DomainResult.Failure(ERROR_NETWORK)
         }
         val makeKey = makeSecurityKey((requestKey as DataResult.Success).data)
         val encryptedDeviceId = encrypt(data = deviceId, key = makeKey)
-        val fileName : String?
+        val fileName: String?
         if (data.profileImage.isNotEmpty()) {
-            val requestImageUploadUrl = networkRepository.requestUploadImageUrl()
+            val requestImageUploadUrl = repository.requestUploadImageUrl()
             if (requestImageUploadUrl is DataResult.Fail) return DomainResult.Failure(ERROR_NETWORK)
             fileName = (requestImageUploadUrl as DataResult.Success).data.imgName
             val uploadImageUrl = requestImageUploadUrl.data.imgUrl
-            val file = context.contentResolver.readAsRequestBody(uri = data.profileImage.toUri())
-            val requestImageUpload = networkRepository.requestUploadImage(
+            val file = try{
+                context.contentResolver.readAsCompressedJpegRequestBody(uri = data.profileImage.toUri())
+            }catch (e: IOException){
+                return DomainResult.Failure(ERROR_FAIL_PACKAGE_IMAGE)
+            }catch (e : OutOfMemoryError){
+                return DomainResult.Failure(ERROR_FAIL_JOB)
+            }
+            val requestImageUpload = repository.requestUploadImage(
                 data = file,
                 url = uploadImageUrl
             )
@@ -67,7 +77,7 @@ class RequestSignUp @Inject constructor(
         } else {
             fileName = null
         }
-        val request = networkRepository.requestSignUp(
+        val request = repository.requestSignUp(
             encryptedDeviceId = encryptedDeviceId,
             fcmToken = fcmToken,
             isNotificationAgreed = notifyStatus,
@@ -75,7 +85,9 @@ class RequestSignUp @Inject constructor(
             profileImage = fileName,
             agreedToTermsOfService = data.agreedToTermsOfService,
             agreedToLocationTerms = data.agreedToLocationTerms,
-            agreedToPrivacyPolicy = data.agreedToPrivacyPolicy
+            agreedToPrivacyPolicy = data.agreedToPrivacyPolicy,
+            deviceModel = deviceModel,
+            deviceOs = androidOs
         )
         when (request) {
             is DataResult.Fail -> {
@@ -92,13 +104,14 @@ class RequestSignUp @Inject constructor(
                     isNotifyAgree = notifyStatus
                 )
                 if (!saveUserInfo) return DomainResult.Failure(ERROR_FAIL_JOB)
-                val refreshToken = request.data.first
-                val accessToken = request.data.second
                 val saveToken = deviceRepository.saveToken(
                     key = BuildConfig.TOKEN_KEY,
-                    data = Token(refreshToken = refreshToken, accessToken = accessToken)
+                    data = Token(
+                        refreshToken = request.data.refreshToken,
+                        accessToken = request.data.accessToken
+                    )
                 )
-                if(!saveToken) return DomainResult.Failure(ERROR_FAIL_JOB)
+                if (!saveToken) return DomainResult.Failure(ERROR_FAIL_JOB)
                 return DomainResult.Success(Unit)
             }
         }
@@ -119,20 +132,20 @@ class RequestSignUp @Inject constructor(
         return java.util.Base64.getEncoder().encodeToString(encryptedBytes)
     }
 
-    fun ContentResolver.readAsRequestBody(uri: Uri): RequestBody =
-        object : RequestBody() {
-            override fun contentType(): MediaType? =
-                this@readAsRequestBody.getType(uri)?.toMediaTypeOrNull()
+    private fun ContentResolver.readAsCompressedJpegRequestBody(
+        uri: Uri,
+    ): RequestBody {
+        val inputStream = openInputStream(uri)
+            ?: throw IOException("Failed to open InputStream for URI: $uri")
 
-            override fun writeTo(sink: BufferedSink) {
-                this@readAsRequestBody.openInputStream(uri)?.source()?.use(sink::writeAll)
-            }
+        inputStream.use { stream ->
+            val bitmap = BitmapFactory.decodeStream(stream)
+                ?: throw IOException("Failed to decode bitmap from URI: $uri")
 
-            override fun contentLength(): Long =
-                this@readAsRequestBody.query(uri, null, null, null, null)?.use { cursor ->
-                    val sizeColumnIndex: Int = cursor.getColumnIndex(OpenableColumns.SIZE)
-                    cursor.moveToFirst()
-                    cursor.getLong(sizeColumnIndex)
-                } ?: super.contentLength()
+            val byteArrayOutputStream = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 50, byteArrayOutputStream)
+            val byteArray = byteArrayOutputStream.toByteArray()
+            return byteArray.toRequestBody("image/jpeg".toMediaTypeOrNull())
         }
+    }
 }

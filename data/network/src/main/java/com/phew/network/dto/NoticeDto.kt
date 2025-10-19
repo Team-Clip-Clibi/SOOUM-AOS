@@ -12,7 +12,8 @@ data class NoticeDto(
 @Serializable
 class NoticeData(
     val title: String,
-    val url: String,
+    val url: String?,
     val createdAt: String,
     val id: Int,
+    val noticeType : String
 )

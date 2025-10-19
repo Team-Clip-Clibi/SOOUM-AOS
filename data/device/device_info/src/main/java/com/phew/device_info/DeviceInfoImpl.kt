@@ -24,6 +24,24 @@ class DeviceInfoImpl @Inject constructor(@ApplicationContext private val context
         }
     }
 
+    override suspend fun osVersion(): String {
+        try {
+            return android.os.Build.VERSION.RELEASE
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw IllegalArgumentException("Device OS Version not fount ${e.message}")
+        }
+    }
+
+    override suspend fun modelName(): String {
+        try {
+            return android.os.Build.MODEL
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw IllegalArgumentException("Device Model Name not fount ${e.message}")
+        }
+    }
+
     override suspend fun firebaseToken(): String {
         try {
             val token = FirebaseMessaging.getInstance().token.await()

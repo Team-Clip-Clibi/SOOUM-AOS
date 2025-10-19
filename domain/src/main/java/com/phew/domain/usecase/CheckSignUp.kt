@@ -4,7 +4,6 @@ import com.phew.core_common.DataResult
 import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.domain.repository.DeviceRepository
-import com.phew.domain.repository.NetworkRepository
 import java.security.PublicKey
 import javax.inject.Inject
 import java.util.Base64
@@ -12,24 +11,39 @@ import com.phew.domain.SIGN_UP_ALREADY_SIGN_UP
 import com.phew.domain.SIGN_UP_BANNED
 import com.phew.domain.SIGN_UP_OKAY
 import com.phew.domain.SIGN_UP_WITHDRAWN
+import com.phew.domain.repository.network.SignUpRepository
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import java.security.spec.X509EncodedKeySpec
 import java.security.KeyFactory
 import javax.crypto.Cipher
 
 class CheckSignUp @Inject constructor(
     private val deviceRepository: DeviceRepository,
-    private val networkRepository: NetworkRepository,
+    private val repository: SignUpRepository,
 ) {
-    suspend operator fun invoke(): DomainResult<Pair<String, String>, String> {
-        val securityKeyResult = networkRepository.requestSecurityKey()
+    suspend operator fun invoke(): DomainResult<Pair<String, String>, String> = coroutineScope {
+        val securityKeyResult = repository.requestSecurityKey()
         if (securityKeyResult is DataResult.Fail) {
-            return DomainResult.Failure(ERROR_NETWORK)
+            return@coroutineScope DomainResult.Failure(ERROR_NETWORK)
         }
         val securityKey = (securityKeyResult as DataResult.Success).data
         val key = makeSecurityKey(securityKey)
-        val deviceId = deviceRepository.requestDeviceId()
+
+        val deviceIdDeferred = async { deviceRepository.requestDeviceId() }
+        val osVersionDeferred = async { deviceRepository.requestDeviceOS() }
+        val modelNameDeferred = async { deviceRepository.requestDeviceModel() }
+
+        val deviceId = deviceIdDeferred.await()
+        val osVersion = osVersionDeferred.await()
+        val modelName = modelNameDeferred.await()
+
         val encryptedInfo = encrypt(data = deviceId, key = key)
-        return when (val checkSignUpResult = networkRepository.requestCheckSignUp(encryptedInfo)) {
+        when (val checkSignUpResult = repository.requestCheckSignUp(
+            info = encryptedInfo,
+            osVersion = osVersion,
+            modelName = modelName
+        )) {
             is DataResult.Fail -> {
                 DomainResult.Failure(ERROR_NETWORK)
             }

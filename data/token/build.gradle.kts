@@ -7,6 +7,8 @@ android {
 }
 
 dependencies {
+    implementation(libs.squareup.retrofit2.retrofit)
     implementation(project(":domain"))
     implementation(project(":core:core-common"))
+    implementation(project(":data:network"))
 }

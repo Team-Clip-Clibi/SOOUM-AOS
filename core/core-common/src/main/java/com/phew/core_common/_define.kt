@@ -23,15 +23,18 @@ const val ERROR_NO_DATA = "No Data"
 const val ERROR_NETWORK = "error_network"
 const val ERROR = "error"
 const val ERROR_LOGOUT = "errorLogout"
+const val ERROR_UN_GOOD_IMAGE = "unGoodImage"
+const val ERROR_FAIL_PACKAGE_IMAGE = "errorPackageImage"
 //server api error code
 const val HTTP_NO_MORE_CONTENT = 204
-const val HTTP_INVALID_TOKEN = 401
+const val HTTP_INVALID_TOKEN = 403
 const val HTTP_NOT_FOUND = 404
 const val APP_ERROR_CODE = 505
-
+const val HTTP_UN_GOOD_IMAGE = 422
+//server api success code
+const val HTTP_SUCCESS = 200
 //banner category
 const val BANNER_NEWS = "news"
 const val BANNER_SERVICE = "service"
-
 //TOKEN
 const val TOKEN_FORM ="Bearer "

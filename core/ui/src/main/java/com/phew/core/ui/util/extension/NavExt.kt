@@ -11,7 +11,11 @@ fun NavDestination?.isHomeLevelTab(tab: HomeTabType) =
     } ?: false
 
 fun NavDestination?.shouldShowBottomBar(homeLevelTabs: List<HomeTabType>): Boolean {
-    return homeLevelTabs.any { tab ->
-        this.isHomeLevelTab(tab)
+    if (this.isHomeLevelTab(HomeTabType.WRITE)) {
+        return false
     }
+
+    return homeLevelTabs
+        .filterNot { it == HomeTabType.WRITE }
+        .any { tab -> this.isHomeLevelTab(tab) }
 }

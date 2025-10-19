@@ -6,6 +6,8 @@ import com.phew.domain.dto.UserInfo
 
 interface DeviceRepository {
     suspend fun requestDeviceId(): String
+    suspend fun requestDeviceModel(): String
+    suspend fun requestDeviceOS(): String
     suspend fun requestToken(key: String): Pair<String, String>
     suspend fun saveToken(key: String, data: Token): Boolean
     suspend fun firebaseToken(): String
@@ -24,4 +26,6 @@ interface DeviceRepository {
 
     suspend fun getUserInfo(key: String): UserInfo?
     suspend fun requestLocation() : Location
+    suspend fun deleteDataStoreInfo(key : String) : Boolean
+    suspend fun getLocationPermission() : Boolean
 }
