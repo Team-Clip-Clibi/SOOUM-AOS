@@ -22,7 +22,7 @@ object FontConfig {
             previewTypeface = FontFamily(Font(R.font.yoon))
         ),
         FontItem(
-            name = "꼭꼭체",
+            name = "꾹꾹체",
             serverName = "KKOOKKKOOK",
             previewTypeface = FontFamily(Font(R.font.kkokko))
         )

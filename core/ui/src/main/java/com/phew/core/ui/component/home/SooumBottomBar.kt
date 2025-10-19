@@ -20,6 +20,7 @@ import com.phew.core.ui.compose.ComposableVisibleState
 import com.phew.core.ui.compose.LifecycleAwareComposableRegister
 import com.phew.core.ui.util.extension.isHomeLevelTab
 import com.phew.core.ui.util.extension.shouldShowBottomBar
+import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
 import com.phew.core_design.component.bottomappbar.SooumNavigationBar
 import com.phew.core_design.component.bottomappbar.SooumNavigationBarItem
@@ -59,21 +60,21 @@ fun SooumBottomBar(
                     icon = {
                         Icon(
                             painter = painterResource(id = tab.unselectedIconId),
-                            tint = Color.Unspecified,
-                            contentDescription = null
+                            tint = NeutralColor.GRAY_300,
+                                contentDescription = null
                         )
                     },
                     selectedIcon = {
                         Icon(
                             painter = painterResource(id = tab.selectedIconId),
-                            tint = Color.Unspecified,
+                            tint = NeutralColor.BLACK,
                             contentDescription = null
                         )
                     },
                     label = {
                         Text(
                             text = stringResource(tab.iconTextId),
-                            style = TextComponent.CAPTION_1_SB_12,
+                            style = TextComponent.CAPTION_1_SB_12.copy(color = if(selected) NeutralColor.BLACK else NeutralColor.GRAY_300),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             textAlign = TextAlign.Center

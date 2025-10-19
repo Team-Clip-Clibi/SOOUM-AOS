@@ -148,7 +148,7 @@ internal fun WriteRoute(
         selectedGridImageResId = uiState.selectedGridImageResId,
         selectedFont = uiState.selectedFont,
         selectedFontFamily = uiState.selectedFontFamily,
-        selectedOptionId = uiState.selectedOptionId,
+        selectedOptionIds = uiState.selectedOptionIds,
         hasLocationPermission = uiState.hasLocationPermission,
         showLocationPermissionDialog = uiState.showLocationPermissionDialog,
         showCameraPermissionDialog = uiState.showCameraPermissionDialog,
@@ -223,7 +223,7 @@ private fun WriteScreen(
     selectedGridImageResId: Int?,
     selectedFont: String,
     selectedFontFamily: FontFamily?,
-    selectedOptionId: String,
+    selectedOptionIds: List<String>,
     hasLocationPermission: Boolean,
     showLocationPermissionDialog: Boolean,
     showCameraPermissionDialog: Boolean,
@@ -346,7 +346,7 @@ private fun WriteScreen(
         bottomBar = {
             OptionButtons(
                 options = WriteOptions.availableOptions,
-                selectedOptionId = selectedOptionId,
+                selectedOptionIds = selectedOptionIds,
                 hasLocationPermission = hasLocationPermission,
                 onOptionSelected = { option -> onOptionSelected(option.id) },
                 onDistancePermissionRequest = onDistanceOptionWithoutPermission
@@ -547,7 +547,7 @@ private fun FontSelect(
 @Composable
 private fun OptionButtons(
     options: List<WriteOption>,
-    selectedOptionId: String,
+    selectedOptionIds: List<String>,
     hasLocationPermission: Boolean,
     onOptionSelected: (WriteOption) -> Unit,
     onDistancePermissionRequest: () -> Unit,
@@ -575,7 +575,7 @@ private fun OptionButtons(
                 val isDistanceOption = option.id == WriteOptions.DISTANCE_OPTION_ID
                 RoundButton(
                     text = option.displayName,
-                    selected = option.id == selectedOptionId,
+                    selected = selectedOptionIds.contains(option.id),
                     onClick = {
                         if (isDistanceOption && !hasLocationPermission) {
                             onDistancePermissionRequest()
@@ -592,13 +592,19 @@ private fun OptionButtons(
 @Preview(showBackground = true)
 @Composable
 private fun RoundButtonPreview() {
-    var selected by remember { mutableStateOf(WriteOptions.availableOptions.first().id) }
+    var selectedIds by remember { mutableStateOf(listOf(WriteOptions.availableOptions.first().id)) }
 
     OptionButtons(
         options = WriteOptions.availableOptions,
-        selectedOptionId = selected,
+        selectedOptionIds = selectedIds,
         hasLocationPermission = true,
-        onOptionSelected = { option -> selected = option.id },
+        onOptionSelected = { option ->
+            selectedIds = if (selectedIds.contains(option.id)) {
+                selectedIds.filter { it != option.id }
+            } else {
+                selectedIds + option.id
+            }
+        },
         onDistancePermissionRequest = {}
     )
 }

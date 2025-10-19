@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -141,7 +142,11 @@ fun GridImageItem(
     Box(
         modifier = modifier
             .aspectRatio(1f)
-            .clickable { onClick() }
+            .clickable(
+                onClick = onClick,
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }
+            )
     ) {
         Image(
             painter = painterResource(imageRes),
@@ -175,7 +180,11 @@ private fun CameraGridItem(
         modifier = modifier
             .aspectRatio(1f)
             .background(NeutralColor.GRAY_100)
-            .clickable { onClick() },
+            .clickable(
+                onClick = onClick,
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }
+            ),
         contentAlignment = Alignment.Center
     ) {
         Icon(

@@ -182,6 +182,13 @@ internal fun SpotSeparator() {
     Spacer(modifier = Modifier.width(4.dp))
 }
 
+enum class FeedCardType {
+    DEFAULT,
+    PUNG,
+    DELETED,
+    ADMIN
+}
+
 @Composable
 internal fun BottomContent(
     modifier: Modifier = Modifier,
@@ -190,11 +197,19 @@ internal fun BottomContent(
     commentCount: String? = null,
     timeAgo: String? = null,
     remainingTimeMillis: String? = null,
-    isAdminManger: Boolean = false
+    isAdminManger: Boolean = false,
+    showLocationAndTime: Boolean = true,
+    cardType: FeedCardType = FeedCardType.DEFAULT
 ) {
     val remaining = remainingTimeMillis?.toLongOrNull() ?: 0L
-    val showTimer = !remainingTimeMillis.isNullOrEmpty() && remaining > 0L
     val isExpired = remaining <= 0L
+    
+    // 타이머 표시 조건: FeedDeletedCard(만료된 타이머) 또는 FeedPungCard(남은 시간이 있을 때)
+    val showTimer = when (cardType) {
+        FeedCardType.DELETED -> !remainingTimeMillis.isNullOrEmpty() // 만료된 타이머 표시
+        FeedCardType.PUNG -> !remainingTimeMillis.isNullOrEmpty() && remaining > 0L // 남은 시간이 있을 때만
+        else -> false // DEFAULT, ADMIN은 타이머 표시 안 함
+    }
 
     SooumLog.d(TAG, "remainingTimeMillis : $remainingTimeMillis, " +
             "likeCount : $likeCount, commentCount : $commentCount, isExpired : $isExpired, showTimer: $showTimer")
@@ -220,10 +235,12 @@ internal fun BottomContent(
                     SpotSeparator()
                 }
             }
-            LocationAndWriteTimeLabel(
-                location = distance?.takeIf { it.isNotEmpty() },
-                writeTime = timeAgo?.takeIf { it.isNotEmpty() }
-            )
+            if (showLocationAndTime) {
+                LocationAndWriteTimeLabel(
+                    location = distance?.takeIf { it.isNotEmpty() },
+                    writeTime = timeAgo?.takeIf { it.isNotEmpty() }
+                )
+            }
         }
         if (!showTimer) {
             SooumLog.d(TAG, "LikeAndComment")
@@ -244,7 +261,8 @@ private fun BottomContentPreview_WithTimer() {
             likeCount = "0",
             commentCount = "0",
             timeAgo = "방금 전",
-            remainingTimeMillis = "86400000"
+            remainingTimeMillis = "86400000",
+            cardType = FeedCardType.PUNG
         )
     }
 }
@@ -258,7 +276,24 @@ private fun BottomContentPreview_NoTimer() {
             likeCount = "12",
             commentCount = "3",
             timeAgo = "방금 전",
-            remainingTimeMillis = null
+            remainingTimeMillis = null,
+            cardType = FeedCardType.DEFAULT
+        )
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFFFFFFFF)
+@Composable
+private fun BottomContentPreview_DeletedCard() {
+    Box(modifier = Modifier.background(NeutralColor.WHITE)) {
+        BottomContent(
+            distance = "",
+            likeCount = null,
+            commentCount = null,
+            timeAgo = "",
+            remainingTimeMillis = "0",
+            showLocationAndTime = false,
+            cardType = FeedCardType.DELETED
         )
     }
 }
