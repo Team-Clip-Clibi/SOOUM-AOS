@@ -36,6 +36,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -193,6 +194,7 @@ internal fun TagRow(
     val focusHandled by rememberUpdatedState(onFocusHandled)
     var focusTrigger by remember { mutableStateOf(0) }
     var awaitingFocus by remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
 
     // currentInput과 동기화
     LaunchedEffect(currentInput) {
@@ -205,13 +207,33 @@ internal fun TagRow(
             awaitingFocus = true
             focusTrigger++
             focusHandled()
+            scrollState.animateScrollTo(scrollState.maxValue)
         }
+    }
+
+    // 입력 상태가 변경될 때 스크롤 처리
+    LaunchedEffect(state) {
+        if (state == TagState.Focus || state == TagState.Typing) {
+            scrollState.animateScrollTo(scrollState.maxValue)
+        }
+    }
+
+    // 입력 텍스트가 변경될 때마다 스크롤 처리
+    LaunchedEffect(input) {
+        if (state == TagState.Typing || state == TagState.Focus) {
+            scrollState.animateScrollTo(scrollState.maxValue)
+        }
+    }
+
+    val startPadding by remember(scrollState.value) {
+        derivedStateOf { if (scrollState.value > 0) 0.dp else 16.dp }
     }
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
+            .horizontalScroll(scrollState)
+            .padding(start = startPadding),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         tags.forEach { tag ->
@@ -499,7 +521,7 @@ private fun TagDefault(
                         painter = painterResource(R.drawable.ic_delete),
                         contentDescription = "태그 제거",
                         tint = TagDesignTokens.IconTint,
-                        modifier = Modifier.size(12.dp)
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             }

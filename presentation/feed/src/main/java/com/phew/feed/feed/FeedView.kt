@@ -382,7 +382,7 @@ private fun FeedListView(
             modifier = Modifier
                 .fillMaxSize()
                 .nestedScroll(nestedScrollConnection)
-                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 60.dp)
+                .padding(start = 16.dp, end = 16.dp, bottom = 60.dp)
                 .graphicsLayer {
                     translationY = if (isRefreshing) {
                         refreshState.distanceFraction * with(density) { refreshingOffset.toPx() }
@@ -393,10 +393,18 @@ private fun FeedListView(
             state = lazyListState
         ) {
             item {
+                // 더 좋은 방법이 있으면 수정 필요
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            item {
                 FeedUi.FeedNoticeView(
                     feedNotice = feedNotice,
                     feedNoticeClick = feedNoticeClick
                 )
+            }
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
             }
             itemsIndexed(
                 items = feedCards,

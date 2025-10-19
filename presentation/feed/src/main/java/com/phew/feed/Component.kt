@@ -92,7 +92,6 @@ object FeedUi {
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
-                .padding(bottom = 10.dp)
         ) {
             HorizontalPager(
                 state = pagerState,
@@ -142,19 +141,6 @@ object FeedUi {
                 }
             }
         }
-    }
-
-    // TODO 임시.. 어떤 데이터가 오는지 어떻게 매칭 해야할지 모르겠음..
-    @Composable
-    internal fun getTextStyleForFont(font: String) = when (font.lowercase()) {
-        "bold", "pretendard-bold" -> TextComponent.TITLE_2_SB_16
-        "semi_bold", "semibold", "pretendard-semibold" -> TextComponent.SUBTITLE_1_M_16
-        "medium", "pretendard-medium" -> TextComponent.BODY_1_M_14
-        "regular", "pretendard-regular", "default" -> TextComponent.BODY_1_M_14
-        "light", "pretendard-light" -> TextComponent.CAPTION_2_M_12
-        "extra_bold", "extrabold", "pretendard-extrabold" -> TextComponent.HEAD_3_B_20
-        "black", "pretendard-black" -> TextComponent.HEAD_2_B_24
-        else -> TextComponent.BODY_1_M_14 // fallback to default
     }
 
     @Composable

@@ -53,13 +53,16 @@ fun SooumTabRow(
     indicator: @Composable (tabPositions: List<SooumTabPosition>) -> Unit = @Composable { tabPositions ->
         if (selectedTabIndex < tabPositions.size) {
             val currentTab = tabPositions[selectedTabIndex]
-            val contentWidth by animateDpAsState(
-                targetValue = currentTab.contentWidth,
+            val targetIndicatorWidth = (currentTab.contentWidth - SooumTabRowDefaults.IndicatorHorizontalPadding * 2)
+                .coerceAtLeast(SooumTabRowDefaults.MinimumIndicatorWidth)
+            val indicatorWidth by animateDpAsState(
+                targetValue = targetIndicatorWidth,
                 animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing),
                 label = ""
             )
-            val contentOffset by animateDpAsState(
-                targetValue = currentTab.left + (currentTab.width - currentTab.contentWidth) / 2,
+            val targetIndicatorOffset = currentTab.left + (currentTab.width - targetIndicatorWidth) / 2
+            val indicatorOffset by animateDpAsState(
+                targetValue = targetIndicatorOffset,
                 animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing),
                 label = ""
             )
@@ -67,9 +70,9 @@ fun SooumTabRow(
                 Modifier
                     .fillMaxWidth()
                     .wrapContentSize(Alignment.BottomStart)
-                    .offset(x = contentOffset)
-                    .width(contentWidth),
-                width = contentWidth,
+                    .offset(x = indicatorOffset)
+                    .width(indicatorWidth),
+                width = indicatorWidth,
                 height = 2.dp
             )
         }
@@ -256,6 +259,8 @@ object SooumTabRowDefaults {
     val ScrollableTabRowEdgeStartPadding = 16.dp
 
     val ActiveIndicatorHeight = 2.0.dp
+    val IndicatorHorizontalPadding = 16.dp
+    val MinimumIndicatorWidth = 8.dp
 
     /** Default container color of a tab row. */
     @Deprecated(
@@ -340,8 +345,6 @@ object SooumTabRowDefaults {
 }
 
 private val ScrollableTabRowMinimumTabWidth = 0.dp
-private val IndicationHorizonPadding = 12.dp
-
 private class ScrollableTabData(
     private val scrollState: ScrollState,
     private val coroutineScope: CoroutineScope

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -195,22 +196,24 @@ object AppBar {
                 .fillMaxWidth()
                 .windowInsetsPadding(WindowInsets.statusBars)
                 .height(48.dp)
-                .background(NeutralColor.WHITE)
-                .padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .background(NeutralColor.WHITE),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // 왼쪽 아이콘
-            Icon(
-                painter = painterResource(image),
-                contentDescription = "back",
+            Box(
                 modifier = Modifier
-                    .size(20.dp)
+                    .width(AppBarDefaults.IconSlotSize)
+                    .fillMaxHeight()
                     .clickable { onClick() },
-                tint = NeutralColor.BLACK
-            )
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(image),
+                    contentDescription = "back",
+                    modifier = Modifier.size(20.dp),
+                    tint = NeutralColor.BLACK
+                )
+            }
 
-            // 중앙 제목
             Text(
                 text = appBarText,
                 style = TextComponent.TITLE_1_SB_18,
@@ -219,14 +222,18 @@ object AppBar {
                 modifier = Modifier.weight(1f)
             )
 
-            // 오른쪽 텍스트 버튼
-            Text(
-                text = buttonText,
-                style = buttonTextStyle.copy(color = buttonTextColor),
+            Box(
                 modifier = Modifier
-                    .clickable { onButtonClick() }
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-            )
+                    .width(AppBarDefaults.IconSlotSize)
+                    .fillMaxHeight()
+                    .clickable { onButtonClick() },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = buttonText,
+                    style = buttonTextStyle.copy(color = buttonTextColor)
+                )
+            }
         }
     }
 
@@ -251,6 +258,10 @@ object AppBar {
             }
         }
     }
+}
+
+private object AppBarDefaults {
+    val IconSlotSize = 56.dp
 }
 
 /**

@@ -1,5 +1,6 @@
 package com.phew.core.ui.component.home
 
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -13,6 +14,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.phew.core.ui.compose.ComposableType
@@ -61,7 +63,8 @@ fun SooumBottomBar(
                         Icon(
                             painter = painterResource(id = tab.unselectedIconId),
                             tint = NeutralColor.GRAY_300,
-                                contentDescription = null
+                                contentDescription = null,
+                            modifier = Modifier.size(24.dp)
                         )
                     },
                     selectedIcon = {
@@ -74,7 +77,7 @@ fun SooumBottomBar(
                     label = {
                         Text(
                             text = stringResource(tab.iconTextId),
-                            style = TextComponent.CAPTION_1_SB_12.copy(color = if(selected) NeutralColor.BLACK else NeutralColor.GRAY_300),
+                            style = TextComponent.CAPTION_1_SB_12.copy(color = if(selected) NeutralColor.BLACK else NeutralColor.GRAY_400),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             textAlign = TextAlign.Center
