@@ -155,11 +155,8 @@ fun GridImageItem(
                 modifier = Modifier
                     .align(Alignment.Center)
                     .background(NeutralColor.WHITE, CircleShape)
-                    .padding(4.dp)
             ) {
-                // TODO 요기 안되요 Help 성일님~
-                Icon(
-                    tint = NeutralColor.WHITE,
+                Image(
                     painter = painterResource(R.drawable.ic_check_round),
                     contentDescription = "선택됨",
                     modifier = Modifier.size(20.dp)

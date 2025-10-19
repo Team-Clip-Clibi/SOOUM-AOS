@@ -2,19 +2,18 @@ package com.phew.presentation.write.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.only
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Modifier
@@ -41,9 +40,8 @@ fun NumberTagFlowLayout(
         modifier = modifier
             .fillMaxWidth()
             .windowInsetsPadding(WindowInsets.ime.only(WindowInsetsSides.Bottom))
-            .padding(horizontal = 16.dp)
-            .padding(top = 8.dp)
-            .padding(bottom = 8.dp),
+            .background(NeutralColor.GRAY_100)
+            .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -94,7 +92,8 @@ private fun NumberTagFlowLayoutWithCardPreview() {
                 .height(328.dp)
                 .width(328.dp)
                 .background(NeutralColor.WHITE)
-                .padding(16.dp),
+                .padding(16.dp)
+                .windowInsetsPadding(WindowInsets.ime.only(WindowInsetsSides.Bottom)),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             CardView(

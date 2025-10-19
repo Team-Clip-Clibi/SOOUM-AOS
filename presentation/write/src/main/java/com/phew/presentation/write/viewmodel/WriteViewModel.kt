@@ -379,6 +379,15 @@ private fun requestCameraImageForBackground() {
         }
     }
 
+    fun hideRelatedTags() {
+        _uiState.update {
+            it.copy(
+                relatedTags = emptyList(),
+                currentTagInput = ""
+            )
+        }
+    }
+
     fun onWriteComplete() {
         if (_uiState.value.canComplete) {
             viewModelScope.launch {

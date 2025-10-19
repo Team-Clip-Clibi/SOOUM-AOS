@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="write_screen_title">새로운 카드</string>
+    <string name="write_screen_complete">완료</string>
+    <string name="write_screen_background_section">배경</string>
+    <string name="write_screen_font_section">폰트</string>
+</resources>
