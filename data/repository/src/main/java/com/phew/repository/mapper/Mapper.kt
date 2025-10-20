@@ -3,7 +3,11 @@ package com.phew.repository.mapper
 import com.phew.core_common.APP_ERROR_CODE
 import com.phew.core_common.DataResult
 import com.phew.core_common.TimeUtils
+import com.phew.domain.dto.CardComment
+import com.phew.domain.dto.CardDetail
+import com.phew.domain.dto.CardDetailTag
 import com.phew.domain.dto.CardImageDefault
+import com.phew.domain.dto.CardReply
 import com.phew.domain.dto.CheckSignUp
 import com.phew.domain.dto.CheckedBaned
 import com.phew.domain.dto.DistanceCard
@@ -31,6 +35,10 @@ import com.phew.network.dto.request.feed.TagInfoDTO
 import com.phew.network.dto.response.DistanceDTO
 import com.phew.network.dto.response.LatestDto
 import com.phew.network.dto.response.PopularDto
+import com.phew.network.dto.response.card.CardCommentResponseDTO
+import com.phew.network.dto.response.card.CardDetailResponseDTO
+import com.phew.network.dto.response.card.CardDetailTagDTO
+import com.phew.network.dto.response.card.CardReplyResponseDTO
 import com.phew.repository.TYPE_BLOCK
 import com.phew.repository.TYPE_COMMENT_LIKE
 import com.phew.repository.TYPE_COMMENT_WRITE
@@ -199,6 +207,67 @@ internal fun CheckBanedDTO.toDomain(): CheckedBaned {
     return CheckedBaned(
         isBaned = this.isBaned,
         expiredAt = this.expiredAt
+    )
+}
+
+internal fun CardDetailResponseDTO.toDomain(): CardDetail {
+    return CardDetail(
+        cardId = cardId,
+        likeCount = likeCnt,
+        commentCardCount = commentCardCnt,
+        cardImgUrl = cardImgUrl,
+        cardImgName = cardImgName,
+        cardContent = cardContent,
+        font = font,
+        distance = distance,
+        createdAt = createdAt,
+        isAdminCard = isAdminCard,
+        memberId = memberId,
+        nickname = nickname,
+        profileImgUrl = profileImgUrl,
+        isLike = isLike,
+        isCommentWritten = isCommentWritten,
+        tags = tags.map { it.toDomain() },
+        isOwnCard = isOwnCard,
+        previousCardId = previousCardId,
+        isPreviousCardDeleted = isPreviousCardDeleted,
+        previousCardImgUrl = previousCardImgUrl,
+        visitedCnt = visitedCnt
+    )
+}
+
+internal fun CardDetailTagDTO.toDomain(): CardDetailTag {
+    return CardDetailTag(
+        tagId = tagId,
+        name = name
+    )
+}
+
+internal fun CardCommentResponseDTO.toDomain(): CardComment {
+    return CardComment(
+        cardId = cardId,
+        likeCount = likeCnt,
+        commentCardCount = commentCardCnt,
+        cardImgUrl = cardImgUrl,
+        cardImgName = cardImgName,
+        cardContent = cardContent,
+        font = font,
+        distance = distance,
+        createdAt = createdAt,
+        isAdminCard = isAdminCard
+    )
+}
+
+internal fun CardReplyResponseDTO.toDomain(): CardReply {
+    return CardReply(
+        isDistanceShared = isDistanceShared,
+        latitude = latitude,
+        longitude = longitude,
+        content = content,
+        font = font,
+        imgType = imgType,
+        imgName = imgName,
+        tags = tags
     )
 }
 
