@@ -78,6 +78,7 @@ import com.phew.presentation.write.component.NumberTagFlowLayout
 import com.phew.presentation.write.component.NumberTagItem
 import com.phew.presentation.write.viewmodel.WriteViewModel
 import androidx.compose.ui.res.stringResource
+import com.phew.presentation.write.R as WriteR
 
 /**
  *  추후 작업
@@ -336,8 +337,8 @@ private fun WriteScreen(
         modifier = modifier,
         topBar = {
             AppBar.TextButtonAppBar(
-                appBarText = "새로운 카드",
-                buttonText = "완료",
+                appBarText = stringResource(WriteR.string.write_screen_title),
+                buttonText = stringResource(WriteR.string.write_screen_complete),
                 onButtonClick = onWriteComplete,
                 onClick = onBackPressed,
                 buttonTextColor = if (isWriteCompleted) NeutralColor.BLACK else NeutralColor.GRAY_300

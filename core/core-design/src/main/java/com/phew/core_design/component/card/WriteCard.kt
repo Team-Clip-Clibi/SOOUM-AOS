@@ -51,6 +51,7 @@ import androidx.compose.ui.platform.TextToolbarStatus
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isFinite
 import androidx.compose.ui.unit.sp
@@ -164,6 +165,7 @@ fun CardView(
 private fun BaseCard(
     modifier: Modifier = Modifier,
     backgroundColor: Color,
+    elevation: Dp = 2.dp,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
@@ -175,7 +177,7 @@ private fun BaseCard(
             ),
         shape = RoundedCornerShape(CardDesignTokens.CardRadius),
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = elevation)
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -244,7 +246,7 @@ private fun EditableWriteContentBox(
                             if (content.isBlank()) {
                                 Text(
                                     text = placeholder,
-                                    style = textStyle.copy(color = CardDesignTokens.TextBackTint),
+                                    style = textStyle.copy(color = NeutralColor.WHITE),
                                     textAlign = TextAlign.Center
                                 )
                             }
@@ -301,7 +303,8 @@ private fun WriteCard(
 ) {
     BaseCard(
         modifier = modifier.fillMaxWidth(),
-        backgroundColor = Color.Transparent
+        backgroundColor = Color.Transparent,
+        elevation = 0.dp
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             val backgroundModifier = Modifier
@@ -360,7 +363,6 @@ private fun WriteCard(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
                             .height(60.dp),
                         contentAlignment = Alignment.Center
                     ) {

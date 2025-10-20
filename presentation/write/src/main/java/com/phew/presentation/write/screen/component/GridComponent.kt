@@ -164,7 +164,7 @@ fun GridImageItem(
                 Image(
                     painter = painterResource(R.drawable.ic_check_round),
                     contentDescription = "선택됨",
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(32.dp)
                 )
             }
         }

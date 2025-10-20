@@ -102,7 +102,7 @@ private fun NavigationBarLayout(
                 .fillMaxWidth()
                 .windowInsetsPadding(windowInsets)
                 .height(NavigationDefaults.barHeight)
-                .padding(start = 16.dp, bottom = 8.dp, top = 8.dp, end = 16.dp)
+                .padding(horizontal = 16.dp, vertical = 8.dp)
                 .selectableGroup(),
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
             content = content
@@ -170,7 +170,7 @@ private fun RowScope.NavigationBarItemLayout(
             icon()
             Spacer(
                 Modifier
-                    .height(2.dp)
+                    .height(4.dp)
                     .fillMaxWidth()
             )
             styledLabel()

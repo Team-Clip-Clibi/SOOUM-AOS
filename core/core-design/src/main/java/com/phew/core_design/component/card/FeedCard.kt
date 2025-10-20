@@ -101,7 +101,7 @@ fun FeedDeletedCard(
     Surface(
         modifier = Modifier
             .fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         color = NeutralColor.GRAY_200,
         shadowElevation = 6.dp,
         border = BorderStroke(1.dp, NeutralColor.GRAY_100)
@@ -197,7 +197,7 @@ private fun FeedCardImpl(
     Surface(
         modifier = Modifier
             .fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         color = Primary.MAIN,
         shadowElevation = 6.dp,
         border = BorderStroke(1.dp, NeutralColor.GRAY_200)
@@ -241,7 +241,7 @@ private fun FeedAdminCardImpl(
     Surface(
         modifier = Modifier
             .fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         color = Primary.MAIN,
         shadowElevation = 6.dp,
         border = BorderStroke(1.dp, NeutralColor.GRAY_200)

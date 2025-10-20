@@ -96,15 +96,15 @@ internal fun LocationAndWriteTimeLabel(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (!location.isNullOrEmpty()) {
-            Image(
+            Icon(
                 painter = painterResource(R.drawable.ic_location_stoke),
                 modifier = Modifier.size(12.dp),
                 contentDescription = "location",
+                tint = NeutralColor.GRAY_500
             )
             Text(
                 text = location,
-                style = TextComponent.CAPTION_2_M_12,
-                color = NeutralColor.GRAY_500,
+                style = TextComponent.CAPTION_2_M_12.copy(color = NeutralColor.GRAY_500),
                 modifier = Modifier.padding(start = 2.dp)
             )
             if (!writeTime.isNullOrEmpty()) {
@@ -114,8 +114,7 @@ internal fun LocationAndWriteTimeLabel(
         if (!writeTime.isNullOrEmpty()) {
             Text(
                 text = writeTime,
-                style = TextComponent.CAPTION_2_M_12,
-                color = NeutralColor.GRAY_500,
+                style = TextComponent.CAPTION_2_M_12.copy(color = NeutralColor.GRAY_500),
                 modifier = Modifier
             )
         }
@@ -141,13 +140,14 @@ internal fun LikeAndComment(
                 painterResource(R.drawable.ic_heart_stoke),
                 contentDescription = "좋아요",
                 modifier = modifier.then(
-                    Modifier.size(12.dp)
-                )
+                    Modifier.size(14.dp)
+                ),
+                tint = NeutralColor.GRAY_500
             )
             Spacer(modifier = Modifier.width(2.dp))
             Text(
                 text = likeValue ?: "0",
-                style = TextComponent.CAPTION_2_M_12
+                style = TextComponent.CAPTION_2_M_12.copy(color = NeutralColor.GRAY_500)
             )
         }
 
