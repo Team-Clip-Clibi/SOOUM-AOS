@@ -79,6 +79,7 @@ fun FeedView(
     closeDialog: () -> Unit,
     noticeClick: () -> Unit,
     webViewClick: (String) -> Unit,
+    cardClick: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isRefreshing = uiState.refresh is UiState.Loading
@@ -164,8 +165,8 @@ fun FeedView(
             nestedScrollConnection = nestedScrollConnection,
             composition = composition,
             progress = progress,
-            onClick = {
-                //   TODO 상세 보기 화면으로 이동 필요
+            onClick = { cardId ->
+                cardClick(cardId)
             },
             onRemoveCard = viewModel::removeFeedCard,
             feedNotice = if (feedNoticeState is UiState.Success) feedNoticeState.data else emptyList(),

@@ -444,18 +444,26 @@ object MediumButton {
         buttonText: String,
         onClick: () -> Unit,
         isEnable: Boolean = true,
+        isSelect: Boolean = true,
+        baseColor: Color = NeutralColor.GRAY_100,
+        blinkColor: Color = NeutralColor.GRAY_200,
+        disabledColor: Color = NeutralColor.GRAY_200,
+        borderColor: Color = baseColor,
+        selectTextColor: Color = NeutralColor.GRAY_600,
+        disEnableTextColor: Color = NeutralColor.GRAY_400,
     ) {
         BlinkMediumButton(
-            baseColor = NeutralColor.GRAY_100,
-            blinkColor = NeutralColor.GRAY_200,
-            disabledColor = NeutralColor.GRAY_200,
+            baseColor = baseColor,
+            blinkColor = blinkColor,
+            disabledColor = disabledColor,
+            borderColor = borderColor,
             onClick = onClick,
             enabled = isEnable
         ) {
             Text(
                 text = buttonText,
                 style = TextComponent.SUBTITLE_1_M_16,
-                color = if (isEnable) NeutralColor.GRAY_600 else NeutralColor.GRAY_400
+                color = if (isEnable && isSelect) selectTextColor else disEnableTextColor
             )
         }
     }
