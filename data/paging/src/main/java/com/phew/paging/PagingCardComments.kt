@@ -17,9 +17,7 @@ internal class PagingCardComments(
 ) : PagingSource<Int, CardComment>() {
 
     override fun getRefreshKey(state: PagingState<Int, CardComment>): Int? {
-        return state.anchorPosition?.let { anchorPosition ->
-            state.closestPageToPosition(anchorPosition)?.nextKey
-        }
+        return null
     }
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, CardComment> {
