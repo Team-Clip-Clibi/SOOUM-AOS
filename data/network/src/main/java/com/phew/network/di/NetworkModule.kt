@@ -6,6 +6,7 @@ import com.phew.network.BuildConfig
 import com.phew.network.retrofit.NotifyHttp
 import com.phew.network.TokenAuthenticator
 import com.phew.network.retrofit.FeedHttp
+import com.phew.network.retrofit.ReportHttp
 import com.phew.network.retrofit.SignUpHttp
 import com.phew.network.retrofit.SplashHttp
 import com.phew.network.retrofit.TokenRefreshHttp
@@ -59,7 +60,7 @@ object NetworkModule {
     fun provideOkHttpClient(
         loggingInterceptor: HttpLoggingInterceptor,
         authInterceptor: AuthInterceptor,
-        tokenAuthenticator: TokenAuthenticator
+        tokenAuthenticator: TokenAuthenticator,
     ): OkHttpClient = OkHttpClient.Builder()
         .addInterceptor(loggingInterceptor)
         .addInterceptor(authInterceptor)
@@ -73,7 +74,7 @@ object NetworkModule {
     @Singleton
     @Named("RefreshClient")
     fun provideRefreshOkHttpClient(
-        loggingInterceptor: HttpLoggingInterceptor
+        loggingInterceptor: HttpLoggingInterceptor,
     ): OkHttpClient = OkHttpClient.Builder()
         .addInterceptor(loggingInterceptor)
         .readTimeout(20L, TimeUnit.SECONDS)
@@ -85,7 +86,7 @@ object NetworkModule {
     @Provides
     fun provideRetrofit(
         @Named("AuthClient") okHttpClient: OkHttpClient,
-        json: Json
+        json: Json,
     ): Retrofit = Retrofit.Builder()
         .baseUrl(BuildConfig.BASE_URL)
         .client(okHttpClient)
@@ -96,7 +97,7 @@ object NetworkModule {
     @Provides
     fun provideTokenRefreshApi(
         @Named("RefreshClient") okHttpClient: OkHttpClient,
-        json: Json
+        json: Json,
     ): TokenRefreshHttp = Retrofit.Builder()
         .baseUrl(BuildConfig.BASE_URL)
         .client(okHttpClient)
@@ -118,5 +119,9 @@ object NetworkModule {
 
     @Singleton
     @Provides
-    fun provideSignUpHttp(retrofit: Retrofit) : SignUpHttp = retrofit.create(SignUpHttp::class.java)
+    fun provideSignUpHttp(retrofit: Retrofit): SignUpHttp = retrofit.create(SignUpHttp::class.java)
+
+    @Singleton
+    @Provides
+    fun provideReportsHttp(retrofit: Retrofit): ReportHttp = retrofit.create(ReportHttp::class.java)
 }

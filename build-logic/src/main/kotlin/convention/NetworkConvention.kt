@@ -62,6 +62,7 @@ class NetworkConvention : Plugin<Project> {
                 val cardDistance: String = properties.getProperty("api_url_card_distance", "")
                 val backgroundImageCheck: String =
                     properties.getProperty("api_url_background_image_check", "")
+                val cardReports: String = properties.getProperty("api_url_reports_card", "")
 
                 buildConfigField("String", "BASE_URL", baseUrl)
                 buildConfigField("String", "API_URL", apiUrl)
@@ -93,6 +94,7 @@ class NetworkConvention : Plugin<Project> {
                     "API_URL_UPLOAD_BACKGROUND_IMAGE_CHECK",
                     backgroundImageCheck
                 )
+                buildConfigField("String", "API_URL_REPORTS_CARDS", cardReports)
             }
             buildFeatures.buildConfig = true
             compileOptions {
