@@ -240,7 +240,7 @@ internal fun TagRow(
             Tag(
                 state = TagState.Default,
                 text = tag,
-                showRemoveIcon = true,
+                showRemoveIcon = enableAdd,
                 onRemove = { onRemove(tag) },
                 onClick = { onRemove(tag) }
             )
@@ -590,7 +590,7 @@ private fun TagNumber(
 }
 
 @Composable
-private fun TagColorful(
+fun TagColorful(
     text: String,
     iconContent: @Composable (() -> Unit)? = null,
     onClick: () -> Unit = {},
@@ -679,7 +679,6 @@ fun TagList(
         }
     }
 }
-
 
 // ===== 프리뷰 =====
 

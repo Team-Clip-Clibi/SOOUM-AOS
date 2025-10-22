@@ -9,13 +9,11 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -39,7 +37,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.ContentScale
@@ -124,12 +121,11 @@ sealed class BaseCardData(open val id: String, open val type: CardType) {
     ) : BaseCardData(id, CardType.WRITE)
 
     data class Reply(
-        val authorName: String,
-        val authorProfileUrl: String? = null,
+        val previousCommentThumbnailUri: String? = null, // 대댓글에서 이전 댓글 썸네일
         val content: String,
         val tags: List<String> = emptyList(),
         val timeAgo: String = "",
-        val hasThumbnail: Boolean = false,
+        val hasPreviousCommentThumbnail: Boolean = false,
         val thumbnailUri: String = "",
         override val id: String = ""
     ) : BaseCardData(id, CardType.REPLY)
@@ -166,6 +162,7 @@ private fun BaseCard(
     modifier: Modifier = Modifier,
     backgroundColor: Color,
     elevation: Dp = 2.dp,
+    minimumHeight: Dp = 328.dp,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
@@ -173,7 +170,7 @@ private fun BaseCard(
             .fillMaxWidth()
             .defaultMinSize(
                 minWidth = 328.dp,
-                minHeight = 328.dp
+                minHeight = minimumHeight
             ),
         shape = RoundedCornerShape(CardDesignTokens.CardRadius),
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
@@ -304,7 +301,8 @@ private fun WriteCard(
     BaseCard(
         modifier = modifier.fillMaxWidth(),
         backgroundColor = Color.Transparent,
-        elevation = 0.dp
+        elevation = 0.dp,
+        minimumHeight = 328.dp
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             val backgroundModifier = Modifier
@@ -392,14 +390,15 @@ private fun ReplyCard(
     modifier: Modifier = Modifier
 ) {
     BaseCard(
-        modifier = modifier,
+        modifier = modifier.height(328.dp),
         backgroundColor = CardDesignTokens.CardBackgroundCyan
     ) {
         Column(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxWidth()
         ) {
-            // 썸네일 영역 (상단)
-            if (data.hasThumbnail) {
+            // 이전 댓글 썸네일 영역 (상단)
+            if (data.hasPreviousCommentThumbnail) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -417,9 +416,9 @@ private fun ReplyCard(
                             shape = RoundedCornerShape(CardDesignTokens.CardRadius)
                         ) { }
 
-                        if (data.thumbnailUri.isNotBlank()) {
+                        if (data.previousCommentThumbnailUri?.isNotBlank() == true) {
                             AsyncImage(
-                                model = data.thumbnailUri,
+                                model = data.previousCommentThumbnailUri,
                                 contentDescription = null,
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier
@@ -435,32 +434,31 @@ private fun ReplyCard(
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_back_thumbnail),
-                                contentDescription = "썸네일 있음",
+                                contentDescription = "이전 댓글 썸네일",
                                 tint = CardDesignTokens.TextSecondary
                             )
                         }
                     }
                 }
             }
-            
+
             // 상단 여백
             Spacer(modifier = Modifier.weight(1f))
-            
+
             // 중앙 컨텐츠 영역
             ReadOnlyContentBox(
                 modifier = Modifier.fillMaxWidth(),
                 content = data.content,
             )
-            
+
             // 중간 여백 (태그와 컨텐츠 사이)
             Spacer(modifier = Modifier.weight(1f))
-            
+
             // 하단 태그 영역
             if (data.tags.isNotEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
                         .height(60.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -468,7 +466,9 @@ private fun ReplyCard(
                         tags = data.tags,
                         enableAdd = false,
                         onAdd = {},
-                        onRemove = {}
+                        onRemove = {},
+                        currentInput = "",
+                        onInputChange = {}
                     )
                 }
             } else {
@@ -485,24 +485,38 @@ private fun DeletedCard(
     modifier: Modifier = Modifier
 ) {
     BaseCard(
-        modifier = modifier,
+        modifier = modifier
+            .height(439.dp),
+        elevation = 0.dp,
         backgroundColor = CardDesignTokens.CardBackgroundGray
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(NeutralColor.GRAY_100)
                 .padding(16.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Image(
-                painter = painterResource(R.drawable.img_no_card),
-                contentDescription = null,
+            Box(
                 modifier = Modifier
                     .height(130.dp)
-                    .width(220.dp),
-                contentScale = ContentScale.Fit
-            )
+                    .width(220.dp)
+                    .background(NeutralColor.GRAY_100)
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.img_no_card),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .height(130.dp)
+                        .width(220.dp),
+                    contentScale = ContentScale.Fit,
+                    colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(
+                        NeutralColor.GRAY_100,
+                        androidx.compose.ui.graphics.BlendMode.Multiply
+                    )
+                )
+            }
             Spacer(modifier = Modifier.height(20.dp))
             Text(
                 text = data.reason,
@@ -531,11 +545,10 @@ fun CardViewPreview() {
         item {
             CardView(
                 BaseCardData.Reply(
-                    "2",
-                    "sol",
+                    previousCommentThumbnailUri = "2",
                     content = "이건 ReplyCard 예시",
                     tags = listOf("답변", "예시"),
-                    hasThumbnail = true
+                    hasPreviousCommentThumbnail = true
                 )
             )
         }
