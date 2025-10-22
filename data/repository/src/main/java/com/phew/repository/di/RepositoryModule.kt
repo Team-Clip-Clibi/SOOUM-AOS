@@ -3,6 +3,7 @@ package com.phew.repository.di
 import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.network.NotifyRepository
 import com.phew.domain.repository.network.CardFeedRepository
+import com.phew.domain.repository.network.CardDetailRepository
 import com.phew.repository.DeviceRepositoryImpl
 import com.phew.repository.NotifyRepositoryImpl
 import dagger.Binds
@@ -13,6 +14,7 @@ import com.phew.domain.repository.network.SignUpRepository
 import com.phew.domain.repository.network.SplashRepository
 import com.phew.repository.network.SignUpRepositoryImpl
 import com.phew.repository.network.SplashRepositoryImpl
+import com.phew.repository.network.CardDetailRepositoryImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -42,6 +44,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindSignUpRepository(impl: SignUpRepositoryImpl): SignUpRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindCardDetailRepository(impl: CardDetailRepositoryImpl): CardDetailRepository
 
     companion object {
         @Provides
