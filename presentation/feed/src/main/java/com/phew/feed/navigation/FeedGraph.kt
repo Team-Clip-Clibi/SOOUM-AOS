@@ -49,7 +49,6 @@ fun NavGraphBuilder.feedGraph(
     finish: () -> Unit,
     onBackPressed: () -> Unit,
     webView: (String) -> Unit,
-    cardClick: (String) -> Unit,
 ) {
     navigation(
         route = FEED_GRAPH,
@@ -87,7 +86,6 @@ fun NavGraphBuilder.feedGraph(
                 closeDialog = homeViewModel::rationalDialogDismissed,
                 noticeClick = navController::navigateToNotify,
                 webViewClick = webView,
-                cardClick = cardClick
             )
         }
 

@@ -11,6 +11,7 @@ import com.phew.core.ui.state.SooumAppState
 import com.phew.core.ui.state.rememberSooumAppState
 import com.phew.home.navigation.homeGraph
 import com.phew.home.navigation.navigateToHomeGraph
+import com.phew.reports.reportGraph
 import com.phew.sign_up.navigation.SIGN_UP_GRAPH
 import com.phew.sign_up.navigation.navigateToSignUpGraph
 import com.phew.sign_up.navigation.signUpGraph
@@ -58,6 +59,12 @@ fun SooumNavHost(
                     SooumOnBackPressed(appState = appState)
                 },
                 webView = webView
+            )
+
+            reportGraph(
+                onBackPressed = {
+                    SooumOnBackPressed(appState = appState)
+                }
             )
 
             splashNavGraph(
