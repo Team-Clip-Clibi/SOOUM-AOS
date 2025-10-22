@@ -8,6 +8,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,6 +39,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -143,6 +145,7 @@ object AppBar {
         onClick: () -> Unit,
         appBarText: String = "Title",
     ) {
+        val interactionSource = remember { MutableInteractionSource() }
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -156,7 +159,11 @@ object AppBar {
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .clickable { onClick() },
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                        onClick = onClick
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
