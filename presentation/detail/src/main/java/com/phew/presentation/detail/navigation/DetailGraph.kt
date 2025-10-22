@@ -56,6 +56,51 @@ fun NavGraphBuilder.detailGraph(
         () -> Unit
     ) -> Unit = { _, _, _, _ -> }
 ) {
+
+
+    /*
+     * 사용 예시 ---------------------------------------------------------------------------
+     *
+     * NavHost(navController, startDestination = DETAIL_GRAPH) {
+     *     detailGraph(
+     *         navController = navController,
+     *         sooumAppState = sooumAppState,
+     *         onBackPressed = { navController.popBackStack() },
+     *         detailScreen = { detailArgs, appState, navigateToComment, back ->
+     *             CardDetailRoute(
+     *                 args = detailArgs,
+     *                 onCommentClick = { comment ->
+     *                     navigateToComment(
+     *                         CardDetailCommentArgs(
+     *                             cardId = detailArgs.cardId,
+     *                             parentId = comment.commentId
+     *                         )
+     *                     )
+     *                 },
+     *                 onBack = back
+     *             )
+     *         },
+     *         commentScreen = { commentArgs, appState, navigateToChild, back ->
+     *             CommentRoute(
+     *                 args = commentArgs,
+     *                 onChildCommentClick = { child ->
+     *                     navigateToChild(
+     *                         CardDetailCommentArgs(
+     *                             cardId = commentArgs.cardId,
+     *                             parentId = child.commentId
+     *                         )
+     *                     )
+     *                 },
+     *                 onBack = back
+     *             )
+     *         }
+     *     )
+     * }
+     *
+     * Entry Point ------------------------------------------------------------------------------
+     * navController.navigateToDetailGraph(CardDetailArgs(cardId = 123L))
+     * ------------------------------------------------------------------------------------------
+     */
     navigation(
         route = DETAIL_GRAPH,
         startDestination = DETAIL_ROUTE,
