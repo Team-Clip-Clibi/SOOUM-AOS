@@ -17,6 +17,7 @@ class NetworkConvention : Plugin<Project> {
         pluginManager.apply("org.jetbrains.kotlin.android")
         pluginManager.apply("com.google.devtools.ksp")
         pluginManager.apply("com.google.dagger.hilt.android")
+        pluginManager.apply("sooum.android.lint.convention")
         extensions.getByType<LibraryExtension>().apply {
             namespace = "com.phew.network"
             compileSdk = 36
