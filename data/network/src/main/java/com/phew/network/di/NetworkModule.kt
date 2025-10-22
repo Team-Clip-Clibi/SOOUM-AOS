@@ -6,6 +6,7 @@ import com.phew.network.BuildConfig
 import com.phew.network.retrofit.NotifyHttp
 import com.phew.network.TokenAuthenticator
 import com.phew.network.retrofit.FeedHttp
+import com.phew.network.retrofit.ReportHttp
 import com.phew.network.retrofit.CardDetailsInquiryHttp
 import com.phew.network.retrofit.SignUpHttp
 import com.phew.network.retrofit.SplashHttp
@@ -119,7 +120,11 @@ object NetworkModule {
 
     @Singleton
     @Provides
-    fun provideSignUpHttp(retrofit: Retrofit) : SignUpHttp = retrofit.create(SignUpHttp::class.java)
+    fun provideSignUpHttp(retrofit: Retrofit): SignUpHttp = retrofit.create(SignUpHttp::class.java)
+
+    @Singleton
+    @Provides
+    fun provideReportsHttp(retrofit: Retrofit): ReportHttp = retrofit.create(ReportHttp::class.java)
 
     @Singleton
     @Provides

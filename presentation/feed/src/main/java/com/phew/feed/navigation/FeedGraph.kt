@@ -25,19 +25,19 @@ private val FEED_HOME_ROUTE = HomeTabType.FEED.route
 private const val NOTIFY_ROUTE = "notify_route"
 
 fun NavHostController.navigateToFeedGraph(
-    navOptions: NavOptions? = null
+    navOptions: NavOptions? = null,
 ) {
     this.navigate(FEED_GRAPH, navOptions)
 }
 
 private fun NavHostController.navigateToFeedHome(
-    navOptions: NavOptions? = null
+    navOptions: NavOptions? = null,
 ) {
     this.navigate(FEED_HOME_ROUTE, navOptions)
 }
 
 private fun NavHostController.navigateToNotify(
-    navOptions: NavOptions? = null
+    navOptions: NavOptions? = null,
 ) {
     this.navigate(NOTIFY_ROUTE, navOptions)
 }
@@ -85,7 +85,7 @@ fun NavGraphBuilder.feedGraph(
                 },
                 closeDialog = homeViewModel::rationalDialogDismissed,
                 noticeClick = navController::navigateToNotify,
-                webViewClick = webView
+                webViewClick = webView,
             )
         }
 
