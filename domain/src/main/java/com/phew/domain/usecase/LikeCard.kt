@@ -4,8 +4,8 @@ import com.phew.core_common.APP_ERROR_CODE
 import com.phew.core_common.DataResult
 import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR_FAIL_JOB
-import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.ERROR_LOGOUT
+import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.HTTP_INVALID_TOKEN
 import com.phew.domain.repository.network.CardDetailRepository
 import javax.inject.Inject

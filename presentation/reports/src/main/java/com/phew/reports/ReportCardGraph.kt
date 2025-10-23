@@ -3,10 +3,10 @@ package com.phew.reports
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.remember
 import androidx.navigation.NavGraphBuilder
-import com.phew.core_design.slideComposable
-import androidx.navigation.navArgument
 import androidx.navigation.NavType
 import androidx.navigation.compose.navigation
+import androidx.navigation.navArgument
+import com.phew.core_design.slideComposable
 
 const val REPORT_GRAPH_ROUTE_PREFIX = "report_graph"
 const val CARD_ID_ARG = "cardId"

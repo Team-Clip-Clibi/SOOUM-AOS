@@ -14,8 +14,8 @@ import androidx.navigation.navigation
 import com.phew.core.ui.component.home.HomeTabType
 import com.phew.core.ui.state.SooumAppState
 import com.phew.core_design.slideComposable
-import com.phew.feed.notification.NotifyView
 import com.phew.feed.feed.FeedView
+import com.phew.feed.notification.NotifyView
 import com.phew.feed.viewModel.HomeViewModel
 
 val FEED_GRAPH = HomeTabType.FEED.graph
