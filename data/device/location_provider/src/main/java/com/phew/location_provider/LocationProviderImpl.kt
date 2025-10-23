@@ -5,9 +5,9 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import androidx.core.content.ContextCompat
-import com.phew.location_provider.dto.LocationDTO
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.phew.location_provider.dto.LocationDTO
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject

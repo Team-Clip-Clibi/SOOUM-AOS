@@ -25,16 +25,12 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.ui.Alignment
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.platform.LocalDensity
-import kotlinx.coroutines.launch
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -43,7 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -53,8 +49,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
-import com.phew.core_design.AppBar
 import com.phew.core.ui.R
+import com.phew.core.ui.component.camera.CameraPickerBottomSheet
+import com.phew.core.ui.component.camera.CameraPickerEffect
+import com.phew.core.ui.model.CameraCaptureRequest
+import com.phew.core.ui.model.CameraPickerAction
+import com.phew.core.ui.model.CameraPickerEffectState
+import com.phew.core_design.AppBar
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.Primary
@@ -62,11 +63,8 @@ import com.phew.core_design.TextComponent
 import com.phew.core_design.component.button.RoundButton
 import com.phew.core_design.component.card.BaseCardData
 import com.phew.core_design.component.card.CardView
-import com.phew.core.ui.model.CameraCaptureRequest
-import com.phew.core.ui.model.CameraPickerAction
-import com.phew.core.ui.component.camera.CameraPickerBottomSheet
-import com.phew.core.ui.component.camera.CameraPickerEffect
-import com.phew.core.ui.model.CameraPickerEffectState
+import com.phew.presentation.write.component.NumberTagFlowLayout
+import com.phew.presentation.write.component.NumberTagItem
 import com.phew.presentation.write.model.BackgroundConfig
 import com.phew.presentation.write.model.FontConfig
 import com.phew.presentation.write.model.FontItem
@@ -74,10 +72,7 @@ import com.phew.presentation.write.model.WriteOption
 import com.phew.presentation.write.model.WriteOptions
 import com.phew.presentation.write.screen.component.FilteredImageGrid
 import com.phew.presentation.write.screen.component.FontSelectorGrid
-import com.phew.presentation.write.component.NumberTagFlowLayout
-import com.phew.presentation.write.component.NumberTagItem
 import com.phew.presentation.write.viewmodel.WriteViewModel
-import androidx.compose.ui.res.stringResource
 import com.phew.presentation.write.R as WriteR
 
 /**

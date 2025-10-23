@@ -3,11 +3,11 @@ package com.phew.network.di
 import com.phew.domain.token.TokenManger
 import com.phew.network.AuthInterceptor
 import com.phew.network.BuildConfig
-import com.phew.network.retrofit.NotifyHttp
 import com.phew.network.TokenAuthenticator
-import com.phew.network.retrofit.FeedHttp
-import com.phew.network.retrofit.ReportHttp
 import com.phew.network.retrofit.CardDetailsInquiryHttp
+import com.phew.network.retrofit.FeedHttp
+import com.phew.network.retrofit.NotifyHttp
+import com.phew.network.retrofit.ReportHttp
 import com.phew.network.retrofit.SignUpHttp
 import com.phew.network.retrofit.SplashHttp
 import com.phew.network.retrofit.TokenRefreshHttp
@@ -15,6 +15,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -29,6 +30,7 @@ import javax.inject.Singleton
 @Module
 object NetworkModule {
 
+    @OptIn(ExperimentalSerializationApi::class)
     @Provides
     @Singleton
     fun provideJson(): Json = Json {

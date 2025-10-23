@@ -19,7 +19,7 @@ class ApplicationConvention : Plugin<Project> {
         pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
         pluginManager.apply("com.google.devtools.ksp")
         pluginManager.apply("com.google.gms.google-services")
-
+        pluginManager.apply("sooum.android.lint.convention")
         extensions.getByType<ApplicationExtension>().apply {
             namespace = "com.phew.sooum"
             compileSdk = 36

@@ -3,9 +3,9 @@ package com.phew.sign_up
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.phew.core_common.DomainResult
 import com.phew.core.ui.model.CameraCaptureRequest
 import com.phew.core.ui.model.CameraPickerAction
+import com.phew.core_common.DomainResult
 import com.phew.domain.usecase.CheckNickName
 import com.phew.domain.usecase.CheckSignUp
 import com.phew.domain.usecase.CreateImageFile

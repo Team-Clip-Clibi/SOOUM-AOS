@@ -59,15 +59,15 @@ import com.phew.feed.FeedUi
 import com.phew.feed.NAV_HOME_FEED_INDEX
 import com.phew.feed.NAV_HOME_NEAR_INDEX
 import com.phew.feed.NAV_HOME_POPULAR_INDEX
-import com.phew.presentation.feed.R
 import com.phew.feed.viewModel.DistanceType
 import com.phew.feed.viewModel.FeedPagingState
 import com.phew.feed.viewModel.FeedType
 import com.phew.feed.viewModel.HomeViewModel
 import com.phew.feed.viewModel.UiState
+import com.phew.presentation.feed.R
 import kotlinx.coroutines.FlowPreview
-import com.phew.core.ui.R as CoreUiR
 import kotlinx.coroutines.flow.debounce
+import com.phew.core.ui.R as CoreUiR
 
 
 @OptIn(FlowPreview::class)

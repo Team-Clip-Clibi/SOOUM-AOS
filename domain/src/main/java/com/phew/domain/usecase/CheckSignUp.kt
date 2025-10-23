@@ -3,20 +3,20 @@ package com.phew.domain.usecase
 import com.phew.core_common.DataResult
 import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR_NETWORK
-import com.phew.domain.repository.DeviceRepository
-import java.security.PublicKey
-import javax.inject.Inject
-import java.util.Base64
 import com.phew.domain.SIGN_UP_ALREADY_SIGN_UP
 import com.phew.domain.SIGN_UP_BANNED
 import com.phew.domain.SIGN_UP_OKAY
 import com.phew.domain.SIGN_UP_WITHDRAWN
+import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.network.SignUpRepository
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import java.security.spec.X509EncodedKeySpec
 import java.security.KeyFactory
+import java.security.PublicKey
+import java.security.spec.X509EncodedKeySpec
+import java.util.Base64
 import javax.crypto.Cipher
+import javax.inject.Inject
 
 class CheckSignUp @Inject constructor(
     private val deviceRepository: DeviceRepository,
