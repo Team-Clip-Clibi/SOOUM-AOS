@@ -87,7 +87,7 @@ object TagDesignTokens {
 
     // 컬러풀 태그
     val ColorfulBackground = Primary.LIGHT_1
-    val ColorfulText = Primary.MAIN
+    val ColorfulText = Primary.DARK
     val ColorfulIconTint = Primary.MAIN
 
     // 아이콘 색상
