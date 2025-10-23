@@ -133,13 +133,13 @@ object FeedUi {
                             feedNoticeClick(currentNotice.url)
                         },
                     )
-                    IndicatorDot(
-                        pagerState = pagerState,
-                        totalSize = feedNotice.size,
-                        modifier =  Modifier.padding(top = 16.dp, end = 16.dp).align(Alignment.TopEnd)
-                    )
                 }
             }
+            IndicatorDot(
+                pagerState = pagerState,
+                totalSize = feedNotice.size,
+                modifier =  Modifier.padding(top = 16.dp, end = 16.dp).align(Alignment.TopEnd)
+            )
         }
     }
 
