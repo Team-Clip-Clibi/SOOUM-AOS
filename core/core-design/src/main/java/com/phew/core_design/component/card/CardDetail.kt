@@ -38,6 +38,7 @@ fun CardDetail(
             )
         } else {
             CardView(
+                modifier = modifier.padding(vertical = 2.dp),
                 data = BaseCardData.Reply(
                     previousCommentThumbnailUri = previousCommentThumbnailUri,
                     content = cardContent,
