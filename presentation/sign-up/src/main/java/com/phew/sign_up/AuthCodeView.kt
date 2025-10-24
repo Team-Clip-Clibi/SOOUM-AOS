@@ -79,7 +79,13 @@ fun AuthCodeView(viewModel: SignUpViewModel, onBack: () -> Unit, home: () -> Uni
                 color = NeutralColor.BLACK,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 32.dp)
+                    .padding(bottom = 4.dp)
+            )
+            Text(
+                text = stringResource(R.string.authCode_txt_content),
+                style = TextComponent.TITLE_2_SB_16,
+                color = NeutralColor.GRAY_500,
+                modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp)
             )
             TextFiledComponent.NoIcon(
                 value = uiState.authCode,
@@ -93,7 +99,6 @@ fun AuthCodeView(viewModel: SignUpViewModel, onBack: () -> Unit, home: () -> Uni
             )
         }
     }
-
 }
 
 @Composable
