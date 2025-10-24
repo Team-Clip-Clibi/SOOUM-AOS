@@ -39,6 +39,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
@@ -83,7 +85,7 @@ import com.phew.presentation.write.R as WriteR
 internal fun WriteRoute(
     modifier: Modifier = Modifier,
     viewModel: WriteViewModel = hiltViewModel(),
-    onBackPressed: () -> Unit
+    onBackPressed: () -> Unit,
 ) {
     BackHandler {
         onBackPressed()
@@ -113,14 +115,14 @@ internal fun WriteRoute(
 
         viewModel.onInitialLocationPermissionCheck(fineGranted || coarseGranted)
     }
-    
+
     //  Effect Event로 수정
     LaunchedEffect(Unit) {
         viewModel.requestPermissionEvent.collect { permissions ->
             locationPermission.launch(permissions)
         }
     }
-    
+
     // 완료 이벤트 처리
     LaunchedEffect(Unit) {
         viewModel.writeCompleteEvent.collect {
@@ -130,7 +132,7 @@ internal fun WriteRoute(
     }
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    
+
     WriteScreen(
         modifier = modifier,
         content = uiState.content,
@@ -261,7 +263,7 @@ private fun WriteScreen(
     onCameraCaptureResult: (Boolean, Uri) -> Unit,
     onRequestGalleryPermissionFromSettings: () -> Unit,
     onGallerySettingsResult: (Boolean) -> Unit,
-    onCameraSettingsResult: (Boolean) -> Unit
+    onCameraSettingsResult: (Boolean) -> Unit,
 ) {
 
     val snackBarHostState = remember { SnackbarHostState() }
@@ -273,6 +275,8 @@ private fun WriteScreen(
     }
     val context = LocalContext.current
     var settingsTarget by remember { mutableStateOf<SettingsTarget?>(null) }
+    val keyboard = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
     val settingsLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) {
@@ -328,7 +332,7 @@ private fun WriteScreen(
         onGalleryPermissionDenied = onGalleryPermissionDenied
     )
 
-    Scaffold (
+    Scaffold(
         modifier = modifier,
         topBar = {
             AppBar.TextButtonAppBar(
@@ -355,7 +359,12 @@ private fun WriteScreen(
         }
     ) { innerPadding ->
         val scrollState = rememberScrollState()
-
+        LaunchedEffect(scrollState.isScrollInProgress) {
+            if (scrollState.isScrollInProgress) {
+                keyboard?.hide()
+                focusManager.clearFocus()
+            }
+        }
         Column(
             modifier = Modifier
                 .background(NeutralColor.WHITE)
@@ -368,7 +377,6 @@ private fun WriteScreen(
                     .padding(horizontal = 16.dp, vertical = 8.dp)
                     .verticalScroll(scrollState)
                     .weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 CardView(
                     modifier = Modifier
@@ -393,7 +401,6 @@ private fun WriteScreen(
                 )
 
                 BackgroundSelect(
-                    modifier = Modifier.fillMaxWidth(),
                     selectedGridImageResId = selectedGridImageResId,
                     selectedBackgroundFilter = selectedBackgroundFilter,
                     onFilterChange = onFilterChange,
@@ -483,7 +490,10 @@ private fun isGalleryPermissionGranted(context: Context): Boolean {
     } else {
         Manifest.permission.READ_EXTERNAL_STORAGE
     }
-    return ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+    return ContextCompat.checkSelfPermission(
+        context,
+        permission
+    ) == PackageManager.PERMISSION_GRANTED
 }
 
 private enum class SettingsTarget {
@@ -493,17 +503,16 @@ private enum class SettingsTarget {
 
 @Composable
 private fun BackgroundSelect(
-    modifier: Modifier,
     selectedGridImageResId: Int?,
     selectedBackgroundFilter: String,
     onFilterChange: (filter: String) -> Unit,
     onImageSelected: (Int) -> Unit,
-    onCameraClick: () -> Unit
+    onCameraClick: () -> Unit,
 ) {
-    Column {
+    Column(modifier = Modifier.fillMaxWidth().padding(top = 24.dp)) {
         Text(
-            text = "배경",
-            style = TextComponent.CAPTION_1_SB_12.copy(color = Primary.DARK)
+            text = stringResource(com.phew.presentation.write.R.string.write_screen_background_section),
+            style = TextComponent.CAPTION_1_SB_12.copy(color = Primary.DARK),
         )
 
         FilteredImageGrid(
@@ -524,14 +533,14 @@ private fun BackgroundSelect(
 private fun FontSelect(
     fontItem: List<FontItem>,
     selectedFont: String,
-    onFontSelected: (FontFamily) -> Unit
+    onFontSelected: (FontFamily) -> Unit,
 ) {
-    Column {
+    Column(modifier = Modifier.padding(top = 24.dp)) {
         Text(
-            text = "폰트",
-            style = TextComponent.CAPTION_1_SB_12.copy(color = Primary.DARK)
+            text = stringResource(com.phew.presentation.write.R.string.write_screen_font_section),
+            style = TextComponent.CAPTION_1_SB_12.copy(color = Primary.DARK),
         )
-        
+
         FontSelectorGrid(
             fonts = fontItem,
             selectedFont = selectedFont,
@@ -547,9 +556,9 @@ private fun OptionButtons(
     hasLocationPermission: Boolean,
     onOptionSelected: (WriteOption) -> Unit,
     onDistancePermissionRequest: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
-    Column (
+    Column(
         modifier = modifier
             .fillMaxWidth()
             .background(NeutralColor.WHITE)

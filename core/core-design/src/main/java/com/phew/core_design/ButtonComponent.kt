@@ -31,6 +31,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -478,6 +481,7 @@ object MediumButton {
         buttonText: String,
         onClick: () -> Unit,
         isEnable: Boolean = true,
+        fontFamily: FontFamily = FontFamily(Font(R.font.medium)),
     ) {
         BlinkMediumButton(
             baseColor = Primary.LIGHT_1,
@@ -489,7 +493,11 @@ object MediumButton {
         ) {
             Text(
                 text = buttonText,
-                style = TextComponent.SUBTITLE_1_M_16,
+                style = TextComponent.SUBTITLE_1_M_16.let { textStyle: TextStyle ->
+                    textStyle.copy(
+                        fontFamily = fontFamily
+                    )
+                },
                 color = if (isEnable) NeutralColor.GRAY_600 else NeutralColor.GRAY_400
             )
         }
@@ -500,6 +508,7 @@ object MediumButton {
         buttonText: String,
         onClick: () -> Unit,
         isEnable: Boolean = true,
+        fontFamily: FontFamily = FontFamily(Font(R.font.medium)),
     ) {
         BlinkMediumButton(
             baseColor = NeutralColor.GRAY_200,
@@ -510,7 +519,11 @@ object MediumButton {
         ) {
             Text(
                 text = buttonText,
-                style = TextComponent.SUBTITLE_1_M_16,
+                style = TextComponent.SUBTITLE_1_M_16.let { textStyle: TextStyle ->
+                    textStyle.copy(
+                        fontFamily = fontFamily
+                    )
+                },
                 color = if (isEnable) NeutralColor.GRAY_600 else NeutralColor.GRAY_400
             )
         }

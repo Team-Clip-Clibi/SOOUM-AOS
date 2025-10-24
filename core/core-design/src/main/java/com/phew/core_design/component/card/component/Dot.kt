@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,13 +21,12 @@ fun IndicatorDot(
     totalSize: Int
 ) {
     Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
         modifier = modifier
     ) {
         repeat(totalSize) { iteration ->
             Box(
                 modifier = Modifier
-                    .padding(2.dp)
                     .clip(RoundedCornerShape(80.dp))
                     .background(NeutralColor.GRAY_600.copy(alpha = if (iteration == pagerState.currentPage % totalSize) 0.8f else 0.2f))
                     .width(if (iteration == pagerState.currentPage % totalSize) 8.dp else 4.dp)

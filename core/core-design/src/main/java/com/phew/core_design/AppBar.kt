@@ -72,7 +72,7 @@ object AppBar {
                     .height(17.dp)
             )
 
-            Icon(
+            Image(
                 painter = if (newAlarm) painterResource(R.drawable.ic_bell_stoke) else painterResource(
                     R.drawable.ic_bell_no_badge_stoke
                 ),
@@ -151,6 +151,7 @@ object AppBar {
                 .windowInsetsPadding(WindowInsets.statusBars)
                 .height(48.dp)
                 .statusBarsPadding()
+                .zIndex(1f)
                 .background(NeutralColor.WHITE)
                 .padding(start = 4.dp),
             verticalAlignment = Alignment.CenterVertically

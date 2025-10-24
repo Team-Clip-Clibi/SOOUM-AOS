@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -208,16 +209,20 @@ private fun TopBar(
     isTabsVisible: Boolean,
     selectIndex: Int,
 ) {
-    AppBar.IconLeftAppBar(
-        onClick = backClick,
-        appBarText = stringResource(R.string.home_notice_top_bar)
-    )
-    NotificationUi.AnimatedNoticeTabLayout(
-        allClick = allClick,
-        noticeClick = noticeClick,
-        isTabsVisible = isTabsVisible,
-        selectTabData = selectIndex
-    )
+    Column(modifier = Modifier
+        .fillMaxWidth()
+        .wrapContentHeight()) {
+        AppBar.IconLeftAppBar(
+            onClick = backClick,
+            appBarText = stringResource(R.string.home_notice_top_bar)
+        )
+        NotificationUi.AnimatedNoticeTabLayout(
+            allClick = allClick,
+            noticeClick = noticeClick,
+            isTabsVisible = isTabsVisible,
+            selectTabData = selectIndex
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
