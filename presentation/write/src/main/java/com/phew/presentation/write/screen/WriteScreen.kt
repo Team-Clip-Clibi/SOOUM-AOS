@@ -39,6 +39,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
@@ -273,6 +275,8 @@ private fun WriteScreen(
     }
     val context = LocalContext.current
     var settingsTarget by remember { mutableStateOf<SettingsTarget?>(null) }
+    val keyboard = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
     val settingsLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) {
@@ -355,7 +359,12 @@ private fun WriteScreen(
         }
     ) { innerPadding ->
         val scrollState = rememberScrollState()
-
+        LaunchedEffect(scrollState.isScrollInProgress) {
+            if (scrollState.isScrollInProgress) {
+                keyboard?.hide()
+                focusManager.clearFocus()
+            }
+        }
         Column(
             modifier = Modifier
                 .background(NeutralColor.WHITE)
