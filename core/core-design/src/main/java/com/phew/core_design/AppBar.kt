@@ -151,6 +151,7 @@ object AppBar {
                 .windowInsetsPadding(WindowInsets.statusBars)
                 .height(48.dp)
                 .statusBarsPadding()
+                .zIndex(1f)
                 .background(NeutralColor.WHITE)
                 .padding(start = 4.dp),
             verticalAlignment = Alignment.CenterVertically

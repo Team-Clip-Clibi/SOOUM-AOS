@@ -105,7 +105,7 @@ internal fun NotiCard(
 }
 
 @Composable
-fun NotiCardPager(
+fun NoticeCardPager(
     dataList: List<NotiCardData>,
     onClick: (NotiCardData) -> Unit,
     modifier: Modifier = Modifier
