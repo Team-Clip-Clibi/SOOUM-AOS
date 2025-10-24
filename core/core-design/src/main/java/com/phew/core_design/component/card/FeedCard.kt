@@ -198,7 +198,7 @@ private fun FeedCardImpl(
             .fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         color = Primary.MAIN,
-        shadowElevation = 6.dp,
+        shadowElevation = 16.dp,
         border = BorderStroke(1.dp, NeutralColor.GRAY_200)
     ) {
         Column(
