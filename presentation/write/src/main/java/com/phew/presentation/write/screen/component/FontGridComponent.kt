@@ -24,13 +24,11 @@ internal fun FontSelectorGrid(
     fonts: List<FontItem>,
     selectedFont: String,
     onFontSelected: (FontFamily) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
-
     Column(
         modifier = modifier
-            .fillMaxWidth()
-            .padding(16.dp),
+            .fillMaxWidth().padding(top = 10.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         fonts.chunked(2).forEach { rowFonts ->
@@ -47,13 +45,15 @@ internal fun FontSelectorGrid(
                             SelectedSecondary(
                                 buttonText = font.name,
                                 onClick = { font.previewTypeface?.let { onFontSelected(it) } },
-                                isEnable = true
+                                isEnable = true,
+                                fontFamily = font.previewTypeface ?: FontFamily(Font(R.font.medium))
                             )
                         } else {
                             DisabledSecondary(
                                 buttonText = font.name,
                                 onClick = {},
-                                isEnable = false
+                                isEnable = false,
+                                fontFamily = font.previewTypeface ?: FontFamily(Font(R.font.medium))
                             )
                             Box(
                                 modifier = Modifier

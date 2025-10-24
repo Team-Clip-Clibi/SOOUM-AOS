@@ -42,8 +42,7 @@ fun SooumFilter(
         modifier = modifier
             .fillMaxWidth()
             .background(FilterDesignTokens.BackgroundDefault)
-            .padding(horizontal = FilterDesignTokens.HorizontalPadding,
-                vertical = FilterDesignTokens.VerticalPadding),
+            .padding(vertical = FilterDesignTokens.VerticalPadding),
         verticalAlignment = Alignment.CenterVertically
     ) {
         filters.forEach { label ->
