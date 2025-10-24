@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="card_detail_bottom_search">조회</string>
+    <string name="card_no_comment">첫 댓글을 남겨보세요</string>
 </resources>

@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -28,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -35,9 +37,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.model.navigation.CardDetailCommentArgs
 import com.phew.core.ui.util.extension.nestedScrollWithStickyHeader
+import com.phew.core_common.TimeUtils
 import com.phew.core_common.log.SooumLog
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.R
+import com.phew.core_design.TextComponent
+import com.phew.presentation.detail.R as DetailR
 import com.phew.core_design.component.card.CardDetail
 import com.phew.core_design.component.card.CardViewComment
 import com.phew.domain.dto.CardComment
@@ -137,7 +142,6 @@ private fun CardDetailScreen(
         initialPageOffsetFraction = 0f,
         pageCount = { comments.size }
     )
-    val pageChange = rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier,
@@ -181,30 +185,44 @@ private fun CardDetailScreen(
                         )
                     }
                 )
-                HorizontalPager(
-                    modifier = Modifier
-                        .background(NeutralColor.GRAY_100)
-                        .nestedScrollWithStickyHeader(scrollState),
-                    state = pagerState,
-                    flingBehavior = PagerDefaults.flingBehavior(state = pagerState),
-                    pageContent = { page ->
-                        if (pageChange.value) {
+                
+                if (comments.isNotEmpty()) {
+                    HorizontalPager(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(NeutralColor.GRAY_100)
+                            .nestedScrollWithStickyHeader(scrollState),
+                        state = pagerState,
+                        flingBehavior = PagerDefaults.flingBehavior(state = pagerState),
+                        pageSpacing = 10.dp,
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+                        pageContent = { page ->
                             CardViewComment(
                                 contentText = comments[page].cardContent,
                                 thumbnailUri = comments[page].cardImgUrl,
                                 distance = comments[page].distance ?: "",
-                                createAt = comments[page].createdAt,
+                                createAt = TimeUtils.getRelativeTimeString(comments[page].createdAt),
                                 likeCnt = comments[page].likeCount.toString(),
                                 commentCnt = comments[page].commentCardCount.toString(),
                                 font = comments[page].font,
                                 onClick = {
-                                    pageChange.value = false
                                     onClickCommentView()
                                 }
                             )
                         }
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = stringResource(DetailR.string.card_no_comment),
+                            style = TextComponent.BODY_1_M_14
+                        )
                     }
-                )
+
+                }
             }
 
             // Floating Action Button

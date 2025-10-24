@@ -62,6 +62,7 @@ import com.phew.core_design.TextComponent
 import com.phew.core_design.component.button.RoundButton
 import com.phew.core_design.component.card.BaseCardData
 import com.phew.core_design.component.card.CardView
+import com.phew.domain.dto.CardImageDefault
 import com.phew.core.ui.model.CameraCaptureRequest
 import com.phew.core.ui.model.CameraPickerAction
 import com.phew.core.ui.component.camera.CameraPickerBottomSheet
@@ -156,7 +157,7 @@ internal fun WriteRoute(
         activeBackgroundImageResId = uiState.activeBackgroundResId,
         activeBackgroundUri = uiState.activeBackgroundUri,
         selectedBackgroundFilter = uiState.selectedBackgroundFilter,
-        selectedGridImageResId = uiState.selectedGridImageResId,
+        selectedGridImageName = uiState.selectedGridImageName,
         selectedFont = uiState.selectedFont,
         selectedFontFamily = uiState.selectedFontFamily,
         selectedOptionIds = uiState.selectedOptionIds,
@@ -164,6 +165,7 @@ internal fun WriteRoute(
         showLocationPermissionDialog = uiState.showLocationPermissionDialog,
         showCameraPermissionDialog = uiState.showCameraPermissionDialog,
         showGalleryPermissionDialog = uiState.showGalleryPermissionDialog,
+        cardDefaultImagesByCategory = uiState.cardDefaultImagesByCategory,
         onBackPressed = onBackPressed,
         onContentChange = viewModel::updateContent,
         onTagInputChange = viewModel::updateTagInput,
@@ -232,7 +234,7 @@ private fun WriteScreen(
     activeBackgroundImageResId: Int?,
     activeBackgroundUri: Uri?,
     selectedBackgroundFilter: String,
-    selectedGridImageResId: Int?,
+    selectedGridImageName: String?,
     selectedFont: String,
     selectedFontFamily: FontFamily?,
     selectedOptionIds: List<String>,
@@ -240,11 +242,12 @@ private fun WriteScreen(
     showLocationPermissionDialog: Boolean,
     showCameraPermissionDialog: Boolean,
     showGalleryPermissionDialog: Boolean,
+    cardDefaultImagesByCategory: Map<String, List<CardImageDefault>>,
     onBackPressed: () -> Unit,
     onContentChange: (String) -> Unit,
     onTagInputChange: (String) -> Unit,
     onFilterChange: (filter: String) -> Unit,
-    onImageSelected: (Int) -> Unit,
+    onImageSelected: (String) -> Unit,
     onCustomImageSelected: (Uri) -> Unit,
     onContentClick: () -> Unit, // Add this line
     onFontSelected: (FontFamily) -> Unit,
@@ -415,8 +418,9 @@ private fun WriteScreen(
 
                 BackgroundSelect(
                     modifier = Modifier.fillMaxWidth(),
-                    selectedGridImageResId = selectedGridImageResId,
+                    selectedGridImageName = selectedGridImageName,
                     selectedBackgroundFilter = selectedBackgroundFilter,
+                    cardDefaultImagesByCategory = cardDefaultImagesByCategory,
                     onFilterChange = onFilterChange,
                     onImageSelected = onImageSelected,
                     onCameraClick = onCameraPickerRequested
@@ -515,10 +519,11 @@ private enum class SettingsTarget {
 @Composable
 private fun BackgroundSelect(
     modifier: Modifier,
-    selectedGridImageResId: Int?,
+    selectedGridImageName: String?,
     selectedBackgroundFilter: String,
+    cardDefaultImagesByCategory: Map<String, List<CardImageDefault>>,
     onFilterChange: (filter: String) -> Unit,
-    onImageSelected: (Int) -> Unit,
+    onImageSelected: (String) -> Unit,
     onCameraClick: () -> Unit
 ) {
     Column {
@@ -529,9 +534,9 @@ private fun BackgroundSelect(
 
         FilteredImageGrid(
             filters = BackgroundConfig.filterNames,
-            imagesByFilter = BackgroundConfig.imagesByFilter,
             selectedFilter = selectedBackgroundFilter,
-            selectedImage = selectedGridImageResId,
+            selectedImageName = selectedGridImageName,
+            cardDefaultImagesByCategory = cardDefaultImagesByCategory,
             onFilterSelected = { filter ->
                 onFilterChange(filter)
             },

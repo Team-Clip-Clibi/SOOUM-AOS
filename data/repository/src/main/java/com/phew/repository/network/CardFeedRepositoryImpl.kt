@@ -4,6 +4,7 @@ import com.phew.core_common.APP_ERROR_CODE
 import com.phew.core_common.DataResult
 import com.phew.core_common.HTTP_NOT_FOUND
 import com.phew.core_common.HTTP_SUCCESS
+import com.phew.domain.dto.CardDefaultImagesResponse
 import com.phew.domain.dto.CardImageDefault
 import com.phew.domain.dto.CheckedBaned
 import com.phew.domain.dto.DistanceCard
@@ -151,15 +152,17 @@ class CardFeedRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun requestCardImageDefault(): DataResult<List<CardImageDefault>> {
+    override suspend fun requestCardImageDefault(): DataResult<CardDefaultImagesResponse> {
         return apiCall(
             apiCall = {
                 feedHttp.requestCardImageDefault()
             },
             mapper = { result ->
-                result.defaultImages.values.flatMap { imageInfoList ->
-                    imageInfoList.map { it.toDomain() }
-                }
+                CardDefaultImagesResponse(
+                    defaultImages = result.defaultImages.mapValues { (_, imageInfoList) ->
+                        imageInfoList.map { it.toDomain() }
+                    }
+                )
             }
         )
     }

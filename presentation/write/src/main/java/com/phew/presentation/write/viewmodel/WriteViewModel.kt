@@ -67,6 +67,9 @@ class WriteViewModel @Inject constructor(
     val uiState: StateFlow<WriteUiState> = _uiState.asStateFlow()
 
     init {
+        // 기본 이미지 로드
+        loadCardDefaultImages()
+        
         // 실시간 태그 검색 로직
         viewModelScope.launch {
             uiState
@@ -250,12 +253,30 @@ class WriteViewModel @Inject constructor(
         _uiState.update { it.copy(selectedBackgroundFilter = filter) }
     }
 
-    fun selectBackgroundImage(imageResId: Int) {
+    fun selectBackgroundImage(imageName: String) {
         _uiState.update { state ->
-            state.copy(
-                activeBackgroundResId = imageResId,
-                activeBackgroundUri = null
-            )
+            // 서버에서 받은 기본 이미지 찾기
+            val serverImage = state.cardDefaultImagesByCategory.values
+                .flatten()
+                .find { it.imageName == imageName }
+            
+            SooumLog.d(TAG, "selectBackgroundImage() imageName: $imageName, serverImage: $serverImage")
+
+            if (serverImage != null) {
+                // 서버 기본 이미지인 경우
+                state.copy(
+                    activeBackgroundResId = null,
+                    activeBackgroundUri = Uri.parse(serverImage.url),
+                    selectedDefaultImageName = imageName
+                )
+            } else {
+                // 서버 이미지가 아닌 경우 (현재는 모든 이미지가 서버에서 오므로 이 경우는 없어야 함)
+                state.copy(
+                    activeBackgroundResId = null,
+                    activeBackgroundUri = null,
+                    selectedDefaultImageName = null
+                )
+            }
         }
     }
 
@@ -315,7 +336,8 @@ class WriteViewModel @Inject constructor(
                         _uiState.update { state ->
                             state.copy(
                                 activeBackgroundUri = result.data,
-                                activeBackgroundResId = null
+                                activeBackgroundResId = null,
+                                selectedDefaultImageName = null
                             )
                         }
                     }
@@ -332,7 +354,8 @@ class WriteViewModel @Inject constructor(
         _uiState.update { state ->
             state.copy(
                 activeBackgroundUri = uri,
-                activeBackgroundResId = null
+                activeBackgroundResId = null,
+                selectedDefaultImageName = null
             )
         }
     }
@@ -400,49 +423,75 @@ private fun requestCameraImageForBackground() {
     }
 
     fun onWriteComplete() {
-        if (_uiState.value.canComplete) {
+        val currentState = _uiState.value
+        if (currentState.canComplete && !currentState.isWriteInProgress) {
+            _uiState.update { it.copy(isWriteInProgress = true) }
             viewModelScope.launch {
                 val state = _uiState.value
                 val selectedFontServerName = FontConfig.availableFonts
                     .find { it.name == state.selectedFont }?.serverName 
                     ?: FontConfig.defaultFont.serverName
                 
-                val result = if (state.parentCardId != null) {
-                    // 댓글 작성 (PostCardReply 사용)
-                    val replyParam = PostCardReply.Param(
-                        cardId = state.parentCardId,
-                        content = state.content,
-                        font = selectedFontServerName,
-                        imgType = if (state.activeBackgroundUri != null) "CUSTOM" else "DEFAULT",
-                        imgName = state.activeBackgroundResId?.toString() ?: "",
-                        tags = state.tags,
-                        isDistanceShared = state.selectedOptionIds.contains(WriteOptions.DISTANCE_OPTION_ID)
-                    )
-                    SooumLog.d(TAG, "onWriteComplete reply: $replyParam")
-                    postCardReply(replyParam)
-                } else {
-                    // 새 카드 작성 (PostCard 사용)
-                    val cardParam = PostCard.Param(
-                        isFromDevice = state.activeBackgroundUri != null,
-                        answerCard = false,
-                        cardId = null,
-                        imageUrl = state.activeBackgroundUri?.toString(),
-                        content = state.content,
-                        font = selectedFontServerName,
-                        imgName = state.activeBackgroundResId?.toString(),
-                        isStory = state.selectedOptionIds.contains("twenty_four_hours"),
-                        tags = state.tags
-                    )
-                    SooumLog.d(TAG, "onWriteComplete card: $cardParam")
-                    postCard(cardParam)
+                SooumLog.d(TAG, "onWriteComplete state: selectedDefaultImageName=${state.selectedDefaultImageName}, activeBackgroundUri=${state.activeBackgroundUri}")
+                
+                val result = try {
+                    if (state.parentCardId != null) {
+                        // 댓글 작성 (PostCardReply 사용)
+                        val (imgType, imgName) = when {
+                            state.selectedDefaultImageName != null -> "DEFAULT" to state.selectedDefaultImageName
+                            state.activeBackgroundUri != null -> "CUSTOM" to ""
+                            else -> "DEFAULT" to ""
+                        }
+                        
+                        SooumLog.d(TAG, "onWriteComplete reply imgType: $imgType, imgName: $imgName")
+                        
+                        val replyParam = PostCardReply.Param(
+                            cardId = state.parentCardId,
+                            content = state.content,
+                            font = selectedFontServerName,
+                            imgType = imgType,
+                            imgName = imgName,
+                            tags = state.tags,
+                            isDistanceShared = state.selectedOptionIds.contains(WriteOptions.DISTANCE_OPTION_ID)
+                        )
+                        SooumLog.d(TAG, "onWriteComplete reply: $replyParam")
+                        postCardReply(replyParam)
+                    } else {
+                        // 새 카드 작성 (PostCard 사용)
+                        val (isFromDevice, imgName, imageUrl) = when {
+                            state.selectedDefaultImageName != null -> Triple(false, state.selectedDefaultImageName, null)
+                            state.activeBackgroundUri != null -> Triple(true, null, state.activeBackgroundUri.toString())
+                            else -> Triple(false, null, null)
+                        }
+                        
+                        SooumLog.d(TAG, "onWriteComplete card isFromDevice: $isFromDevice, imgName: $imgName, imageUrl: $imageUrl")
+                        
+                        val cardParam = PostCard.Param(
+                            isFromDevice = isFromDevice,
+                            answerCard = false,
+                            cardId = null,
+                            imageUrl = imageUrl,
+                            content = state.content,
+                            font = selectedFontServerName,
+                            imgName = imgName,
+                            isStory = state.selectedOptionIds.contains("twenty_four_hours"),
+                            tags = state.tags
+                        )
+                        SooumLog.d(TAG, "onWriteComplete card: $cardParam")
+                        postCard(cardParam)
+                    }
+                } catch (e: Exception) {
+                    SooumLog.e(TAG, "onWriteComplete exception during API call: ${e.message}")
+                    DomainResult.Failure("API 호출 중 예외 발생: ${e.message}")
                 }
                 
                 when (result) {
                     is DomainResult.Success -> {
-                        _uiState.update { it.copy(isWriteCompleted = true) }
+                        _uiState.update { it.copy(isWriteCompleted = true, isWriteInProgress = false) }
                         _writeCompleteEvent.emit(Unit)
                     }
                     is DomainResult.Failure -> {
+                        _uiState.update { it.copy(isWriteInProgress = false) }
                         SooumLog.e(TAG, "onWriteComplete failed: ${result.error}")
                         // Handle error - could add error state to UI
                     }
@@ -456,6 +505,38 @@ private fun requestCameraImageForBackground() {
             optionIds.filter { it != distanceOptionId }
         } else {
             optionIds
+        }
+    }
+
+    private fun loadCardDefaultImages() {
+        viewModelScope.launch {
+            try {
+                when (val result = getCardDefaultImage()) {
+                    is DomainResult.Success -> {
+                        _uiState.update { 
+                            it.copy(
+                                cardDefaultImagesByCategory = result.data.defaultImages
+                            )
+                        }
+                        SooumLog.d(TAG, "loadCardDefaultImages() success: ${result.data.defaultImages.size} categories loaded")
+                    }
+                    is DomainResult.Failure -> {
+                        _uiState.update { 
+                            it.copy(
+                                cardDefaultImagesByCategory = emptyMap()
+                            )
+                        }
+                        SooumLog.e(TAG, "loadCardDefaultImages() failed: ${result.error}")
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update { 
+                    it.copy(
+                        cardDefaultImagesByCategory = emptyMap()
+                    )
+                }
+                SooumLog.e(TAG, "loadCardDefaultImages() exception: ${e.message}")
+            }
         }
     }
 }

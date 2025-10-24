@@ -19,7 +19,8 @@ import com.phew.presentation.write.screen.WriteRoute
 
 val WRITE_GRAPH = HomeTabType.WRITE.graph
 
-private val WRITE_ROUTE = HomeTabType.WRITE.route.asNavParam()
+private val WRITE_HOME_ROUTE = HomeTabType.WRITE.route
+private val WRITE_ROUTE_WITH_ARGS = HomeTabType.WRITE.route.asNavParam()
 
 fun NavHostController.navigateToWriteGraph(
     navOptions: NavOptions? = null
@@ -31,13 +32,13 @@ fun NavHostController.navigateToWriteGraphWithArgs(
     writeArgs: WriteArgs,
     navOptions: NavOptions? = null
 ) {
-    this.navigate(WRITE_ROUTE.asNavArg(writeArgs), navOptions)
+    this.navigate(WRITE_ROUTE_WITH_ARGS.asNavArg(writeArgs), navOptions)
 }
 
 private fun NavHostController.navigateToWriteRoute(
     navOptions: NavOptions? = null
 ) {
-    this.navigate(WRITE_ROUTE, navOptions)
+    this.navigate(WRITE_HOME_ROUTE, navOptions)
 }
 
 fun NavGraphBuilder.writeGraph(
@@ -49,10 +50,20 @@ fun NavGraphBuilder.writeGraph(
 ) {
     navigation(
         route = WRITE_GRAPH,
-        startDestination = WRITE_ROUTE
+        startDestination = WRITE_HOME_ROUTE
     ) {
+        // 탭에서 접근하는 경로 (파라미터 없음)
+        slideComposable(route = WRITE_HOME_ROUTE) { nav ->
+            WriteRoute(
+                args = null,
+                onBackPressed = onBackPressed,
+                onWriteComplete = onWriteComplete
+            )
+        }
+        
+        // Detail에서 접근하는 경로 (파라미터 있음)
         slideComposable(
-            route = WRITE_ROUTE,
+            route = WRITE_ROUTE_WITH_ARGS,
             arguments = listOf(
                 navArgument(NavArgKey) {
                     type = createNavType<WriteArgs>(isNullableAllowed = true)

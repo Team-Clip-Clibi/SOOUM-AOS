@@ -276,13 +276,21 @@ suspend fun <T, R> apiCall(
 ): DataResult<R> {
     try {
         val response = apiCall()
-        if (!response.isSuccessful || response.body() == null) return DataResult.Fail(
+        if (!response.isSuccessful) return DataResult.Fail(
             code = response.code(),
             message = response.message()
         )
-        val body = response.body()!!
+        
+        val body = response.body()
+        if (body == null) {
+            return DataResult.Fail(
+                code = response.code(),
+                message = "Response body is null or empty"
+            )
+        }
+        
         return DataResult.Success(mapper(body))
-    } catch (e: Exception) {
+    }  catch (e: Exception) {
         e.printStackTrace()
         return DataResult.Fail(code = APP_ERROR_CODE, message = e.message, throwable = e)
     }
