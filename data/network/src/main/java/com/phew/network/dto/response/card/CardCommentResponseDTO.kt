@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class CardCommentResponseDTO(
-    val cardId: Int,
+    val cardId: Long,
     val likeCnt: Int,
     val commentCardCnt: Int,
     val cardImgUrl: String,

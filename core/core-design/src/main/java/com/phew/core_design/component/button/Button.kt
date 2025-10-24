@@ -98,13 +98,6 @@ fun IconButtons(
             .height(44.dp)
             .width(60.dp)
             .padding(vertical = 12.dp)
-            .drawBehind {
-                val color = when {
-                    !enabled -> disabledColor
-                    else -> baseColor
-                }
-                drawRect(color)
-            }
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -114,9 +107,9 @@ fun IconButtons(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            painter = if(enabled) painterResource(selectedIconId) else painterResource(unSelectedIconId),
+            painter = if(enabled) painterResource(unSelectedIconId) else painterResource(selectedIconId),
             contentDescription = "button icon",
-            tint = if (enabled) selectedIconTintColor  else NeutralColor.GRAY_500,
+            tint = if (enabled) NeutralColor.GRAY_500  else selectedIconTintColor,
             modifier = Modifier
                 .size(20.dp)
         )

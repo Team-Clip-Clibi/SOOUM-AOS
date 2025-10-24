@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.phew.core_common.DomainResult
 import com.phew.core.ui.model.CameraPickerAction
 import com.phew.core.ui.model.CameraCaptureRequest
+import com.phew.core_common.log.SooumLog
 import com.phew.domain.dto.Location
 import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.usecase.CreateImageFile
@@ -15,6 +16,7 @@ import com.phew.domain.usecase.FinishTakePicture
 import com.phew.domain.usecase.GetCardDefaultImage
 import com.phew.domain.usecase.GetRelatedTag
 import com.phew.domain.usecase.PostCard
+import com.phew.domain.usecase.PostCardReply
 import com.phew.presentation.write.model.BackgroundConfig
 import com.phew.presentation.write.model.FontConfig
 import com.phew.presentation.write.model.WriteOptions
@@ -43,7 +45,8 @@ class WriteViewModel @Inject constructor(
     private val finishTakePicture: FinishTakePicture,
     private val getRelatedTag: GetRelatedTag,
     private val getCardDefaultImage: GetCardDefaultImage,
-    private val postCard: PostCard
+    private val postCard: PostCard,
+    private val postCardReply: PostCardReply
 ) : ViewModel() {
 
     private val locationPermissions = arrayOf(
@@ -391,6 +394,10 @@ private fun requestCameraImageForBackground() {
             )
         }
     }
+    
+    fun setParentCardId(parentCardId: Long) {
+        _uiState.update { it.copy(parentCardId = parentCardId) }
+    }
 
     fun onWriteComplete() {
         if (_uiState.value.canComplete) {
@@ -400,24 +407,43 @@ private fun requestCameraImageForBackground() {
                     .find { it.name == state.selectedFont }?.serverName 
                     ?: FontConfig.defaultFont.serverName
                 
-                val param = PostCard.Param(
-                    isFromDevice = state.activeBackgroundUri != null,
-                    answerCard = false,
-                    cardId = null,
-                    imageUrl = state.activeBackgroundUri?.toString(),
-                    content = state.content,
-                    font = selectedFontServerName,
-                    imgName = state.activeBackgroundResId?.toString(),
-                    isStory = state.selectedOptionIds.contains("twenty_four_hours"),
-                    tags = state.tags
-                )
+                val result = if (state.parentCardId != null) {
+                    // 댓글 작성 (PostCardReply 사용)
+                    val replyParam = PostCardReply.Param(
+                        cardId = state.parentCardId,
+                        content = state.content,
+                        font = selectedFontServerName,
+                        imgType = if (state.activeBackgroundUri != null) "CUSTOM" else "DEFAULT",
+                        imgName = state.activeBackgroundResId?.toString() ?: "",
+                        tags = state.tags,
+                        isDistanceShared = state.selectedOptionIds.contains(WriteOptions.DISTANCE_OPTION_ID)
+                    )
+                    SooumLog.d(TAG, "onWriteComplete reply: $replyParam")
+                    postCardReply(replyParam)
+                } else {
+                    // 새 카드 작성 (PostCard 사용)
+                    val cardParam = PostCard.Param(
+                        isFromDevice = state.activeBackgroundUri != null,
+                        answerCard = false,
+                        cardId = null,
+                        imageUrl = state.activeBackgroundUri?.toString(),
+                        content = state.content,
+                        font = selectedFontServerName,
+                        imgName = state.activeBackgroundResId?.toString(),
+                        isStory = state.selectedOptionIds.contains("twenty_four_hours"),
+                        tags = state.tags
+                    )
+                    SooumLog.d(TAG, "onWriteComplete card: $cardParam")
+                    postCard(cardParam)
+                }
                 
-                when (val result = postCard(param)) {
+                when (result) {
                     is DomainResult.Success -> {
                         _uiState.update { it.copy(isWriteCompleted = true) }
                         _writeCompleteEvent.emit(Unit)
                     }
                     is DomainResult.Failure -> {
+                        SooumLog.e(TAG, "onWriteComplete failed: ${result.error}")
                         // Handle error - could add error state to UI
                     }
                 }

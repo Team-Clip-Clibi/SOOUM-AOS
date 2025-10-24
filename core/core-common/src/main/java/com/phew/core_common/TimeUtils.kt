@@ -78,6 +78,12 @@ object TimeUtils {
      */
     fun getRelativeTimeString(createAt: String): String {
         return try {
+            // 빈 문자열 체크
+            if (createAt.isBlank()) {
+                SooumLog.w(TAG, "Empty createAt string provided")
+                return ""
+            }
+            
             // 여러 포맷으로 파싱 시도
             // TODO 해당 부분 정리 필요 (서버와 다시 확인 필요)
             val createdTime = try {

@@ -218,7 +218,7 @@ class CardFeedRepositoryImpl @Inject constructor(
     }
 
     override suspend fun requestUploadCardAnswer(
-        cardId: Int,
+        cardId: Long,
         isDistanceShared: Boolean,
         latitude: Double?,
         longitude: Double?,

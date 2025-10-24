@@ -43,6 +43,7 @@ internal fun CardDetailBottom(
                 .fillMaxWidth()
         ) {
             IconButtons(
+                enabled = !isLikeCard,
                 selectedIconTintColor = if (isLikeCard) Danger.M_RED else NeutralColor.GRAY_500,
                 selectedIconId = R.drawable.ic_heart_filled,
                 unSelectedIconId = R.drawable.ic_heart_stoke,

@@ -49,16 +49,18 @@ internal fun CardDetailHeader(
                 style = TextComponent.SUBTITLE_2_SB_14
             )
 
-            TagColorful(
-                text = distance,
-                iconContent = {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_location_filled),
-                        contentDescription = null,
-                        tint = TagDesignTokens.ColorfulIconTint
-                    )
-                }
-            )
+            if (distance.isNotEmpty()) {
+                TagColorful(
+                    text = distance,
+                    iconContent = {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_location_filled),
+                            contentDescription = null,
+                            tint = TagDesignTokens.ColorfulIconTint
+                        )
+                    }
+                )
+            }
         }
 
         Text(

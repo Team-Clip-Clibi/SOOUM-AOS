@@ -1,7 +1,7 @@
 package com.phew.domain.dto
 
 data class CardDetail(
-    val cardId: Int,
+    val cardId: Long,
     val likeCount: Int,
     val commentCardCount: Int,
     val cardImgUrl: String,
@@ -11,26 +11,25 @@ data class CardDetail(
     val distance: String?,
     val createdAt: String,
     val isAdminCard: Boolean,
-    val memberId: Int,
+    val memberId: Long,
     val nickname: String,
-    val profileImgUrl: String,
+    val profileImgUrl: String?,
     val isLike: Boolean,
     val isCommentWritten: Boolean,
     val tags: List<CardDetailTag>,
     val isOwnCard: Boolean,
     val previousCardId: String?,
-    val isPreviousCardDeleted: Boolean,
     val previousCardImgUrl: String?,
     val visitedCnt: Int
 )
 
 data class CardDetailTag(
-    val tagId: Int,
+    val tagId: Long,
     val name: String
 )
 
 data class CardComment(
-    val cardId: Int,
+    val cardId: Long,
     val likeCount: Int,
     val commentCardCount: Int,
     val cardImgUrl: String,
@@ -59,7 +58,7 @@ data class CardReplyRequest(
     val longitude: Double?,
     val content: String,
     val font: String,
-    val imgType: String,
+    val imgType: String, // TODO Image 서버로 받아오는 로직 구현 필요
     val imgName: String,
     val tags: List<String>
 )

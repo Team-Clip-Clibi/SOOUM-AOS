@@ -1,30 +1,112 @@
 package com.phew.presentation.detail.screen
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerDefaults
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.phew.core.ui.model.navigation.CardDetailArgs
+import com.phew.core.ui.model.navigation.CardDetailCommentArgs
+import com.phew.core.ui.util.extension.nestedScrollWithStickyHeader
+import com.phew.core_common.log.SooumLog
 import com.phew.core_design.NeutralColor
+import com.phew.core_design.R
 import com.phew.core_design.component.card.CardDetail
+import com.phew.core_design.component.card.CardViewComment
+import com.phew.domain.dto.CardComment
 import com.phew.presentation.detail.component.CardDetailBottom
 import com.phew.presentation.detail.component.CardDetailHeader
+import com.phew.presentation.detail.viewmodel.CardDetailViewModel
 
 @Composable
 internal fun CardDetailRoute(
     modifier: Modifier = Modifier,
     args: CardDetailArgs,
+    viewModel: CardDetailViewModel = hiltViewModel(),
+    onNavigateToComment: (CardDetailCommentArgs) -> Unit,
+    onNavigateToWrite: (Long) -> Unit,
     onBackPressed: () -> Unit
 ) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(args.cardId) {
+        SooumLog.d(TAG, "cardId=${args.cardId}")
+        viewModel.loadCardDetail(args.cardId)
+    }
+
+    // 에러 처리
+    uiState.error?.let { error ->
+        LaunchedEffect(error) {
+            // TODO: 에러 메시지 표시 (Toast, SnackBar 등)
+            viewModel.clearError()
+        }
+    }
+
+    // 로딩 중일 때는 로딩 화면 표시
+    if (uiState.isLoading) {
+        // TODO: 로딩 화면 표시
+        return
+    }
+
+    // cardDetail이 없으면 빈 화면 또는 에러 표시
+    val cardDetail = uiState.cardDetail
+    if (cardDetail == null) {
+        // TODO: 데이터 없음 화면 표시
+        return
+    }
+
+    CardDetailScreen(
+        modifier = modifier,
+        cardContent = cardDetail.cardContent,
+        cardThumbnailUri = cardDetail.cardImgUrl,
+        cardTags = cardDetail.tags?.map { it.name } ?: emptyList(),
+        previousCommentThumbnailUri = cardDetail.previousCardImgUrl ?: "",
+        profileUri = cardDetail.profileImgUrl ?: "",
+        nickName = cardDetail.nickname,
+        distance = cardDetail.distance ?: "",
+        createAt = cardDetail.createdAt.takeIf { it.isNotBlank() } ?: "",
+        likeCnt = cardDetail.likeCount,
+        commentCnt = cardDetail.commentCardCount,
+        searchCnt = cardDetail.visitedCnt,
+        isLikeCard = cardDetail.isLike,
+        comments = uiState.comments,
+        onClickLike = {
+            viewModel.toggleLike(args.cardId)
+        },
+        onClickCommentIcon = {
+            onNavigateToWrite(args.cardId)
+        },
+        onClickCommentView = {
+
+        }
+    )
 
 }
 
@@ -32,24 +114,125 @@ internal fun CardDetailRoute(
 @Composable
 private fun CardDetailScreen(
     modifier: Modifier,
-
+    cardContent: String,
+    cardThumbnailUri: String,
+    cardTags: List<String>,
+    previousCommentThumbnailUri: String,
+    profileUri: String,
+    nickName: String,
+    distance: String,
+    createAt: String,
+    likeCnt: Int,
+    commentCnt: Int,
+    searchCnt: Int,
+    isLikeCard: Boolean,
+    comments: List<CardComment>,
+    onClickLike: () -> Unit,
+    onClickCommentIcon: () -> Unit,
+    onClickCommentView: () -> Unit,
 ) {
+
+    val pagerState = rememberPagerState(
+        initialPage = 0,
+        initialPageOffsetFraction = 0f,
+        pageCount = { comments.size }
+    )
+    val pageChange = rememberSaveable { mutableStateOf(false) }
+
     Scaffold(
         modifier = modifier,
         topBar = {
-
+            //   TODO TopAppBar 추가
         }
     ) { paddingValues ->
         val scrollState = rememberScrollState()
 
-        Column(
-            modifier = modifier
-                .background(NeutralColor.WHITE)
-                .fillMaxSize()
-                .padding(paddingValues)
+        Box(
+            modifier = Modifier.fillMaxSize()
         ) {
+            Column(
+                modifier = modifier
+                    .background(NeutralColor.WHITE)
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(paddingValues)
+            ) {
+                CardDetail(
+                    previousCommentThumbnailUri = previousCommentThumbnailUri,
+                    cardContent = cardContent,
+                    cardThumbnailUri = cardThumbnailUri,
+                    cardTags = cardTags,
+                    header = {
+                        CardDetailHeader(
+                            profileUri = profileUri,
+                            nickName = nickName,
+                            distance = distance,
+                            createAt = createAt
+                        )
+                    },
+                    bottom = {
+                        CardDetailBottom(
+                            likeCnt = likeCnt,
+                            commentCnt = commentCnt,
+                            searchCnt = searchCnt,
+                            isLikeCard = isLikeCard,
+                            onClickLike = onClickLike,
+                            onClickComment = onClickCommentIcon
+                        )
+                    }
+                )
+                HorizontalPager(
+                    modifier = Modifier
+                        .background(NeutralColor.GRAY_100)
+                        .nestedScrollWithStickyHeader(scrollState),
+                    state = pagerState,
+                    flingBehavior = PagerDefaults.flingBehavior(state = pagerState),
+                    pageContent = { page ->
+                        if (pageChange.value) {
+                            CardViewComment(
+                                contentText = comments[page].cardContent,
+                                thumbnailUri = comments[page].cardImgUrl,
+                                distance = comments[page].distance ?: "",
+                                createAt = comments[page].createdAt,
+                                likeCnt = comments[page].likeCount.toString(),
+                                commentCnt = comments[page].commentCardCount.toString(),
+                                font = comments[page].font,
+                                onClick = {
+                                    pageChange.value = false
+                                    onClickCommentView()
+                                }
+                            )
+                        }
+                    }
+                )
+            }
 
-
+            // Floating Action Button
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(bottom = 32.dp, end = 16.dp)
+                    .width(54.dp)
+                    .height(54.dp)
+                    .shadow(
+                        elevation = 8.dp,
+                        shape = RoundedCornerShape(27.dp),
+                        ambientColor = Color(0x64486C).copy(alpha = 0.2f),
+                        spotColor = Color(0x64486C).copy(alpha = 0.2f)
+                    )
+                    .background(
+                        color = NeutralColor.GRAY_600,
+                        shape = RoundedCornerShape(27.dp)
+                    )
+                    .clickable { onClickCommentIcon() },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_plus),
+                    contentDescription = "Add",
+                    tint = NeutralColor.WHITE
+                )
+            }
         }
     }
 }
@@ -138,3 +321,5 @@ private fun CardDetailPreview() {
         Spacer(modifier = Modifier.size(24.dp))
     }
 }
+
+private const val TAG = "CardDetailScreen"

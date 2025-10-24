@@ -78,6 +78,7 @@ import com.phew.presentation.write.component.NumberTagFlowLayout
 import com.phew.presentation.write.component.NumberTagItem
 import com.phew.presentation.write.viewmodel.WriteViewModel
 import androidx.compose.ui.res.stringResource
+import com.phew.core.ui.model.navigation.WriteArgs
 import com.phew.presentation.write.R as WriteR
 
 /**
@@ -87,8 +88,10 @@ import com.phew.presentation.write.R as WriteR
 @Composable
 internal fun WriteRoute(
     modifier: Modifier = Modifier,
+    args: WriteArgs? = null,
     viewModel: WriteViewModel = hiltViewModel(),
-    onBackPressed: () -> Unit
+    onBackPressed: () -> Unit,
+    onWriteComplete: () -> Unit
 ) {
     BackHandler {
         onBackPressed()
@@ -129,8 +132,14 @@ internal fun WriteRoute(
     // 완료 이벤트 처리
     LaunchedEffect(Unit) {
         viewModel.writeCompleteEvent.collect {
-            // TODO: Show Toast and navigate to Feed Home
-            onBackPressed() // 임시로 뒤로가기
+            onWriteComplete()
+        }
+    }
+    
+    // parentCardId 설정
+    LaunchedEffect(args) {
+        args?.parentCardId?.let { parentCardId ->
+            viewModel.setParentCardId(parentCardId)
         }
     }
 
@@ -138,6 +147,7 @@ internal fun WriteRoute(
     
     WriteScreen(
         modifier = modifier,
+        args = args,
         content = uiState.content,
         tags = uiState.tags,
         currentTagInput = uiState.currentTagInput,
@@ -213,6 +223,7 @@ internal fun WriteRoute(
 @Composable
 private fun WriteScreen(
     modifier: Modifier = Modifier,
+    args: WriteArgs? = null,
     content: String,
     tags: List<String>,
     currentTagInput: String,
@@ -336,8 +347,13 @@ private fun WriteScreen(
     Scaffold (
         modifier = modifier,
         topBar = {
+            val titleRes = if (args?.parentCardId != null) {
+                WriteR.string.write_screen_comment_title
+            } else {
+                WriteR.string.write_screen_title
+            }
             AppBar.TextButtonAppBar(
-                appBarText = stringResource(WriteR.string.write_screen_title),
+                appBarText = stringResource(titleRes),
                 buttonText = stringResource(WriteR.string.write_screen_complete),
                 onButtonClick = onWriteComplete,
                 onClick = onBackPressed,

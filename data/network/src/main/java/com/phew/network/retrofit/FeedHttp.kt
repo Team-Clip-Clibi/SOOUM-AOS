@@ -87,7 +87,7 @@ interface FeedHttp {
      */
     @POST(BuildConfig.API_URL_UPLOAD_CARD_ANSWER)
     suspend fun requestUploadAnswerCard(
-        @Path("cardId") cardId: Int,
+        @Path("cardId") cardId: Long,
         @Body request: RequestUploadCardAnswerDTO,
     ): Response<Unit>
 

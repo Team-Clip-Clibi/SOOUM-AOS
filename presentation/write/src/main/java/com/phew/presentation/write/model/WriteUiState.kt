@@ -31,7 +31,8 @@ data class WriteUiState(
     val showGalleryPermissionDialog: Boolean = false,
     val focusTagInput: Boolean = false,
     val isWriteCompleted: Boolean = false,
-    val shouldShowPermissionRationale: Boolean = false
+    val shouldShowPermissionRationale: Boolean = false,
+    val parentCardId: Long? = null
 ) {
     val isContentValid: Boolean
         get() = content.isNotBlank()

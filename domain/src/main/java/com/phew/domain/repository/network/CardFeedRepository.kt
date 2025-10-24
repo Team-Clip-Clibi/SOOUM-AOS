@@ -45,7 +45,7 @@ interface CardFeedRepository {
     ): Int
 
     suspend fun requestUploadCardAnswer(
-        cardId: Int,
+        cardId: Long,
         isDistanceShared: Boolean,
         latitude: Double?,
         longitude: Double?,

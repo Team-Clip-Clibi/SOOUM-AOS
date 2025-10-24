@@ -49,6 +49,7 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
+import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core_design.AppBar
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.NeutralColor
@@ -64,6 +65,7 @@ import com.phew.feed.viewModel.DistanceType
 import com.phew.feed.viewModel.FeedPagingState
 import com.phew.feed.viewModel.FeedType
 import com.phew.feed.viewModel.HomeViewModel
+import com.phew.feed.viewModel.NavigationEvent
 import com.phew.feed.viewModel.UiState
 import kotlinx.coroutines.FlowPreview
 import com.phew.core.ui.R as CoreUiR
@@ -78,6 +80,7 @@ fun FeedView(
     requestPermission: () -> Unit,
     closeDialog: () -> Unit,
     noticeClick: () -> Unit,
+    navigateToDetail: (CardDetailArgs) -> Unit,
     webViewClick: (String) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -105,6 +108,17 @@ fun FeedView(
 
     BackHandler {
         finish()
+    }
+
+    // Navigation event handling
+    LaunchedEffect(viewModel) {
+        viewModel.navigationEvent.collect { event ->
+            when (event) {
+                is NavigationEvent.NavigateToDetail -> {
+                    navigateToDetail(event.args)
+                }
+            }
+        }
     }
 
     // 리컴포지션 최적화: 페이징 상태 직접 참조
@@ -164,8 +178,8 @@ fun FeedView(
             nestedScrollConnection = nestedScrollConnection,
             composition = composition,
             progress = progress,
-            onClick = {
-                //   TODO 상세 보기 화면으로 이동 필요
+            onClick = { cardId ->
+                viewModel.navigateToDetail(cardId)
             },
             onRemoveCard = viewModel::removeFeedCard,
             feedNotice = if (feedNoticeState is UiState.Success) feedNoticeState.data else emptyList(),

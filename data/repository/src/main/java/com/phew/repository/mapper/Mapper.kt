@@ -230,7 +230,6 @@ internal fun CardDetailResponseDTO.toDomain(): CardDetail {
         tags = tags.map { it.toDomain() },
         isOwnCard = isOwnCard,
         previousCardId = previousCardId,
-        isPreviousCardDeleted = isPreviousCardDeleted,
         previousCardImgUrl = previousCardImgUrl,
         visitedCnt = visitedCnt
     )

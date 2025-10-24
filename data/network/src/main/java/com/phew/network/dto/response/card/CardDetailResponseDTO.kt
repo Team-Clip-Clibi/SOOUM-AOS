@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class CardDetailResponseDTO(
-    val cardId: Int,
+    val cardId: Long,
     val likeCnt: Int,
     val commentCardCnt: Int,
     val cardImgUrl: String,
@@ -14,21 +14,21 @@ data class CardDetailResponseDTO(
     val distance: String? = null,
     val createdAt: String,
     val isAdminCard: Boolean,
-    val memberId: Int,
+    val memberId: Long,
     val nickname: String,
-    val profileImgUrl: String,
+    val profileImgUrl: String? = null,
     val isLike: Boolean,
     val isCommentWritten: Boolean,
     val tags: List<CardDetailTagDTO>,
     val isOwnCard: Boolean,
     val previousCardId: String? = null,
-    val isPreviousCardDeleted: Boolean,
+    val isPreviousCardDeleted: Boolean = false,
     val previousCardImgUrl: String? = null,
     val visitedCnt: Int
 )
 
 @Serializable
 data class CardDetailTagDTO(
-    val tagId: Int,
+    val tagId: Long,
     val name: String
 )

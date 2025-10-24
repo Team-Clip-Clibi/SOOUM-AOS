@@ -11,16 +11,16 @@ import java.io.IOException
 
 internal class PagingCardComments(
     private val repository: CardDetailRepository,
-    private val cardId: Int,
+    private val cardId: Long,
     private val latitude: Double?,
     private val longitude: Double?
-) : PagingSource<Int, CardComment>() {
+) : PagingSource<Long, CardComment>() {
 
-    override fun getRefreshKey(state: PagingState<Int, CardComment>): Int? {
+    override fun getRefreshKey(state: PagingState<Long, CardComment>): Long? {
         return null
     }
 
-    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, CardComment> {
+    override suspend fun load(params: LoadParams<Long>): LoadResult<Long, CardComment> {
         val lastId = params.key
         return try {
             val result = if (lastId == null) {

@@ -18,16 +18,16 @@ class CardDetailRepositoryImpl @Inject constructor(
     private val cardDetailsHttp: CardDetailsInquiryHttp
 ) : CardDetailRepository {
 
-    override suspend fun likeCard(cardId: Int): DataResult<Unit> = executeWithoutBody {
+    override suspend fun likeCard(cardId: Long): DataResult<Unit> = executeWithoutBody {
         cardDetailsHttp.requestCardLike(cardId)
     }
 
-    override suspend fun unlikeCard(cardId: Int): DataResult<Unit> = executeWithoutBody {
+    override suspend fun unlikeCard(cardId: Long): DataResult<Unit> = executeWithoutBody {
         cardDetailsHttp.deleteCardLike(cardId)
     }
 
     override suspend fun getCardDetail(
-        cardId: Int,
+        cardId: Long,
         latitude: Double?,
         longitude: Double?
     ): DataResult<CardDetail> {
@@ -37,7 +37,10 @@ class CardDetailRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun postCardReply(cardId: Int, request: CardReplyRequest): DataResult<CardReply> {
+    override suspend fun postCardReply(
+        cardId: Long, 
+        request: CardReplyRequest
+    ): DataResult<CardReply> {
         return apiCall(
             apiCall = {
                 cardDetailsHttp.postCardDetail(
@@ -49,12 +52,12 @@ class CardDetailRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun deleteCard(cardId: Int): DataResult<Unit> = executeWithoutBody {
+    override suspend fun deleteCard(cardId: Long): DataResult<Unit> = executeWithoutBody {
         cardDetailsHttp.deleteCard(cardId)
     }
 
     override suspend fun getCardComments(
-        cardId: Int,
+        cardId: Long,
         latitude: Double?,
         longitude: Double?
     ): DataResult<List<CardComment>> {
@@ -65,8 +68,8 @@ class CardDetailRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getCardCommentsMore(
-        cardId: Int,
-        lastId: Int,
+        cardId: Long,
+        lastId: Long,
         latitude: Double?,
         longitude: Double?
     ): DataResult<List<CardComment>> {

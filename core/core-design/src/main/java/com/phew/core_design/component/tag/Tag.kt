@@ -229,11 +229,15 @@ internal fun TagRow(
         derivedStateOf { if (scrollState.value > 0) 0.dp else 16.dp }
     }
 
+    val endPadding by remember(scrollState.value) {
+        derivedStateOf { if (scrollState.value > 0) 16.dp else 0.dp }
+    }
+
     Row(
         modifier = modifier
             .fillMaxWidth()
             .horizontalScroll(scrollState)
-            .padding(start = startPadding),
+            .padding(start = startPadding, end = endPadding),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         tags.forEach { tag ->
@@ -619,62 +623,6 @@ fun TagColorful(
             Text(
                 text = text,
                 style = TextComponent.CAPTION_3_M_10.copy(color = TagDesignTokens.ColorfulText)
-            )
-        }
-    }
-}
-
-// 추후 수정 필요
-@Composable
-fun TagList(
-    tags: List<String>,
-    onTagsChange: (List<String>) -> Unit
-) {
-    var currentInput by remember { mutableStateOf("") }
-
-    LazyRow(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        items(tags) { tag ->
-            Surface(
-                shape = RoundedCornerShape(50),
-                color = TagDesignTokens.BackgroundNumberColor
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = tag,
-                        style = TextComponent.CAPTION_2_M_12.copy(color = TagDesignTokens.TextTintColor)
-                    )
-                    IconButton(
-                        onClick = { onTagsChange(tags - tag) },
-                        modifier = Modifier.size(16.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_delete),
-                            contentDescription = "삭제",
-                            tint = TagDesignTokens.IconTint,
-                            modifier = Modifier.size(12.dp)
-                        )
-                    }
-                }
-            }
-        }
-
-        item {
-            TagInputField(
-                text = currentInput,
-                onTextChange = { currentInput = TagPolicy.sanitize(it) },
-                onComplete = {
-                    if (TagPolicy.isValid(currentInput)) {
-                        onTagsChange(tags + currentInput)
-                        currentInput = ""
-                    }
-                },
-                onRemove = { currentInput = "" }
             )
         }
     }
