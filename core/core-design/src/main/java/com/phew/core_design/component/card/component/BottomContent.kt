@@ -223,23 +223,23 @@ internal fun BottomContent(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            if (showTimer) {
-                TimerLabel(remainingTimeMillis = remaining, isExpired = isExpired)
-                if (!distance.isNullOrEmpty() || !timeAgo.isNullOrEmpty()) {
+            if (showLocationAndTime) {
+                LocationAndWriteTimeLabel(
+                    location = distance?.takeIf { it.isNotEmpty() },
+                    writeTime = timeAgo?.takeIf { it.isNotEmpty() }
+                )
+                if(showTimer){
                     SpotSeparator()
                 }
+            }
+            if (showTimer) {
+                TimerLabel(remainingTimeMillis = remaining, isExpired = isExpired)
             }
             if (isAdminManger){
                 ManagerLabel()
                 if (!distance.isNullOrEmpty() || !timeAgo.isNullOrEmpty()) {
                     SpotSeparator()
                 }
-            }
-            if (showLocationAndTime) {
-                LocationAndWriteTimeLabel(
-                    location = distance?.takeIf { it.isNotEmpty() },
-                    writeTime = timeAgo?.takeIf { it.isNotEmpty() }
-                )
             }
         }
         if (!showTimer) {
@@ -275,7 +275,7 @@ private fun BottomContentPreview_NoTimer() {
             distance = "600m",
             likeCount = "12",
             commentCount = "3",
-            timeAgo = "방금 전",
+            timeAgo = "방금 전1",
             remainingTimeMillis = null,
             cardType = FeedCardType.DEFAULT
         )
