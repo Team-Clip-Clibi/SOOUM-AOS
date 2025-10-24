@@ -2,23 +2,30 @@ package com.phew.presentation.detail.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import com.phew.core_common.DomainResult
 import com.phew.core_common.log.SooumLog
 import com.phew.domain.dto.CardComment
 import com.phew.domain.dto.CardDetail
 import com.phew.domain.usecase.DeleteCard
 import com.phew.domain.usecase.GetCardComments
+import com.phew.domain.usecase.GetCardCommentsPaging
 import com.phew.domain.usecase.GetCardDetail
 import com.phew.domain.usecase.GetMoreCardComments
 import com.phew.domain.usecase.LikeCard
-import com.phew.domain.usecase.PostCardReply
 import com.phew.domain.usecase.UnlikeCard
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
 data class CardDetailUiState(
@@ -33,7 +40,7 @@ data class CardDetailUiState(
 class CardDetailViewModel @Inject constructor(
     private val getCardDetail: GetCardDetail,
     private val getCardComments: GetCardComments,
-    private val getMoreCardComments: GetMoreCardComments,
+    private val commentPaging: GetCardCommentsPaging,
     private val likeCard: LikeCard,
     private val unLikeCard: UnlikeCard,
     private val deleteCard: DeleteCard
@@ -41,6 +48,33 @@ class CardDetailViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(CardDetailUiState())
     val uiState: StateFlow<CardDetailUiState> = _uiState.asStateFlow()
+
+    private val _pagingRequest = MutableStateFlow<PagingRequest>(PagingRequest.None)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val commentsPagingData: Flow<PagingData<CardComment>> = _pagingRequest
+        .flatMapLatest { request ->
+            when (request) {
+                is PagingRequest.None -> flowOf(PagingData.empty())
+                is PagingRequest.Ready -> commentPaging(request.param)
+            }
+        }
+        .cachedIn(viewModelScope)
+
+    fun requestComment(cardId: Long, latitude: Double? = null, longitude: Double? = null) {
+        _pagingRequest.update { state ->
+            if (state is PagingRequest.Ready && state.param.cardId == cardId) {
+                return@update state
+            }
+            PagingRequest.Ready(
+                GetCardCommentsPaging.Param(
+                    cardId = cardId,
+                    latitude = latitude,
+                    longitude = longitude
+                )
+            )
+        }
+    }
 
     fun loadCardDetail(cardId: Long) {
         viewModelScope.launch {
@@ -102,19 +136,19 @@ class CardDetailViewModel @Inject constructor(
     fun toggleLike(cardId: Long) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLikeLoading = true)
-            
+
             val currentDetail = _uiState.value.cardDetail
             if (currentDetail == null) {
                 _uiState.value = _uiState.value.copy(isLikeLoading = false)
                 return@launch
             }
-            
+
             val result = if (currentDetail.isLike) {
                 unLikeCard(cardId)
             } else {
                 likeCard(cardId)
             }
-            
+
             when (result) {
                 is DomainResult.Success -> {
                     val updatedDetail = currentDetail.copy(
@@ -143,6 +177,11 @@ class CardDetailViewModel @Inject constructor(
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
     }
+}
+
+sealed class PagingRequest {
+    data object None : PagingRequest()
+    data class Ready(val param: GetCardCommentsPaging.Param) : PagingRequest()
 }
 
 private const val TAG = "CardDetailViewModel"
