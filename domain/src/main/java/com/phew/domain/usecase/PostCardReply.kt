@@ -7,7 +7,6 @@ import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.ERROR_LOGOUT
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.HTTP_INVALID_TOKEN
-import com.phew.domain.dto.CardReply
 import com.phew.domain.dto.CardReplyRequest
 import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.network.CardDetailRepository
@@ -27,7 +26,7 @@ class PostCardReply @Inject constructor(
         val isDistanceShared: Boolean
     )
 
-    suspend operator fun invoke(param: Param): DomainResult<CardReply, String> {
+    suspend operator fun invoke(param: Param): DomainResult<Unit, String> {
         val locationPermissionCheck = deviceRepository.getLocationPermission()
         val (latitude, longitude) = if (locationPermissionCheck && param.isDistanceShared) {
             val location = deviceRepository.requestLocation()
@@ -48,7 +47,7 @@ class PostCardReply @Inject constructor(
         )
 
         return when (val result = repository.postCardReply(param.cardId, request)) {
-            is DataResult.Success -> DomainResult.Success(result.data)
+            is DataResult.Success -> DomainResult.Success(Unit)
             is DataResult.Fail -> mapFailure(result)
         }
     }

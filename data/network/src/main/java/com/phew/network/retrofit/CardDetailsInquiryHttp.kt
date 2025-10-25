@@ -4,7 +4,6 @@ import com.phew.network.BuildConfig
 import com.phew.network.dto.request.feed.RequestUploadCardAnswerDTO
 import com.phew.network.dto.response.card.CardCommentResponseDTO
 import com.phew.network.dto.response.card.CardDetailResponseDTO
-import com.phew.network.dto.response.card.CardReplyResponseDTO
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -50,7 +49,7 @@ interface CardDetailsInquiryHttp {
     suspend fun postCardDetail(
         @Path("cardId") cardId: Long,
         @Body body: RequestUploadCardAnswerDTO
-    ): Response<CardReplyResponseDTO>
+    ): Response<Unit>
 
     /**
      *  카드 삭제
