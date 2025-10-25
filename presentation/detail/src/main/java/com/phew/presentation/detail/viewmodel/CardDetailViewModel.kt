@@ -8,11 +8,13 @@ import com.phew.core_common.DomainResult
 import com.phew.core_common.log.SooumLog
 import com.phew.domain.dto.CardComment
 import com.phew.domain.dto.CardDetail
+import com.phew.domain.usecase.BlockMember
 import com.phew.domain.usecase.DeleteCard
 import com.phew.domain.usecase.GetCardComments
 import com.phew.domain.usecase.GetCardCommentsPaging
 import com.phew.domain.usecase.GetCardDetail
 import com.phew.domain.usecase.LikeCard
+import com.phew.domain.usecase.UnblockMember
 import com.phew.domain.usecase.UnlikeCard
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -27,12 +29,22 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
+enum class CardDetailError {
+    COMMENTS_LOAD_FAILED,
+    CARD_LOAD_FAILED,
+    NETWORK_ERROR
+}
+
 data class CardDetailUiState(
     val isLoading: Boolean = false,
     val cardDetail: CardDetail? = null,
     val comments: List<CardComment> = emptyList(),
-    val error: String? = null,
-    val isLikeLoading: Boolean = false
+    val error: CardDetailError? = null,
+    val isLikeLoading: Boolean = false,
+    val isBlockLoading: Boolean = false,
+    val blockSuccess: Boolean = false,
+    val blockedMemberId: Long? = null,
+    val blockedNickname: String? = null
 )
 
 @HiltViewModel
@@ -42,7 +54,9 @@ class CardDetailViewModel @Inject constructor(
     private val commentPaging: GetCardCommentsPaging,
     private val likeCard: LikeCard,
     private val unLikeCard: UnlikeCard,
-    private val deleteCard: DeleteCard
+    private val deleteCard: DeleteCard,
+    private val blockMember: BlockMember,
+    private val unblockMember: UnblockMember
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CardDetailUiState())
@@ -104,21 +118,21 @@ class CardDetailViewModel @Inject constructor(
                             isLoading = false,
                             cardDetail = cardDetailResult.data,
                             comments = emptyList(), // 빈 댓글 목록으로 설정
-                            error = "댓글을 불러올 수 없습니다: ${commentsResult.error}"
+                            error = CardDetailError.COMMENTS_LOAD_FAILED
                         )
                     }
                     cardDetailResult is DomainResult.Failure -> {
                         SooumLog.e(TAG, "loadCardDetail() cardDetail failed: ${cardDetailResult.error}")
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
-                            error = cardDetailResult.error
+                            error = CardDetailError.CARD_LOAD_FAILED
                         )
                     }
                     commentsResult is DomainResult.Failure -> {
                         SooumLog.e(TAG, "loadCardDetail() comments failed: ${commentsResult.error}")
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
-                            error = commentsResult.error
+                            error = CardDetailError.COMMENTS_LOAD_FAILED
                         )
                     }
                 }
@@ -126,7 +140,7 @@ class CardDetailViewModel @Inject constructor(
                 SooumLog.e(TAG, "loadCardDetail() exception: ${e.message}")
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = "카드 정보를 불러오는 중 오류가 발생했습니다."
+                    error = CardDetailError.NETWORK_ERROR
                 )
             }
         }
@@ -166,7 +180,55 @@ class CardDetailViewModel @Inject constructor(
                 is DomainResult.Failure -> {
                     _uiState.value = _uiState.value.copy(
                         isLikeLoading = false,
-                        error = result.error
+                        error = CardDetailError.NETWORK_ERROR
+                    )
+                }
+            }
+        }
+    }
+
+    fun blockMember(toMemberId: Long, nickname: String) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isBlockLoading = true)
+            
+            val result = blockMember(BlockMember.Param(toMemberId))
+            
+            when (result) {
+                is DomainResult.Success -> {
+                    _uiState.value = _uiState.value.copy(
+                        isBlockLoading = false,
+                        blockSuccess = true,
+                        blockedMemberId = toMemberId,
+                        blockedNickname = nickname
+                    )
+                }
+                is DomainResult.Failure -> {
+                    _uiState.value = _uiState.value.copy(
+                        isBlockLoading = false,
+                        error = CardDetailError.NETWORK_ERROR
+                    )
+                }
+            }
+        }
+    }
+
+    fun unblockMember() {
+        val memberId = _uiState.value.blockedMemberId ?: return
+        
+        viewModelScope.launch {
+            val result = unblockMember(UnblockMember.Param(memberId))
+            
+            when (result) {
+                is DomainResult.Success -> {
+                    _uiState.value = _uiState.value.copy(
+                        blockedMemberId = null,
+                        blockedNickname = null,
+                        blockSuccess = false
+                    )
+                }
+                is DomainResult.Failure -> {
+                    _uiState.value = _uiState.value.copy(
+                        error = CardDetailError.NETWORK_ERROR
                     )
                 }
             }
@@ -175,6 +237,10 @@ class CardDetailViewModel @Inject constructor(
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
+    }
+    
+    fun clearBlockSuccess() {
+        _uiState.value = _uiState.value.copy(blockSuccess = false)
     }
 }
 

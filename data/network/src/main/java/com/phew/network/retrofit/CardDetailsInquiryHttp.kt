@@ -1,6 +1,7 @@
 package com.phew.network.retrofit
 
 import com.phew.network.BuildConfig
+import com.phew.network.dto.request.card.RequestBlockMemberDTO
 import com.phew.network.dto.request.feed.RequestUploadCardAnswerDTO
 import com.phew.network.dto.response.card.CardCommentResponseDTO
 import com.phew.network.dto.response.card.CardDetailResponseDTO
@@ -79,4 +80,20 @@ interface CardDetailsInquiryHttp {
         @Query("latitude") latitude: Double? = null,
         @Query("longitude") longitude: Double? = null
     ): Response<List<CardCommentResponseDTO>>
+
+    /**
+     *  멤버 차단
+     */
+    @POST(BuildConfig.API_URL_BLOCK_MEMBER)
+    suspend fun blockMember(
+        @Path("toMemberId") toMemberId: Long
+    ): Response<Unit>
+
+    /**
+     *  멤버 차단 해제
+     */
+    @DELETE(BuildConfig.API_URL_UNBLOCK_MEMBER)
+    suspend fun unblockMember(
+        @Path("toMemberId") toMemberId: Long
+    ): Response<Unit>
 }

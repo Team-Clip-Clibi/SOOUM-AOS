@@ -18,12 +18,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -34,11 +38,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.phew.core.ui.model.CameraPickerAction
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.model.navigation.CardDetailCommentArgs
 import com.phew.core.ui.util.extension.nestedScrollWithStickyHeader
 import com.phew.core_common.TimeUtils
 import com.phew.core_common.log.SooumLog
+import com.phew.core_design.AppBar.IconBothAppBar
+import com.phew.core_design.BottomSheetComponent
+import com.phew.core_design.BottomSheetItem
+import com.phew.core_design.DialogComponent
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.R
 import com.phew.core_design.TextComponent
@@ -48,7 +57,10 @@ import com.phew.core_design.component.card.CardViewComment
 import com.phew.domain.dto.CardComment
 import com.phew.presentation.detail.component.CardDetailBottom
 import com.phew.presentation.detail.component.CardDetailHeader
+import com.phew.presentation.detail.model.MoreAction
+import com.phew.presentation.detail.viewmodel.CardDetailError
 import com.phew.presentation.detail.viewmodel.CardDetailViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 internal fun CardDetailRoute(
@@ -60,6 +72,8 @@ internal fun CardDetailRoute(
     onBackPressed: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackBarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(args.cardId) {
         SooumLog.d(TAG, "cardId=${args.cardId}")
@@ -67,10 +81,36 @@ internal fun CardDetailRoute(
     }
 
     // 에러 처리
-    uiState.error?.let { error ->
-        LaunchedEffect(error) {
+    uiState.error?.let { errorType ->
+        val errorMessage = when (errorType) {
+            CardDetailError.COMMENTS_LOAD_FAILED -> stringResource(DetailR.string.card_detail_error_comments)
+            CardDetailError.CARD_LOAD_FAILED -> stringResource(DetailR.string.card_detail_error_load_card)
+            CardDetailError.NETWORK_ERROR -> stringResource(DetailR.string.card_detail_error_load_card)
+        }
+        
+        LaunchedEffect(errorType) {
             // TODO: 에러 메시지 표시 (Toast, SnackBar 등)
+            // errorMessage를 사용하여 에러 표시
             viewModel.clearError()
+        }
+    }
+
+    if (uiState.blockSuccess) {
+        val nickname = uiState.blockedNickname ?: ""
+        val message = stringResource(DetailR.string.card_detail_block_success, nickname)
+        val cancelText = stringResource(DetailR.string.card_detail_cancel)
+        
+        LaunchedEffect(uiState.blockSuccess) {
+            coroutineScope.launch {
+                val result = snackBarHostState.showSnackbar(
+                    message = message,
+                    actionLabel = cancelText
+                )
+                if (result == androidx.compose.material3.SnackbarResult.ActionPerformed) {
+                    viewModel.unblockMember()
+                }
+            }
+            viewModel.clearBlockSuccess()
         }
     }
 
@@ -95,6 +135,7 @@ internal fun CardDetailRoute(
         previousCommentThumbnailUri = cardDetail.previousCardImgUrl ?: "",
         profileUri = cardDetail.profileImgUrl ?: "",
         nickName = cardDetail.nickname,
+        memberId = cardDetail.memberId,
         distance = cardDetail.distance ?: "",
         createAt = cardDetail.createdAt.takeIf { it.isNotBlank() } ?: "",
         likeCnt = cardDetail.likeCount,
@@ -102,6 +143,7 @@ internal fun CardDetailRoute(
         searchCnt = cardDetail.visitedCnt,
         isLikeCard = cardDetail.isLike,
         comments = uiState.comments,
+        onBackPressed = onBackPressed,
         onClickLike = {
             viewModel.toggleLike(args.cardId)
         },
@@ -110,7 +152,11 @@ internal fun CardDetailRoute(
         },
         onClickCommentView = {
 
-        }
+        },
+        onBlockMember = { toMemberId, nickname ->
+            viewModel.blockMember(toMemberId, nickname)
+        },
+        snackBarHostState = snackBarHostState
     )
 
 }
@@ -125,6 +171,7 @@ private fun CardDetailScreen(
     previousCommentThumbnailUri: String,
     profileUri: String,
     nickName: String,
+    memberId: Long,
     distance: String,
     createAt: String,
     likeCnt: Int,
@@ -132,9 +179,12 @@ private fun CardDetailScreen(
     searchCnt: Int,
     isLikeCard: Boolean,
     comments: List<CardComment>,
+    onBackPressed: () -> Unit,
     onClickLike: () -> Unit,
     onClickCommentIcon: () -> Unit,
     onClickCommentView: () -> Unit,
+    onBlockMember: (Long, String) -> Unit,
+    snackBarHostState: SnackbarHostState,
 ) {
 
     val pagerState = rememberPagerState(
@@ -142,11 +192,26 @@ private fun CardDetailScreen(
         initialPageOffsetFraction = 0f,
         pageCount = { comments.size }
     )
+    
+    var showBottomSheet by remember { mutableStateOf(false) }
+    var showBlockDialog by remember { mutableStateOf(false) }
 
-    Scaffold(
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
         modifier = modifier,
         topBar = {
-            //   TODO TopAppBar 추가
+            IconBothAppBar(
+                startImage = R.drawable.ic_left,
+                endImage = R.drawable.ic_more_stoke,
+                appBarText = stringResource(DetailR.string.card_title_comment),
+                startClick = onBackPressed,
+                endClick = { showBottomSheet = true }
+            )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackBarHostState) { data ->
+                DialogComponent.SnackBar(data)
+            }
         }
     ) { paddingValues ->
         val scrollState = rememberScrollState()
@@ -251,6 +316,55 @@ private fun CardDetailScreen(
                     tint = NeutralColor.WHITE
                 )
             }
+            }
+        }
+        
+        // BottomSheet
+        if (showBottomSheet) {
+            BottomSheetComponent.BottomSheet(
+                data = arrayListOf(
+                    BottomSheetItem(
+                        id = MoreAction.BLOCK.ordinal,
+                        title = stringResource(id = DetailR.string.card_detail_block)
+                    ),
+                    BottomSheetItem(
+                        id = MoreAction.DANGER.ordinal,
+                        title = stringResource(id = DetailR.string.card_detail_report)
+                    )
+                ),
+                onItemClick = { id ->
+                    when (id) {
+                        MoreAction.BLOCK.ordinal -> {
+                            showBottomSheet = false
+                            showBlockDialog = true
+                        }
+                        MoreAction.DANGER.ordinal -> {
+                            showBottomSheet = false
+                            // TODO: 신고하기 로직 추가
+                        }
+                    }
+                },
+                onDismiss = {
+                    showBottomSheet = false
+                }
+            )
+        }
+
+
+        
+        // Block Dialog
+        if (showBlockDialog) {
+            DialogComponent.DefaultButtonTwo(
+                title = stringResource(DetailR.string.card_detail_block_dialog_title),
+                description = stringResource(DetailR.string.card_detail_block_dialog_subtitle, nickName),
+                buttonTextStart = stringResource(DetailR.string.card_detail_cancel),
+                buttonTextEnd = stringResource(DetailR.string.card_detail_block),
+                onClick = {
+                    showBlockDialog = false
+                    onBlockMember(memberId, nickName)
+                },
+                onDismiss = { showBlockDialog = false }
+            )
         }
     }
 }

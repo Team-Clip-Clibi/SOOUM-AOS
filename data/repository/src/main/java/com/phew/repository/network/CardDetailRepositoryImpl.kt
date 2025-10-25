@@ -86,6 +86,14 @@ class CardDetailRepositoryImpl @Inject constructor(
         )
     }
 
+    override suspend fun blockMember(toMemberId: Long): DataResult<Unit> = executeWithoutBody {
+        cardDetailsHttp.blockMember(toMemberId)
+    }
+
+    override suspend fun unblockMember(toMemberId: Long): DataResult<Unit> = executeWithoutBody {
+        cardDetailsHttp.unblockMember(toMemberId)
+    }
+
     private suspend fun executeWithoutBody(block: suspend () -> Response<Unit>): DataResult<Unit> {
         return try {
             val response = block()

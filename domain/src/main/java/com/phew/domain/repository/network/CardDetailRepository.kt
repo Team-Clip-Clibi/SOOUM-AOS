@@ -13,4 +13,6 @@ interface CardDetailRepository {
     suspend fun deleteCard(cardId: Long): DataResult<Unit>
     suspend fun getCardComments(cardId: Long, latitude: Double? = null, longitude: Double? = null): DataResult<List<CardComment>>
     suspend fun getCardCommentsMore(cardId: Long, lastId: Long, latitude: Double? = null, longitude: Double? = null): DataResult<List<CardComment>>
+    suspend fun blockMember(toMemberId: Long): DataResult<Unit>
+    suspend fun unblockMember(toMemberId: Long): DataResult<Unit>
 }

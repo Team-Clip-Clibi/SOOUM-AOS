@@ -131,6 +131,7 @@ object AppBar {
                 Icon(
                     painter = painterResource(endImage),
                     contentDescription = "right icon",
+                    tint = NeutralColor.BLACK,
                     modifier = Modifier.size(24.dp)
                 )
             }

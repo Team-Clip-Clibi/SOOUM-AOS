@@ -72,8 +72,6 @@ fun NavGraphBuilder.feedGraph(
                     locationPermission.launch(permissions)
                 }
             }
-            println("!! $TAG, $FEED_HOME_ROUTE")
-
             FeedView(
                 viewModel = homeViewModel,
                 finish = onBackPressed,
