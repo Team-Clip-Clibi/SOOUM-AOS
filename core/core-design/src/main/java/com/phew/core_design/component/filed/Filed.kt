@@ -1,19 +1,14 @@
 package com.phew.core_design.component.filed
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.SemanticsProperties.Text
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -24,10 +19,8 @@ import com.phew.core_design.TextComponent
 import com.phew.core_design.component.filed.FiledDesignTokens.CommentMinHeight
 import com.phew.core_design.component.filed.FiledDesignTokens.CommentWidth
 import com.phew.core_design.component.filed.FiledDesignTokens.CornerRadius
-import com.phew.core_design.component.filed.FiledDesignTokens.HorizontalPadding
 import com.phew.core_design.component.filed.FiledDesignTokens.MainMinHeight
 import com.phew.core_design.component.filed.FiledDesignTokens.MainWidth
-import com.phew.core_design.component.filed.FiledDesignTokens.VerticalPadding
 
 object FiledDesignTokens{
     val HorizontalPadding = 24.dp

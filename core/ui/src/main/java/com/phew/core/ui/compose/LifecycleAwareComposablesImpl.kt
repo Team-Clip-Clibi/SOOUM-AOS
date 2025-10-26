@@ -3,7 +3,6 @@ package com.phew.core.ui.compose
 import androidx.lifecycle.Lifecycle
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.text.compareTo
 
 
 @Singleton

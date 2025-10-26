@@ -56,7 +56,7 @@ import com.phew.core_design.component.card.FeedDefaultCard
 import com.phew.core_design.component.card.FeedDeletedCard
 import com.phew.core_design.component.card.FeedPungCard
 import com.phew.core_design.component.card.NotiCardData
-import com.phew.core_design.component.card.NotiCardPager
+import com.phew.core_design.component.card.NoticeCardPager
 import com.phew.core_design.component.card.component.IndicatorDot
 import com.phew.core_design.component.tab.SooumTab
 import com.phew.core_design.component.tab.SooumTabRow
@@ -103,10 +103,14 @@ object FeedUi {
                 val actualIndex = page % feedNotice.size
                 val currentNotice = feedNotice[actualIndex]
                 Box(
-                    modifier = Modifier.fillMaxWidth().wrapContentHeight()
-                ){
-                    NotiCardPager(
-                        modifier = Modifier.fillMaxWidth().align(Alignment.CenterStart),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                ) {
+                    NoticeCardPager(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.CenterStart),
                         dataList = feedNotice.map { data ->
                             NotiCardData(
                                 title = when (currentNotice.type) {
@@ -133,13 +137,15 @@ object FeedUi {
                             feedNoticeClick(currentNotice.url)
                         },
                     )
-                    IndicatorDot(
-                        pagerState = pagerState,
-                        totalSize = feedNotice.size,
-                        modifier =  Modifier.padding(top = 16.dp, end = 16.dp).align(Alignment.TopEnd)
-                    )
                 }
             }
+            IndicatorDot(
+                pagerState = pagerState,
+                totalSize = feedNotice.size,
+                modifier = Modifier
+                    .padding(top = 16.dp, end = 16.dp)
+                    .align(Alignment.TopEnd)
+            )
         }
     }
 
@@ -151,7 +157,7 @@ object FeedUi {
         nearClick: () -> Unit,
         isTabsVisible: Boolean,
         onDistanceClick: (DistanceType) -> Unit,
-        selectDistanceType: DistanceType
+        selectDistanceType: DistanceType,
     ) {
         val tabItem = listOf(
             stringResource(R.string.home_feed_tab_recent_card),
@@ -248,7 +254,7 @@ object FeedUi {
     }
 
     @Composable
-    private fun DistanceText(distance: String,  onClick: () -> Unit, isSelect: Boolean) {
+    private fun DistanceText(distance: String, onClick: () -> Unit, isSelect: Boolean) {
         Text(
             text = distance,
             style = TextComponent.SUBTITLE_3_SB_14,
@@ -270,7 +276,7 @@ object FeedUi {
     internal fun TypedFeedCardView(
         feedCard: FeedCardType,
         onClick: (String) -> Unit,
-        onRemoveCard: (String) -> Unit
+        onRemoveCard: (String) -> Unit,
     ) {
         when (feedCard) {
             is FeedCardType.BoombType -> PungTypeCard(
@@ -283,8 +289,9 @@ object FeedUi {
                 feedCard = feedCard,
                 onClick = onClick
             )
+
             is FeedCardType.NormalType -> NormalTypeCard(
-                feedCard =  feedCard,
+                feedCard = feedCard,
                 onClick = onClick
             )
         }
@@ -294,7 +301,7 @@ object FeedUi {
     internal fun PungTypeCard(
         feedCard: FeedCardType.BoombType,
         onClick: (String) -> Unit,
-        onRemoveCard: (String) -> Unit
+        onRemoveCard: (String) -> Unit,
     ) {
         SooumLog.d(TAG, "PungTypeCard Type")
         var remainingTimeMillis by remember {
@@ -339,7 +346,7 @@ object FeedUi {
     @Composable
     internal fun AdminTypeCard(
         feedCard: FeedCardType.AdminType,
-        onClick: (String) -> Unit
+        onClick: (String) -> Unit,
     ) {
         SooumLog.d(TAG, "AdminTypeCard Type")
         FeedAdminCard(
@@ -359,7 +366,7 @@ object FeedUi {
     @Composable
     internal fun NormalTypeCard(
         feedCard: FeedCardType.NormalType,
-        onClick: (String) -> Unit
+        onClick: (String) -> Unit,
     ) {
         SooumLog.d(TAG, "NormalTypeCard Type")
         FeedDefaultCard(
@@ -470,7 +477,13 @@ object NotificationUi {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Image(
-                    painter = painterResource(com.phew.core_design.R.drawable.ic_notification),
+                    painter = painterResource(
+                        id = when (data.type) {
+                            Notice.NoticeType.ANNOUNCEMENT -> com.phew.core_design.R.drawable.ic_notification
+                            Notice.NoticeType.NEWS -> com.phew.core_design.R.drawable.ic_mail_filled_bule
+                            Notice.NoticeType.MAINTENANCE -> com.phew.core_design.R.drawable.ic_headset_filled_yellow
+                        }
+                    ),
                     contentDescription = data.content,
                 )
                 Text(

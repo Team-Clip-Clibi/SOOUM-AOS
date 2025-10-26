@@ -15,6 +15,7 @@ import com.phew.presentation.detail.navigation.detailGraph
 import com.phew.core.ui.model.navigation.WriteArgs
 import com.phew.presentation.write.navigation.navigateToWriteGraphWithArgs
 import com.phew.presentation.write.navigation.writeGraph
+import com.phew.reports.reportGraph
 import com.phew.sign_up.navigation.SIGN_UP_GRAPH
 import com.phew.sign_up.navigation.navigateToSignUpGraph
 import com.phew.sign_up.navigation.signUpGraph
@@ -65,6 +66,12 @@ fun SooumNavHost(
                 onWriteComplete = {
                     // Feed에서 Write 완료 시 Feed 데이터 갱신
                     // TODO: FeedViewModel refresh 호출
+                }
+            )
+
+            reportGraph(
+                onBackPressed = {
+                    SooumOnBackPressed(appState = appState)
                 }
             )
 

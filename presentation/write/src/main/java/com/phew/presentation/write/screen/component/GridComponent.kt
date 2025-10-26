@@ -67,7 +67,7 @@ internal fun FilteredImageGrid(
         // 서버 카테고리를 한국어 필터명으로 매핑
         val categoryMapping = mapOf(
             "COLOR" to "컬러",
-            "NATURE" to "자연", 
+            "NATURE" to "자연",
             "SENSITIVITY" to "감성",
             "FOOD" to "푸드",
             "ABSTRACT" to "추상",
@@ -107,7 +107,6 @@ fun ImageGrid(
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
-            .padding(8.dp)
     ) {
         val chunkedImages = displayImages.chunked(columns)
 

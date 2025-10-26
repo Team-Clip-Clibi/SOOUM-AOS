@@ -1,14 +1,14 @@
 package com.phew.repository
 
 
-import com.phew.device_info.DeviceInfo
-import com.phew.location_provider.LocationProvider
 import com.phew.datastore_local.DataStore
 import com.phew.datastore_local.dto.UserInfoDTO
+import com.phew.device_info.DeviceInfo
 import com.phew.domain.dto.Location
 import com.phew.domain.dto.Token
 import com.phew.domain.dto.UserInfo
 import com.phew.domain.repository.DeviceRepository
+import com.phew.location_provider.LocationProvider
 import javax.inject.Inject
 
 

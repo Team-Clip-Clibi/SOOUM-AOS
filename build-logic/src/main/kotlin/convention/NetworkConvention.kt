@@ -17,6 +17,7 @@ class NetworkConvention : Plugin<Project> {
         pluginManager.apply("org.jetbrains.kotlin.android")
         pluginManager.apply("com.google.devtools.ksp")
         pluginManager.apply("com.google.dagger.hilt.android")
+        pluginManager.apply("sooum.android.lint.convention")
         extensions.getByType<LibraryExtension>().apply {
             namespace = "com.phew.network"
             compileSdk = 36
@@ -67,6 +68,7 @@ class NetworkConvention : Plugin<Project> {
                 val cardDelete: String = properties.getProperty("api_url_card_delete", "")
                 val cardComment: String = properties.getProperty("api_url_card_comment", "")
                 val cardCommentMore: String = properties.getProperty("api_url_card_comment_more", "")
+                val cardReports: String = properties.getProperty("api_url_reports_card", "")
                 val cardBlock: String = properties.getProperty("api_url_block_member", "")
                 val cardUnblock: String = properties.getProperty("api_url_unblock_member", "")
 
@@ -100,6 +102,7 @@ class NetworkConvention : Plugin<Project> {
                     "API_URL_UPLOAD_BACKGROUND_IMAGE_CHECK",
                     backgroundImageCheck
                 )
+                buildConfigField("String", "API_URL_REPORTS_CARDS", cardReports)
                 buildConfigField("String", "API_URL_CARD_LIKE", cardLike)
                 buildConfigField("String", "API_URL_CARD_DETAIL", cardDetail)
                 buildConfigField("String", "API_URL_CARD_DELETE", cardDelete)

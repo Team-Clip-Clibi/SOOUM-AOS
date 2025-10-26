@@ -34,6 +34,10 @@ gradlePlugin {
             id = "sooum.android.defaultConvention"
             implementationClass = "convention.DefaultConvention"
         }
+        create("lintConvention"){
+            id = "sooum.android.lint.convention"
+            implementationClass = "convention.SOOUMLintConvention"
+        }
     }
 }
 

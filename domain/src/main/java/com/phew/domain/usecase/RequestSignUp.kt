@@ -5,8 +5,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
 import androidx.core.net.toUri
 import com.phew.core_common.DataResult
 import com.phew.core_common.DomainResult
@@ -18,6 +16,7 @@ import com.phew.domain.BuildConfig
 import com.phew.domain.dto.Token
 import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.network.SignUpRepository
+import dagger.hilt.android.qualifiers.ApplicationContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -27,6 +26,7 @@ import java.security.KeyFactory
 import java.security.PublicKey
 import java.security.spec.X509EncodedKeySpec
 import javax.crypto.Cipher
+import javax.inject.Inject
 
 class RequestSignUp @Inject constructor(
     private val repository: SignUpRepository,

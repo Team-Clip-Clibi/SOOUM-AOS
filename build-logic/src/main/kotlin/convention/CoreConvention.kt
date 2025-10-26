@@ -16,8 +16,12 @@ class CoreConvention : Plugin<Project> {
         pluginManager.apply("com.android.library")
         pluginManager.apply("org.jetbrains.kotlin.android")
         pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
-
+        pluginManager.apply("sooum.android.lint.convention")
         extensions.getByType<LibraryExtension>().apply {
+            lint{
+                disable.add("UnusedResources") // 사용 안하는 리소스 경고 무시
+
+            }
             compileSdk = 36
             defaultConfig {
                 minSdk = 31

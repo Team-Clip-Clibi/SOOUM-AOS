@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -199,7 +198,7 @@ private fun FeedCardImpl(
             .fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         color = Primary.MAIN,
-        shadowElevation = 6.dp,
+        shadowElevation = 16.dp,
         border = BorderStroke(1.dp, NeutralColor.GRAY_200)
     ) {
         Column(

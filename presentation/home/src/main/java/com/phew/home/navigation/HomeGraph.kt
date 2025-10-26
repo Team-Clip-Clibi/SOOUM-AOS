@@ -8,13 +8,18 @@ import com.phew.core.ui.state.SooumAppState
 import com.phew.feed.navigation.FEED_GRAPH
 import com.phew.feed.navigation.feedGraph
 import com.phew.presentation.write.navigation.writeGraph
+import com.phew.reports.REPORT_GRAPH_ROUTE_PREFIX
 
 private const val HOME_GRAPH = "home_graph"
 
 fun NavHostController.navigateToHomeGraph(
-    navOptions: NavOptions? = null
+    navOptions: NavOptions? = null,
 ) {
     this.navigate(HOME_GRAPH, navOptions)
+}
+
+fun NavHostController.navigateToReport(cardId: String, navOptions: NavOptions? = null) {
+    this.navigate("$REPORT_GRAPH_ROUTE_PREFIX/$cardId", navOptions)
 }
 
 /**
@@ -35,7 +40,7 @@ fun NavGraphBuilder.homeGraph(
             navController = navController,
             finish = finish,
             onBackPressed = onBackPressed,
-            webView = webView
+            webView = webView,
         )
 
         writeGraph(
@@ -55,7 +60,6 @@ fun NavGraphBuilder.homeGraph(
 
         // TODO Tag 그래프 추가
         // TODO My 그래프 추가
-
     }
 
 }

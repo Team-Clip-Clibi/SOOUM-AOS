@@ -1,0 +1,38 @@
+package com.phew.reports
+
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.remember
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavType
+import androidx.navigation.compose.navigation
+import androidx.navigation.navArgument
+import com.phew.core_design.slideComposable
+
+const val REPORT_GRAPH_ROUTE_PREFIX = "report_graph"
+const val CARD_ID_ARG = "cardId"
+private const val REPORT_ROUTE_WITH_ARGS = "$REPORT_GRAPH_ROUTE_PREFIX/{$CARD_ID_ARG}"
+private const val REPORT_VIEW_ROUTE = "report_view_route"
+
+fun NavGraphBuilder.reportGraph(
+    onBackPressed: () -> Unit,
+) {
+    navigation(
+        route = REPORT_ROUTE_WITH_ARGS,
+        startDestination = REPORT_VIEW_ROUTE,
+        arguments = listOf(
+            navArgument(CARD_ID_ARG) {
+                type = NavType.StringType
+            }
+        )
+    ) {
+        slideComposable(route = REPORT_VIEW_ROUTE) { backStackEntry ->
+            val snackBarHostState = remember { SnackbarHostState() }
+            val cardId = backStackEntry.arguments?.getString(CARD_ID_ARG)
+            ReportView(
+                cardId = cardId ?: "",
+                onBack = onBackPressed,
+                snackBarHostState = snackBarHostState
+            )
+        }
+    }
+}

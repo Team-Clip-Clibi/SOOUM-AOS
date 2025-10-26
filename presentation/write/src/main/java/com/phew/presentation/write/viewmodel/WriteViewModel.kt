@@ -5,10 +5,10 @@ import android.net.Uri
 import androidx.compose.ui.text.font.FontFamily
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.phew.core_common.DomainResult
-import com.phew.core.ui.model.CameraPickerAction
 import com.phew.core.ui.model.CameraCaptureRequest
 import com.phew.core_common.log.SooumLog
+import com.phew.core.ui.model.CameraPickerAction
+import com.phew.core_common.DomainResult
 import com.phew.domain.dto.Location
 import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.usecase.CreateImageFile
@@ -69,7 +69,7 @@ class WriteViewModel @Inject constructor(
     init {
         // 기본 이미지 로드
         loadCardDefaultImages()
-        
+
         // 실시간 태그 검색 로직
         viewModelScope.launch {
             uiState
@@ -259,7 +259,7 @@ class WriteViewModel @Inject constructor(
             val serverImage = state.cardDefaultImagesByCategory.values
                 .flatten()
                 .find { it.imageName == imageName }
-            
+
             SooumLog.d(TAG, "selectBackgroundImage() imageName: $imageName, serverImage: $serverImage")
 
             if (serverImage != null) {
@@ -417,7 +417,7 @@ private fun requestCameraImageForBackground() {
             )
         }
     }
-    
+
     fun setParentCardId(parentCardId: Long) {
         _uiState.update { it.copy(parentCardId = parentCardId) }
     }
@@ -433,7 +433,7 @@ private fun requestCameraImageForBackground() {
                     ?: FontConfig.defaultFont.serverName
                 
                 SooumLog.d(TAG, "onWriteComplete state: selectedDefaultImageName=${state.selectedDefaultImageName}, activeBackgroundUri=${state.activeBackgroundUri}")
-                
+
                 val result = try {
                     if (state.parentCardId != null) {
                         // 댓글 작성 (PostCardReply 사용)
@@ -442,9 +442,9 @@ private fun requestCameraImageForBackground() {
                             state.activeBackgroundUri != null -> "CUSTOM" to ""
                             else -> "DEFAULT" to ""
                         }
-                        
+
                         SooumLog.d(TAG, "onWriteComplete reply imgType: $imgType, imgName: $imgName")
-                        
+
                         val replyParam = PostCardReply.Param(
                             cardId = state.parentCardId,
                             content = state.content,
@@ -463,9 +463,9 @@ private fun requestCameraImageForBackground() {
                             state.activeBackgroundUri != null -> Triple(true, null, state.activeBackgroundUri.toString())
                             else -> Triple(false, null, null)
                         }
-                        
+
                         SooumLog.d(TAG, "onWriteComplete card isFromDevice: $isFromDevice, imgName: $imgName, imageUrl: $imageUrl")
-                        
+
                         val cardParam = PostCard.Param(
                             isFromDevice = isFromDevice,
                             answerCard = false,
@@ -513,7 +513,7 @@ private fun requestCameraImageForBackground() {
             try {
                 when (val result = getCardDefaultImage()) {
                     is DomainResult.Success -> {
-                        _uiState.update { 
+                        _uiState.update {
                             it.copy(
                                 cardDefaultImagesByCategory = result.data.defaultImages
                             )
@@ -521,7 +521,7 @@ private fun requestCameraImageForBackground() {
                         SooumLog.d(TAG, "loadCardDefaultImages() success: ${result.data.defaultImages.size} categories loaded")
                     }
                     is DomainResult.Failure -> {
-                        _uiState.update { 
+                        _uiState.update {
                             it.copy(
                                 cardDefaultImagesByCategory = emptyMap()
                             )
@@ -530,7 +530,7 @@ private fun requestCameraImageForBackground() {
                     }
                 }
             } catch (e: Exception) {
-                _uiState.update { 
+                _uiState.update {
                     it.copy(
                         cardDefaultImagesByCategory = emptyMap()
                     )

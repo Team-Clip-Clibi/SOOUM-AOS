@@ -25,16 +25,12 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.ui.Alignment
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.platform.LocalDensity
-import kotlinx.coroutines.launch
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -43,7 +39,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -53,8 +51,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
-import com.phew.core_design.AppBar
 import com.phew.core.ui.R
+import com.phew.core.ui.component.camera.CameraPickerBottomSheet
+import com.phew.core.ui.component.camera.CameraPickerEffect
+import com.phew.core.ui.model.CameraCaptureRequest
+import com.phew.core.ui.model.CameraPickerAction
+import com.phew.core.ui.model.CameraPickerEffectState
+import com.phew.core_design.AppBar
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.Primary
@@ -62,12 +65,11 @@ import com.phew.core_design.TextComponent
 import com.phew.core_design.component.button.RoundButton
 import com.phew.core_design.component.card.BaseCardData
 import com.phew.core_design.component.card.CardView
+import com.phew.presentation.write.component.NumberTagFlowLayout
+import com.phew.presentation.write.component.NumberTagItem
 import com.phew.domain.dto.CardImageDefault
-import com.phew.core.ui.model.CameraCaptureRequest
-import com.phew.core.ui.model.CameraPickerAction
 import com.phew.core.ui.component.camera.CameraPickerBottomSheet
 import com.phew.core.ui.component.camera.CameraPickerEffect
-import com.phew.core.ui.model.CameraPickerEffectState
 import com.phew.presentation.write.model.BackgroundConfig
 import com.phew.presentation.write.model.FontConfig
 import com.phew.presentation.write.model.FontItem
@@ -75,8 +77,6 @@ import com.phew.presentation.write.model.WriteOption
 import com.phew.presentation.write.model.WriteOptions
 import com.phew.presentation.write.screen.component.FilteredImageGrid
 import com.phew.presentation.write.screen.component.FontSelectorGrid
-import com.phew.presentation.write.component.NumberTagFlowLayout
-import com.phew.presentation.write.component.NumberTagItem
 import com.phew.presentation.write.viewmodel.WriteViewModel
 import androidx.compose.ui.res.stringResource
 import com.phew.core.ui.model.navigation.WriteArgs
@@ -122,21 +122,21 @@ internal fun WriteRoute(
 
         viewModel.onInitialLocationPermissionCheck(fineGranted || coarseGranted)
     }
-    
+
     //  Effect Event로 수정
     LaunchedEffect(Unit) {
         viewModel.requestPermissionEvent.collect { permissions ->
             locationPermission.launch(permissions)
         }
     }
-    
+
     // 완료 이벤트 처리
     LaunchedEffect(Unit) {
         viewModel.writeCompleteEvent.collect {
             onWriteComplete()
         }
     }
-    
+
     // parentCardId 설정
     LaunchedEffect(args) {
         args?.parentCardId?.let { parentCardId ->
@@ -145,7 +145,7 @@ internal fun WriteRoute(
     }
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    
+
     WriteScreen(
         modifier = modifier,
         args = args,
@@ -280,7 +280,7 @@ private fun WriteScreen(
     onCameraCaptureResult: (Boolean, Uri) -> Unit,
     onRequestGalleryPermissionFromSettings: () -> Unit,
     onGallerySettingsResult: (Boolean) -> Unit,
-    onCameraSettingsResult: (Boolean) -> Unit
+    onCameraSettingsResult: (Boolean) -> Unit,
 ) {
 
     val snackBarHostState = remember { SnackbarHostState() }
@@ -292,6 +292,8 @@ private fun WriteScreen(
     }
     val context = LocalContext.current
     var settingsTarget by remember { mutableStateOf<SettingsTarget?>(null) }
+    val keyboard = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
     val settingsLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) {
@@ -347,7 +349,7 @@ private fun WriteScreen(
         onGalleryPermissionDenied = onGalleryPermissionDenied
     )
 
-    Scaffold (
+    Scaffold(
         modifier = modifier,
         topBar = {
             val titleRes = if (args?.parentCardId != null) {
@@ -379,7 +381,12 @@ private fun WriteScreen(
         }
     ) { innerPadding ->
         val scrollState = rememberScrollState()
-
+        LaunchedEffect(scrollState.isScrollInProgress) {
+            if (scrollState.isScrollInProgress) {
+                keyboard?.hide()
+                focusManager.clearFocus()
+            }
+        }
         Column(
             modifier = Modifier
                 .background(NeutralColor.WHITE)
@@ -392,7 +399,6 @@ private fun WriteScreen(
                     .padding(horizontal = 16.dp, vertical = 8.dp)
                     .verticalScroll(scrollState)
                     .weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 CardView(
                     modifier = Modifier
@@ -508,7 +514,10 @@ private fun isGalleryPermissionGranted(context: Context): Boolean {
     } else {
         Manifest.permission.READ_EXTERNAL_STORAGE
     }
-    return ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+    return ContextCompat.checkSelfPermission(
+        context,
+        permission
+    ) == PackageManager.PERMISSION_GRANTED
 }
 
 private enum class SettingsTarget {
@@ -526,10 +535,10 @@ private fun BackgroundSelect(
     onImageSelected: (String) -> Unit,
     onCameraClick: () -> Unit
 ) {
-    Column {
+    Column(modifier = Modifier.fillMaxWidth().padding(top = 24.dp)) {
         Text(
-            text = "배경",
-            style = TextComponent.CAPTION_1_SB_12.copy(color = Primary.DARK)
+            text = stringResource(com.phew.presentation.write.R.string.write_screen_background_section),
+            style = TextComponent.CAPTION_1_SB_12.copy(color = Primary.DARK),
         )
 
         FilteredImageGrid(
@@ -550,14 +559,14 @@ private fun BackgroundSelect(
 private fun FontSelect(
     fontItem: List<FontItem>,
     selectedFont: String,
-    onFontSelected: (FontFamily) -> Unit
+    onFontSelected: (FontFamily) -> Unit,
 ) {
-    Column {
+    Column(modifier = Modifier.padding(top = 24.dp)) {
         Text(
-            text = "폰트",
-            style = TextComponent.CAPTION_1_SB_12.copy(color = Primary.DARK)
+            text = stringResource(com.phew.presentation.write.R.string.write_screen_font_section),
+            style = TextComponent.CAPTION_1_SB_12.copy(color = Primary.DARK),
         )
-        
+
         FontSelectorGrid(
             fonts = fontItem,
             selectedFont = selectedFont,
@@ -573,9 +582,9 @@ private fun OptionButtons(
     hasLocationPermission: Boolean,
     onOptionSelected: (WriteOption) -> Unit,
     onDistancePermissionRequest: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
-    Column (
+    Column(
         modifier = modifier
             .fillMaxWidth()
             .background(NeutralColor.WHITE)
