@@ -94,7 +94,7 @@ object TextComponent {
             fontSize = 14.sp,
             lineHeight = 21.sp,
             fontFamily = FontFamily(Font(R.font.semi_bold)),
-            fontWeight = FontWeight(500),
+            fontWeight = FontWeight(600),
             color = NeutralColor.BLACK
         )
     val BODY_1_M_14
