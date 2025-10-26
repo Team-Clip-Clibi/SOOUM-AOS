@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
@@ -28,6 +29,7 @@ import com.phew.core_design.NeutralColor
 import com.phew.core_design.OpacityColor
 import com.phew.core_design.Primary
 import com.phew.core_design.TextComponent
+import com.phew.core_design.UnKnowColor
 import com.phew.core_design.component.card.component.BottomContent
 import com.phew.core_design.component.card.component.FeedCardType
 
@@ -99,10 +101,14 @@ fun FeedDeletedCard(
 ) {
     Surface(
         modifier = Modifier
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .shadow(
+                elevation = 16.dp,
+                spotColor = UnKnowColor.color,
+                ambientColor = UnKnowColor.color
+            ),
         shape = RoundedCornerShape(16.dp),
         color = NeutralColor.GRAY_200,
-        shadowElevation = 6.dp,
         border = BorderStroke(1.dp, NeutralColor.GRAY_100)
     ) {
         Column(
@@ -195,10 +201,14 @@ private fun FeedCardImpl(
 ) {
     Surface(
         modifier = Modifier
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .shadow(
+                elevation = 16.dp,
+                spotColor = UnKnowColor.color,
+                ambientColor = UnKnowColor.color
+            ),
         shape = RoundedCornerShape(16.dp),
         color = Primary.MAIN,
-        shadowElevation = 16.dp,
         border = BorderStroke(1.dp, NeutralColor.GRAY_200)
     ) {
         Column(
@@ -240,10 +250,14 @@ private fun FeedAdminCardImpl(
 ) {
     Surface(
         modifier = Modifier
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .shadow(
+                elevation = 16.dp,
+                spotColor = UnKnowColor.color,
+                ambientColor = UnKnowColor.color
+            ),
         shape = RoundedCornerShape(16.dp),
         color = Primary.MAIN,
-        shadowElevation = 6.dp,
         border = BorderStroke(1.dp, NeutralColor.GRAY_200)
     ) {
         Column(

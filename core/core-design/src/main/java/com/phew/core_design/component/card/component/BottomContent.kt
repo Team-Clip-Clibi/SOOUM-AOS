@@ -16,6 +16,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -78,7 +80,7 @@ internal fun ManagerLabel(
         Text(
             text = "sooum",
             style = TextComponent.CAPTION_2_M_12,
-            color = NeutralColor.BLACK,
+            color = NeutralColor.GRAY_500,
             modifier = Modifier.padding(start = 2.dp)
         )
     }
@@ -136,18 +138,19 @@ internal fun LikeAndComment(
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                painterResource(R.drawable.ic_heart_stoke),
+            Image(
+                painter = painterResource(R.drawable.ic_heart_stoke),
                 contentDescription = "좋아요",
                 modifier = modifier.then(
                     Modifier.size(14.dp)
                 ),
-                tint = NeutralColor.GRAY_500
+                colorFilter = ColorFilter.tint(NeutralColor.GRAY_500)
             )
             Spacer(modifier = Modifier.width(2.dp))
             Text(
                 text = likeValue ?: "0",
-                style = TextComponent.CAPTION_2_M_12.copy(color = NeutralColor.GRAY_500)
+                style = TextComponent.CAPTION_2_M_12.copy(color = NeutralColor.GRAY_500),
+                color = NeutralColor.GRAY_500
             )
         }
 
@@ -158,15 +161,17 @@ internal fun LikeAndComment(
                 Modifier.padding(start = 4.dp)
             )
         ) {
-            Icon(
+            Image(
                 painter = painterResource(R.drawable.ic_message_stoke),
                 contentDescription = "댓글",
-                modifier = Modifier.size(12.dp)
+                modifier = Modifier.size(12.dp),
+                colorFilter = ColorFilter.tint(NeutralColor.GRAY_500)
             )
             Spacer(modifier = Modifier.width(2.dp))
             Text(
                 text = commentValue ?: "0",
-                style = TextComponent.CAPTION_2_M_12
+                style = TextComponent.CAPTION_2_M_12.copy(color = NeutralColor.GRAY_500),
+                color = NeutralColor.GRAY_500
             )
         }
     }
