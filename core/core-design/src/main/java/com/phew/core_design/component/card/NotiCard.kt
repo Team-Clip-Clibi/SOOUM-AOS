@@ -18,15 +18,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.Primary
 import com.phew.core_design.R
 import com.phew.core_design.TextComponent
+import com.phew.core_design.UnKnowColor
 import com.phew.core_design.theme.SooumTheme
 
 // NotiCard 데이터 모델
@@ -40,7 +43,7 @@ data class NotiCardData(
 )
 
 @Composable
-internal fun NotiCard(
+fun NotiCard(
     data: NotiCardData,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -49,9 +52,7 @@ internal fun NotiCard(
         modifier = modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        shape = RoundedCornerShape(12.dp),
         color = NeutralColor.WHITE,
-        shadowElevation = 4.dp
     ) {
         Box(
             modifier = Modifier
@@ -105,14 +106,14 @@ internal fun NotiCard(
 }
 
 @Composable
-fun NotiCardPager(
+fun NoticeCardPager(
     dataList: List<NotiCardData>,
     onClick: (NotiCardData) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         // 카드 리스트
         dataList.forEach { data ->

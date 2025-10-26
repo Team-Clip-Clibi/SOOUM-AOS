@@ -4,40 +4,41 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.domain.dto.FeedData
+import com.phew.core_common.DataResult
+import com.phew.core_common.DomainResult
+import com.phew.domain.dto.DistanceCard
 import com.phew.domain.dto.FeedCardType
 import com.phew.domain.dto.Latest
+import com.phew.domain.dto.Location
 import com.phew.domain.dto.Notice
 import com.phew.domain.dto.Notification
 import com.phew.domain.dto.Notify
 import com.phew.domain.dto.Popular
+import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.network.CardFeedRepository
 import com.phew.domain.usecase.CheckLocationPermission
+import com.phew.domain.usecase.CreateImageFile
+import com.phew.domain.usecase.FinishTakePicture
+import com.phew.domain.usecase.GetFeedNotification
 import com.phew.domain.usecase.GetNotification
 import com.phew.domain.usecase.GetReadNotification
 import com.phew.domain.usecase.GetUnReadNotification
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.drop
-import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
-import com.phew.core_common.DataResult
-import com.phew.core_common.DomainResult
-import com.phew.domain.dto.DistanceCard
-import com.phew.domain.dto.Location
-import com.phew.domain.repository.DeviceRepository
-import com.phew.domain.usecase.CreateImageFile
-import com.phew.domain.usecase.FinishTakePicture
-import com.phew.domain.usecase.GetFeedNotification
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 
 @HiltViewModel
@@ -55,6 +56,10 @@ class HomeViewModel @Inject constructor(
     ViewModel() {
     private val _uiState = MutableStateFlow(Home())
     val uiState: StateFlow<Home> = _uiState.asStateFlow()
+
+    // Navigation side effects
+    private val _navigationEvent = MutableSharedFlow<NavigationEvent>()
+    val navigationEvent = _navigationEvent.asSharedFlow()
 
     /**
      * 공지사항(notice)
@@ -609,6 +614,19 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    fun navigateToDetail(cardId: String) {
+        viewModelScope.launch {
+            val cardIdLong = cardId.toLongOrNull()
+            if (cardIdLong != null) {
+                _navigationEvent.emit(NavigationEvent.NavigateToDetail(CardDetailArgs(cardIdLong)))
+            }
+        }
+    }
+
+}
+
+sealed interface NavigationEvent {
+    data class NavigateToDetail(val args: CardDetailArgs) : NavigationEvent
 }
 
 data class Home(

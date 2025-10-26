@@ -1,6 +1,7 @@
 package com.phew.domain.repository.network
 
 import com.phew.core_common.DataResult
+import com.phew.domain.dto.CardDefaultImagesResponse
 import com.phew.domain.dto.CardImageDefault
 import com.phew.domain.dto.CheckedBaned
 import com.phew.domain.dto.DistanceCard
@@ -29,7 +30,7 @@ interface CardFeedRepository {
     ): DataResult<List<DistanceCard>>
 
     suspend fun requestRelatedTag(resultCnt: Int = 8, tag: String): DataResult<List<TagInfo>>
-    suspend fun requestCardImageDefault(): DataResult<List<CardImageDefault>>
+    suspend fun requestCardImageDefault(): DataResult<CardDefaultImagesResponse>
     suspend fun requestUploadCardImage(): DataResult<CardImageDefault>
     suspend fun requestCheckUploadCard(): DataResult<CheckedBaned>
     suspend fun requestUploadCard(
@@ -45,7 +46,7 @@ interface CardFeedRepository {
     ): Int
 
     suspend fun requestUploadCardAnswer(
-        cardId: Int,
+        cardId: Long,
         isDistanceShared: Boolean,
         latitude: Double?,
         longitude: Double?,

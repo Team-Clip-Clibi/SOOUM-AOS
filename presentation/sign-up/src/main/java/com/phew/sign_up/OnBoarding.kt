@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,14 +16,15 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.runtime.Composable
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -35,11 +37,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import com.phew.core_design.NeutralColor
-import com.phew.core_design.TextComponent
 import androidx.compose.ui.unit.dp
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.LargeButton
+import com.phew.core_design.NeutralColor
+import com.phew.core_design.SmallButton
+import com.phew.core_design.TextComponent
 import com.phew.domain.SIGN_UP_ALREADY_SIGN_UP
 import com.phew.domain.SIGN_UP_BANNED
 import com.phew.domain.SIGN_UP_OKAY
@@ -216,17 +219,10 @@ private fun BottomView(
             buttonText = stringResource(R.string.onBoarding_btn_start),
             onClick = onClickStart
         )
-
-        Text(
-            text = stringResource(R.string.onBoarding_btn_already_sign_up),
-            style = TextComponent.BODY_1_M_14,
-            color = NeutralColor.GRAY_500,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(32.dp)
-                .padding(top = 8.dp)
-                .clickable { onClickAlreadySignUp() }
+        Spacer(modifier = Modifier.height(8.dp))
+        SmallButton.NoIconTertiary(
+            buttonText = stringResource(R.string.onBoarding_btn_already_sign_up),
+            onClick = onClickAlreadySignUp,
         )
     }
 }

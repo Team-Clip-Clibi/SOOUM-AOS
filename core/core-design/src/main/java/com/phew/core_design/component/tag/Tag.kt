@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -36,6 +35,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,7 +47,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -86,7 +85,7 @@ object TagDesignTokens {
 
     // 컬러풀 태그
     val ColorfulBackground = Primary.LIGHT_1
-    val ColorfulText = Primary.MAIN
+    val ColorfulText = Primary.DARK
     val ColorfulIconTint = Primary.MAIN
 
     // 아이콘 색상
@@ -193,6 +192,7 @@ internal fun TagRow(
     val focusHandled by rememberUpdatedState(onFocusHandled)
     var focusTrigger by remember { mutableStateOf(0) }
     var awaitingFocus by remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
 
     // currentInput과 동기화
     LaunchedEffect(currentInput) {
@@ -205,20 +205,44 @@ internal fun TagRow(
             awaitingFocus = true
             focusTrigger++
             focusHandled()
+            scrollState.animateScrollTo(scrollState.maxValue)
         }
+    }
+
+    // 입력 상태가 변경될 때 스크롤 처리
+    LaunchedEffect(state) {
+        if (state == TagState.Focus || state == TagState.Typing) {
+            scrollState.animateScrollTo(scrollState.maxValue)
+        }
+    }
+
+    // 입력 텍스트가 변경될 때마다 스크롤 처리
+    LaunchedEffect(input) {
+        if (state == TagState.Typing || state == TagState.Focus) {
+            scrollState.animateScrollTo(scrollState.maxValue)
+        }
+    }
+
+    val startPadding by remember(scrollState.value) {
+        derivedStateOf { if (scrollState.value > 0) 0.dp else 16.dp }
+    }
+
+    val endPadding by remember(scrollState.value) {
+        derivedStateOf { if (scrollState.value > 0) 16.dp else 0.dp }
     }
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
+            .horizontalScroll(scrollState)
+            .padding(start = startPadding, end = endPadding),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         tags.forEach { tag ->
             Tag(
                 state = TagState.Default,
                 text = tag,
-                showRemoveIcon = true,
+                showRemoveIcon = enableAdd,
                 onRemove = { onRemove(tag) },
                 onClick = { onRemove(tag) }
             )
@@ -499,7 +523,7 @@ private fun TagDefault(
                         painter = painterResource(R.drawable.ic_delete),
                         contentDescription = "태그 제거",
                         tint = TagDesignTokens.IconTint,
-                        modifier = Modifier.size(12.dp)
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             }
@@ -568,7 +592,7 @@ private fun TagNumber(
 }
 
 @Composable
-private fun TagColorful(
+fun TagColorful(
     text: String,
     iconContent: @Composable (() -> Unit)? = null,
     onClick: () -> Unit = {},
@@ -601,63 +625,6 @@ private fun TagColorful(
         }
     }
 }
-
-// 추후 수정 필요
-@Composable
-fun TagList(
-    tags: List<String>,
-    onTagsChange: (List<String>) -> Unit
-) {
-    var currentInput by remember { mutableStateOf("") }
-
-    LazyRow(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        items(tags) { tag ->
-            Surface(
-                shape = RoundedCornerShape(50),
-                color = TagDesignTokens.BackgroundNumberColor
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = tag,
-                        style = TextComponent.CAPTION_2_M_12.copy(color = TagDesignTokens.TextTintColor)
-                    )
-                    IconButton(
-                        onClick = { onTagsChange(tags - tag) },
-                        modifier = Modifier.size(16.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_delete),
-                            contentDescription = "삭제",
-                            tint = TagDesignTokens.IconTint,
-                            modifier = Modifier.size(12.dp)
-                        )
-                    }
-                }
-            }
-        }
-
-        item {
-            TagInputField(
-                text = currentInput,
-                onTextChange = { currentInput = TagPolicy.sanitize(it) },
-                onComplete = {
-                    if (TagPolicy.isValid(currentInput)) {
-                        onTagsChange(tags + currentInput)
-                        currentInput = ""
-                    }
-                },
-                onRemove = { currentInput = "" }
-            )
-        }
-    }
-}
-
 
 // ===== 프리뷰 =====
 

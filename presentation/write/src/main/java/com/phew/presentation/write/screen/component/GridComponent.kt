@@ -10,15 +10,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -33,20 +34,22 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.R
 import com.phew.core_design.component.filter.SooumFilter
+import com.phew.domain.dto.CardImageDefault
 
 
 @Composable
 internal fun FilteredImageGrid(
     modifier: Modifier = Modifier,
     filters: List<String>,
-    imagesByFilter: Map<String, List<Int>>,
     selectedFilter: String,
-    selectedImage: Int?,
+    selectedImageName: String?,
+    cardDefaultImagesByCategory: Map<String, List<CardImageDefault>>,
     onFilterSelected: (String) -> Unit,
-    onImageSelected: (Int) -> Unit,
+    onImageSelected: (String) -> Unit,
     onCameraClick: () -> Unit
 ) {
     Column(
@@ -61,13 +64,27 @@ internal fun FilteredImageGrid(
             onFilterSelected = onFilterSelected
         )
 
-        val images = imagesByFilter[selectedFilter].orEmpty()
+        // 서버 카테고리를 한국어 필터명으로 매핑
+        val categoryMapping = mapOf(
+            "COLOR" to "컬러",
+            "NATURE" to "자연",
+            "SENSITIVITY" to "감성",
+            "FOOD" to "푸드",
+            "ABSTRACT" to "추상",
+            "MEMO" to "메모"
+        )
+
+        // 현재 선택된 필터에 해당하는 이미지들
+        val currentFilterImages = remember(selectedFilter, cardDefaultImagesByCategory) {
+            val serverCategory = categoryMapping.entries.find { it.value == selectedFilter }?.key
+            cardDefaultImagesByCategory[serverCategory] ?: emptyList()
+        }
 
         ImageGrid(
-            images = images,
-            selectedImage = selectedImage,
-            onImageClick = { resId ->
-                onImageSelected(resId)
+            cardDefaultImages = currentFilterImages,
+            selectedImageName = selectedImageName,
+            onImageClick = { imageName ->
+                onImageSelected(imageName)
             },
             onCameraClick = onCameraClick
         )
@@ -77,20 +94,19 @@ internal fun FilteredImageGrid(
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun ImageGrid(
-    images: List<Int>,
-    selectedImage: Int?,
-    onImageClick: (Int) -> Unit,
+    cardDefaultImages: List<CardImageDefault>,
+    selectedImageName: String?,
+    onImageClick: (String) -> Unit,
     onCameraClick: () -> Unit,
     modifier: Modifier = Modifier,
     columns: Int = 4
 ) {
     val totalItems = 8 // 7개 이미지 + 1개 카메라
-    val displayImages = images.take(totalItems - 1)
+    val displayImages = cardDefaultImages.take(totalItems - 1)
 
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
-            .padding(8.dp)
     ) {
         val chunkedImages = displayImages.chunked(columns)
 
@@ -101,11 +117,11 @@ fun ImageGrid(
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    rowImages.forEach { resId ->
+                    rowImages.forEach { cardImage ->
                         GridImageItem(
-                            imageRes = resId,
-                            isSelected = selectedImage == resId,
-                            onClick = { onImageClick(resId) },
+                            cardImage = cardImage,
+                            isSelected = selectedImageName == cardImage.imageName,
+                            onClick = { onImageClick(cardImage.imageName) },
                             modifier = Modifier
                                 .weight(1f)
                                 .aspectRatio(1f)
@@ -134,7 +150,7 @@ fun ImageGrid(
 
 @Composable
 fun GridImageItem(
-    imageRes: Int,
+    cardImage: CardImageDefault,
     isSelected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -148,11 +164,11 @@ fun GridImageItem(
                 interactionSource = remember { MutableInteractionSource() }
             )
     ) {
-        Image(
-            painter = painterResource(imageRes),
-            contentDescription = null,
+        AsyncImage(
+            model = cardImage.url,
+            contentDescription = cardImage.imageName,
             contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
         )
 
         if (isSelected) {
@@ -164,7 +180,7 @@ fun GridImageItem(
                 Image(
                     painter = painterResource(R.drawable.ic_check_round),
                     contentDescription = "선택됨",
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(32.dp)
                 )
             }
         }
@@ -248,14 +264,13 @@ private fun FilteredImageGridPreview() {
 
     FilteredImageGrid(
         filters = filters,
-        imagesByFilter = dummyImages,
         selectedFilter = selectedFilter,
-        selectedImage = selectedImage,
+        selectedImageName = null,
         onFilterSelected = { selectedFilter = it },
         onImageSelected = { resId ->
-            selectedImage = resId
             println("이미지 선택됨: $resId")
         },
+        cardDefaultImagesByCategory = emptyMap(),
         onCameraClick = {
             println("카메라 클릭")
         }

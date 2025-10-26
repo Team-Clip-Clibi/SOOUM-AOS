@@ -4,10 +4,10 @@ import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
 import android.provider.MediaStore
+import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR_FAIL_JOB
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
-import com.phew.core_common.DomainResult
 
 class CreateImageFile @Inject constructor(@ApplicationContext private val context: Context) {
 

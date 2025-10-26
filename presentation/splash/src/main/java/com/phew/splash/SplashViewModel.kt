@@ -2,10 +2,10 @@ package com.phew.splash
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.phew.core_common.AppVersion
 import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR
 import com.phew.core_common.IsDebug
-import com.phew.core_common.AppVersion
 import com.phew.domain.usecase.CheckAppVersion
 import com.phew.domain.usecase.GetFirebaseToken
 import com.phew.domain.usecase.SaveNotify

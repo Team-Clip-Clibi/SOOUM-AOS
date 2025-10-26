@@ -1,5 +1,8 @@
 package com.phew.network.dto.request.feed
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class RequestUploadCardAnswerDTO (
     val isDistanceShared: Boolean,
     val latitude: Double?,

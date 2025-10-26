@@ -3,6 +3,7 @@ package com.phew.presentation.write.model
 import android.net.Uri
 import androidx.compose.ui.text.font.FontFamily
 import com.phew.core.ui.model.CameraCaptureRequest
+import com.phew.domain.dto.CardImageDefault
 import com.phew.domain.dto.TagInfo
 import com.phew.presentation.write.component.NumberTagItem
 
@@ -31,7 +32,11 @@ data class WriteUiState(
     val showGalleryPermissionDialog: Boolean = false,
     val focusTagInput: Boolean = false,
     val isWriteCompleted: Boolean = false,
-    val shouldShowPermissionRationale: Boolean = false
+    val shouldShowPermissionRationale: Boolean = false,
+    val isWriteInProgress: Boolean = false,
+    val parentCardId: Long? = null,
+    val cardDefaultImagesByCategory: Map<String, List<CardImageDefault>> = emptyMap(),
+    val selectedDefaultImageName: String? = null
 ) {
     val isContentValid: Boolean
         get() = content.isNotBlank()
@@ -43,6 +48,8 @@ data class WriteUiState(
             return if (images.contains(active)) active else null
         }
 
+    val selectedGridImageName: String?
+        get() = selectedDefaultImageName
 
 
     val canComplete: Boolean
@@ -58,4 +65,5 @@ data class WriteUiState(
                 countUnit = tagInfo.countDisplay.unit
             )
         }
+
 }

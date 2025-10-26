@@ -1,18 +1,22 @@
 package com.phew.repository.di
 
-import com.phew.domain.repository.DeviceRepository
-import com.phew.domain.repository.network.NotifyRepository
-import com.phew.domain.repository.network.CardFeedRepository
-import com.phew.repository.DeviceRepositoryImpl
-import com.phew.repository.NotifyRepositoryImpl
-import dagger.Binds
-import com.phew.repository.network.CardFeedRepositoryImpl
-import com.phew.repository.network.MockCardFeedRepositoryImpl
 import com.phew.core_common.IsDebug
+import com.phew.domain.repository.DeviceRepository
+import com.phew.domain.repository.network.CardDetailRepository
+import com.phew.domain.repository.network.CardFeedRepository
+import com.phew.domain.repository.network.NotifyRepository
+import com.phew.domain.repository.network.ReportsRepository
 import com.phew.domain.repository.network.SignUpRepository
 import com.phew.domain.repository.network.SplashRepository
+import com.phew.repository.DeviceRepositoryImpl
+import com.phew.repository.NotifyRepositoryImpl
+import com.phew.repository.network.CardDetailRepositoryImpl
+import com.phew.repository.network.CardFeedRepositoryImpl
+import com.phew.repository.network.MockCardFeedRepositoryImpl
+import com.phew.repository.network.ReportRepositoryImpl
 import com.phew.repository.network.SignUpRepositoryImpl
 import com.phew.repository.network.SplashRepositoryImpl
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -43,13 +47,21 @@ abstract class RepositoryModule {
     @Singleton
     abstract fun bindSignUpRepository(impl: SignUpRepositoryImpl): SignUpRepository
 
+    @Binds
+    @Singleton
+    abstract fun bindCardDetailRepository(impl: CardDetailRepositoryImpl): CardDetailRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindReportsRepository(impl: ReportRepositoryImpl): ReportsRepository
+
     companion object {
         @Provides
         @Singleton
         fun provideCardFeedRepository(
             @IsDebug isDebug: Boolean,
             realImpl: CardFeedRepositoryImpl,
-            mockImpl: MockCardFeedRepositoryImpl
+            mockImpl: MockCardFeedRepositoryImpl,
         ): CardFeedRepository {
             return realImpl
             // 임시로 mock 데이터로 확인하고 싶을떄 사용

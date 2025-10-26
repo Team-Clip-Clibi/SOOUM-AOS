@@ -18,7 +18,7 @@ class PresentationConvention : Plugin<Project> {
         pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
         pluginManager.apply("com.google.dagger.hilt.android")
         pluginManager.apply("com.google.devtools.ksp")
-
+        pluginManager.apply("sooum.android.lint.convention")
         extensions.getByType<LibraryExtension>().apply {
             compileSdk = 36
             defaultConfig {

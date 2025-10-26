@@ -13,16 +13,24 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,6 +41,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.airbnb.lottie.compose.LottieAnimation
@@ -46,19 +55,11 @@ import com.phew.core_design.AppBar
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
 import com.phew.domain.dto.Notice
-import com.phew.feed.viewModel.HomeViewModel
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.paging.LoadState
 import com.phew.domain.dto.Notification
 import com.phew.feed.NAV_NOTICE_ACTIVATE
 import com.phew.feed.NAV_NOTICE_NOTIFY_INDEX
 import com.phew.feed.NotificationUi
+import com.phew.feed.viewModel.HomeViewModel
 import com.phew.presentation.feed.R
 import kotlinx.coroutines.launch
 
@@ -208,16 +209,20 @@ private fun TopBar(
     isTabsVisible: Boolean,
     selectIndex: Int,
 ) {
-    AppBar.IconLeftAppBar(
-        onClick = backClick,
-        appBarText = stringResource(R.string.home_notice_top_bar)
-    )
-    NotificationUi.AnimatedNoticeTabLayout(
-        allClick = allClick,
-        noticeClick = noticeClick,
-        isTabsVisible = isTabsVisible,
-        selectTabData = selectIndex
-    )
+    Column(modifier = Modifier
+        .fillMaxWidth()
+        .wrapContentHeight()) {
+        AppBar.IconLeftAppBar(
+            onClick = backClick,
+            appBarText = stringResource(R.string.home_notice_top_bar)
+        )
+        NotificationUi.AnimatedNoticeTabLayout(
+            allClick = allClick,
+            noticeClick = noticeClick,
+            isTabsVisible = isTabsVisible,
+            selectTabData = selectIndex
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

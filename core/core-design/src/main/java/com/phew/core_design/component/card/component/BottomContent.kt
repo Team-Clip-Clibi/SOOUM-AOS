@@ -3,21 +3,23 @@ package com.phew.core_design.component.card.component
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.Icon
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.phew.core_common.TimeUtils
 import com.phew.core_common.log.SooumLog
@@ -78,7 +80,7 @@ internal fun ManagerLabel(
         Text(
             text = "sooum",
             style = TextComponent.CAPTION_2_M_12,
-            color = NeutralColor.BLACK,
+            color = NeutralColor.GRAY_500,
             modifier = Modifier.padding(start = 2.dp)
         )
     }
@@ -96,15 +98,15 @@ internal fun LocationAndWriteTimeLabel(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (!location.isNullOrEmpty()) {
-            Image(
+            Icon(
                 painter = painterResource(R.drawable.ic_location_stoke),
                 modifier = Modifier.size(12.dp),
                 contentDescription = "location",
+                tint = NeutralColor.GRAY_500
             )
             Text(
                 text = location,
-                style = TextComponent.CAPTION_2_M_12,
-                color = NeutralColor.GRAY_500,
+                style = TextComponent.CAPTION_2_M_12.copy(color = NeutralColor.GRAY_500),
                 modifier = Modifier.padding(start = 2.dp)
             )
             if (!writeTime.isNullOrEmpty()) {
@@ -114,8 +116,7 @@ internal fun LocationAndWriteTimeLabel(
         if (!writeTime.isNullOrEmpty()) {
             Text(
                 text = writeTime,
-                style = TextComponent.CAPTION_2_M_12,
-                color = NeutralColor.GRAY_500,
+                style = TextComponent.CAPTION_2_M_12.copy(color = NeutralColor.GRAY_500),
                 modifier = Modifier
             )
         }
@@ -137,17 +138,19 @@ internal fun LikeAndComment(
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                painterResource(R.drawable.ic_heart_stoke),
+            Image(
+                painter = painterResource(R.drawable.ic_heart_stoke),
                 contentDescription = "좋아요",
                 modifier = modifier.then(
-                    Modifier.size(12.dp)
-                )
+                    Modifier.size(14.dp)
+                ),
+                colorFilter = ColorFilter.tint(NeutralColor.GRAY_500)
             )
             Spacer(modifier = Modifier.width(2.dp))
             Text(
                 text = likeValue ?: "0",
-                style = TextComponent.CAPTION_2_M_12
+                style = TextComponent.CAPTION_2_M_12.copy(color = NeutralColor.GRAY_500),
+                color = NeutralColor.GRAY_500
             )
         }
 
@@ -158,15 +161,17 @@ internal fun LikeAndComment(
                 Modifier.padding(start = 4.dp)
             )
         ) {
-            Icon(
+            Image(
                 painter = painterResource(R.drawable.ic_message_stoke),
                 contentDescription = "댓글",
-                modifier = Modifier.size(12.dp)
+                modifier = Modifier.size(12.dp),
+                colorFilter = ColorFilter.tint(NeutralColor.GRAY_500)
             )
             Spacer(modifier = Modifier.width(2.dp))
             Text(
                 text = commentValue ?: "0",
-                style = TextComponent.CAPTION_2_M_12
+                style = TextComponent.CAPTION_2_M_12.copy(color = NeutralColor.GRAY_500),
+                color = NeutralColor.GRAY_500
             )
         }
     }
@@ -223,23 +228,23 @@ internal fun BottomContent(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            if (showTimer) {
-                TimerLabel(remainingTimeMillis = remaining, isExpired = isExpired)
-                if (!distance.isNullOrEmpty() || !timeAgo.isNullOrEmpty()) {
+            if (showLocationAndTime) {
+                LocationAndWriteTimeLabel(
+                    location = distance?.takeIf { it.isNotEmpty() },
+                    writeTime = timeAgo?.takeIf { it.isNotEmpty() }
+                )
+                if(showTimer){
                     SpotSeparator()
                 }
+            }
+            if (showTimer) {
+                TimerLabel(remainingTimeMillis = remaining, isExpired = isExpired)
             }
             if (isAdminManger){
                 ManagerLabel()
                 if (!distance.isNullOrEmpty() || !timeAgo.isNullOrEmpty()) {
                     SpotSeparator()
                 }
-            }
-            if (showLocationAndTime) {
-                LocationAndWriteTimeLabel(
-                    location = distance?.takeIf { it.isNotEmpty() },
-                    writeTime = timeAgo?.takeIf { it.isNotEmpty() }
-                )
             }
         }
         if (!showTimer) {
@@ -275,7 +280,7 @@ private fun BottomContentPreview_NoTimer() {
             distance = "600m",
             likeCount = "12",
             commentCount = "3",
-            timeAgo = "방금 전",
+            timeAgo = "방금 전1",
             remainingTimeMillis = null,
             cardType = FeedCardType.DEFAULT
         )

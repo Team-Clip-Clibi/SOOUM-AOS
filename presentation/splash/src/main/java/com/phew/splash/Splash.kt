@@ -1,6 +1,8 @@
 package com.phew.splash
 
 
+import android.Manifest
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -30,8 +32,6 @@ import androidx.compose.ui.unit.dp
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.Primary
-import android.Manifest
-import android.os.Build
 
 
 @Composable

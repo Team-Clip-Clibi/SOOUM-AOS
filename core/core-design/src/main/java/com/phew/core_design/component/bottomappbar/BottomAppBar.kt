@@ -4,10 +4,10 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,9 +18,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.ProvideTextStyle
@@ -102,7 +102,7 @@ private fun NavigationBarLayout(
                 .fillMaxWidth()
                 .windowInsetsPadding(windowInsets)
                 .height(NavigationDefaults.barHeight)
-                .padding(start = 16.dp, bottom = 8.dp, top = 8.dp, end = 16.dp)
+                .padding(horizontal = 16.dp, vertical = 8.dp)
                 .selectableGroup(),
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
             content = content
@@ -170,7 +170,7 @@ private fun RowScope.NavigationBarItemLayout(
             icon()
             Spacer(
                 Modifier
-                    .height(2.dp)
+                    .height(4.dp)
                     .fillMaxWidth()
             )
             styledLabel()

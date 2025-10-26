@@ -37,7 +37,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color.Companion.Red
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -51,12 +53,14 @@ import com.phew.core_design.NeutralColor.GRAY_600
 import com.phew.core_design.NeutralColor.WHITE
 import com.phew.core_design.Primary
 import com.phew.core_design.TextComponent
+import com.phew.core_design.UnKnowColor
 import com.phew.core_design.component.card.FeedAdminCard
 import com.phew.core_design.component.card.FeedDefaultCard
 import com.phew.core_design.component.card.FeedDeletedCard
 import com.phew.core_design.component.card.FeedPungCard
+import com.phew.core_design.component.card.NotiCard
 import com.phew.core_design.component.card.NotiCardData
-import com.phew.core_design.component.card.NotiCardPager
+import com.phew.core_design.component.card.NoticeCardPager
 import com.phew.core_design.component.card.component.IndicatorDot
 import com.phew.core_design.component.tab.SooumTab
 import com.phew.core_design.component.tab.SooumTabRow
@@ -92,69 +96,56 @@ object FeedUi {
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
-                .padding(bottom = 10.dp)
         ) {
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(71.dp)
-                    .clip(shape = RoundedCornerShape(size = 16.dp))
+                    .clip(RoundedCornerShape(12.dp))
             ) { page ->
                 val actualIndex = page % feedNotice.size
                 val currentNotice = feedNotice[actualIndex]
-                Box(
-                    modifier = Modifier.fillMaxWidth().wrapContentHeight()
-                ){
-                    NotiCardPager(
-                        modifier = Modifier.fillMaxWidth().align(Alignment.CenterStart),
-                        dataList = feedNotice.map { data ->
-                            NotiCardData(
-                                title = when (currentNotice.type) {
-                                    Notice.NoticeType.ANNOUNCEMENT -> stringResource(R.string.home_notice_notice)
-                                    Notice.NoticeType.NEWS -> stringResource(R.string.home_notice_news)
-                                    Notice.NoticeType.MAINTENANCE -> stringResource(R.string.home_notice_service)
-                                },
-                                description = currentNotice.content,
-                                id = currentNotice.id.toString(),
-                                iconRes = when (currentNotice.type) {
-                                    Notice.NoticeType.ANNOUNCEMENT -> com.phew.core_design.R.drawable.ic_notification
-                                    Notice.NoticeType.NEWS -> com.phew.core_design.R.drawable.ic_mail_filled_bule
-                                    Notice.NoticeType.MAINTENANCE -> com.phew.core_design.R.drawable.ic_headset_filled_yellow
-                                },
-                                iconTint = when (currentNotice.type) {
-                                    Notice.NoticeType.ANNOUNCEMENT -> Red
-                                    Notice.NoticeType.NEWS -> MAIN
-                                    Notice.NoticeType.MAINTENANCE -> M_YELLOW
-                                },
-                                iconBackgroundColor = NeutralColor.GRAY_100,
-                            )
-                        },
-                        onClick = {
-                            feedNoticeClick(currentNotice.url)
-                        },
-                    )
-                    IndicatorDot(
-                        pagerState = pagerState,
-                        totalSize = feedNotice.size,
-                        modifier =  Modifier.padding(top = 16.dp, end = 16.dp).align(Alignment.TopEnd)
-                    )
-                }
+                val cardData = NotiCardData(
+                    title = when (currentNotice.type) {
+                        Notice.NoticeType.ANNOUNCEMENT -> stringResource(R.string.home_notice_notice)
+                        Notice.NoticeType.NEWS -> stringResource(R.string.home_notice_news)
+                        Notice.NoticeType.MAINTENANCE -> stringResource(R.string.home_notice_service)
+                    },
+                    description = currentNotice.content,
+                    id = currentNotice.id.toString(),
+                    iconRes = when (currentNotice.type) {
+                        Notice.NoticeType.ANNOUNCEMENT -> com.phew.core_design.R.drawable.ic_tool_filled
+                        Notice.NoticeType.NEWS -> com.phew.core_design.R.drawable.ic_mail_filled_bule
+                        Notice.NoticeType.MAINTENANCE -> com.phew.core_design.R.drawable.ic_headset_filled_yellow
+                    },
+                    iconTint = when (currentNotice.type) {
+                        Notice.NoticeType.ANNOUNCEMENT -> GRAY_400
+                        Notice.NoticeType.NEWS -> MAIN
+                        Notice.NoticeType.MAINTENANCE -> M_YELLOW
+                    },
+                    iconBackgroundColor = NeutralColor.GRAY_100,
+                )
+                NotiCard(
+                    data = cardData,
+                    onClick = { feedNoticeClick(currentNotice.url) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(
+                            elevation = 16.dp,
+                            spotColor = UnKnowColor.color,
+                            ambientColor = UnKnowColor.color
+                        )
+                )
             }
+            IndicatorDot(
+                pagerState = pagerState,
+                totalSize = feedNotice.size,
+                modifier = Modifier
+                    .padding(top = 16.dp, end = 16.dp)
+                    .align(Alignment.TopEnd)
+            )
         }
-    }
-
-    // TODO 임시.. 어떤 데이터가 오는지 어떻게 매칭 해야할지 모르겠음..
-    @Composable
-    internal fun getTextStyleForFont(font: String) = when (font.lowercase()) {
-        "bold", "pretendard-bold" -> TextComponent.TITLE_2_SB_16
-        "semi_bold", "semibold", "pretendard-semibold" -> TextComponent.SUBTITLE_1_M_16
-        "medium", "pretendard-medium" -> TextComponent.BODY_1_M_14
-        "regular", "pretendard-regular", "default" -> TextComponent.BODY_1_M_14
-        "light", "pretendard-light" -> TextComponent.CAPTION_2_M_12
-        "extra_bold", "extrabold", "pretendard-extrabold" -> TextComponent.HEAD_3_B_20
-        "black", "pretendard-black" -> TextComponent.HEAD_2_B_24
-        else -> TextComponent.BODY_1_M_14 // fallback to default
     }
 
     @Composable
@@ -165,7 +156,7 @@ object FeedUi {
         nearClick: () -> Unit,
         isTabsVisible: Boolean,
         onDistanceClick: (DistanceType) -> Unit,
-        selectDistanceType: DistanceType
+        selectDistanceType: DistanceType,
     ) {
         val tabItem = listOf(
             stringResource(R.string.home_feed_tab_recent_card),
@@ -262,7 +253,7 @@ object FeedUi {
     }
 
     @Composable
-    private fun DistanceText(distance: String,  onClick: () -> Unit, isSelect: Boolean) {
+    private fun DistanceText(distance: String, onClick: () -> Unit, isSelect: Boolean) {
         Text(
             text = distance,
             style = TextComponent.SUBTITLE_3_SB_14,
@@ -284,7 +275,7 @@ object FeedUi {
     internal fun TypedFeedCardView(
         feedCard: FeedCardType,
         onClick: (String) -> Unit,
-        onRemoveCard: (String) -> Unit
+        onRemoveCard: (String) -> Unit,
     ) {
         when (feedCard) {
             is FeedCardType.BoombType -> PungTypeCard(
@@ -297,8 +288,9 @@ object FeedUi {
                 feedCard = feedCard,
                 onClick = onClick
             )
+
             is FeedCardType.NormalType -> NormalTypeCard(
-                feedCard =  feedCard,
+                feedCard = feedCard,
                 onClick = onClick
             )
         }
@@ -308,7 +300,7 @@ object FeedUi {
     internal fun PungTypeCard(
         feedCard: FeedCardType.BoombType,
         onClick: (String) -> Unit,
-        onRemoveCard: (String) -> Unit
+        onRemoveCard: (String) -> Unit,
     ) {
         SooumLog.d(TAG, "PungTypeCard Type")
         var remainingTimeMillis by remember {
@@ -353,7 +345,7 @@ object FeedUi {
     @Composable
     internal fun AdminTypeCard(
         feedCard: FeedCardType.AdminType,
-        onClick: (String) -> Unit
+        onClick: (String) -> Unit,
     ) {
         SooumLog.d(TAG, "AdminTypeCard Type")
         FeedAdminCard(
@@ -373,7 +365,7 @@ object FeedUi {
     @Composable
     internal fun NormalTypeCard(
         feedCard: FeedCardType.NormalType,
-        onClick: (String) -> Unit
+        onClick: (String) -> Unit,
     ) {
         SooumLog.d(TAG, "NormalTypeCard Type")
         FeedDefaultCard(
@@ -484,8 +476,19 @@ object NotificationUi {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Image(
-                    painter = painterResource(com.phew.core_design.R.drawable.ic_notification),
+                    painter = painterResource(
+                        id = when (data.type) {
+                            Notice.NoticeType.ANNOUNCEMENT -> com.phew.core_design.R.drawable.ic_tool_filled
+                            Notice.NoticeType.NEWS -> com.phew.core_design.R.drawable.ic_mail_filled_bule
+                            Notice.NoticeType.MAINTENANCE -> com.phew.core_design.R.drawable.ic_headset_filled_yellow
+                        }
+                    ),
                     contentDescription = data.content,
+                    colorFilter = ColorFilter.tint(when(data.type){
+                        Notice.NoticeType.ANNOUNCEMENT -> GRAY_400
+                        Notice.NoticeType.NEWS -> MAIN
+                        Notice.NoticeType.MAINTENANCE -> M_YELLOW
+                    })
                 )
                 Text(
                     text = stringResource(R.string.home_notice_notice),

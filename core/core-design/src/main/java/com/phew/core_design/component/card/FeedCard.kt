@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -19,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
@@ -29,6 +29,7 @@ import com.phew.core_design.NeutralColor
 import com.phew.core_design.OpacityColor
 import com.phew.core_design.Primary
 import com.phew.core_design.TextComponent
+import com.phew.core_design.UnKnowColor
 import com.phew.core_design.component.card.component.BottomContent
 import com.phew.core_design.component.card.component.FeedCardType
 
@@ -100,10 +101,14 @@ fun FeedDeletedCard(
 ) {
     Surface(
         modifier = Modifier
-            .fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+            .fillMaxWidth()
+            .shadow(
+                elevation = 16.dp,
+                spotColor = UnKnowColor.color,
+                ambientColor = UnKnowColor.color
+            ),
+        shape = RoundedCornerShape(16.dp),
         color = NeutralColor.GRAY_200,
-        shadowElevation = 6.dp,
         border = BorderStroke(1.dp, NeutralColor.GRAY_100)
     ) {
         Column(
@@ -196,10 +201,14 @@ private fun FeedCardImpl(
 ) {
     Surface(
         modifier = Modifier
-            .fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+            .fillMaxWidth()
+            .shadow(
+                elevation = 16.dp,
+                spotColor = UnKnowColor.color,
+                ambientColor = UnKnowColor.color
+            ),
+        shape = RoundedCornerShape(16.dp),
         color = Primary.MAIN,
-        shadowElevation = 6.dp,
         border = BorderStroke(1.dp, NeutralColor.GRAY_200)
     ) {
         Column(
@@ -212,7 +221,8 @@ private fun FeedCardImpl(
             BodyContent(
                 contentText = contentText,
                 imgUrl = imgUrl,
-                fontFamily = resolveFontFamily(font = font)
+                fontFamily = resolveFontFamily(font = font),
+                textMaxLines = 3
             )
 
             BottomContent(
@@ -240,10 +250,14 @@ private fun FeedAdminCardImpl(
 ) {
     Surface(
         modifier = Modifier
-            .fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+            .fillMaxWidth()
+            .shadow(
+                elevation = 16.dp,
+                spotColor = UnKnowColor.color,
+                ambientColor = UnKnowColor.color
+            ),
+        shape = RoundedCornerShape(16.dp),
         color = Primary.MAIN,
-        shadowElevation = 6.dp,
         border = BorderStroke(1.dp, NeutralColor.GRAY_200)
     ) {
         Column(
@@ -256,7 +270,8 @@ private fun FeedAdminCardImpl(
             BodyContent(
                 contentText = contentText,
                 imgUrl = imgUrl,
-                fontFamily = resolveFontFamily(font = font)
+                fontFamily = resolveFontFamily(font = font),
+                textMaxLines = 3
             )
 
             BottomContent(
@@ -271,11 +286,12 @@ private fun FeedAdminCardImpl(
 }
 
 @Composable
-private fun BodyContent(
+internal fun BodyContent(
     modifier: Modifier = Modifier,
     contentText: String = "",
     imgUrl: String = "",
     fontFamily: FontFamily,
+    textMaxLines: Int
 ) {
     Box(
         modifier = modifier
@@ -308,7 +324,7 @@ private fun BodyContent(
                 color = NeutralColor.WHITE,
                 fontFamily = fontFamily,
                 textAlign = TextAlign.Center,
-                maxLines = 3,
+                maxLines = textMaxLines,
                 overflow = TextOverflow.Ellipsis
             )
         }
@@ -365,7 +381,7 @@ private fun Preview_FeedCard() {
     }
 }
 
-private fun resolveFontFamily(font: String): FontFamily {
+internal fun resolveFontFamily(font: String): FontFamily {
     // TODO: 폰트 문자열 매핑 규칙 확정 시 교체
     return FontFamily.Default
 }
