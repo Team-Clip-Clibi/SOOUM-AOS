@@ -11,6 +11,7 @@ import com.phew.core.ui.state.SooumAppState
 import com.phew.core.ui.state.rememberSooumAppState
 import com.phew.home.navigation.homeGraph
 import com.phew.home.navigation.navigateToHomeGraph
+import com.phew.home.navigation.navigateToReport
 import com.phew.presentation.detail.navigation.detailGraph
 import com.phew.core.ui.model.navigation.WriteArgs
 import com.phew.presentation.write.navigation.navigateToWriteGraphWithArgs
@@ -87,7 +88,6 @@ fun SooumNavHost(
                     )
                 },
                 navToHome = {
-                    println("!! $TAG, NavToHome")
                     navController.navigateToHomeGraph(
                         navOptions = navOptions {
                             popUpTo(SIGN_UP_GRAPH) {
@@ -110,6 +110,9 @@ fun SooumNavHost(
                     navController.navigateToWriteGraphWithArgs(
                         WriteArgs(parentCardId = cardId)
                     )
+                },
+                onNavigateToReport = { cardId ->
+                    navController.navigateToReport(cardId.toString())
                 },
                 onWriteComplete = {
                     // Detail에서 Write 완료 시 Detail 댓글 갱신

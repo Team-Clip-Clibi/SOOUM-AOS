@@ -69,6 +69,7 @@ internal fun CardDetailRoute(
     viewModel: CardDetailViewModel = hiltViewModel(),
     onNavigateToComment: (CardDetailCommentArgs) -> Unit,
     onNavigateToWrite: (Long) -> Unit,
+    onNavigateToReport: (Long) -> Unit,
     onBackPressed: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -156,6 +157,8 @@ internal fun CardDetailRoute(
         onBlockMember = { toMemberId, nickname ->
             viewModel.blockMember(toMemberId, nickname)
         },
+        onNavigateToReport = onNavigateToReport,
+        cardId = args.cardId,
         snackBarHostState = snackBarHostState
     )
 
@@ -184,6 +187,8 @@ private fun CardDetailScreen(
     onClickCommentIcon: () -> Unit,
     onClickCommentView: () -> Unit,
     onBlockMember: (Long, String) -> Unit,
+    onNavigateToReport: (Long) -> Unit,
+    cardId: Long,
     snackBarHostState: SnackbarHostState,
 ) {
 
@@ -300,8 +305,8 @@ private fun CardDetailScreen(
                     .shadow(
                         elevation = 8.dp,
                         shape = RoundedCornerShape(27.dp),
-                        ambientColor = Color(0x64486C).copy(alpha = 0.2f),
-                        spotColor = Color(0x64486C).copy(alpha = 0.2f)
+                        ambientColor = Color(0x64486C).copy(alpha = 0.2f), // TODO 컬러 수정 필요
+                        spotColor = Color(0x64486C).copy(alpha = 0.2f) // TODO 컬러 수정 필요
                     )
                     .background(
                         color = NeutralColor.GRAY_600,
@@ -340,7 +345,7 @@ private fun CardDetailScreen(
                         }
                         MoreAction.DANGER.ordinal -> {
                             showBottomSheet = false
-                            // TODO: 신고하기 로직 추가
+                            onNavigateToReport(cardId)
                         }
                     }
                 },

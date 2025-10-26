@@ -60,6 +60,7 @@ fun NavGraphBuilder.detailGraph(
     navController: NavController,
     onBackPressed: () -> Unit,
     onNavigateToWrite: (Long) -> Unit,
+    onNavigateToReport: (Long) -> Unit,
     onWriteComplete: () -> Unit = {},
     detailScreen: @Composable (
         CardDetailArgs,
@@ -97,6 +98,7 @@ fun NavGraphBuilder.detailGraph(
                     onNavigateToWrite = { cardId ->
                         onNavigateToWrite(cardId)
                     },
+                    onNavigateToReport = onNavigateToReport,
                     onBackPressed = onBackPressed
                 )
             }
