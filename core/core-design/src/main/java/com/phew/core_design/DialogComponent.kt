@@ -24,6 +24,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.res.painterResource
 
 object DialogComponent {
     @Composable
@@ -230,8 +237,22 @@ object DialogComponent {
             Text(
                 text = data.visuals.message,
                 style = TextComponent.CAPTION_2_M_12,
-                color = NeutralColor.WHITE
+                color = NeutralColor.WHITE,
+                modifier = Modifier.weight(1f)
             )
+
+            // Action button
+            data.visuals.actionLabel?.let { actionLabel ->
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = actionLabel,
+                    style = TextComponent.CAPTION_2_M_12,
+                    color = NeutralColor.WHITE,
+                    modifier = Modifier
+                        .clickable { data.performAction() }
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
         }
     }
 }

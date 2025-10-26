@@ -29,7 +29,7 @@ class PagerRepositoryImpl @Inject constructor(
     ) { pagingUnReadNotificationProvider.get() }.flow
 
     override fun cardComments(
-        cardId: Int,
+        cardId: Long,
         latitude: Double?,
         longitude: Double?
     ): Flow<PagingData<CardComment>> =

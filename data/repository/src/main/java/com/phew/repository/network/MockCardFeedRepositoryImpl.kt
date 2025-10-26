@@ -1,6 +1,7 @@
 package com.phew.repository.network
 
 import com.phew.core_common.DataResult
+import com.phew.domain.dto.CardDefaultImagesResponse
 import com.phew.domain.dto.CardImageDefault
 import com.phew.domain.dto.CheckedBaned
 import com.phew.domain.dto.DistanceCard
@@ -78,8 +79,8 @@ class MockCardFeedRepositoryImpl @Inject constructor() : CardFeedRepository {
         return DataResult.Success(emptyList())
     }
 
-    override suspend fun requestCardImageDefault(): DataResult<List<CardImageDefault>> {
-        return DataResult.Success(emptyList())
+    override suspend fun requestCardImageDefault(): DataResult<CardDefaultImagesResponse> {
+        return DataResult.Success(CardDefaultImagesResponse(defaultImages = emptyMap()))
     }
 
     override suspend fun requestUploadCardImage(): DataResult<CardImageDefault> {
@@ -105,7 +106,7 @@ class MockCardFeedRepositoryImpl @Inject constructor() : CardFeedRepository {
     }
 
     override suspend fun requestUploadCardAnswer(
-        cardId: Int,
+        cardId: Long,
         isDistanceShared: Boolean,
         latitude: Double?,
         longitude: Double?,

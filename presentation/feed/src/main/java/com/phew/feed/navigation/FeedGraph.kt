@@ -12,11 +12,13 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
 import androidx.navigation.navigation
 import com.phew.core.ui.component.home.HomeTabType
+import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.state.SooumAppState
 import com.phew.core_design.slideComposable
 import com.phew.feed.feed.FeedView
 import com.phew.feed.notification.NotifyView
 import com.phew.feed.viewModel.HomeViewModel
+import com.phew.presentation.detail.navigation.navigateToDetailGraph
 
 val FEED_GRAPH = HomeTabType.FEED.graph
 
@@ -70,8 +72,6 @@ fun NavGraphBuilder.feedGraph(
                     locationPermission.launch(permissions)
                 }
             }
-            println("!! $TAG, $FEED_HOME_ROUTE")
-
             FeedView(
                 viewModel = homeViewModel,
                 finish = onBackPressed,
@@ -85,7 +85,10 @@ fun NavGraphBuilder.feedGraph(
                 },
                 closeDialog = homeViewModel::rationalDialogDismissed,
                 noticeClick = navController::navigateToNotify,
-                webViewClick = webView,
+                navigateToDetail = { cardDetailArgs ->
+                    navController.navigateToDetailGraph(cardDetailArgs)
+                },
+                webViewClick = webView
             )
         }
 

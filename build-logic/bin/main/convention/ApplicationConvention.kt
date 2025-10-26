@@ -19,7 +19,7 @@ class ApplicationConvention : Plugin<Project> {
         pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
         pluginManager.apply("com.google.devtools.ksp")
         pluginManager.apply("com.google.gms.google-services")
-
+        pluginManager.apply("sooum.android.lint.convention")
         extensions.getByType<ApplicationExtension>().apply {
             namespace = "com.phew.sooum"
             compileSdk = 36
@@ -86,6 +86,7 @@ class ApplicationConvention : Plugin<Project> {
             add("implementation", project(":presentation:sign-up"))
             add("implementation", project(":presentation:feed"))
             add("implementation", project(":presentation:home"))
+            add("implementation", project(":presentation:reports"))
             add("implementation", project(":domain"))
             add("implementation", project(":data"))
             add("implementation", project(":data:repository"))
@@ -99,6 +100,8 @@ class ApplicationConvention : Plugin<Project> {
             add("implementation", project(":core:core-design"))
             add("implementation", project(":core:core-common"))
             add("implementation", project(":core:ui"))
+            add("implementation", project(":presentation:write"))
+            add("implementation", project(":presentation:detail"))
         }
     }
 }

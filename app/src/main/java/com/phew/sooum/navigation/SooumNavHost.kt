@@ -11,6 +11,11 @@ import com.phew.core.ui.state.SooumAppState
 import com.phew.core.ui.state.rememberSooumAppState
 import com.phew.home.navigation.homeGraph
 import com.phew.home.navigation.navigateToHomeGraph
+import com.phew.home.navigation.navigateToReport
+import com.phew.presentation.detail.navigation.detailGraph
+import com.phew.core.ui.model.navigation.WriteArgs
+import com.phew.presentation.write.navigation.navigateToWriteGraphWithArgs
+import com.phew.presentation.write.navigation.writeGraph
 import com.phew.reports.reportGraph
 import com.phew.sign_up.navigation.SIGN_UP_GRAPH
 import com.phew.sign_up.navigation.navigateToSignUpGraph
@@ -58,7 +63,11 @@ fun SooumNavHost(
                 onBackPressed = {
                     SooumOnBackPressed(appState = appState)
                 },
-                webView = webView
+                webView = webView,
+                onWriteComplete = {
+                    // Feed에서 Write 완료 시 Feed 데이터 갱신
+                    // TODO: FeedViewModel refresh 호출
+                }
             )
 
             reportGraph(
@@ -79,7 +88,6 @@ fun SooumNavHost(
                     )
                 },
                 navToHome = {
-                    println("!! $TAG, NavToHome")
                     navController.navigateToHomeGraph(
                         navOptions = navOptions {
                             popUpTo(SIGN_UP_GRAPH) {
@@ -91,6 +99,48 @@ fun SooumNavHost(
                 },
                 appVersionUpdate = appVersionUpdate,
                 finish = finish
+            )
+
+            detailGraph(
+                navController = navController,
+                onBackPressed = {
+                    SooumOnBackPressed(appState = appState)
+                },
+                onNavigateToWrite = { cardId ->
+                    navController.navigateToWriteGraphWithArgs(
+                        WriteArgs(parentCardId = cardId)
+                    )
+                },
+                onNavigateToReport = { cardId ->
+                    navController.navigateToReport(cardId.toString())
+                },
+                onWriteComplete = {
+                    // Detail에서 Write 완료 시 Detail 댓글 갱신
+                    // TODO: CardDetailViewModel refresh 호출
+                },
+                detailScreen = { _, _, _ ->
+
+                },
+                commentScreen = { _, _, _ ->
+
+                }
+            )
+
+            // Detail에서 Write로 갈 때 사용하는 별도 writeGraph
+            writeGraph(
+                appState = appState,
+                navController = navController,
+                onBackPressed = {
+                    SooumOnBackPressed(appState = appState)
+                },
+                onWriteComplete = {
+                    // Detail에서 Write 완료 시 Detail 댓글 갱신 후 돌아가기
+                    // TODO: CardDetailViewModel refresh 호출
+                    navController.popBackStack()
+                },
+                onDetailWriteComplete = {
+                    navController.popBackStack()
+                }
             )
         }
     }

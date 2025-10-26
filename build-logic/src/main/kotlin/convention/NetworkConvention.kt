@@ -69,6 +69,8 @@ class NetworkConvention : Plugin<Project> {
                 val cardComment: String = properties.getProperty("api_url_card_comment", "")
                 val cardCommentMore: String = properties.getProperty("api_url_card_comment_more", "")
                 val cardReports: String = properties.getProperty("api_url_reports_card", "")
+                val cardBlock: String = properties.getProperty("api_url_block_member", "")
+                val cardUnblock: String = properties.getProperty("api_url_unblock_member", "")
 
                 buildConfigField("String", "BASE_URL", baseUrl)
                 buildConfigField("String", "API_URL", apiUrl)
@@ -106,6 +108,8 @@ class NetworkConvention : Plugin<Project> {
                 buildConfigField("String", "API_URL_CARD_DELETE", cardDelete)
                 buildConfigField("String", "API_URL_CARD_COMMENT", cardComment)
                 buildConfigField("String", "API_URL_CARD_COMMENT_MORE", cardCommentMore)
+                buildConfigField("String", "API_URL_BLOCK_MEMBER", cardBlock)
+                buildConfigField("String", "API_URL_UNBLOCK_MEMBER", cardUnblock)
             }
             buildFeatures.buildConfig = true
             compileOptions {

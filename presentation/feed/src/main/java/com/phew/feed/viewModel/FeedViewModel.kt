@@ -4,11 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import com.phew.core.ui.model.navigation.CardDetailArgs
+import com.phew.domain.dto.FeedData
 import com.phew.core_common.DataResult
 import com.phew.core_common.DomainResult
 import com.phew.domain.dto.DistanceCard
 import com.phew.domain.dto.FeedCardType
-import com.phew.domain.dto.FeedData
 import com.phew.domain.dto.Latest
 import com.phew.domain.dto.Location
 import com.phew.domain.dto.Notice
@@ -55,6 +56,10 @@ class HomeViewModel @Inject constructor(
     ViewModel() {
     private val _uiState = MutableStateFlow(Home())
     val uiState: StateFlow<Home> = _uiState.asStateFlow()
+
+    // Navigation side effects
+    private val _navigationEvent = MutableSharedFlow<NavigationEvent>()
+    val navigationEvent = _navigationEvent.asSharedFlow()
 
     /**
      * 공지사항(notice)
@@ -609,6 +614,19 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    fun navigateToDetail(cardId: String) {
+        viewModelScope.launch {
+            val cardIdLong = cardId.toLongOrNull()
+            if (cardIdLong != null) {
+                _navigationEvent.emit(NavigationEvent.NavigateToDetail(CardDetailArgs(cardIdLong)))
+            }
+        }
+    }
+
+}
+
+sealed interface NavigationEvent {
+    data class NavigateToDetail(val args: CardDetailArgs) : NavigationEvent
 }
 
 data class Home(

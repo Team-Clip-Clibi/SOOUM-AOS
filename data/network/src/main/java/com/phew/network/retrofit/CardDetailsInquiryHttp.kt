@@ -1,10 +1,10 @@
 package com.phew.network.retrofit
 
 import com.phew.network.BuildConfig
+import com.phew.network.dto.request.card.RequestBlockMemberDTO
 import com.phew.network.dto.request.feed.RequestUploadCardAnswerDTO
 import com.phew.network.dto.response.card.CardCommentResponseDTO
 import com.phew.network.dto.response.card.CardDetailResponseDTO
-import com.phew.network.dto.response.card.CardReplyResponseDTO
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -22,7 +22,7 @@ interface CardDetailsInquiryHttp {
      */
     @POST(BuildConfig.API_URL_CARD_LIKE)
     suspend fun requestCardLike(
-        @Path("cardId") cardId: Int
+        @Path("cardId") cardId: Long
     ) : Response<Unit>
 
     /**
@@ -30,7 +30,7 @@ interface CardDetailsInquiryHttp {
      */
     @DELETE(BuildConfig.API_URL_CARD_LIKE)
     suspend fun deleteCardLike(
-        @Path("cardId") cardId: Int
+        @Path("cardId") cardId: Long
     ): Response<Unit>
 
     /**
@@ -38,7 +38,7 @@ interface CardDetailsInquiryHttp {
      */
     @GET(BuildConfig.API_URL_CARD_DETAIL)
     suspend fun requestCardDetail(
-        @Path("cardId") cardId: Int,
+        @Path("cardId") cardId: Long,
         @Query("latitude") latitude: Double? = null,
         @Query("longitude") longitude: Double? = null
     ): Response<CardDetailResponseDTO>
@@ -48,16 +48,16 @@ interface CardDetailsInquiryHttp {
      */
     @POST(BuildConfig.API_URL_CARD_DETAIL)
     suspend fun postCardDetail(
-        @Path("cardId") cardId: Int,
+        @Path("cardId") cardId: Long,
         @Body body: RequestUploadCardAnswerDTO
-    ): Response<CardReplyResponseDTO>
+    ): Response<Unit>
 
     /**
      *  카드 삭제
      */
     @DELETE(BuildConfig.API_URL_CARD_DELETE)
     suspend fun deleteCard(
-        @Path("cardId") cardId: Int
+        @Path("cardId") cardId: Long
     ): Response<Unit>
 
     /**
@@ -65,7 +65,7 @@ interface CardDetailsInquiryHttp {
      */
     @GET(BuildConfig.API_URL_CARD_COMMENT)
     suspend fun requestCardComments(
-        @Path("cardId") cardId: Int,
+        @Path("cardId") cardId: Long,
         @Query("latitude") latitude: Double? = null,
         @Query("longitude") longitude: Double? = null
     ): Response<List<CardCommentResponseDTO>>
@@ -75,9 +75,25 @@ interface CardDetailsInquiryHttp {
      */
     @GET(BuildConfig.API_URL_CARD_COMMENT_MORE)
     suspend fun requestCardCommentsMore(
-        @Path("cardId") cardId: Int,
-        @Path("lastId") lastId: Int,
+        @Path("cardId") cardId: Long,
+        @Path("lastId") lastId: Long,
         @Query("latitude") latitude: Double? = null,
         @Query("longitude") longitude: Double? = null
     ): Response<List<CardCommentResponseDTO>>
+
+    /**
+     *  멤버 차단
+     */
+    @POST(BuildConfig.API_URL_BLOCK_MEMBER)
+    suspend fun blockMember(
+        @Path("toMemberId") toMemberId: Long
+    ): Response<Unit>
+
+    /**
+     *  멤버 차단 해제
+     */
+    @DELETE(BuildConfig.API_URL_UNBLOCK_MEMBER)
+    suspend fun unblockMember(
+        @Path("toMemberId") toMemberId: Long
+    ): Response<Unit>
 }

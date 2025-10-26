@@ -8,20 +8,28 @@ import com.phew.core_common.ERROR_LOGOUT
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.HTTP_INVALID_TOKEN
 import com.phew.domain.dto.CardDetail
+import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.network.CardDetailRepository
 import javax.inject.Inject
 
 class GetCardDetail @Inject constructor(
-    private val repository: CardDetailRepository
+    private val repository: CardDetailRepository,
+    private val deviceRepository: DeviceRepository
 ) {
     data class Param(
-        val cardId: Int,
-        val latitude: Double? = null,
-        val longitude: Double? = null
+        val cardId: Long
     )
 
     suspend operator fun invoke(param: Param): DomainResult<CardDetail, String> {
-        return when (val result = repository.getCardDetail(param.cardId, param.latitude, param.longitude)) {
+        val locationPermissionCheck = deviceRepository.getLocationPermission()
+        val (latitude, longitude) = if (locationPermissionCheck) {
+            val location = deviceRepository.requestLocation()
+            location.latitude to location.longitude
+        } else {
+            null to null
+        }
+
+        return when (val result = repository.getCardDetail(param.cardId, latitude, longitude)) {
             is DataResult.Success -> DomainResult.Success(result.data)
             is DataResult.Fail -> mapFailure(result)
         }

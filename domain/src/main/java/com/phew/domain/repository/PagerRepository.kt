@@ -11,7 +11,7 @@ interface PagerRepository {
     fun notificationUnRead(): Flow<PagingData<Notification>>
     fun notificationRead(): Flow<PagingData<Notification>>
     fun cardComments(
-        cardId: Int,
+        cardId: Long,
         latitude: Double? = null,
         longitude: Double? = null
     ): Flow<PagingData<CardComment>>

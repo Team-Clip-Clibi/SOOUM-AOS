@@ -31,7 +31,7 @@ class PostCard @Inject constructor(
     data class Param(
         val isFromDevice: Boolean, //핸드폰 디바이스에서 사진 선택했는지
         val answerCard: Boolean, // 답 카드 인지
-        val cardId: Int?,
+        val cardId: Long?,
         val imageUrl: String?,
         val content: String,
         val font: String,
@@ -90,7 +90,7 @@ class PostCard @Inject constructor(
         } else {
             if (param.cardId == null) DomainResult.Failure(ERROR_FAIL_JOB)
             networkRepository.requestUploadCardAnswer(
-                cardId = param.cardId!!,
+                cardId = param.cardId ?: 0L,
                 content = param.content,
                 font = param.font,
                 imageName = imageInfo.name,

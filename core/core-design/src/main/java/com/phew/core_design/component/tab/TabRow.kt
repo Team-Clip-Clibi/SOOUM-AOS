@@ -262,21 +262,10 @@ object SooumTabRowDefaults {
     val IndicatorHorizontalPadding = 16.dp
     val MinimumIndicatorWidth = 8.dp
 
-    /** Default container color of a tab row. */
-    @Deprecated(
-        message = "Use TabRowDefaults.primaryContainerColor instead",
-        replaceWith = ReplaceWith("primaryContainerColor")
-    )
     val containerColor: Color
         @Composable get() =
             NeutralColor.WHITE
 
-
-    /** Default content color of a tab row. */
-    @Deprecated(
-        message = "Use TabRowDefaults.primaryContentColor instead",
-        replaceWith = ReplaceWith("primaryContentColor")
-    )
     val contentSelectedColor: Color
         @Composable get() =
             NeutralColor.BLACK
@@ -295,12 +284,6 @@ object SooumTabRowDefaults {
      * @param color color of the indicator
      */
     @Composable
-    @Deprecated(
-        message = "Use SecondaryIndicator instead.",
-        replaceWith = ReplaceWith(
-            "SecondaryIndicator(modifier, height, color)"
-        )
-    )
     fun Indicator(
         modifier: Modifier = Modifier,
         height: Dp = ActiveIndicatorHeight,

@@ -4,3 +4,7 @@ data class CardImageDefault(
     val imageName: String,
     val url: String
 )
+
+data class CardDefaultImagesResponse(
+    val defaultImages: Map<String, List<CardImageDefault>>
+)

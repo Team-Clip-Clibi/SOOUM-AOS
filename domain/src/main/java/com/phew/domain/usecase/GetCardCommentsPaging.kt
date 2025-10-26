@@ -10,7 +10,7 @@ class GetCardCommentsPaging @Inject constructor(
     private val repository: PagerRepository
 ) {
     data class Param(
-        val cardId: Int,
+        val cardId: Long,
         val latitude: Double? = null,
         val longitude: Double? = null
     )

@@ -7,22 +7,47 @@ import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.ERROR_LOGOUT
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.HTTP_INVALID_TOKEN
-import com.phew.domain.dto.CardReply
 import com.phew.domain.dto.CardReplyRequest
+import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.network.CardDetailRepository
 import javax.inject.Inject
 
 class PostCardReply @Inject constructor(
-    private val repository: CardDetailRepository
+    private val repository: CardDetailRepository,
+    private val deviceRepository: DeviceRepository
 ) {
     data class Param(
-        val cardId: Int,
-        val request: CardReplyRequest
+        val cardId: Long,
+        val content: String,
+        val font: String,
+        val imgType: String,
+        val imgName: String,
+        val tags: List<String>,
+        val isDistanceShared: Boolean
     )
 
-    suspend operator fun invoke(param: Param): DomainResult<CardReply, String> {
-        return when (val result = repository.postCardReply(param.cardId, param.request)) {
-            is DataResult.Success -> DomainResult.Success(result.data)
+    suspend operator fun invoke(param: Param): DomainResult<Unit, String> {
+        val locationPermissionCheck = deviceRepository.getLocationPermission()
+        val (latitude, longitude) = if (locationPermissionCheck && param.isDistanceShared) {
+            val location = deviceRepository.requestLocation()
+            location.latitude to location.longitude
+        } else {
+            null to null
+        }
+
+        val request = CardReplyRequest(
+            isDistanceShared = param.isDistanceShared,
+            latitude = latitude,
+            longitude = longitude,
+            content = param.content,
+            font = param.font,
+            imgType = param.imgType,
+            imgName = param.imgName,
+            tags = param.tags
+        )
+
+        return when (val result = repository.postCardReply(param.cardId, request)) {
+            is DataResult.Success -> DomainResult.Success(Unit)
             is DataResult.Fail -> mapFailure(result)
         }
     }

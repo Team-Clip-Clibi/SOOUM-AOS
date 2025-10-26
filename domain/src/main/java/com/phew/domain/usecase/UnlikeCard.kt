@@ -13,7 +13,7 @@ import javax.inject.Inject
 class UnlikeCard @Inject constructor(
     private val repository: CardDetailRepository
 ) {
-    suspend operator fun invoke(cardId: Int): DomainResult<Unit, String> {
+    suspend operator fun invoke(cardId: Long): DomainResult<Unit, String> {
         return when (val result = repository.unlikeCard(cardId)) {
             is DataResult.Success -> DomainResult.Success(Unit)
             is DataResult.Fail -> mapFailure(result)

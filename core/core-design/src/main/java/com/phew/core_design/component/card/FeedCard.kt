@@ -211,7 +211,8 @@ private fun FeedCardImpl(
             BodyContent(
                 contentText = contentText,
                 imgUrl = imgUrl,
-                fontFamily = resolveFontFamily(font = font)
+                fontFamily = resolveFontFamily(font = font),
+                textMaxLines = 3
             )
 
             BottomContent(
@@ -255,7 +256,8 @@ private fun FeedAdminCardImpl(
             BodyContent(
                 contentText = contentText,
                 imgUrl = imgUrl,
-                fontFamily = resolveFontFamily(font = font)
+                fontFamily = resolveFontFamily(font = font),
+                textMaxLines = 3
             )
 
             BottomContent(
@@ -270,11 +272,12 @@ private fun FeedAdminCardImpl(
 }
 
 @Composable
-private fun BodyContent(
+internal fun BodyContent(
     modifier: Modifier = Modifier,
     contentText: String = "",
     imgUrl: String = "",
     fontFamily: FontFamily,
+    textMaxLines: Int
 ) {
     Box(
         modifier = modifier
@@ -307,7 +310,7 @@ private fun BodyContent(
                 color = NeutralColor.WHITE,
                 fontFamily = fontFamily,
                 textAlign = TextAlign.Center,
-                maxLines = 3,
+                maxLines = textMaxLines,
                 overflow = TextOverflow.Ellipsis
             )
         }
@@ -364,7 +367,7 @@ private fun Preview_FeedCard() {
     }
 }
 
-private fun resolveFontFamily(font: String): FontFamily {
+internal fun resolveFontFamily(font: String): FontFamily {
     // TODO: 폰트 문자열 매핑 규칙 확정 시 교체
     return FontFamily.Default
 }

@@ -4,30 +4,29 @@ import com.phew.core_common.APP_ERROR_CODE
 import com.phew.core_common.DataResult
 import com.phew.domain.dto.CardComment
 import com.phew.domain.dto.CardDetail
-import com.phew.domain.dto.CardReply
 import com.phew.domain.dto.CardReplyRequest
 import com.phew.domain.repository.network.CardDetailRepository
 import com.phew.network.dto.request.feed.RequestUploadCardAnswerDTO
 import com.phew.network.retrofit.CardDetailsInquiryHttp
 import com.phew.repository.mapper.apiCall
 import com.phew.repository.mapper.toDomain
-import retrofit2.Response
 import javax.inject.Inject
+import retrofit2.Response
 
 class CardDetailRepositoryImpl @Inject constructor(
     private val cardDetailsHttp: CardDetailsInquiryHttp
 ) : CardDetailRepository {
 
-    override suspend fun likeCard(cardId: Int): DataResult<Unit> = executeWithoutBody {
+    override suspend fun likeCard(cardId: Long): DataResult<Unit> = executeWithoutBody {
         cardDetailsHttp.requestCardLike(cardId)
     }
 
-    override suspend fun unlikeCard(cardId: Int): DataResult<Unit> = executeWithoutBody {
+    override suspend fun unlikeCard(cardId: Long): DataResult<Unit> = executeWithoutBody {
         cardDetailsHttp.deleteCardLike(cardId)
     }
 
     override suspend fun getCardDetail(
-        cardId: Int,
+        cardId: Long,
         latitude: Double?,
         longitude: Double?
     ): DataResult<CardDetail> {
@@ -37,24 +36,33 @@ class CardDetailRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun postCardReply(cardId: Int, request: CardReplyRequest): DataResult<CardReply> {
-        return apiCall(
-            apiCall = {
-                cardDetailsHttp.postCardDetail(
-                    cardId = cardId,
-                    body = request.toNetwork()
-                )
-            },
-            mapper = { it.toDomain() }
-        )
+    override suspend fun postCardReply(
+        cardId: Long, 
+        request: CardReplyRequest
+    ): DataResult<Unit> {
+        return try {
+            val response = cardDetailsHttp.postCardDetail(
+                cardId = cardId,
+                body = request.toNetwork()
+            )
+            
+            if (response.isSuccessful) {
+                DataResult.Success(Unit)
+            } else {
+                DataResult.Fail(code = response.code(), message = response.message())
+            }
+        } catch (e: Exception) {
+            DataResult.Fail(code = APP_ERROR_CODE, message = e.message, throwable = e)
+        }
     }
 
-    override suspend fun deleteCard(cardId: Int): DataResult<Unit> = executeWithoutBody {
+
+    override suspend fun deleteCard(cardId: Long): DataResult<Unit> = executeWithoutBody {
         cardDetailsHttp.deleteCard(cardId)
     }
 
     override suspend fun getCardComments(
-        cardId: Int,
+        cardId: Long,
         latitude: Double?,
         longitude: Double?
     ): DataResult<List<CardComment>> {
@@ -65,8 +73,8 @@ class CardDetailRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getCardCommentsMore(
-        cardId: Int,
-        lastId: Int,
+        cardId: Long,
+        lastId: Long,
         latitude: Double?,
         longitude: Double?
     ): DataResult<List<CardComment>> {
@@ -76,6 +84,14 @@ class CardDetailRepositoryImpl @Inject constructor(
             },
             mapper = { list -> list.map { it.toDomain() } }
         )
+    }
+
+    override suspend fun blockMember(toMemberId: Long): DataResult<Unit> = executeWithoutBody {
+        cardDetailsHttp.blockMember(toMemberId)
+    }
+
+    override suspend fun unblockMember(toMemberId: Long): DataResult<Unit> = executeWithoutBody {
+        cardDetailsHttp.unblockMember(toMemberId)
     }
 
     private suspend fun executeWithoutBody(block: suspend () -> Response<Unit>): DataResult<Unit> {
@@ -104,3 +120,5 @@ class CardDetailRepositoryImpl @Inject constructor(
         )
     }
 }
+
+private const val TAG = "CardDetailRepository"
