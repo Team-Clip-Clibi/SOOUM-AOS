@@ -6,6 +6,7 @@ import com.phew.core_common.AppVersion
 import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR
 import com.phew.core_common.IsDebug
+import com.phew.domain.usecase.AutoLogin
 import com.phew.domain.usecase.CheckAppVersion
 import com.phew.domain.usecase.GetFirebaseToken
 import com.phew.domain.usecase.SaveNotify
@@ -23,10 +24,11 @@ class SplashViewModel @Inject constructor(
     @IsDebug private val isDebug: Boolean,
     @AppVersion private val appVersion: String,
     private val updateFcm: GetFirebaseToken,
-    private val notify : SaveNotify,
+    private val notify: SaveNotify,
+    private val autoLogin: AutoLogin
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
-    val usState: StateFlow<UiState> = _uiState.asStateFlow()
+    val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
     init {
         versionCheck()
@@ -49,7 +51,7 @@ class SplashViewModel @Inject constructor(
                         updateFcmToken()
                         return@launch
                     }
-                    _uiState.value = UiState.Fail
+                    _uiState.value = UiState.Update
                 }
             }
         }
@@ -69,20 +71,35 @@ class SplashViewModel @Inject constructor(
         }
     }
 
-    fun saveNotify(data : Boolean){
+    fun saveNotify(data: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
-            when(notify(SaveNotify.Param(data))){
-                is DomainResult.Failure ->{
+            when (notify(SaveNotify.Param(data))) {
+                is DomainResult.Failure -> {
                     _uiState.value = UiState.Error(ERROR)
                 }
+
                 is DomainResult.Success -> {
-                    _uiState.value = UiState.NextPage
+                    requestAutoLogin()
                 }
             }
         }
     }
 
-    fun initError(){
+    private fun requestAutoLogin() {
+        viewModelScope.launch(Dispatchers.IO) {
+            when (autoLogin()) {
+                true -> {
+                    _uiState.value = UiState.FeedPage
+                }
+
+                false -> {
+                    _uiState.value = UiState.SignUpPage
+                }
+            }
+        }
+    }
+
+    fun initError() {
         _uiState.value = UiState.Loading
     }
 }
@@ -91,7 +108,8 @@ class SplashViewModel @Inject constructor(
 sealed interface UiState {
     data object Loading : UiState
     data object Success : UiState
-    data object NextPage : UiState
+    data object SignUpPage : UiState
+    data object FeedPage : UiState
+    data object Update : UiState
     data class Error(val error: String) : UiState
-    data object Fail : UiState
 }
