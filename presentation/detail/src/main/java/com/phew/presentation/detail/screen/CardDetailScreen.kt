@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -51,6 +52,7 @@ import com.phew.core_common.log.SooumLog
 import com.phew.core_design.AppBar.IconBothAppBar
 import com.phew.core_design.BottomSheetComponent
 import com.phew.core_design.BottomSheetItem
+import com.phew.core_design.Danger
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.Primary
@@ -261,7 +263,7 @@ private fun CardDetailScreen(
         val scrollState = rememberScrollState()
 
         Box(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize().navigationBarsPadding()
         ) {
             Column(
                 modifier = modifier
@@ -275,6 +277,7 @@ private fun CardDetailScreen(
                     cardContent = cardContent,
                     cardThumbnailUri = cardThumbnailUri,
                     cardTags = cardTags,
+                    isDeleted = isExpire,
                     header = {
                         CardDetailHeader(
                             profileUri = profileUri,
@@ -368,11 +371,17 @@ private fun CardDetailScreen(
                 data = arrayListOf(
                     BottomSheetItem(
                         id = MoreAction.BLOCK.ordinal,
-                        title = stringResource(id = DetailR.string.card_detail_block)
+                        title = stringResource(id = DetailR.string.card_detail_block),
+                        image = R.drawable.ic_eye,
+                        textColor = NeutralColor.GRAY_500,
+                        imageColor = NeutralColor.BLACK
                     ),
                     BottomSheetItem(
                         id = MoreAction.DANGER.ordinal,
-                        title = stringResource(id = DetailR.string.card_detail_report)
+                        title = stringResource(id = DetailR.string.card_detail_report),
+                        image = R.drawable.ic_flag_stoke,
+                        imageColor = Danger.M_RED,
+                        textColor = Danger.M_RED,
                     )
                 ),
                 onItemClick = { id ->
