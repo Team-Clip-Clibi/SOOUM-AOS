@@ -234,7 +234,7 @@ private fun CardDetailScreen(
                 ) {
                     IconBothAppBar(
                         startImage = R.drawable.ic_left,
-                        endImage = R.drawable.ic_more_stoke,
+                        endImage = R.drawable.ic_more_stroke_circle,
                         appBarText = stringResource(DetailR.string.card_title_comment),
                         startClick = onBackPressed,
                         endClick = { showBottomSheet = true }
