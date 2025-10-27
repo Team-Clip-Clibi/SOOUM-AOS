@@ -16,9 +16,7 @@ import com.phew.sign_up.SignUpFinish
 import com.phew.sign_up.SignUpViewModel
 
 const val SIGN_UP_GRAPH = "sign_up_graph"
-
 private const val ON_BOARDING_ROUTE = "on_boarding_route"
-
 private const val SIGN_UP_AUTH_CODE_ROUTE = "sign_up_auth_code_route"
 private const val SIGN_UP_AGREEMENT_ROUTE = "sign_up_agreement_route"
 private const val SIGN_UP_NICKNAME_ROUTE = "sign_up_nickname_route"
