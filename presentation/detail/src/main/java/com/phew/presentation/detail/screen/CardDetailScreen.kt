@@ -5,11 +5,15 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.rememberPagerState
@@ -24,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -31,14 +36,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.phew.core.ui.model.CameraPickerAction
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.model.navigation.CardDetailCommentArgs
 import com.phew.core.ui.util.extension.nestedScrollWithStickyHeader
@@ -49,8 +53,10 @@ import com.phew.core_design.BottomSheetComponent
 import com.phew.core_design.BottomSheetItem
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.NeutralColor
+import com.phew.core_design.Primary
 import com.phew.core_design.R
 import com.phew.core_design.TextComponent
+import com.phew.core_design.UnKnowColor
 import com.phew.presentation.detail.R as DetailR
 import com.phew.core_design.component.card.CardDetail
 import com.phew.core_design.component.card.CardViewComment
@@ -60,6 +66,7 @@ import com.phew.presentation.detail.component.CardDetailHeader
 import com.phew.presentation.detail.model.MoreAction
 import com.phew.presentation.detail.viewmodel.CardDetailError
 import com.phew.presentation.detail.viewmodel.CardDetailViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -132,7 +139,7 @@ internal fun CardDetailRoute(
         modifier = modifier,
         cardContent = cardDetail.cardContent,
         cardThumbnailUri = cardDetail.cardImgUrl,
-        cardTags = cardDetail.tags?.map { it.name } ?: emptyList(),
+        cardTags = cardDetail.tags.map { it.name },
         previousCommentThumbnailUri = cardDetail.previousCardImgUrl ?: "",
         profileUri = cardDetail.profileImgUrl ?: "",
         nickName = cardDetail.nickname,
@@ -159,9 +166,12 @@ internal fun CardDetailRoute(
         },
         onNavigateToReport = onNavigateToReport,
         cardId = args.cardId,
-        snackBarHostState = snackBarHostState
+        snackBarHostState = snackBarHostState,
+        storyExpirationTime = cardDetail.endTime.toString(),
+        isExpire = cardDetail.storyExpirationTime != null && TimeUtils.parseTimerToMillis(
+            cardDetail.storyExpirationTime ?: ""
+        ) <= 0L
     )
-
 }
 
 
@@ -190,8 +200,20 @@ private fun CardDetailScreen(
     onNavigateToReport: (Long) -> Unit,
     cardId: Long,
     snackBarHostState: SnackbarHostState,
+    storyExpirationTime : String,
+    isExpire : Boolean
 ) {
-
+    var remainingTimeMillis by remember {
+        mutableLongStateOf(storyExpirationTime.toLong())
+    }
+    var isExpired by remember { mutableStateOf(false) }
+    LaunchedEffect(memberId) {
+        while (remainingTimeMillis > 0) {
+            delay(1000L)
+            remainingTimeMillis -= 1000L
+        }
+        isExpired = true
+    }
     val pagerState = rememberPagerState(
         initialPage = 0,
         initialPageOffsetFraction = 0f,
@@ -203,16 +225,33 @@ private fun CardDetailScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
-        modifier = modifier,
-        topBar = {
-            IconBothAppBar(
-                startImage = R.drawable.ic_left,
-                endImage = R.drawable.ic_more_stoke,
-                appBarText = stringResource(DetailR.string.card_title_comment),
-                startClick = onBackPressed,
-                endClick = { showBottomSheet = true }
-            )
-        },
+            modifier = modifier,
+            topBar = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .windowInsetsPadding(WindowInsets.statusBars)
+                ) {
+                    IconBothAppBar(
+                        startImage = R.drawable.ic_left,
+                        endImage = R.drawable.ic_more_stoke,
+                        appBarText = stringResource(DetailR.string.card_title_comment),
+                        startClick = onBackPressed,
+                        endClick = { showBottomSheet = true }
+                    )
+                    Text(
+                        text = if (remainingTimeMillis.toString().trim() == "0") {
+                            ""
+                        } else {
+                            TimeUtils.formatMillisToTimer(remainingTimeMillis)
+                        },
+                        color = Primary.DARK,
+                        style = TextComponent.CAPTION_3_M_10,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            },
         snackbarHost = {
             SnackbarHost(hostState = snackBarHostState) { data ->
                 DialogComponent.SnackBar(data)
@@ -303,10 +342,9 @@ private fun CardDetailScreen(
                     .width(54.dp)
                     .height(54.dp)
                     .shadow(
-                        elevation = 8.dp,
-                        shape = RoundedCornerShape(27.dp),
-                        ambientColor = Color(0x64486C).copy(alpha = 0.2f), // TODO 컬러 수정 필요
-                        spotColor = Color(0x64486C).copy(alpha = 0.2f) // TODO 컬러 수정 필요
+                        elevation = 12.dp,
+                        spotColor = UnKnowColor.color2,
+                        ambientColor = UnKnowColor.color2
                     )
                     .background(
                         color = NeutralColor.GRAY_600,
@@ -321,7 +359,7 @@ private fun CardDetailScreen(
                     tint = NeutralColor.WHITE
                 )
             }
-            }
+        }
         }
         
         // BottomSheet

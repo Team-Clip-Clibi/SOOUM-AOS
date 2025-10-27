@@ -24,11 +24,13 @@ data class CardDetailResponseDTO(
     val previousCardId: String? = null,
     val isPreviousCardDeleted: Boolean = false,
     val previousCardImgUrl: String? = null,
-    val visitedCnt: Int
+    val visitedCnt: Int,
+    val isFeedCard: Boolean,
+    val storyExpirationTime : String?
 )
 
 @Serializable
 data class CardDetailTagDTO(
     val tagId: Long,
-    val name: String
+    val name: String,
 )

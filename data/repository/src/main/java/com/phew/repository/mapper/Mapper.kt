@@ -231,7 +231,9 @@ internal fun CardDetailResponseDTO.toDomain(): CardDetail {
         isOwnCard = isOwnCard,
         previousCardId = previousCardId,
         previousCardImgUrl = previousCardImgUrl,
-        visitedCnt = visitedCnt
+        visitedCnt = visitedCnt,
+        isFeedCard = isFeedCard,
+        storyExpirationTime = storyExpirationTime
     )
 }
 
@@ -272,7 +274,7 @@ internal fun CardReplyResponseDTO.toDomain(): CardReply {
 
 suspend fun <T, R> apiCall(
     apiCall: suspend () -> Response<T>,
-    mapper: (T) -> R
+    mapper: (T) -> R,
 ): DataResult<R> {
     try {
         val response = apiCall()
@@ -280,17 +282,15 @@ suspend fun <T, R> apiCall(
             code = response.code(),
             message = response.message()
         )
-        
+
         val body = response.body()
-        if (body == null) {
-            return DataResult.Fail(
+            ?: return DataResult.Fail(
                 code = response.code(),
                 message = "Response body is null or empty"
             )
-        }
-        
+
         return DataResult.Success(mapper(body))
-    }  catch (e: Exception) {
+    } catch (e: Exception) {
         e.printStackTrace()
         return DataResult.Fail(code = APP_ERROR_CODE, message = e.message, throwable = e)
     }
