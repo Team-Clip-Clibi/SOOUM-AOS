@@ -167,7 +167,7 @@ internal fun CardDetailRoute(
         onNavigateToReport = onNavigateToReport,
         cardId = args.cardId,
         snackBarHostState = snackBarHostState,
-        storyExpirationTime = cardDetail.endTime.toString(),
+        storyExpirationTime = if(cardDetail.storyExpirationTime == null) "0" else cardDetail.endTime.toString(),
         isExpire = cardDetail.storyExpirationTime != null && TimeUtils.parseTimerToMillis(
             cardDetail.storyExpirationTime ?: ""
         ) <= 0L
