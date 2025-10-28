@@ -375,10 +375,16 @@ object MediumButton {
         buttonText: String,
         onClick: () -> Unit,
         isEnable: Boolean = true,
+        baseColor: Color = NeutralColor.BLACK,
+        blinkColor: Color = NeutralColor.GRAY_600,
+        disabledColor: Color = NeutralColor.GRAY_200,
     ) {
         BlinkMediumButton(
             onClick = onClick,
-            enabled = isEnable
+            enabled = isEnable,
+            baseColor = baseColor,
+            blinkColor = blinkColor,
+            disabledColor = disabledColor
         ) {
             Text(
                 text = buttonText,

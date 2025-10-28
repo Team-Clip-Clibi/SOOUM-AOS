@@ -32,6 +32,7 @@ object Warning {
 
 object Danger {
     val L_RED = Color(0xFFFFE1DF)
+    val D_RED = Color(0xFFCC392C)
     val M_RED = Color(0xFFEE3A26)
 }
 

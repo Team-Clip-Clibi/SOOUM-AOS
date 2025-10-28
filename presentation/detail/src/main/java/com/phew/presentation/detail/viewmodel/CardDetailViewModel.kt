@@ -17,6 +17,7 @@ import com.phew.domain.usecase.LikeCard
 import com.phew.domain.usecase.UnblockMember
 import com.phew.domain.usecase.UnlikeCard
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -44,7 +45,8 @@ data class CardDetailUiState(
     val isBlockLoading: Boolean = false,
     val blockSuccess: Boolean = false,
     val blockedMemberId: Long? = null,
-    val blockedNickname: String? = null
+    val blockedNickname: String? = null,
+    val deleteSuccess: Boolean = false,
 )
 
 @HiltViewModel
@@ -56,7 +58,7 @@ class CardDetailViewModel @Inject constructor(
     private val unLikeCard: UnlikeCard,
     private val deleteCard: DeleteCard,
     private val blockMember: BlockMember,
-    private val unblockMember: UnblockMember
+    private val unblockMember: UnblockMember,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CardDetailUiState())
@@ -101,19 +103,29 @@ class CardDetailViewModel @Inject constructor(
                 val cardDetailResult = cardDetailDeferred.await()
                 val commentsResult = commentsDeferred.await()
 
-                SooumLog.d(TAG, "loadCardDetail() results - cardDetail: $cardDetailResult, comments: $commentsResult")
+                SooumLog.d(
+                    TAG,
+                    "loadCardDetail() results - cardDetail: $cardDetailResult, comments: $commentsResult"
+                )
 
                 when {
                     cardDetailResult is DomainResult.Success && commentsResult is DomainResult.Success -> {
-                        SooumLog.d(TAG, "loadCardDetail() success cardDetail: ${cardDetailResult.data}, comments: ${commentsResult.data}")
+                        SooumLog.d(
+                            TAG,
+                            "loadCardDetail() success cardDetail: ${cardDetailResult.data}, comments: ${commentsResult.data}"
+                        )
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
                             cardDetail = cardDetailResult.data,
                             comments = commentsResult.data
                         )
                     }
+
                     cardDetailResult is DomainResult.Success && commentsResult is DomainResult.Failure -> {
-                        SooumLog.w(TAG, "loadCardDetail() cardDetail success but comments failed: ${commentsResult.error}")
+                        SooumLog.w(
+                            TAG,
+                            "loadCardDetail() cardDetail success but comments failed: ${commentsResult.error}"
+                        )
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
                             cardDetail = cardDetailResult.data,
@@ -121,13 +133,18 @@ class CardDetailViewModel @Inject constructor(
                             error = CardDetailError.COMMENTS_LOAD_FAILED
                         )
                     }
+
                     cardDetailResult is DomainResult.Failure -> {
-                        SooumLog.e(TAG, "loadCardDetail() cardDetail failed: ${cardDetailResult.error}")
+                        SooumLog.e(
+                            TAG,
+                            "loadCardDetail() cardDetail failed: ${cardDetailResult.error}"
+                        )
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
                             error = CardDetailError.CARD_LOAD_FAILED
                         )
                     }
+
                     commentsResult is DomainResult.Failure -> {
                         SooumLog.e(TAG, "loadCardDetail() comments failed: ${commentsResult.error}")
                         _uiState.value = _uiState.value.copy(
@@ -177,6 +194,7 @@ class CardDetailViewModel @Inject constructor(
                         isLikeLoading = false
                     )
                 }
+
                 is DomainResult.Failure -> {
                     _uiState.value = _uiState.value.copy(
                         isLikeLoading = false,
@@ -190,9 +208,9 @@ class CardDetailViewModel @Inject constructor(
     fun blockMember(toMemberId: Long, nickname: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isBlockLoading = true)
-            
+
             val result = blockMember(BlockMember.Param(toMemberId))
-            
+
             when (result) {
                 is DomainResult.Success -> {
                     _uiState.value = _uiState.value.copy(
@@ -202,6 +220,7 @@ class CardDetailViewModel @Inject constructor(
                         blockedNickname = nickname
                     )
                 }
+
                 is DomainResult.Failure -> {
                     _uiState.value = _uiState.value.copy(
                         isBlockLoading = false,
@@ -214,10 +233,10 @@ class CardDetailViewModel @Inject constructor(
 
     fun unblockMember() {
         val memberId = _uiState.value.blockedMemberId ?: return
-        
+
         viewModelScope.launch {
             val result = unblockMember(UnblockMember.Param(memberId))
-            
+
             when (result) {
                 is DomainResult.Success -> {
                     _uiState.value = _uiState.value.copy(
@@ -226,6 +245,7 @@ class CardDetailViewModel @Inject constructor(
                         blockSuccess = false
                     )
                 }
+
                 is DomainResult.Failure -> {
                     _uiState.value = _uiState.value.copy(
                         error = CardDetailError.NETWORK_ERROR
@@ -235,12 +255,38 @@ class CardDetailViewModel @Inject constructor(
         }
     }
 
+    fun requestDeleteCard(cardId: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            when (deleteCard(cardId)) {
+                is DomainResult.Failure -> {
+                    _uiState.update { state ->
+                        state.copy(
+                            deleteSuccess = false
+                        )
+                    }
+                }
+
+                is DomainResult.Success -> {
+                    _uiState.update { state ->
+                        state.copy(
+                            deleteSuccess = true
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
     }
-    
+
     fun clearBlockSuccess() {
         _uiState.value = _uiState.value.copy(blockSuccess = false)
+    }
+
+    fun deleteEventHandle() {
+        _uiState.update { state -> state.copy(deleteSuccess = false) }
     }
 }
 

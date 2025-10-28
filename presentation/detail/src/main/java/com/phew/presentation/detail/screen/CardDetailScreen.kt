@@ -89,7 +89,7 @@ internal fun CardDetailRoute(
         SooumLog.d(TAG, "cardId=${args.cardId}")
         viewModel.loadCardDetail(args.cardId)
     }
-
+    var isDelete by remember { mutableStateOf(false) }
     // 에러 처리
     uiState.error?.let { errorType ->
         val errorMessage = when (errorType) {
@@ -122,6 +122,9 @@ internal fun CardDetailRoute(
             }
             viewModel.clearBlockSuccess()
         }
+    }
+    if(uiState.deleteSuccess){
+        isDelete = true
     }
 
     // 로딩 중일 때는 로딩 화면 표시
@@ -172,7 +175,12 @@ internal fun CardDetailRoute(
         storyExpirationTime = if(cardDetail.storyExpirationTime == null) "0" else cardDetail.endTime.toString(),
         isExpire = cardDetail.storyExpirationTime != null && TimeUtils.parseTimerToMillis(
             cardDetail.storyExpirationTime ?: ""
-        ) <= 0L
+        ) <= 0L || isDelete,
+        isOwnCard = cardDetail.isOwnCard,
+        deleteCard = { cardId ->
+            viewModel.requestDeleteCard(cardId)
+        },
+
     )
 }
 
@@ -199,11 +207,13 @@ private fun CardDetailScreen(
     onClickCommentIcon: () -> Unit,
     onClickCommentView: () -> Unit,
     onBlockMember: (Long, String) -> Unit,
+    deleteCard: (Long) -> Unit,
     onNavigateToReport: (Long) -> Unit,
     cardId: Long,
     snackBarHostState: SnackbarHostState,
-    storyExpirationTime : String,
-    isExpire : Boolean
+    storyExpirationTime: String,
+    isExpire: Boolean,
+    isOwnCard: Boolean,
 ) {
     var remainingTimeMillis by remember {
         mutableLongStateOf(storyExpirationTime.toLong())
@@ -221,10 +231,10 @@ private fun CardDetailScreen(
         initialPageOffsetFraction = 0f,
         pageCount = { comments.size }
     )
-    
+
     var showBottomSheet by remember { mutableStateOf(false) }
     var showBlockDialog by remember { mutableStateOf(false) }
-
+    var showDeleteDialog by remember { mutableStateOf(false) }
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             modifier = modifier,
@@ -254,145 +264,168 @@ private fun CardDetailScreen(
                     )
                 }
             },
-        snackbarHost = {
-            SnackbarHost(hostState = snackBarHostState) { data ->
-                DialogComponent.SnackBar(data)
+            snackbarHost = {
+                SnackbarHost(hostState = snackBarHostState) { data ->
+                    DialogComponent.SnackBar(data)
+                }
             }
-        }
-    ) { paddingValues ->
-        val scrollState = rememberScrollState()
+        ) { paddingValues ->
+            val scrollState = rememberScrollState()
 
-        Box(
-            modifier = Modifier.fillMaxSize().navigationBarsPadding()
-        ) {
-            Column(
-                modifier = modifier
-                    .background(NeutralColor.WHITE)
+            Box(
+                modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(scrollState)
-                    .padding(paddingValues)
+                    .navigationBarsPadding()
             ) {
-                CardDetail(
-                    previousCommentThumbnailUri = previousCommentThumbnailUri,
-                    cardContent = cardContent,
-                    cardThumbnailUri = cardThumbnailUri,
-                    cardTags = cardTags,
-                    isDeleted = isExpire,
-                    header = {
-                        CardDetailHeader(
-                            profileUri = profileUri,
-                            nickName = nickName,
-                            distance = distance,
-                            createAt = createAt
-                        )
-                    },
-                    bottom = {
-                        CardDetailBottom(
-                            likeCnt = likeCnt,
-                            commentCnt = commentCnt,
-                            searchCnt = searchCnt,
-                            isLikeCard = isLikeCard,
-                            onClickLike = onClickLike,
-                            onClickComment = onClickCommentIcon
-                        )
-                    }
-                )
-                
-                if (comments.isNotEmpty()) {
-                    HorizontalPager(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(NeutralColor.GRAY_100)
-                            .nestedScrollWithStickyHeader(scrollState),
-                        state = pagerState,
-                        flingBehavior = PagerDefaults.flingBehavior(state = pagerState),
-                        pageSpacing = 10.dp,
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 10.dp),
-                        pageContent = { page ->
-                            CardViewComment(
-                                contentText = comments[page].cardContent,
-                                thumbnailUri = comments[page].cardImgUrl,
-                                distance = comments[page].distance ?: "",
-                                createAt = TimeUtils.getRelativeTimeString(comments[page].createdAt),
-                                likeCnt = comments[page].likeCount.toString(),
-                                commentCnt = comments[page].commentCardCount.toString(),
-                                font = comments[page].font,
-                                onClick = {
-                                    onClickCommentView()
-                                }
+                Column(
+                    modifier = modifier
+                        .background(NeutralColor.WHITE)
+                        .fillMaxSize()
+                        .verticalScroll(scrollState)
+                        .padding(paddingValues)
+                ) {
+                    CardDetail(
+                        previousCommentThumbnailUri = previousCommentThumbnailUri,
+                        cardContent = cardContent,
+                        cardThumbnailUri = cardThumbnailUri,
+                        cardTags = cardTags,
+                        isDeleted = isExpire,
+                        header = {
+                            CardDetailHeader(
+                                profileUri = profileUri,
+                                nickName = nickName,
+                                distance = distance,
+                                createAt = createAt
+                            )
+                        },
+                        bottom = {
+                            CardDetailBottom(
+                                likeCnt = likeCnt,
+                                commentCnt = commentCnt,
+                                searchCnt = searchCnt,
+                                isLikeCard = isLikeCard,
+                                onClickLike = onClickLike,
+                                onClickComment = onClickCommentIcon
                             )
                         }
                     )
-                } else {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = stringResource(DetailR.string.card_no_comment),
-                            style = TextComponent.BODY_1_M_14
-                        )
-                    }
 
+                    if (comments.isNotEmpty()) {
+                        HorizontalPager(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(NeutralColor.GRAY_100)
+                                .nestedScrollWithStickyHeader(scrollState),
+                            state = pagerState,
+                            flingBehavior = PagerDefaults.flingBehavior(state = pagerState),
+                            pageSpacing = 10.dp,
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                                horizontal = 16.dp,
+                                vertical = 10.dp
+                            ),
+                            pageContent = { page ->
+                                CardViewComment(
+                                    contentText = comments[page].cardContent,
+                                    thumbnailUri = comments[page].cardImgUrl,
+                                    distance = comments[page].distance ?: "",
+                                    createAt = TimeUtils.getRelativeTimeString(comments[page].createdAt),
+                                    likeCnt = comments[page].likeCount.toString(),
+                                    commentCnt = comments[page].commentCardCount.toString(),
+                                    font = comments[page].font,
+                                    onClick = {
+                                        onClickCommentView()
+                                    }
+                                )
+                            }
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = stringResource(DetailR.string.card_no_comment),
+                                style = TextComponent.BODY_1_M_14
+                            )
+                        }
+
+                    }
+                }
+
+                // Floating Action Button
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(bottom = 32.dp, end = 16.dp)
+                        .width(54.dp)
+                        .height(54.dp)
+                        .shadow(
+                            elevation = 12.dp,
+                            spotColor = UnKnowColor.color2,
+                            ambientColor = UnKnowColor.color2
+                        )
+                        .background(
+                            color = NeutralColor.GRAY_600,
+                            shape = RoundedCornerShape(27.dp)
+                        )
+                        .clickable { onClickCommentIcon() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_plus),
+                        contentDescription = "Add",
+                        tint = NeutralColor.WHITE
+                    )
                 }
             }
+        }
 
-            // Floating Action Button
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(bottom = 32.dp, end = 16.dp)
-                    .width(54.dp)
-                    .height(54.dp)
-                    .shadow(
-                        elevation = 12.dp,
-                        spotColor = UnKnowColor.color2,
-                        ambientColor = UnKnowColor.color2
-                    )
-                    .background(
-                        color = NeutralColor.GRAY_600,
-                        shape = RoundedCornerShape(27.dp)
-                    )
-                    .clickable { onClickCommentIcon() },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_plus),
-                    contentDescription = "Add",
-                    tint = NeutralColor.WHITE
-                )
-            }
-        }
-        }
-        
         // BottomSheet
         if (showBottomSheet) {
             BottomSheetComponent.BottomSheet(
-                data = arrayListOf(
-                    BottomSheetItem(
-                        id = MoreAction.BLOCK.ordinal,
-                        title = stringResource(id = DetailR.string.card_detail_block),
-                        image = R.drawable.ic_eye,
-                        textColor = NeutralColor.GRAY_500,
-                        imageColor = NeutralColor.BLACK
-                    ),
-                    BottomSheetItem(
-                        id = MoreAction.DANGER.ordinal,
-                        title = stringResource(id = DetailR.string.card_detail_report),
-                        image = R.drawable.ic_flag_stoke,
-                        imageColor = Danger.M_RED,
-                        textColor = Danger.M_RED,
+                data = if (isOwnCard) {
+                    arrayListOf(
+                        BottomSheetItem(
+                            id = MoreAction.DELETE.ordinal,
+                            title = stringResource(id = DetailR.string.card_detail_delete),
+                            image = R.drawable.ic_trash_stoke,
+                            imageColor = Danger.M_RED,
+                            textColor = Danger.M_RED,
+                        )
                     )
-                ),
+                } else {
+                    arrayListOf(
+                        BottomSheetItem(
+                            id = MoreAction.BLOCK.ordinal,
+                            title = stringResource(id = DetailR.string.card_detail_block),
+                            image = R.drawable.ic_eye,
+                            textColor = NeutralColor.GRAY_500,
+                            imageColor = NeutralColor.BLACK
+                        ),
+                        BottomSheetItem(
+                            id = MoreAction.DANGER.ordinal,
+                            title = stringResource(id = DetailR.string.card_detail_report),
+                            image = R.drawable.ic_flag_stoke,
+                            imageColor = Danger.M_RED,
+                            textColor = Danger.M_RED,
+                        )
+                    )
+                },
                 onItemClick = { id ->
                     when (id) {
                         MoreAction.BLOCK.ordinal -> {
                             showBottomSheet = false
                             showBlockDialog = true
                         }
+
                         MoreAction.DANGER.ordinal -> {
                             showBottomSheet = false
                             onNavigateToReport(cardId)
+                        }
+
+                        MoreAction.DELETE.ordinal -> {
+                            showBottomSheet = false
+                            showDeleteDialog = true
                         }
                     }
                 },
@@ -402,13 +435,32 @@ private fun CardDetailScreen(
             )
         }
 
+        if (showDeleteDialog) {
+            DialogComponent.DefaultButtonTwo(
+                title = stringResource(DetailR.string.card_detail_delete_dialog_title),
+                description = stringResource(DetailR.string.card_detail_delete_dialog_content),
+                buttonTextStart = stringResource(DetailR.string.card_detail_cancel),
+                buttonTextEnd = stringResource(DetailR.string.card_detail_delete),
+                onClick = {
+                    showDeleteDialog = false
+                    deleteCard(cardId)
+                },
+                onDismiss = {
+                    showDeleteDialog = false
+                },
+                rightButtonBaseColor = Danger.M_RED,
+                rightButtonClickColor = Danger.D_RED
+            )
+        }
 
-        
         // Block Dialog
         if (showBlockDialog) {
             DialogComponent.DefaultButtonTwo(
                 title = stringResource(DetailR.string.card_detail_block_dialog_title),
-                description = stringResource(DetailR.string.card_detail_block_dialog_subtitle, nickName),
+                description = stringResource(
+                    DetailR.string.card_detail_block_dialog_subtitle,
+                    nickName
+                ),
                 buttonTextStart = stringResource(DetailR.string.card_detail_cancel),
                 buttonTextEnd = stringResource(DetailR.string.card_detail_block),
                 onClick = {
