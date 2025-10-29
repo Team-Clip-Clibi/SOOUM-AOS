@@ -49,7 +49,7 @@ import com.phew.core.ui.model.navigation.CardDetailCommentArgs
 import com.phew.core.ui.util.extension.nestedScrollWithStickyHeader
 import com.phew.core_common.TimeUtils
 import com.phew.core_common.log.SooumLog
-import com.phew.core_design.AppBar.IconBothAppBar
+import com.phew.core_design.AppBar.TextButtonAppBar
 import com.phew.core_design.BottomSheetComponent
 import com.phew.core_design.BottomSheetItem
 import com.phew.core_design.Danger
@@ -163,8 +163,8 @@ internal fun CardDetailRoute(
         onClickCommentIcon = {
             onNavigateToWrite(args.cardId)
         },
-        onClickCommentView = {
-
+        onClickCommentView = { commentCardId ->
+            onNavigateToComment(CardDetailCommentArgs(cardId = commentCardId , parentId = args.cardId))
         },
         onBlockMember = { toMemberId, nickname ->
             viewModel.blockMember(toMemberId, nickname)
@@ -205,7 +205,7 @@ private fun CardDetailScreen(
     onBackPressed: () -> Unit,
     onClickLike: () -> Unit,
     onClickCommentIcon: () -> Unit,
-    onClickCommentView: () -> Unit,
+    onClickCommentView: (Long) -> Unit,
     onBlockMember: (Long, String) -> Unit,
     deleteCard: (Long) -> Unit,
     onNavigateToReport: (Long) -> Unit,
@@ -244,7 +244,7 @@ private fun CardDetailScreen(
                         .fillMaxWidth()
                         .windowInsetsPadding(WindowInsets.statusBars)
                 ) {
-                    IconBothAppBar(
+                    TextButtonAppBar(
                         startImage = R.drawable.ic_left,
                         endImage = R.drawable.ic_more_stroke_circle,
                         appBarText = stringResource(DetailR.string.card_title_comment),
@@ -333,7 +333,7 @@ private fun CardDetailScreen(
                                     commentCnt = comments[page].commentCardCount.toString(),
                                     font = comments[page].font,
                                     onClick = {
-                                        onClickCommentView()
+                                        onClickCommentView(comments[page].cardId)
                                     }
                                 )
                             }

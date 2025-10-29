@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.phew.core_common.BANNER_NEWS
 import com.phew.core_common.BANNER_SERVICE
+import com.phew.core_design.AppBar.IconBothAppBar
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -89,6 +90,88 @@ object AppBar {
 
     @Composable
     fun IconBothAppBar(
+        @DrawableRes startImage: Int = R.drawable.ic_left,
+        @DrawableRes middleImage: Int = R.drawable.ic_home_stoke,
+        @DrawableRes endImage: Int = R.drawable.ic_more_stroke_circle,
+        topAppBarText: String = "Title",
+        onBackClick: () -> Unit,
+        onSecClick: () -> Unit,
+        onLastClick: () -> Unit,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+                .background(color = NeutralColor.WHITE)
+                .padding(start = 4.dp, end = 4.dp)
+        ) {
+            Row(
+                modifier = Modifier.align(Alignment.CenterStart),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .padding(
+                            start = 8.49731.dp,
+                            top = 5.00009.dp,
+                            end = 8.dp,
+                            bottom = 5.00006.dp
+                        )
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = { onBackClick() }
+                        ),
+                    painter = painterResource(startImage),
+                    contentDescription = "left icon"
+                )
+                Spacer(modifier = Modifier.size(12.dp))
+                Image(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .padding(
+                            start = 1.75.dp,
+                            top = 1.84637.dp,
+                            end = 1.75.dp,
+                            bottom = 1.74998.dp
+                        )
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = { onSecClick() }
+                        ),
+                    painter = painterResource(middleImage),
+                    contentDescription = "sec icon"
+                )
+            }
+
+            Text(
+                text = topAppBarText,
+                style = TextComponent.TITLE_1_SB_18,
+                color = NeutralColor.BLACK,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.align(Alignment.Center)
+            )
+
+            Image(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .size(48.dp)
+                    .padding(12.dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = { onLastClick() }
+                    ),
+                painter = painterResource(endImage),
+                contentDescription = "sec icon"
+            )
+        }
+    }
+
+    @Composable
+    fun TextButtonAppBar(
         @DrawableRes startImage: Int = R.drawable.ic_left,
         @DrawableRes endImage: Int = R.drawable.ic_home_stoke,
         appBarText: String = "Title",
@@ -379,5 +462,13 @@ private fun Preview() {
         Triple(BANNER_NEWS, "테스트 제목5", "테스트 내용5"),
         Triple(BANNER_SERVICE, "테스트 제목6", "테스트 내용6")
     )
-    AppBar.HomeBanner(data = dummyData)
+    Column {
+        AppBar.HomeBanner(data = dummyData)
+        Spacer(modifier = Modifier.height(10.dp))
+        IconBothAppBar(
+            onBackClick = {},
+            onSecClick = {},
+            onLastClick = {}
+        )
+    }
 }

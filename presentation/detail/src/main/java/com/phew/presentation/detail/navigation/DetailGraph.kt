@@ -18,6 +18,7 @@ import com.phew.core.ui.navigation.getNavArg
 import com.phew.core_common.log.SooumLog
 import com.phew.core_design.slideComposable
 import com.phew.presentation.detail.screen.CardDetailRoute
+import com.phew.presentation.detail.screen.CommentCardDetailScreen
 
 val DETAIL_GRAPH = "detail_graph".asNavParam()
 
@@ -117,15 +118,24 @@ fun NavGraphBuilder.detailGraph(
                 SooumLog.e(TAG, "CardDetailCommentArgs is null")
                 navController.popBackStack()
             } else {
-                // //   TODO 스크린 개발되면 수정 예정
-//                commentScreen(
-//                    args = args,
-//                    sooumAppState = sooumAppState,
-//                    onNavigateToChildComment = { childArgs ->
-//                        navController.navigate(COMMENT_ROUTE.asNavArg(childArgs))
-//                    },
-//                    onBackPressed = { navController.popBackStack() }
-//                )
+                CommentCardDetailScreen(
+                    args = args,
+                    onNavigateToComment = { commentArgs ->
+                        navController.navigate(COMMENT_ROUTE.asNavArg(commentArgs))
+                    },
+                    onBackPressed = {
+                        navController.popBackStack()
+                    },
+                    onFeedPressed = {
+
+                    },
+                    onNavigateToWrite = {
+
+                    },
+                    onNavigateToReport = {
+
+                    }
+                )
             }
         }
     }

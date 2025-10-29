@@ -25,7 +25,7 @@ data class CardDetail(
     val previousCardId: String?,
     val previousCardImgUrl: String?,
     val visitedCnt: Int,
-    val isFeedCard: Boolean,
+    val isFeedCard: Boolean = false,
     val storyExpirationTime: String?,
 ) {
     val endTime = storyExpirationTime?.endTimeMillisecondTime()

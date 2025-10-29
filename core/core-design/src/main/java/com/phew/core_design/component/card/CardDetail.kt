@@ -20,13 +20,16 @@ fun CardDetail(
     cardThumbnailUri: String,
     cardTags: List<String>,
     header: @Composable () -> Unit,
-    bottom: @Composable () -> Unit?
+    bottom: @Composable () -> Unit?,
 ) {
     Column(
         modifier = modifier
             .background(NeutralColor.WHITE)
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
+            .padding(
+                start = 16.dp,
+                end = 20.dp,
+            )
     ) {
         header()
 

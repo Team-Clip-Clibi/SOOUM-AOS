@@ -14,4 +14,5 @@
     <string name="card_detail_block_success">%s님의 카드가 목록에서 보이지 않습니다.</string>
     <string name="card_detail_error_comments">댓글을 불러올 수 없습니다</string>
     <string name="card_detail_error_load_card">카드 정보를 불러오는 중 오류가 발생했습니다</string>
+    <string name="card_detail_comment_app_bar_title">댓글 카드</string>
 </resources>
