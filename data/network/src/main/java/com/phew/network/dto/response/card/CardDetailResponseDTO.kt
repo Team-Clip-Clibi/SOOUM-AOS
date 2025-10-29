@@ -25,7 +25,7 @@ data class CardDetailResponseDTO(
     val isPreviousCardDeleted: Boolean = false,
     val previousCardImgUrl: String? = null,
     val visitedCnt: Int,
-    val isFeedCard: Boolean,
+    val isFeedCard: Boolean = false,
     val storyExpirationTime : String?
 )
 
