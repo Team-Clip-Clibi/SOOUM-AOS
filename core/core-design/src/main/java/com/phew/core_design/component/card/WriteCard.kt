@@ -136,14 +136,6 @@ sealed class BaseCardData(open val id: String, open val type: CardType) {
     ) : BaseCardData(id, CardType.DELETED)
 }
 
-data class WriteCardData(
-    val content: String,
-    val tags: List<String> = emptyList(),
-    val showAddButton: Boolean = true,
-    val hasThumbnail: Boolean = false,
-    val id: String = ""
-)
-
 @Composable
 fun CardView(
     data: BaseCardData,
@@ -283,6 +275,7 @@ private fun ReadOnlyContentBox(
             contentAlignment = Alignment.Center
         ) {
             Text(
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp),
                 text = content.ifBlank { " " },
                 style = TextComponent.BODY_1_M_14.copy(color = CardDesignTokens.TextPrimary),
                 maxLines = Int.MAX_VALUE,
