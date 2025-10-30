@@ -292,15 +292,14 @@ object AppBar {
         ) {
             Box(
                 modifier = Modifier
-                    .width(AppBarDefaults.IconSlotSize)
-                    .fillMaxHeight()
+                    .size(48.dp)
+                    .padding(12.dp)
                     .clickable { onClick() },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     painter = painterResource(image),
                     contentDescription = "back",
-                    modifier = Modifier.size(20.dp),
                     tint = NeutralColor.BLACK
                 )
             }

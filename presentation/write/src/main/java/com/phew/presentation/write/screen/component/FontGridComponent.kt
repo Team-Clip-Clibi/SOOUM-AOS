@@ -46,21 +46,14 @@ internal fun FontSelectorGrid(
                                 buttonText = font.name,
                                 onClick = { font.previewTypeface?.let { onFontSelected(it) } },
                                 isEnable = true,
-                                fontFamily = font.previewTypeface ?: FontFamily(Font(R.font.medium))
+                                fontFamily = font.previewTypeface ?: FontFamily(Font(R.font.black))
                             )
                         } else {
                             DisabledSecondary(
                                 buttonText = font.name,
-                                onClick = {},
-                                isEnable = false,
+                                onClick = {font.previewTypeface?.let { onFontSelected(it) }},
+                                isEnable = true,
                                 fontFamily = font.previewTypeface ?: FontFamily(Font(R.font.medium))
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .matchParentSize()
-                                    .clickable {
-                                        font.previewTypeface?.let { onFontSelected(it) }
-                                    }
                             )
                         }
                     }

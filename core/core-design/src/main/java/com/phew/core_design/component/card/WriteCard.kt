@@ -4,9 +4,11 @@ import android.annotation.SuppressLint
 import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -293,11 +295,13 @@ private fun WriteCard(
     data: BaseCardData.Write,
     modifier: Modifier = Modifier
 ) {
-    BaseCard(
-        modifier = modifier.fillMaxWidth(),
-        backgroundColor = Color.Transparent,
-        elevation = 0.dp,
-        minimumHeight = 328.dp
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .aspectRatio(1f),
+        shape = RoundedCornerShape(CardDesignTokens.CardRadius),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             val backgroundModifier = Modifier
@@ -338,15 +342,20 @@ private fun WriteCard(
                 // 상단 여백
                 Spacer(modifier = Modifier.weight(1f))
 
-                // 중앙 컨텐츠 영역
-                EditableWriteContentBox(
+                // 중앙 컨텐츠 영역 - Box로 중앙 정렬
+                Box(
                     modifier = Modifier.fillMaxWidth(),
-                    content = data.content,
-                    placeholder = data.placeholder,
-                    onContentChange = data.onContentChange,
-                    onContentClick = data.onContentClick,
-                    fontFamily = data.fontFamily
-                )
+                    contentAlignment = Alignment.Center
+                ) {
+                    EditableWriteContentBox(
+                        modifier = Modifier.fillMaxWidth(),
+                        content = data.content,
+                        placeholder = data.placeholder,
+                        onContentChange = data.onContentChange,
+                        onContentClick = data.onContentClick,
+                        fontFamily = data.fontFamily
+                    )
+                }
 
                 // 중간 여백 (태그와 컨텐츠 사이)
                 Spacer(modifier = Modifier.weight(1f))
@@ -385,9 +394,14 @@ private fun ReplyCard(
     modifier: Modifier = Modifier,
     onPreviewCard: () -> Unit,
 ) {
-    BaseCard(
-        modifier = modifier.height(328.dp),
-        backgroundColor = CardDesignTokens.CardBackgroundCyan
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .aspectRatio(1f)
+            .border(1.dp, NeutralColor.GRAY_100, RoundedCornerShape(CardDesignTokens.CardRadius)),
+        shape = RoundedCornerShape(CardDesignTokens.CardRadius),
+        colors = CardDefaults.cardColors(containerColor = CardDesignTokens.CardBackgroundCyan),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             val backgroundModifier = Modifier
@@ -464,11 +478,16 @@ private fun ReplyCard(
                 // 상단 여백
                 Spacer(modifier = Modifier.weight(1f))
 
-                // 중앙 컨텐츠 영역
-                ReadOnlyContentBox(
+                // 중앙 컨텐츠 영역 - Box로 중앙 정렬
+                Box(
                     modifier = Modifier.fillMaxWidth(),
-                    content = data.content,
-                )
+                    contentAlignment = Alignment.Center
+                ) {
+                    ReadOnlyContentBox(
+                        modifier = Modifier.fillMaxWidth(),
+                        content = data.content,
+                    )
+                }
 
                 // 중간 여백 (태그와 컨텐츠 사이)
                 Spacer(modifier = Modifier.weight(1f))

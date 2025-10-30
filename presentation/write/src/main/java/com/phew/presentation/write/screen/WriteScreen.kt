@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
@@ -437,6 +438,9 @@ private fun WriteScreen(
                     selectedFont = selectedFont,
                     onFontSelected = onFontSelected
                 )
+                
+                // 하단 여유 공간 (bottomBar와 관련 태그 영역을 위한 패딩)
+                Spacer(modifier = Modifier.height(72.dp))
             }
 
             // 관련 태그를 키보드 위에 플로팅 표시
@@ -600,7 +604,7 @@ private fun OptionButtons(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             options.forEach { option ->
                 val isDistanceOption = option.id == WriteOptions.DISTANCE_OPTION_ID

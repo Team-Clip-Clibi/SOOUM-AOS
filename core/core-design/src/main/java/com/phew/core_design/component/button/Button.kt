@@ -120,7 +120,7 @@ fun IconButtons(
         Spacer(Modifier.width(4.dp))
         Text(
             text = buttonText,
-            style = TextComponent.TITLE_1_SB_18,
+            style = TextComponent.CAPTION_1_SB_12,
             color = NeutralColor.GRAY_500
         )
     }

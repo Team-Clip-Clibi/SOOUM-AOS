@@ -491,7 +491,7 @@ object MediumButton {
     ) {
         BlinkMediumButton(
             baseColor = Primary.LIGHT_1,
-            blinkColor = Primary.DARK,
+            blinkColor = NeutralColor.GRAY_600,
             disabledColor = NeutralColor.GRAY_100,
             borderColor = Primary.DARK,
             onClick = onClick,

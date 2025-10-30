@@ -148,6 +148,6 @@ object FilterDesignTokens {
 
     val BorderRadius = 8.dp
 
-    val PaddingHorizontal = 12.dp
+    val PaddingHorizontal = 10.dp
     val PaddingVertical = 8.dp
 }
