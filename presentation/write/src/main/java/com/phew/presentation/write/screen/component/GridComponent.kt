@@ -172,6 +172,13 @@ fun GridImageItem(
         )
 
         if (isSelected) {
+            // Black overlay with 30% opacity
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(NeutralColor.BLACK.copy(alpha = 0.3f))
+            )
+            
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)

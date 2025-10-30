@@ -67,7 +67,11 @@ fun RoundButton(
                     Modifier
                 }
             )
-            .clickable(enabled = enabled) { onClick() }
+            .clickable(
+                enabled = enabled,
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }
+            ) { onClick() }
             .padding(horizontal = 10.dp),
         contentAlignment = Alignment.Center
     ) {
