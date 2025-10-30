@@ -5,7 +5,6 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
-import androidx.navigation.NavType
 import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
 import com.phew.core.ui.model.navigation.CardDetailArgs
@@ -27,7 +26,7 @@ private val COMMENT_ROUTE = "comment_route".asNavParam()
 
 fun NavHostController.navigateToDetailGraph(
     cardDetailArgs: CardDetailArgs,
-    navOptions: NavOptions? = null
+    navOptions: NavOptions? = null,
 ) {
     SooumLog.i(TAG, "navigateToDetailGraph() $cardDetailArgs")
     this.navigate(DETAIL_GRAPH.asNavArg(cardDetailArgs), navOptions)
@@ -35,7 +34,7 @@ fun NavHostController.navigateToDetailGraph(
 
 fun NavHostController.navigateToWriteFromDetail(
     cardId: Long,
-    navOptions: NavOptions? = null
+    navOptions: NavOptions? = null,
 ) {
     SooumLog.i(TAG, "navigateToWriteFromDetail() cardId: $cardId")
     // TODO: Write 모듈로 네비게이션 구현 필요
@@ -43,7 +42,7 @@ fun NavHostController.navigateToWriteFromDetail(
 
 private fun NavHostController.navigateToDetailRoute(
     cardDetailArgs: CardDetailArgs,
-    navOptions: NavOptions? = null
+    navOptions: NavOptions? = null,
 ) {
     this.navigate(DETAIL_ROUTE.asNavArg(cardDetailArgs), navOptions)
 }
@@ -51,7 +50,7 @@ private fun NavHostController.navigateToDetailRoute(
 
 private fun NavHostController.navigateToDetailCommentRoute(
     cardDetailCommentArgs: CardDetailCommentArgs,
-    navOptions: NavOptions? = null
+    navOptions: NavOptions? = null,
 ) {
     SooumLog.i(TAG, "navigateToDetailRoute() $cardDetailCommentArgs")
     this.navigate(COMMENT_ROUTE.asNavArg(cardDetailCommentArgs), navOptions)
@@ -66,13 +65,14 @@ fun NavGraphBuilder.detailGraph(
     detailScreen: @Composable (
         CardDetailArgs,
         (CardDetailCommentArgs) -> Unit,
-        () -> Unit
+        () -> Unit,
     ) -> Unit = { _, _, _ -> },
     commentScreen: @Composable (
         CardDetailCommentArgs,
         (CardDetailCommentArgs) -> Unit,
-        () -> Unit
-    ) -> Unit = { _, _, _ -> }
+        () -> Unit,
+    ) -> Unit = { _, _, _ -> },
+    navToHome : () -> Unit
 ) {
     navigation(
         route = DETAIL_GRAPH,
@@ -126,15 +126,11 @@ fun NavGraphBuilder.detailGraph(
                     onBackPressed = {
                         navController.popBackStack()
                     },
-                    onFeedPressed = {
-
+                    onFeedPressed = navToHome,
+                    onNavigateToWrite = { cardId ->
+                        onNavigateToWrite(cardId)
                     },
-                    onNavigateToWrite = {
-
-                    },
-                    onNavigateToReport = {
-
-                    }
+                    onNavigateToReport = onNavigateToReport
                 )
             }
         }

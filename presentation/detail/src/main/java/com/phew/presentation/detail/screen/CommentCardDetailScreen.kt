@@ -4,31 +4,31 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -42,8 +42,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.phew.core.ui.model.navigation.CardDetailCommentArgs
 import com.phew.core_common.TimeUtils
 import com.phew.core_common.log.SooumLog
@@ -67,7 +72,12 @@ import com.phew.presentation.detail.model.MoreAction
 import com.phew.presentation.detail.viewmodel.CardDetailError
 import com.phew.presentation.detail.viewmodel.CardDetailViewModel
 import kotlinx.coroutines.delay
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun CommentCardDetailScreen(
     args: CardDetailCommentArgs,
@@ -84,14 +94,29 @@ internal fun CommentCardDetailScreen(
         SooumLog.d(TAG, "CardId : ${args.cardId}")
         viewModel.loadCardDetail(args.cardId)
     }
-    if (uiState.isLoading) {
+    val isRefreshing by remember(uiState.isLoading) {
+        derivedStateOf { uiState.isLoading }
+    }
+    val composition by rememberLottieComposition(
+        LottieCompositionSpec.RawRes(com.phew.core_design.R.raw.ic_refresh)
+    )
+    val refreshProgress by animateLottieCompositionAsState(
+        composition = composition,
+        iterations = com.airbnb.lottie.compose.LottieConstants.IterateForever,
+        restartOnPlay = isRefreshing
+    )
+    if (uiState.isLoading && cardDetail == null) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.statusBars),
             contentAlignment = Alignment.Center
         ) {
-            CircularProgressIndicator()
+            LottieAnimation(
+                composition = composition,
+                progress = { refreshProgress },
+                modifier = Modifier.size(44.dp)
+            )
         }
         return
     }
@@ -106,7 +131,7 @@ internal fun CommentCardDetailScreen(
     val showBottomSheetLambda = remember { { showBottomSheet = true } }
     val onExpireLambda = remember { { isTimerExpired = true } }
     val onClickLikeLambda = remember(args.cardId) { { viewModel.toggleLike(args.cardId) } }
-    val onClickCommentIconLambda = remember { {} } // 빈 람다도 remember 처리
+    val onClickPreviousCard = remember { { onBackPressed(args.parentId) } }
     val onCommentClickLambda: (Long) -> Unit = remember(args.cardId) {
         { childId ->
             onNavigateToComment(
@@ -129,6 +154,7 @@ internal fun CommentCardDetailScreen(
     val unBlockMemberLambda = remember { { viewModel.unblockMember() } }
     val clearErrorLambda =
         remember { { viewModel.clearError() } }
+    val onRefresh = remember(args.cardId) { { viewModel.loadCardDetail(args.cardId) } }
     HandleBlockUser(
         blockSuccess = uiState.blockSuccess,
         nickName = cardDetail.nickname,
@@ -144,6 +170,8 @@ internal fun CommentCardDetailScreen(
             onDismissError = clearErrorLambda
         )
     }
+    val refreshState = rememberPullToRefreshState()
+    val density = LocalDensity.current
     Scaffold(
         topBar = {
             TopLayout(
@@ -161,30 +189,70 @@ internal fun CommentCardDetailScreen(
             }
         }
     ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize()) {
-            CardView(
-                paddingValues = paddingValues,
-                cardDetail = cardDetail,
-                isExpire = isDelete,
-                onClickLike = onClickLikeLambda,
-                onClickCommentIcon = onClickCommentIconLambda,
-                comments = uiState.comments,
-                onCommentClick = onCommentClickLambda
-            )
-            PlusButton(
-                modifier = Modifier.align(Alignment.BottomEnd),
-                onWriteClick = onWriteClickLambda,
-                paddingValues = paddingValues
-            )
-            if (showBottomSheet) {
-                BottomSheetView(
-                    isOwnCard = cardDetail.isOwnCard,
-                    nickName = cardDetail.nickname,
-                    closeBottomSheet = closeBottomSheetLambda,
-                    onNavigateToReport = onNavigateToReportLambda,
-                    onBlockMember = onBlockMemberLambda,
-                    deleteCard = deleteCardLambda
+        PullToRefreshBox(
+            isRefreshing = uiState.isRefresh,
+            onRefresh = onRefresh,
+            modifier = Modifier.fillMaxWidth(),
+            state = refreshState,
+            indicator = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(100.dp)
+                        .padding(top = paddingValues.calculateTopPadding()),
+                    contentAlignment = Alignment.Center
+                ) {
+                    val progress =
+                        if (isRefreshing) refreshProgress else refreshState.distanceFraction
+                    if (isRefreshing || refreshState.distanceFraction > 0f) {
+                        LottieAnimation(
+                            composition = composition,
+                            progress = { progress },
+                            modifier = Modifier.size(80.dp)
+                        )
+                    }
+                }
+            }
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(color = NeutralColor.WHITE)
+                    .padding(
+                        top = paddingValues.calculateTopPadding(),
+                        bottom = paddingValues.calculateBottomPadding()
+                    )
+            ) {
+                CardView(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer {
+                            translationY =
+                                refreshState.distanceFraction * with(density) { 72.dp.toPx() }
+                        },
+                    cardDetail = cardDetail,
+                    isExpire = isDelete,
+                    onClickLike = onClickLikeLambda,
+                    onClickCommentIcon = onWriteClickLambda,
+                    comments = uiState.comments,
+                    onCommentClick = onCommentClickLambda,
+                    onPreviousCardClick = onClickPreviousCard,
                 )
+                PlusButton(
+                    modifier = Modifier.align(Alignment.BottomEnd),
+                    onWriteClick = onWriteClickLambda,
+                    paddingValues = paddingValues
+                )
+                if (showBottomSheet) {
+                    BottomSheetView(
+                        isOwnCard = cardDetail.isOwnCard,
+                        nickName = cardDetail.nickname,
+                        closeBottomSheet = closeBottomSheetLambda,
+                        onNavigateToReport = onNavigateToReportLambda,
+                        onBlockMember = onBlockMemberLambda,
+                        deleteCard = deleteCardLambda
+                    )
+                }
             }
         }
     }
@@ -204,17 +272,18 @@ private fun TopLayout(
     }
     var isExpired by remember { mutableStateOf(false) }
     LaunchedEffect(memberId) {
-        while (remainingTimeMillis > 0) {
-            delay(1000L)
-            remainingTimeMillis -= 1000L
+        if (remainingTimeMillis > 0) {
+            while (remainingTimeMillis > 0) {
+                delay(1000L)
+                remainingTimeMillis -= 1000L
+            }
+            isExpired = true
         }
-        isExpired = true
     }
     if (isExpired) onExpire()
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .windowInsetsPadding(WindowInsets.statusBars)
     ) {
         AppBar.IconBothAppBar(
             topAppBarText = stringResource(R.string.card_detail_comment_app_bar_title),
@@ -236,24 +305,23 @@ private fun TopLayout(
     }
 }
 
+
 @Composable
 private fun CardView(
-    paddingValues: PaddingValues,
+    modifier: Modifier,
     cardDetail: CardDetail,
     isExpire: Boolean,
     onClickLike: () -> Unit,
     onClickCommentIcon: () -> Unit,
     comments: List<CardComment>,
     onCommentClick: (Long) -> Unit,
+    onPreviousCardClick: () -> Unit,
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(
-                top = paddingValues.calculateTopPadding() + 8.dp,
-                bottom = paddingValues.calculateTopPadding() + 10.dp
-            )
+            .background(color = NeutralColor.WHITE)
     ) {
         CardDetailComponent(
             previousCommentThumbnailUri = cardDetail.previousCardImgUrl,
@@ -261,6 +329,7 @@ private fun CardView(
             cardThumbnailUri = cardDetail.cardImgUrl,
             cardTags = cardDetail.tags.map { data -> data.name },
             isDeleted = isExpire,
+            backgroundImageUrl = cardDetail.cardImgUrl.toUri(),
             header = {
                 CardDetailHeader(
                     profileUri = cardDetail.profileImgUrl ?: "",
@@ -278,31 +347,37 @@ private fun CardView(
                     onClickLike = onClickLike,
                     onClickComment = onClickCommentIcon
                 )
-            }
+            },
+            onPreviousCardClick = onPreviousCardClick
         )
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(color = NeutralColor.GRAY_100)
-                .padding(start = 16.dp, bottom = paddingValues.calculateBottomPadding() + 10.dp),
-            verticalArrangement = Arrangement.Center
-        ) {
-            when (comments.size) {
-                0 -> {
+
+        when {
+            comments.isEmpty() -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .background(color = NeutralColor.GRAY_100),
+                    contentAlignment = Alignment.Center
+                ) {
                     Text(
                         text = stringResource(R.string.card_no_comment),
                         style = TextComponent.BODY_1_M_14,
                         color = NeutralColor.GRAY_400,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .wrapContentSize(Alignment.Center),
                         textAlign = TextAlign.Center
                     )
                 }
+            }
 
-                else -> {
+            else -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(color = NeutralColor.GRAY_100)
+                        .padding(start = 16.dp, top = 16.dp, bottom = 16.dp)
+                ) {
                     LazyRow(modifier = Modifier.fillMaxWidth()) {
-                        items(comments) { comment ->
+                        items(items = comments, key = { it.cardId }) { comment ->
                             CardViewComment(
                                 contentText = comment.cardContent,
                                 thumbnailUri = comment.cardImgUrl,
@@ -479,7 +554,7 @@ private fun HandleBlockUser(
 private fun HandleError(
     snackBarHostState: SnackbarHostState,
     errorType: CardDetailError,
-    onDismissError : () -> Unit
+    onDismissError: () -> Unit,
 ) {
     val errorMessage = when (errorType) {
         CardDetailError.COMMENTS_LOAD_FAILED -> stringResource(R.string.card_detail_error_comments)
