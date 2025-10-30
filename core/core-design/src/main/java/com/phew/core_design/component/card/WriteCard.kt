@@ -127,7 +127,8 @@ sealed class BaseCardData(open val id: String, open val type: CardType) {
         val timeAgo: String = "",
         val hasPreviousCommentThumbnail: Boolean = false,
         val thumbnailUri: String = "",
-        override val id: String = ""
+        override val id: String = "",
+        val backgroundImage : Uri ? = null
     ) : BaseCardData(id, CardType.REPLY)
 
     data class Deleted(
@@ -139,11 +140,12 @@ sealed class BaseCardData(open val id: String, open val type: CardType) {
 @Composable
 fun CardView(
     data: BaseCardData,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onPreviousCardClick: () -> Unit = { }
 ) {
     when (data.type) {
         CardType.WRITE -> WriteCard(data as BaseCardData.Write, modifier)
-        CardType.REPLY -> ReplyCard(data as BaseCardData.Reply, modifier)
+        CardType.REPLY -> ReplyCard(data as BaseCardData.Reply, modifier, onPreviousCardClick)
         CardType.DELETED -> DeletedCard(data as BaseCardData.Deleted, modifier)
     }
 }
@@ -380,93 +382,118 @@ private fun WriteCard(
 @Composable
 private fun ReplyCard(
     data: BaseCardData.Reply,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onPreviewCard: () -> Unit,
 ) {
     BaseCard(
         modifier = modifier.height(328.dp),
         backgroundColor = CardDesignTokens.CardBackgroundCyan
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            // 이전 댓글 썸네일 영역 (상단)
-            if (data.hasPreviousCommentThumbnail) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp),
-                    contentAlignment = Alignment.TopStart
-                ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            val backgroundModifier = Modifier
+                .matchParentSize()
+                .clip(RoundedCornerShape(CardDesignTokens.CardRadius))
+
+            when {
+                data.backgroundImage != null -> {
+                    AsyncImage(
+                        model = data.backgroundImage,
+                        contentDescription = "background image",
+                        contentScale = ContentScale.Crop,
+                        modifier = backgroundModifier
+                    )
+                }
+
+                else -> {
                     Box(
-                        modifier = Modifier
-                            .size(32.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Surface(
-                            modifier = Modifier.matchParentSize(),
-                            color = CardDesignTokens.TextPrimary,
-                            shape = RoundedCornerShape(CardDesignTokens.CardRadius)
-                        ) { }
-
-                        if (data.previousCommentThumbnailUri?.isNotBlank() == true) {
-                            AsyncImage(
-                                model = data.previousCommentThumbnailUri,
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .matchParentSize()
-                                    .clip(RoundedCornerShape(CardDesignTokens.CardRadius))
-                            )
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .size(24.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_back_thumbnail),
-                                contentDescription = "이전 댓글 썸네일",
-                                tint = CardDesignTokens.TextSecondary
-                            )
-                        }
-                    }
+                        modifier = backgroundModifier.background(CardDesignTokens.CardBackgroundCyan)
+                    )
                 }
             }
 
-            // 상단 여백
-            Spacer(modifier = Modifier.weight(1f))
-
-            // 중앙 컨텐츠 영역
-            ReadOnlyContentBox(
-                modifier = Modifier.fillMaxWidth(),
-                content = data.content,
-            )
-
-            // 중간 여백 (태그와 컨텐츠 사이)
-            Spacer(modifier = Modifier.weight(1f))
-
-            // 하단 태그 영역
-            if (data.tags.isNotEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(60.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    TagRow(
-                        tags = data.tags,
-                        enableAdd = false,
-                        onAdd = {},
-                        onRemove = {},
-                        currentInput = "",
-                        onInputChange = {}
-                    )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                // 이전 댓글 썸네일 영역 (상단)
+                if (data.hasPreviousCommentThumbnail) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(10.dp)
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = onPreviewCard
+                            ),
+                        contentAlignment = Alignment.TopStart
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Surface(
+                                modifier = Modifier.matchParentSize(),
+                                shape = RoundedCornerShape(CardDesignTokens.CardRadius)
+                            ) {
+                                AsyncImage(
+                                    model = data.previousCommentThumbnailUri,
+                                    contentDescription = null,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .matchParentSize()
+                                        .clip(RoundedCornerShape(CardDesignTokens.CardRadius))
+                                )
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .size(24.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_back_thumbnail),
+                                    contentDescription = "이전 댓글 썸네일",
+                                    tint = CardDesignTokens.TextPrimary
+                                )
+                            }
+                        }
+                    }
                 }
-            } else {
-                // 태그가 없을 때도 동일한 높이 유지
-                Spacer(modifier = Modifier.height(60.dp))
+
+                // 상단 여백
+                Spacer(modifier = Modifier.weight(1f))
+
+                // 중앙 컨텐츠 영역
+                ReadOnlyContentBox(
+                    modifier = Modifier.fillMaxWidth(),
+                    content = data.content,
+                )
+
+                // 중간 여백 (태그와 컨텐츠 사이)
+                Spacer(modifier = Modifier.weight(1f))
+
+                // 하단 태그 영역
+                if (data.tags.isNotEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(60.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        TagRow(
+                            tags = data.tags,
+                            enableAdd = false,
+                            onAdd = {},
+                            onRemove = {},
+                            currentInput = "",
+                            onInputChange = {}
+                        )
+                    }
+                } else {
+                    // 태그가 없을 때도 동일한 높이 유지
+                    Spacer(modifier = Modifier.height(60.dp))
+                }
             }
         }
     }

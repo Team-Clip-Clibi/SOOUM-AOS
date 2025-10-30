@@ -32,7 +32,7 @@ internal fun CardDetailHeader(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(

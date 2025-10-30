@@ -38,6 +38,7 @@ enum class CardDetailError {
 
 data class CardDetailUiState(
     val isLoading: Boolean = false,
+    val isRefresh : Boolean = false,
     val cardDetail: CardDetail? = null,
     val comments: List<CardComment> = emptyList(),
     val error: CardDetailError? = null,
@@ -94,8 +95,7 @@ class CardDetailViewModel @Inject constructor(
     fun loadCardDetail(cardId: Long) {
         viewModelScope.launch {
             try {
-                SooumLog.d(TAG, "loadCardDetail() start cardId: $cardId")
-                _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+                _uiState.value = _uiState.value.copy(isLoading = true, error = null, isRefresh = true)
 
                 val cardDetailDeferred = async { getCardDetail(GetCardDetail.Param(cardId)) }
                 val commentsDeferred = async { getCardComments(GetCardComments.Param(cardId)) }
@@ -103,61 +103,47 @@ class CardDetailViewModel @Inject constructor(
                 val cardDetailResult = cardDetailDeferred.await()
                 val commentsResult = commentsDeferred.await()
 
-                SooumLog.d(
-                    TAG,
-                    "loadCardDetail() results - cardDetail: $cardDetailResult, comments: $commentsResult"
-                )
-
                 when {
                     cardDetailResult is DomainResult.Success && commentsResult is DomainResult.Success -> {
-                        SooumLog.d(
-                            TAG,
-                            "loadCardDetail() success cardDetail: ${cardDetailResult.data}, comments: ${commentsResult.data}"
-                        )
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
                             cardDetail = cardDetailResult.data,
-                            comments = commentsResult.data
+                            comments = commentsResult.data,
+                            isRefresh = false
                         )
                     }
 
                     cardDetailResult is DomainResult.Success && commentsResult is DomainResult.Failure -> {
-                        SooumLog.w(
-                            TAG,
-                            "loadCardDetail() cardDetail success but comments failed: ${commentsResult.error}"
-                        )
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
                             cardDetail = cardDetailResult.data,
-                            comments = emptyList(), // 빈 댓글 목록으로 설정
-                            error = CardDetailError.COMMENTS_LOAD_FAILED
+                            comments = emptyList(),
+                            error = CardDetailError.COMMENTS_LOAD_FAILED,
+                            isRefresh = false
                         )
                     }
 
                     cardDetailResult is DomainResult.Failure -> {
-                        SooumLog.e(
-                            TAG,
-                            "loadCardDetail() cardDetail failed: ${cardDetailResult.error}"
-                        )
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
-                            error = CardDetailError.CARD_LOAD_FAILED
+                            error = CardDetailError.CARD_LOAD_FAILED,
+                            isRefresh = false
                         )
                     }
 
                     commentsResult is DomainResult.Failure -> {
-                        SooumLog.e(TAG, "loadCardDetail() comments failed: ${commentsResult.error}")
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
-                            error = CardDetailError.COMMENTS_LOAD_FAILED
+                            error = CardDetailError.COMMENTS_LOAD_FAILED,
+                            isRefresh = false
                         )
                     }
                 }
             } catch (e: Exception) {
-                SooumLog.e(TAG, "loadCardDetail() exception: ${e.message}")
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = CardDetailError.NETWORK_ERROR
+                    error = CardDetailError.NETWORK_ERROR,
+                    isRefresh = false
                 )
             }
         }
