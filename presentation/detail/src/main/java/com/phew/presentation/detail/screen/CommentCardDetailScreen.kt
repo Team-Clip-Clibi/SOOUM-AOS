@@ -370,26 +370,34 @@ private fun CardView(
             }
 
             else -> {
-                Column(
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(color = NeutralColor.GRAY_100)
-                        .padding(start = 16.dp, top = 16.dp, bottom = 16.dp)
+                        .weight(1f)
+                        .background(color = NeutralColor.GRAY_100),
+                    contentAlignment = Alignment.Center
                 ) {
-                    LazyRow(modifier = Modifier.fillMaxWidth()) {
-                        items(items = comments, key = { it.cardId }) { comment ->
-                            CardViewComment(
-                                contentText = comment.cardContent,
-                                thumbnailUri = comment.cardImgUrl,
-                                distance = comment.distance ?: "",
-                                createAt = TimeUtils.getRelativeTimeString(comment.createdAt),
-                                likeCnt = comment.likeCount.toString(),
-                                commentCnt = comment.commentCardCount.toString(),
-                                font = comment.font,
-                                onClick = {
-                                    onCommentClick(comment.cardId)
-                                }
-                            )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(color = NeutralColor.GRAY_100)
+                            .padding(start = 16.dp, top = 16.dp, bottom = 16.dp)
+                    ) {
+                        LazyRow(modifier = Modifier.fillMaxWidth()) {
+                            items(items = comments, key = { it.cardId }) { comment ->
+                                CardViewComment(
+                                    contentText = comment.cardContent,
+                                    thumbnailUri = comment.cardImgUrl,
+                                    distance = comment.distance ?: "",
+                                    createAt = TimeUtils.getRelativeTimeString(comment.createdAt),
+                                    likeCnt = comment.likeCount.toString(),
+                                    commentCnt = comment.commentCardCount.toString(),
+                                    font = comment.font,
+                                    onClick = {
+                                        onCommentClick(comment.cardId)
+                                    }
+                                )
+                            }
                         }
                     }
                 }
