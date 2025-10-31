@@ -488,6 +488,7 @@ object MediumButton {
         onClick: () -> Unit,
         isEnable: Boolean = true,
         fontFamily: FontFamily = FontFamily(Font(R.font.medium)),
+        textStyle: TextStyle? = null,
     ) {
         BlinkMediumButton(
             baseColor = Primary.LIGHT_1,
@@ -499,8 +500,8 @@ object MediumButton {
         ) {
             Text(
                 text = buttonText,
-                style = TextComponent.SUBTITLE_1_M_16.let { textStyle: TextStyle ->
-                    textStyle.copy(
+                style = textStyle ?: TextComponent.SUBTITLE_1_M_16.let { defaultStyle: TextStyle ->
+                    defaultStyle.copy(
                         fontFamily = fontFamily
                     )
                 },
@@ -515,6 +516,7 @@ object MediumButton {
         onClick: () -> Unit,
         isEnable: Boolean = true,
         fontFamily: FontFamily = FontFamily(Font(R.font.medium)),
+        textStyle: TextStyle? = null,
     ) {
         BlinkMediumButton(
             baseColor = NeutralColor.GRAY_200,
@@ -525,8 +527,8 @@ object MediumButton {
         ) {
             Text(
                 text = buttonText,
-                style = TextComponent.SUBTITLE_1_M_16.let { textStyle: TextStyle ->
-                    textStyle.copy(
+                style = textStyle ?: TextComponent.SUBTITLE_1_M_16.let { defaultStyle: TextStyle ->
+                    defaultStyle.copy(
                         fontFamily = fontFamily
                     )
                 },
