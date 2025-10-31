@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -324,6 +326,7 @@ private fun CardView(
             .background(color = NeutralColor.WHITE)
     ) {
         CardDetailComponent(
+            modifier = Modifier.heightIn(min = 424.dp),
             previousCommentThumbnailUri = cardDetail.previousCardImgUrl,
             cardContent = cardDetail.cardContent,
             cardThumbnailUri = cardDetail.cardImgUrl,
@@ -356,7 +359,7 @@ private fun CardView(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f)
+                        .heightIn(min = 236.dp)
                         .background(color = NeutralColor.GRAY_100),
                     contentAlignment = Alignment.Center
                 ) {
@@ -373,17 +376,21 @@ private fun CardView(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f)
+                        .heightIn(min = 236.dp)
                         .background(color = NeutralColor.GRAY_100),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.TopStart
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(color = NeutralColor.GRAY_100)
-                            .padding(start = 16.dp, top = 16.dp, bottom = 16.dp)
+                            .padding(top = 16.dp, bottom = 16.dp)
                     ) {
-                        LazyRow(modifier = Modifier.fillMaxWidth()) {
+                        LazyRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
+                        ) {
                             items(items = comments, key = { it.cardId }) { comment ->
                                 CardViewComment(
                                     contentText = comment.cardContent,
