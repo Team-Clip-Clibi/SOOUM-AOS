@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -78,6 +77,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
+import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -91,6 +94,8 @@ internal fun CommentCardDetailScreen(
     onFeedPressed: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val comments: LazyPagingItems<CardComment> = viewModel.commentsPagingData
+        .collectAsLazyPagingItems()
     val cardDetail = uiState.cardDetail
     LaunchedEffect(args.cardId) {
         SooumLog.d(TAG, "CardId : ${args.cardId}")
@@ -156,7 +161,12 @@ internal fun CommentCardDetailScreen(
     val unBlockMemberLambda = remember { { viewModel.unblockMember() } }
     val clearErrorLambda =
         remember { { viewModel.clearError() } }
-    val onRefresh = remember(args.cardId) { { viewModel.loadCardDetail(args.cardId) } }
+    val onRefresh = remember(args.cardId) {
+        {
+            viewModel.loadCardDetail(args.cardId)
+            viewModel.requestComment(args.cardId)
+        }
+    }
     HandleBlockUser(
         blockSuccess = uiState.blockSuccess,
         nickName = cardDetail.nickname,
@@ -236,9 +246,16 @@ internal fun CommentCardDetailScreen(
                     isExpire = isDelete,
                     onClickLike = onClickLikeLambda,
                     onClickCommentIcon = onWriteClickLambda,
-                    comments = uiState.comments,
+                    comments = comments,
                     onCommentClick = onCommentClickLambda,
                     onPreviousCardClick = onClickPreviousCard,
+                    playProgression = {
+                        LottieAnimation(
+                            composition = composition,
+                            progress = { refreshProgress },
+                            modifier = Modifier.size(44.dp)
+                        )
+                    }
                 )
                 PlusButton(
                     modifier = Modifier.align(Alignment.BottomEnd),
@@ -315,9 +332,10 @@ private fun CardView(
     isExpire: Boolean,
     onClickLike: () -> Unit,
     onClickCommentIcon: () -> Unit,
-    comments: List<CardComment>,
+    comments: LazyPagingItems<CardComment>,
     onCommentClick: (Long) -> Unit,
     onPreviousCardClick: () -> Unit,
+    playProgression : @Composable () -> Unit
 ) {
     Column(
         modifier = modifier
@@ -326,7 +344,7 @@ private fun CardView(
             .background(color = NeutralColor.WHITE)
     ) {
         CardDetailComponent(
-            modifier = Modifier.heightIn(min = 424.dp),
+            modifier = Modifier.weight(1f),
             previousCommentThumbnailUri = cardDetail.previousCardImgUrl,
             cardContent = cardDetail.cardContent,
             cardThumbnailUri = cardDetail.cardImgUrl,
@@ -353,65 +371,98 @@ private fun CardView(
             },
             onPreviousCardClick = onPreviousCardClick
         )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(236.dp) // 높이 고정
+                .background(color = NeutralColor.GRAY_100),
+            contentAlignment = Alignment.Center // 기본 정렬을 Center로
+        ) {
+            val loadState = comments.loadState
 
-        when {
-            comments.isEmpty() -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 236.dp)
-                        .background(color = NeutralColor.GRAY_100),
-                    contentAlignment = Alignment.Center
-                ) {
+            // Paging의 첫 로드 상태 (refresh) 확인
+            when (loadState.refresh) {
+                // (A) 로딩 중
+                is LoadState.Loading -> {
+                    playProgression()
+                }
+
+                // (B) 로드 성공
+                is LoadState.NotLoading -> {
+                    // 로드 성공 후 아이템이 0개일 때 (빈 상태)
+                    if (comments.itemCount == 0) {
+                        Text(
+                            text = stringResource(R.string.card_no_comment),
+                            style = TextComponent.BODY_1_M_14,
+                            color = NeutralColor.GRAY_400,
+                            textAlign = TextAlign.Center
+                        )
+                    } else {
+                        // (C) 아이템이 1개 이상 있을 때 (리스트 표시)
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize() // Box 안을 꽉 채움
+                                .background(color = NeutralColor.GRAY_100)
+                                .padding(top = 10.dp, bottom = 10.dp),
+                        ) {
+                            LazyRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
+                            ) {
+                                // 3. Paging 전용 items 확장 함수 사용
+                                items(
+                                    count = comments.itemCount,
+                                    key = comments.itemKey { it.cardId } // 키 설정
+                                ) { index ->
+                                    val comment = comments[index] // 인덱스로 아이템 가져오기
+
+                                    if (comment != null) {
+                                        CardViewComment(
+                                            contentText = comment.cardContent,
+                                            thumbnailUri = comment.cardImgUrl,
+                                            distance = comment.distance ?: "",
+                                            createAt = TimeUtils.getRelativeTimeString(comment.createdAt),
+                                            likeCnt = comment.likeCount.toString(),
+                                            commentCnt = comment.commentCardCount.toString(),
+                                            font = comment.font,
+                                            onClick = {
+                                                onCommentClick(comment.cardId)
+                                            }
+                                        )
+                                    } else {
+                                        // (선택 사항) Placeholder UI
+                                    }
+                                }
+
+                                // (선택 사항) 다음 페이지 로드 중일 때 인디케이터 표시
+                                if (loadState.append is LoadState.Loading) {
+                                    item {
+                                        Box(modifier = Modifier.padding(horizontal = 8.dp)) {
+                                            playProgression()
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // (D) 첫 로드 실패
+                is LoadState.Error -> {
+                    // (선택 사항) 에러 메시지 또는 재시도 버튼 표시
                     Text(
-                        text = stringResource(R.string.card_no_comment),
+                        text = "댓글을 불러오는데 실패했습니다.",
                         style = TextComponent.BODY_1_M_14,
                         color = NeutralColor.GRAY_400,
                         textAlign = TextAlign.Center
                     )
                 }
             }
-
-            else -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 236.dp)
-                        .background(color = NeutralColor.GRAY_100),
-                    contentAlignment = Alignment.TopStart
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(color = NeutralColor.GRAY_100)
-                            .padding(top = 16.dp, bottom = 16.dp)
-                    ) {
-                        LazyRow(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
-                        ) {
-                            items(items = comments, key = { it.cardId }) { comment ->
-                                CardViewComment(
-                                    contentText = comment.cardContent,
-                                    thumbnailUri = comment.cardImgUrl,
-                                    distance = comment.distance ?: "",
-                                    createAt = TimeUtils.getRelativeTimeString(comment.createdAt),
-                                    likeCnt = comment.likeCount.toString(),
-                                    commentCnt = comment.commentCardCount.toString(),
-                                    font = comment.font,
-                                    onClick = {
-                                        onCommentClick(comment.cardId)
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 }
+
 
 @Composable
 private fun BottomSheetView(
