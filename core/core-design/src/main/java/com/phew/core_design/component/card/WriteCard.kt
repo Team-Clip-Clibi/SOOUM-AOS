@@ -297,7 +297,6 @@ private fun WriteCard(
 ) {
     Card(
         modifier = modifier
-            .width(328.dp)
             .aspectRatio(1f),
         shape = RoundedCornerShape(CardDesignTokens.CardRadius),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
@@ -389,7 +388,6 @@ private fun ReplyCard(
 ) {
     Card(
         modifier = modifier
-            .width(328.dp)
             .aspectRatio(1f)
             .border(1.dp, NeutralColor.GRAY_100, RoundedCornerShape(CardDesignTokens.CardRadius)),
         shape = RoundedCornerShape(CardDesignTokens.CardRadius),

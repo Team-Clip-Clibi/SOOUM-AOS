@@ -2,6 +2,7 @@ package com.phew.presentation.detail.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.rememberPagerState
@@ -61,6 +63,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemContentType
+import androidx.paging.compose.itemKey
+import androidx.paging.compose.itemContentType
+import androidx.paging.compose.itemKey
 import com.airbnb.lottie.LottieComposition
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
@@ -119,18 +125,7 @@ internal fun CardDetailRoute(
 
     val commentsPagingItems = viewModel.commentsPagingData.collectAsLazyPagingItems()
 
-    val pagerState = rememberPagerState(
-        initialPage = 0,
-        initialPageOffsetFraction = 0f,
-        pageCount = {
-            val pagingCount = commentsPagingItems.itemCount
-            if (pagingCount > 0) {
-                pagingCount
-            } else {
-                uiState.comments.size
-            }
-        }
-    )
+
 
     var showBottomSheet by remember { mutableStateOf(false) }
     var showBlockDialog by remember { mutableStateOf(false) }
@@ -229,7 +224,6 @@ internal fun CardDetailRoute(
         commentCnt = cardDetail.commentCardCount,
         searchCnt = cardDetail.visitedCnt,
         isLikeCard = cardDetail.isLike,
-        comments = uiState.comments,
         commentsPagingItems = commentsPagingItems,
         isRefreshing = isRefreshing,
         composition = composition,
@@ -263,7 +257,6 @@ internal fun CardDetailRoute(
         deleteCard = { cardId ->
             viewModel.requestDeleteCard(cardId)
         },
-        pagerState = pagerState,
         showBottomSheet = showBottomSheet,
         onShowBottomSheetChange = { showBottomSheet = it },
         showBlockDialog = showBlockDialog,
@@ -294,7 +287,6 @@ private fun CardDetailScreen(
     commentCnt: Int,
     searchCnt: Int,
     isLikeCard: Boolean,
-    comments: List<CardComment>,
     commentsPagingItems: LazyPagingItems<CardComment>,
     isRefreshing: Boolean,
     progress: Float,
@@ -314,7 +306,6 @@ private fun CardDetailScreen(
     remainingTimeMillis: Long,
     isExpire: Boolean,
     isOwnCard: Boolean,
-    pagerState: androidx.compose.foundation.pager.PagerState,
     showBottomSheet: Boolean,
     onShowBottomSheetChange: (Boolean) -> Unit,
     showBlockDialog: Boolean,
@@ -326,7 +317,7 @@ private fun CardDetailScreen(
     density: androidx.compose.ui.unit.Density,
 ) {
 
-
+    val commentPagerHeight = 236.dp
 
     Scaffold(
         modifier = modifier,
@@ -465,84 +456,57 @@ private fun CardDetailScreen(
                     )
                 }
 
-                val hasPagingComments = commentsPagingItems.itemCount > 0
-                val hasStaticComments = comments.isNotEmpty()
-                when {
-                    hasPagingComments || hasStaticComments -> {
-                        item {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize(),
-                                contentAlignment = Alignment.Center
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(commentPagerHeight)
+                            .background(NeutralColor.GRAY_100),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (commentsPagingItems.loadState.refresh is LoadState.Loading) {
+                            CircularProgressIndicator()
+                        } else if (commentsPagingItems.itemCount == 0) {
+                            Text(
+                                text = stringResource(DetailR.string.card_no_comment),
+                                style = TextComponent.BODY_1_M_14,
+                                color = NeutralColor.GRAY_400
+                            )
+                        } else {
+                            LazyRow(
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(horizontal = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                HorizontalPager(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .background(NeutralColor.GRAY_100),
-                                    state = pagerState,
-                                    flingBehavior = PagerDefaults.flingBehavior(state = pagerState),
-                                    pageSpacing = 10.dp,
-                                    contentPadding = PaddingValues(
-                                        horizontal = 16.dp,
-                                        vertical = 10.dp
-                                    ),
-                                    pageContent = { page ->
-                                        val comment = if (hasPagingComments) {
-                                            commentsPagingItems[page]
-                                        } else {
-                                            comments.getOrNull(page)
-                                        }
-
-                                        if (comment != null) {
-                                            CardViewComment(
-                                                contentText = comment.cardContent,
-                                                thumbnailUri = comment.cardImgUrl,
-                                                distance = comment.distance ?: "",
-                                                createAt = TimeUtils.getRelativeTimeString(comment.createdAt),
-                                                likeCnt = comment.likeCount.toString(),
-                                                commentCnt = comment.commentCardCount.toString(),
-                                                font = comment.font,
-                                                onClick = {
-                                                    onClickCommentView(comment.cardId)
-                                                }
-                                            )
-                                        } else {
-                                            Box(
-                                                modifier = Modifier
-                                                    .fillMaxSize(),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                CircularProgressIndicator()
+                                items(
+                                    count = commentsPagingItems.itemCount,
+                                    key = commentsPagingItems.itemKey { it.cardId },
+                                    contentType = commentsPagingItems.itemContentType { "CardComment" }
+                                ) { index ->
+                                    val comment = commentsPagingItems[index]
+                                    if (comment != null) {
+                                        CardViewComment(
+                                            contentText = comment.cardContent,
+                                            thumbnailUri = comment.cardImgUrl,
+                                            distance = comment.distance ?: "",
+                                            createAt = TimeUtils.getRelativeTimeString(comment.createdAt),
+                                            likeCnt = comment.likeCount.toString(),
+                                            commentCnt = comment.commentCardCount.toString(),
+                                            font = comment.font,
+                                            onClick = {
+                                                onClickCommentView(comment.cardId)
                                             }
+                                        )
+                                    }
+                                }
+                                if (commentsPagingItems.loadState.append is LoadState.Loading) {
+                                    item {
+                                        Box(modifier = Modifier.fillParentMaxHeight().padding(horizontal = 16.dp)) {
+                                            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                                         }
                                     }
-                                )
-                            }
-                        }
-                    }
-
-                    commentsPagingItems.loadState.refresh is LoadState.Loading -> {
-                        item {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator()
-                            }
-                        }
-                    }
-
-                    else -> {
-                        item {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = stringResource(DetailR.string.card_no_comment),
-                                    style = TextComponent.BODY_1_M_14
-                                )
+                                }
                             }
                         }
                     }
