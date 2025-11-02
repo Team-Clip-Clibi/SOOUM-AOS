@@ -11,6 +11,9 @@ import androidx.compose.ui.unit.dp
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.R
 import android.net.Uri
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.Alignment
+
 @Composable
 fun CardDetail(
     modifier: Modifier = Modifier,
@@ -31,30 +34,37 @@ fun CardDetail(
             .padding(
                 start = 16.dp,
                 end = 20.dp,
-            )
+            ),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         header()
 
-        if (isDeleted) {
-            CardView(
-                data = BaseCardData.Deleted(
-                    reason = stringResource(R.string.card_deleted)
-                ),
-            )
-        } else {
-            CardView(
-                modifier = modifier.padding(vertical = 2.dp),
-                data = BaseCardData.Reply(
-                    previousCommentThumbnailUri = previousCommentThumbnailUri,
-                    content = cardContent,
-                    tags = cardTags,
-                    hasPreviousCommentThumbnail = previousCommentThumbnailUri?.isNotBlank() == true,
-                    thumbnailUri = cardThumbnailUri,
-                    backgroundImage = backgroundImageUrl
-                ),
-                onPreviousCardClick = onPreviousCardClick
-            )
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            if (isDeleted) {
+                CardView(
+                    data = BaseCardData.Deleted(
+                        reason = stringResource(R.string.card_deleted)
+                    ),
+                )
+            } else {
+                CardView(
+                    modifier = modifier.padding(vertical = 2.dp),
+                    data = BaseCardData.Reply(
+                        previousCommentThumbnailUri = previousCommentThumbnailUri,
+                        content = cardContent,
+                        tags = cardTags,
+                        hasPreviousCommentThumbnail = previousCommentThumbnailUri?.isNotBlank() == true,
+                        thumbnailUri = cardThumbnailUri,
+                        backgroundImage = backgroundImageUrl
+                    ),
+                    onPreviousCardClick = onPreviousCardClick
+                )
+            }
         }
+
         bottom()
     }
 }

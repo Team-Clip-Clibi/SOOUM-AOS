@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
@@ -37,6 +38,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -399,28 +401,32 @@ private fun WriteScreen(
                     .padding(horizontal = 16.dp, vertical = 8.dp)
                     .verticalScroll(scrollState)
                     .weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                CardView(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 328.dp, max = 420.dp),
-                    data = BaseCardData.Write(
-                        content = content,
-                        tags = tags,
-                        backgroundResId = activeBackgroundImageResId,
-                        backgroundUri = activeBackgroundUri,
-                        fontFamily = selectedFontFamily,
-                        placeholder = stringResource(com.phew.core_design.R.string.write_card_content_placeholder),
-                        onContentChange = onContentChange,
-                        onContentClick = onContentClick, // Add this line
-                        onAddTag = onAddTag,
-                        onRemoveTag = onRemoveTag,
-                        shouldFocusTagInput = focusTagInput,
-                        onTagFocusHandled = onTagFocusHandled,
-                        currentTagInput = currentTagInput,
-                        onTagInputChange = onTagInputChange
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ){
+                    CardView(
+                        modifier = Modifier,
+                        data = BaseCardData.Write(
+                            content = content,
+                            tags = tags,
+                            backgroundResId = activeBackgroundImageResId,
+                            backgroundUri = activeBackgroundUri,
+                            fontFamily = selectedFontFamily,
+                            placeholder = stringResource(com.phew.core_design.R.string.write_card_content_placeholder),
+                            onContentChange = onContentChange,
+                            onContentClick = onContentClick, // Add this line
+                            onAddTag = onAddTag,
+                            onRemoveTag = onRemoveTag,
+                            shouldFocusTagInput = focusTagInput,
+                            onTagFocusHandled = onTagFocusHandled,
+                            currentTagInput = currentTagInput,
+                            onTagInputChange = onTagInputChange
+                        )
                     )
-                )
+                }
 
                 BackgroundSelect(
                     modifier = Modifier.fillMaxWidth(),
@@ -437,6 +443,9 @@ private fun WriteScreen(
                     selectedFont = selectedFont,
                     onFontSelected = onFontSelected
                 )
+                
+                // 하단 여유 공간 (bottomBar와 관련 태그 영역을 위한 패딩)
+                Spacer(modifier = Modifier.height(72.dp))
             }
 
             // 관련 태그를 키보드 위에 플로팅 표시
@@ -600,7 +609,7 @@ private fun OptionButtons(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             options.forEach { option ->
                 val isDistanceOption = option.id == WriteOptions.DISTANCE_OPTION_ID

@@ -4,5 +4,5 @@
     <string name="write_screen_comment_title">댓글카드</string>
     <string name="write_screen_complete">완료</string>
     <string name="write_screen_background_section">배경</string>
-    <string name="write_screen_font_section">폰트</string>
+    <string name="write_screen_font_section">글씨체</string>
 </resources>

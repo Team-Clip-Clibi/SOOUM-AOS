@@ -77,16 +77,14 @@ class CardDetailViewModel @Inject constructor(
         }
         .cachedIn(viewModelScope)
 
-    fun requestComment(cardId: Long, latitude: Double? = null, longitude: Double? = null) {
+    fun requestComment(cardId: Long) {
         _pagingRequest.update { state ->
             if (state is PagingRequest.Ready && state.param.cardId == cardId) {
                 return@update state
             }
             PagingRequest.Ready(
                 GetCardCommentsPaging.Param(
-                    cardId = cardId,
-                    latitude = latitude,
-                    longitude = longitude
+                    cardId = cardId
                 )
             )
         }
@@ -95,6 +93,7 @@ class CardDetailViewModel @Inject constructor(
     fun loadCardDetail(cardId: Long) {
         viewModelScope.launch {
             try {
+                requestComment(cardId)
                 _uiState.value = _uiState.value.copy(isLoading = true, error = null, isRefresh = true)
 
                 val cardDetailDeferred = async { getCardDetail(GetCardDetail.Param(cardId)) }
@@ -105,57 +104,71 @@ class CardDetailViewModel @Inject constructor(
 
                 when {
                     cardDetailResult is DomainResult.Success && commentsResult is DomainResult.Success -> {
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            cardDetail = cardDetailResult.data,
-                            comments = commentsResult.data,
-                            isRefresh = false
-                        )
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                cardDetail = cardDetailResult.data,
+                                comments = commentsResult.data,
+                                isRefresh = false
+                            )
+                        }
                     }
 
                     cardDetailResult is DomainResult.Success && commentsResult is DomainResult.Failure -> {
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            cardDetail = cardDetailResult.data,
-                            comments = emptyList(),
-                            error = CardDetailError.COMMENTS_LOAD_FAILED,
-                            isRefresh = false
-                        )
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                cardDetail = cardDetailResult.data,
+                                comments = emptyList(),
+                                error = CardDetailError.COMMENTS_LOAD_FAILED,
+                                isRefresh = false
+                            )
+                        }
                     }
 
                     cardDetailResult is DomainResult.Failure -> {
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            error = CardDetailError.CARD_LOAD_FAILED,
-                            isRefresh = false
-                        )
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                error = CardDetailError.CARD_LOAD_FAILED,
+                                isRefresh = false
+                            )
+                        }
                     }
 
                     commentsResult is DomainResult.Failure -> {
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            error = CardDetailError.COMMENTS_LOAD_FAILED,
-                            isRefresh = false
-                        )
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                error = CardDetailError.COMMENTS_LOAD_FAILED,
+                                isRefresh = false
+                            )
+                        }
                     }
                 }
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = CardDetailError.NETWORK_ERROR,
-                    isRefresh = false
-                )
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = CardDetailError.NETWORK_ERROR,
+                        isRefresh = false
+                    )
+                }
             }
         }
     }
 
     fun toggleLike(cardId: Long) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLikeLoading = true)
+            _uiState.update {
+                it.copy(isLikeLoading = true)
+            }
 
             val currentDetail = _uiState.value.cardDetail
             if (currentDetail == null) {
-                _uiState.value = _uiState.value.copy(isLikeLoading = false)
+                _uiState.update {
+                    it.copy(isLikeLoading = false)
+                }
                 return@launch
             }
 
@@ -175,17 +188,21 @@ class CardDetailViewModel @Inject constructor(
                             currentDetail.likeCount + 1
                         }
                     )
-                    _uiState.value = _uiState.value.copy(
-                        cardDetail = updatedDetail,
-                        isLikeLoading = false
-                    )
+                    _uiState.update {
+                        it.copy(
+                            cardDetail = updatedDetail,
+                            isLikeLoading = false
+                        )
+                    }
                 }
 
                 is DomainResult.Failure -> {
-                    _uiState.value = _uiState.value.copy(
-                        isLikeLoading = false,
-                        error = CardDetailError.NETWORK_ERROR
-                    )
+                    _uiState.update {
+                        it.copy(
+                            isLikeLoading = false,
+                            error = CardDetailError.NETWORK_ERROR
+                        )
+                    }
                 }
             }
         }
@@ -193,25 +210,31 @@ class CardDetailViewModel @Inject constructor(
 
     fun blockMember(toMemberId: Long, nickname: String) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isBlockLoading = true)
+            _uiState.update {
+                it.copy(isBlockLoading = true)
+            }
 
             val result = blockMember(BlockMember.Param(toMemberId))
 
             when (result) {
                 is DomainResult.Success -> {
-                    _uiState.value = _uiState.value.copy(
-                        isBlockLoading = false,
-                        blockSuccess = true,
-                        blockedMemberId = toMemberId,
-                        blockedNickname = nickname
-                    )
+                    _uiState.update {
+                        it.copy(
+                            isBlockLoading = false,
+                            blockSuccess = true,
+                            blockedMemberId = toMemberId,
+                            blockedNickname = nickname
+                        )
+                    }
                 }
 
                 is DomainResult.Failure -> {
-                    _uiState.value = _uiState.value.copy(
-                        isBlockLoading = false,
-                        error = CardDetailError.NETWORK_ERROR
-                    )
+                    _uiState.update {
+                        it.copy(
+                            isBlockLoading = false,
+                            error = CardDetailError.NETWORK_ERROR
+                        )
+                    }
                 }
             }
         }
@@ -225,17 +248,21 @@ class CardDetailViewModel @Inject constructor(
 
             when (result) {
                 is DomainResult.Success -> {
-                    _uiState.value = _uiState.value.copy(
-                        blockedMemberId = null,
-                        blockedNickname = null,
-                        blockSuccess = false
-                    )
+                    _uiState.update {
+                        it.copy(
+                            blockedMemberId = null,
+                            blockedNickname = null,
+                            blockSuccess = false
+                        )
+                    }
                 }
 
                 is DomainResult.Failure -> {
-                    _uiState.value = _uiState.value.copy(
-                        error = CardDetailError.NETWORK_ERROR
-                    )
+                    _uiState.update {
+                        it.copy(
+                            error = CardDetailError.NETWORK_ERROR
+                        )
+                    }
                 }
             }
         }
@@ -264,11 +291,15 @@ class CardDetailViewModel @Inject constructor(
     }
 
     fun clearError() {
-        _uiState.value = _uiState.value.copy(error = null)
+        _uiState.update {
+            it.copy(error = null)
+        }
     }
 
     fun clearBlockSuccess() {
-        _uiState.value = _uiState.value.copy(blockSuccess = false)
+        _uiState.update {
+            it.copy(blockSuccess = false)
+        }
     }
 
     fun deleteEventHandle() {

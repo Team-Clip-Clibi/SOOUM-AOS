@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -128,7 +130,7 @@ sealed class BaseCardData(open val id: String, open val type: CardType) {
         val hasPreviousCommentThumbnail: Boolean = false,
         val thumbnailUri: String = "",
         override val id: String = "",
-        val backgroundImage : Uri ? = null
+        val backgroundImage: Uri? = null
     ) : BaseCardData(id, CardType.REPLY)
 
     data class Deleted(
@@ -136,14 +138,6 @@ sealed class BaseCardData(open val id: String, open val type: CardType) {
         override val id: String = ""
     ) : BaseCardData(id, CardType.DELETED)
 }
-
-data class WriteCardData(
-    val content: String,
-    val tags: List<String> = emptyList(),
-    val showAddButton: Boolean = true,
-    val hasThumbnail: Boolean = false,
-    val id: String = ""
-)
 
 @Composable
 fun CardView(
@@ -285,6 +279,7 @@ private fun ReadOnlyContentBox(
             contentAlignment = Alignment.Center
         ) {
             Text(
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp),
                 text = content.ifBlank { " " },
                 style = TextComponent.BODY_1_M_14.copy(color = CardDesignTokens.TextPrimary),
                 maxLines = Int.MAX_VALUE,
@@ -300,11 +295,12 @@ private fun WriteCard(
     data: BaseCardData.Write,
     modifier: Modifier = Modifier
 ) {
-    BaseCard(
-        modifier = modifier.fillMaxWidth(),
-        backgroundColor = Color.Transparent,
-        elevation = 0.dp,
-        minimumHeight = 328.dp
+    Card(
+        modifier = modifier
+            .aspectRatio(1f),
+        shape = RoundedCornerShape(CardDesignTokens.CardRadius),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             val backgroundModifier = Modifier
@@ -336,50 +332,48 @@ private fun WriteCard(
                     )
                 }
             }
-
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color.Transparent)
             ) {
-                // 상단 여백
-                Spacer(modifier = Modifier.weight(1f))
-
-                // 중앙 컨텐츠 영역
-                EditableWriteContentBox(
-                    modifier = Modifier.fillMaxWidth(),
-                    content = data.content,
-                    placeholder = data.placeholder,
-                    onContentChange = data.onContentChange,
-                    onContentClick = data.onContentClick,
-                    fontFamily = data.fontFamily
-                )
-
-                // 중간 여백 (태그와 컨텐츠 사이)
-                Spacer(modifier = Modifier.weight(1f))
+                // 중앙 컨텐츠 영역 - Box로 중앙 정렬
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.Center),
+                    contentAlignment = Alignment.Center
+                ) {
+                    EditableWriteContentBox(
+                        modifier = Modifier.fillMaxWidth(),
+                        content = data.content,
+                        placeholder = data.placeholder,
+                        onContentChange = data.onContentChange,
+                        onContentClick = data.onContentClick,
+                        fontFamily = data.fontFamily
+                    )
+                }
 
                 // 하단 태그 영역
                 if (data.tags.isNotEmpty() || data.showAddButton) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(60.dp),
+                            .height(60.dp)
+                            .align(Alignment.BottomCenter),
                         contentAlignment = Alignment.Center
                     ) {
-                    TagRow(
-                        tags = data.tags,
-                        enableAdd = data.showAddButton,
-                        onAdd = data.onAddTag,
-                        onRemove = data.onRemoveTag,
-                        shouldFocus = data.shouldFocusTagInput,
-                        onFocusHandled = data.onTagFocusHandled,
-                        currentInput = data.currentTagInput,
-                        onInputChange = data.onTagInputChange
-                    )
-                }
-            } else {
-                    // 태그가 없을 때도 동일한 높이 유지
-                    Spacer(modifier = Modifier.height(60.dp))
+                        TagRow(
+                            tags = data.tags,
+                            enableAdd = data.showAddButton,
+                            onAdd = data.onAddTag,
+                            onRemove = data.onRemoveTag,
+                            shouldFocus = data.shouldFocusTagInput,
+                            onFocusHandled = data.onTagFocusHandled,
+                            currentInput = data.currentTagInput,
+                            onInputChange = data.onTagInputChange
+                        )
+                    }
                 }
             }
         }
@@ -392,9 +386,13 @@ private fun ReplyCard(
     modifier: Modifier = Modifier,
     onPreviewCard: () -> Unit,
 ) {
-    BaseCard(
-        modifier = modifier.height(328.dp),
-        backgroundColor = CardDesignTokens.CardBackgroundCyan
+    Card(
+        modifier = modifier
+            .aspectRatio(1f)
+            .border(1.dp, NeutralColor.GRAY_100, RoundedCornerShape(CardDesignTokens.CardRadius)),
+        shape = RoundedCornerShape(CardDesignTokens.CardRadius),
+        colors = CardDefaults.cardColors(containerColor = CardDesignTokens.CardBackgroundCyan),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             val backgroundModifier = Modifier
@@ -402,9 +400,9 @@ private fun ReplyCard(
                 .clip(RoundedCornerShape(CardDesignTokens.CardRadius))
 
             when {
-                data.backgroundImage != null -> {
+                data.thumbnailUri.isNotEmpty() -> {
                     AsyncImage(
-                        model = data.backgroundImage,
+                        model = data.thumbnailUri,
                         contentDescription = "background image",
                         contentScale = ContentScale.Crop,
                         modifier = backgroundModifier
@@ -418,16 +416,14 @@ private fun ReplyCard(
                 }
             }
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-            ) {
+            Box(modifier = Modifier.fillMaxSize()) {
                 // 이전 댓글 썸네일 영역 (상단)
                 if (data.hasPreviousCommentThumbnail) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(10.dp)
+                            .align(Alignment.TopStart)
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null,
@@ -468,38 +464,37 @@ private fun ReplyCard(
                     }
                 }
 
-                // 상단 여백
-                Spacer(modifier = Modifier.weight(1f))
-
-                // 중앙 컨텐츠 영역
-                ReadOnlyContentBox(
-                    modifier = Modifier.fillMaxWidth(),
-                    content = data.content,
-                )
-
-                // 중간 여백 (태그와 컨텐츠 사이)
-                Spacer(modifier = Modifier.weight(1f))
+                // 중앙 컨텐츠 영역 - Box로 중앙 정렬
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.Center),
+                    contentAlignment = Alignment.Center
+                ) {
+                    ReadOnlyContentBox(
+                        modifier = Modifier.fillMaxWidth(),
+                        content = data.content,
+                        )
+                }
 
                 // 하단 태그 영역
                 if (data.tags.isNotEmpty()) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(60.dp),
+                            .height(60.dp)
+                            .align(Alignment.BottomCenter),
                         contentAlignment = Alignment.Center
                     ) {
                         TagRow(
                             tags = data.tags,
                             enableAdd = false,
-                            onAdd = {},
-                            onRemove = {},
+                            onAdd = { },
+                            onRemove = { },
                             currentInput = "",
                             onInputChange = {}
                         )
                     }
-                } else {
-                    // 태그가 없을 때도 동일한 높이 유지
-                    Spacer(modifier = Modifier.height(60.dp))
                 }
             }
         }

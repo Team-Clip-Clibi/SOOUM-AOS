@@ -3,6 +3,7 @@ package com.phew.presentation.write.screen.component
 import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -54,8 +55,7 @@ internal fun FilteredImageGrid(
 ) {
     Column(
         modifier = modifier
-            .fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+            .fillMaxWidth()
     ) {
         SooumFilter(
             modifier = Modifier.fillMaxWidth(),
@@ -111,7 +111,9 @@ fun ImageGrid(
         val chunkedImages = displayImages.chunked(columns)
 
         Column(
-            modifier.clip(RoundedCornerShape(12.dp))
+            modifier
+                .clip(RoundedCornerShape(12.dp))
+                .border(1.dp, NeutralColor.GRAY_200, RoundedCornerShape(12.dp))
         ) {
             chunkedImages.forEachIndexed { rowIndex, rowImages ->
                 Row(
@@ -172,6 +174,13 @@ fun GridImageItem(
         )
 
         if (isSelected) {
+            // Black overlay with 30% opacity
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(NeutralColor.BLACK.copy(alpha = 0.3f))
+            )
+            
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
@@ -207,7 +216,7 @@ private fun CameraGridItem(
             painter = painterResource(R.drawable.ic_camera_filled),
             contentDescription = "카메라",
             tint = NeutralColor.GRAY_400,
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(24.dp)
         )
     }
 }

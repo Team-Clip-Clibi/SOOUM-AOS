@@ -37,6 +37,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import androidx.core.net.toUri
 
 @HiltViewModel
 class WriteViewModel @Inject constructor(
@@ -513,10 +514,30 @@ private fun requestCameraImageForBackground() {
             try {
                 when (val result = getCardDefaultImage()) {
                     is DomainResult.Success -> {
-                        _uiState.update {
-                            it.copy(
+                        _uiState.update { state ->
+                            val newState = state.copy(
                                 cardDefaultImagesByCategory = result.data.defaultImages
                             )
+                            
+                            // COLOR 카테고리의 첫 번째 이미지를 자동으로 선택
+                            val colorCategoryImages = result.data.defaultImages["COLOR"]
+                            val firstColorImage = colorCategoryImages?.firstOrNull()
+                            
+                            if (firstColorImage != null && state.selectedDefaultImageName == null) {
+                                val uri = try {
+                                    firstColorImage.url.toUri()
+                                } catch (e: Exception) {
+                                    null
+                                }
+                                newState.copy(
+                                    activeBackgroundUri = uri,
+                                    activeBackgroundResId = null,
+                                    selectedDefaultImageName = firstColorImage.imageName,
+                                    selectedBackgroundFilter = "컬러"  // 필터도 컬러로 설정
+                                )
+                            } else {
+                                newState
+                            }
                         }
                         SooumLog.d(TAG, "loadCardDefaultImages() success: ${result.data.defaultImages.size} categories loaded")
                     }
