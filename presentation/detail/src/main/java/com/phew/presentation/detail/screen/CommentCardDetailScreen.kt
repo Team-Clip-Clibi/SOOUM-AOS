@@ -100,6 +100,7 @@ internal fun CommentCardDetailScreen(
     LaunchedEffect(args.cardId) {
         SooumLog.d(TAG, "CardId : ${args.cardId}")
         viewModel.loadCardDetail(args.cardId)
+        viewModel.requestComment(args.cardId)
     }
     val isRefreshing by remember(uiState.isLoading) {
         derivedStateOf { uiState.isLoading }
@@ -335,7 +336,7 @@ private fun CardView(
     comments: LazyPagingItems<CardComment>,
     onCommentClick: (Long) -> Unit,
     onPreviousCardClick: () -> Unit,
-    playProgression : @Composable () -> Unit
+    playProgression: @Composable () -> Unit
 ) {
     Column(
         modifier = modifier
@@ -374,50 +375,47 @@ private fun CardView(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(236.dp) // 높이 고정
+                .height(236.dp)
                 .background(color = NeutralColor.GRAY_100),
-            contentAlignment = Alignment.Center // 기본 정렬을 Center로
+            contentAlignment = Alignment.Center
         ) {
             val loadState = comments.loadState
-
-            // Paging의 첫 로드 상태 (refresh) 확인
             when (loadState.refresh) {
-                // (A) 로딩 중
                 is LoadState.Loading -> {
                     playProgression()
                 }
 
-                // (B) 로드 성공
                 is LoadState.NotLoading -> {
-                    // 로드 성공 후 아이템이 0개일 때 (빈 상태)
-                    if (comments.itemCount == 0) {
-                        Text(
-                            text = stringResource(R.string.card_no_comment),
-                            style = TextComponent.BODY_1_M_14,
-                            color = NeutralColor.GRAY_400,
-                            textAlign = TextAlign.Center
-                        )
-                    } else {
-                        // (C) 아이템이 1개 이상 있을 때 (리스트 표시)
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize() // Box 안을 꽉 채움
-                                .background(color = NeutralColor.GRAY_100)
-                                .padding(top = 10.dp, bottom = 10.dp),
-                        ) {
-                            LazyRow(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
-                            ) {
-                                // 3. Paging 전용 items 확장 함수 사용
-                                items(
-                                    count = comments.itemCount,
-                                    key = comments.itemKey { it.cardId } // 키 설정
-                                ) { index ->
-                                    val comment = comments[index] // 인덱스로 아이템 가져오기
+                    when (comments.itemCount) {
+                        0 -> {
+                            Text(
+                                text = stringResource(R.string.card_no_comment),
+                                style = TextComponent.BODY_1_M_14,
+                                color = NeutralColor.GRAY_400,
+                                textAlign = TextAlign.Center
+                            )
+                        }
 
-                                    if (comment != null) {
+                        else -> {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(color = NeutralColor.GRAY_100)
+                                    .padding(top = 10.dp, bottom = 10.dp),
+                            ) {
+                                LazyRow(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
+                                ) {
+                                    items(
+                                        count = comments.itemCount,
+                                        key = comments.itemKey { it.cardId }
+                                    ) { index ->
+                                        val comment = comments[index]
+                                        if (comment == null) {
+                                            return@items
+                                        }
                                         CardViewComment(
                                             contentText = comment.cardContent,
                                             thumbnailUri = comment.cardImgUrl,
@@ -430,16 +428,12 @@ private fun CardView(
                                                 onCommentClick(comment.cardId)
                                             }
                                         )
-                                    } else {
-                                        // (선택 사항) Placeholder UI
                                     }
-                                }
-
-                                // (선택 사항) 다음 페이지 로드 중일 때 인디케이터 표시
-                                if (loadState.append is LoadState.Loading) {
-                                    item {
-                                        Box(modifier = Modifier.padding(horizontal = 8.dp)) {
-                                            playProgression()
+                                    if (loadState.append is LoadState.Loading) {
+                                        item {
+                                            Box(modifier = Modifier.padding(horizontal = 8.dp)) {
+                                                playProgression()
+                                            }
                                         }
                                     }
                                 }
@@ -448,11 +442,9 @@ private fun CardView(
                     }
                 }
 
-                // (D) 첫 로드 실패
                 is LoadState.Error -> {
-                    // (선택 사항) 에러 메시지 또는 재시도 버튼 표시
                     Text(
-                        text = "댓글을 불러오는데 실패했습니다.",
+                        text = stringResource(R.string.card_error_comment),
                         style = TextComponent.BODY_1_M_14,
                         color = NeutralColor.GRAY_400,
                         textAlign = TextAlign.Center

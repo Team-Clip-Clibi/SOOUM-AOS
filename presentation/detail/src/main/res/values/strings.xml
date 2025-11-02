@@ -2,6 +2,7 @@
 <resources>
     <string name="card_detail_bottom_search">조회</string>
     <string name="card_no_comment">첫 댓글을 남겨보세요</string>
+    <string name="card_error_comment">댓글을 불러오는데 실패했습니다.</string>
     <string name="card_title_comment">댓글</string>
     <string name="card_detail_block">차단하기</string>
     <string name="card_detail_report">신고하기</string>
