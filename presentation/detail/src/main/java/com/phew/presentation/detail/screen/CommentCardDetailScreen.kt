@@ -12,12 +12,12 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
@@ -340,12 +340,12 @@ private fun CardView(
 ) {
     Column(
         modifier = modifier
-            .fillMaxSize()
+            .fillMaxWidth()
             .verticalScroll(rememberScrollState())
             .background(color = NeutralColor.WHITE)
     ) {
         CardDetailComponent(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.fillMaxSize().heightIn(424.dp),
             previousCommentThumbnailUri = cardDetail.previousCardImgUrl,
             cardContent = cardDetail.cardContent,
             cardThumbnailUri = cardDetail.cardImgUrl,
@@ -374,10 +374,10 @@ private fun CardView(
         )
         Box(
             modifier = Modifier
+                .weight(1f)
                 .fillMaxWidth()
-                .height(236.dp)
                 .background(color = NeutralColor.GRAY_100),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             val loadState = comments.loadState
             when (loadState.refresh) {
@@ -400,8 +400,10 @@ private fun CardView(
                             Column(
                                 modifier = Modifier
                                     .fillMaxSize()
+                                    .heightIn(236.dp)
                                     .background(color = NeutralColor.GRAY_100)
                                     .padding(top = 10.dp, bottom = 10.dp),
+                                verticalArrangement = Arrangement.Center
                             ) {
                                 LazyRow(
                                     modifier = Modifier.fillMaxWidth(),
