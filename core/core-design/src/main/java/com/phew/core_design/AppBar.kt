@@ -190,7 +190,11 @@ object AppBar {
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .clickable { startClick() },
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = { startClick() }
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
