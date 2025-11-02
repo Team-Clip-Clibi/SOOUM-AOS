@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -425,85 +426,110 @@ private fun CardDetailScreen(
                         }
                     },
                 state = lazyListState,
-                contentPadding = PaddingValues(bottom = 96.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 item {
-                    CardDetail(
-                        previousCommentThumbnailUri = previousCommentThumbnailUri,
-                        cardContent = cardContent,
-                        cardThumbnailUri = cardThumbnailUri,
-                        cardTags = cardTags,
-                        isDeleted = isExpire,
-                        header = {
-                            CardDetailHeader(
-                                profileUri = profileUri,
-                                nickName = nickName,
-                                distance = distance,
-                                createAt = createAt
-                            )
-                        },
-                        bottom = {
-                            CardDetailBottom(
-                                likeCnt = likeCnt,
-                                commentCnt = commentCnt,
-                                searchCnt = searchCnt,
-                                isLikeCard = isLikeCard,
-                                onClickLike = onClickLike,
-                                onClickComment = onClickCommentIcon
+                    Column(
+                        modifier = Modifier
+                            .fillParentMaxHeight()
+                            .fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .weight(1.4f)
+                                .fillMaxWidth()
+                                .verticalScroll(rememberScrollState())
+                        ) {
+                            CardDetail(
+                                previousCommentThumbnailUri = previousCommentThumbnailUri,
+                                cardContent = cardContent,
+                                cardThumbnailUri = cardThumbnailUri,
+                                cardTags = cardTags,
+                                isDeleted = isExpire,
+                                header = {
+                                    CardDetailHeader(
+                                        profileUri = profileUri,
+                                        nickName = nickName,
+                                        distance = distance,
+                                        createAt = createAt
+                                    )
+                                },
+                                bottom = {
+                                    CardDetailBottom(
+                                        likeCnt = likeCnt,
+                                        commentCnt = commentCnt,
+                                        searchCnt = searchCnt,
+                                        isLikeCard = isLikeCard,
+                                        onClickLike = onClickLike,
+                                        onClickComment = onClickCommentIcon
+                                    )
+                                }
                             )
                         }
-                    )
-                }
 
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(commentPagerHeight)
-                            .background(NeutralColor.GRAY_100),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (commentsPagingItems.loadState.refresh is LoadState.Loading) {
-                            CircularProgressIndicator()
-                        } else if (commentsPagingItems.itemCount == 0) {
-                            Text(
-                                text = stringResource(DetailR.string.card_no_comment),
-                                style = TextComponent.BODY_1_M_14,
-                                color = NeutralColor.GRAY_400
-                            )
-                        } else {
-                            LazyRow(
-                                modifier = Modifier.fillMaxSize(),
-                                contentPadding = PaddingValues(horizontal = 16.dp),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                items(
-                                    count = commentsPagingItems.itemCount,
-                                    key = commentsPagingItems.itemKey { it.cardId },
-                                    contentType = commentsPagingItems.itemContentType { "CardComment" }
-                                ) { index ->
-                                    val comment = commentsPagingItems[index]
-                                    if (comment != null) {
-                                        CardViewComment(
-                                            contentText = comment.cardContent,
-                                            thumbnailUri = comment.cardImgUrl,
-                                            distance = comment.distance ?: "",
-                                            createAt = TimeUtils.getRelativeTimeString(comment.createdAt),
-                                            likeCnt = comment.likeCount.toString(),
-                                            commentCnt = comment.commentCardCount.toString(),
-                                            font = comment.font,
-                                            onClick = {
-                                                onClickCommentView(comment.cardId)
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
+                                .background(NeutralColor.GRAY_100),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (commentsPagingItems.loadState.refresh is LoadState.Loading) {
+                                CircularProgressIndicator()
+                            } else if (commentsPagingItems.itemCount == 0) {
+                                Text(
+                                    text = stringResource(DetailR.string.card_no_comment),
+                                    style = TextComponent.BODY_1_M_14,
+                                    color = NeutralColor.GRAY_400
+                                )
+                            } else {
+                                LazyRow(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentPadding = PaddingValues(
+                                        horizontal = 16.dp, 
+                                        vertical = 10.dp
+                                    ),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    items(
+                                        count = commentsPagingItems.itemCount,
+                                        key = commentsPagingItems.itemKey { it.cardId },
+                                        contentType = commentsPagingItems.itemContentType { "CardComment" }
+                                    ) { index ->
+                                        val comment = commentsPagingItems[index]
+                                        if (comment != null) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillParentMaxHeight()
+                                                    .aspectRatio(1f)
+                                            ) {
+                                                CardViewComment(
+                                                    contentText = comment.cardContent,
+                                                    thumbnailUri = comment.cardImgUrl,
+                                                    distance = comment.distance ?: "",
+                                                    createAt = TimeUtils.getRelativeTimeString(comment.createdAt),
+                                                    likeCnt = comment.likeCount.toString(),
+                                                    commentCnt = comment.commentCardCount.toString(),
+                                                    font = comment.font,
+                                                    onClick = {
+                                                        onClickCommentView(comment.cardId)
+                                                    }
+                                                )
                                             }
-                                        )
+                                        }
                                     }
-                                }
-                                if (commentsPagingItems.loadState.append is LoadState.Loading) {
-                                    item {
-                                        Box(modifier = Modifier.fillParentMaxHeight().padding(horizontal = 16.dp)) {
-                                            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                                    if (commentsPagingItems.loadState.append is LoadState.Loading) {
+                                        item {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillParentMaxHeight()
+                                                    .padding(horizontal = 16.dp)
+                                            ) {
+                                                CircularProgressIndicator(
+                                                    modifier = Modifier.align(Alignment.Center)
+                                                )
+                                            }
                                         }
                                     }
                                 }

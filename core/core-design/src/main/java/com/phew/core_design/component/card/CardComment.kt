@@ -70,7 +70,7 @@ private fun CardViewCommentImpl(
 
     Surface(
         modifier = Modifier
-            .size(211.dp)
+            .fillMaxSize()
             .border(
                 width = 1.dp,
                 color = NeutralColor.GRAY_100,
@@ -93,10 +93,12 @@ private fun CardViewCommentImpl(
                 ),
         ) {
             BodyContent(
+                modifier = Modifier.weight(1f),
                 contentText = contentText,
                 imgUrl = thumbnailUri,
                 fontFamily = resolveFontFamily(font = font),
-                textMaxLines = 4
+                textMaxLines = 4,
+                useFixedHeight = false
             )
 
             BottomContent(

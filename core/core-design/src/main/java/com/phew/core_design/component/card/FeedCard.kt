@@ -278,12 +278,19 @@ internal fun BodyContent(
     contentText: String = "",
     imgUrl: String = "",
     fontFamily: FontFamily,
-    textMaxLines: Int
+    textMaxLines: Int,
+    useFixedHeight: Boolean = true
 ) {
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(177.dp)
+            .then(
+                if (useFixedHeight) {
+                    Modifier.height(177.dp)
+                } else {
+                    Modifier.fillMaxWidth()
+                }
+            )
     ) {
         AsyncImage(
             model = imgUrl,

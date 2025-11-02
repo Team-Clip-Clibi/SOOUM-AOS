@@ -6,9 +6,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -325,7 +328,6 @@ private fun TopLayout(
     }
 }
 
-
 @Composable
 private fun CardView(
     modifier: Modifier,
@@ -340,38 +342,43 @@ private fun CardView(
 ) {
     Column(
         modifier = modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
+            .fillMaxSize()
             .background(color = NeutralColor.WHITE)
     ) {
-        CardDetailComponent(
-            modifier = Modifier.fillMaxSize().heightIn(424.dp),
-            previousCommentThumbnailUri = cardDetail.previousCardImgUrl,
-            cardContent = cardDetail.cardContent,
-            cardThumbnailUri = cardDetail.cardImgUrl,
-            cardTags = cardDetail.tags.map { data -> data.name },
-            isDeleted = isExpire,
-            backgroundImageUrl = cardDetail.cardImgUrl.toUri(),
-            header = {
-                CardDetailHeader(
-                    profileUri = cardDetail.profileImgUrl ?: "",
-                    nickName = cardDetail.nickname,
-                    distance = cardDetail.distance ?: "",
-                    createAt = cardDetail.createdAt
-                )
-            },
-            bottom = {
-                CardDetailBottom(
-                    likeCnt = cardDetail.likeCount,
-                    commentCnt = cardDetail.commentCardCount,
-                    searchCnt = cardDetail.visitedCnt,
-                    isLikeCard = cardDetail.isLike,
-                    onClickLike = onClickLike,
-                    onClickComment = onClickCommentIcon
-                )
-            },
-            onPreviousCardClick = onPreviousCardClick
-        )
+        Column(
+            modifier = Modifier
+                .weight(1.4f)
+                .verticalScroll(rememberScrollState())
+        ) {
+            CardDetailComponent(
+                modifier = Modifier.fillMaxWidth(),
+                previousCommentThumbnailUri = cardDetail.previousCardImgUrl,
+                cardContent = cardDetail.cardContent,
+                cardThumbnailUri = cardDetail.cardImgUrl,
+                cardTags = cardDetail.tags.map { data -> data.name },
+                isDeleted = isExpire,
+                backgroundImageUrl = cardDetail.cardImgUrl.toUri(),
+                header = {
+                    CardDetailHeader(
+                        profileUri = cardDetail.profileImgUrl ?: "",
+                        nickName = cardDetail.nickname,
+                        distance = cardDetail.distance ?: "",
+                        createAt = cardDetail.createdAt
+                    )
+                },
+                bottom = {
+                    CardDetailBottom(
+                        likeCnt = cardDetail.likeCount,
+                        commentCnt = cardDetail.commentCardCount,
+                        searchCnt = cardDetail.visitedCnt,
+                        isLikeCard = cardDetail.isLike,
+                        onClickLike = onClickLike,
+                        onClickComment = onClickCommentIcon
+                    )
+                },
+                onPreviousCardClick = onPreviousCardClick
+            )
+        }
         Box(
             modifier = Modifier
                 .weight(1f)
@@ -400,7 +407,6 @@ private fun CardView(
                             Column(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .heightIn(236.dp)
                                     .background(color = NeutralColor.GRAY_100)
                                     .padding(top = 10.dp, bottom = 10.dp),
                                 verticalArrangement = Arrangement.Center
@@ -418,18 +424,24 @@ private fun CardView(
                                         if (comment == null) {
                                             return@items
                                         }
-                                        CardViewComment(
-                                            contentText = comment.cardContent,
-                                            thumbnailUri = comment.cardImgUrl,
-                                            distance = comment.distance ?: "",
-                                            createAt = TimeUtils.getRelativeTimeString(comment.createdAt),
-                                            likeCnt = comment.likeCount.toString(),
-                                            commentCnt = comment.commentCardCount.toString(),
-                                            font = comment.font,
-                                            onClick = {
-                                                onCommentClick(comment.cardId)
-                                            }
-                                        )
+                                        Box(
+                                            modifier = Modifier
+                                                .fillParentMaxHeight()
+                                                .aspectRatio(1f)
+                                        ) {
+                                            CardViewComment(
+                                                contentText = comment.cardContent,
+                                                thumbnailUri = comment.cardImgUrl,
+                                                distance = comment.distance ?: "",
+                                                createAt = TimeUtils.getRelativeTimeString(comment.createdAt),
+                                                likeCnt = comment.likeCount.toString(),
+                                                commentCnt = comment.commentCardCount.toString(),
+                                                font = comment.font,
+                                                onClick = {
+                                                    onCommentClick(comment.cardId)
+                                                }
+                                            )
+                                        }
                                     }
                                     if (loadState.append is LoadState.Loading) {
                                         item {
