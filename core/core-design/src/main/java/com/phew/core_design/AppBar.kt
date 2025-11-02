@@ -190,7 +190,11 @@ object AppBar {
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .clickable { startClick() },
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = { startClick() }
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -209,7 +213,11 @@ object AppBar {
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .clickable { endClick() },
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = { endClick() }
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -293,14 +301,19 @@ object AppBar {
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .padding(12.dp)
-                    .clickable { onClick() },
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = { onClick() }
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     painter = painterResource(image),
-                    contentDescription = "back",
-                    tint = NeutralColor.BLACK
+                    contentDescription = "back icon",
+                    modifier = Modifier
+                        .size(24.dp)
+                        .padding(6.dp)
                 )
             }
 

@@ -38,6 +38,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -400,28 +401,32 @@ private fun WriteScreen(
                     .padding(horizontal = 16.dp, vertical = 8.dp)
                     .verticalScroll(scrollState)
                     .weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                CardView(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 328.dp, max = 420.dp),
-                    data = BaseCardData.Write(
-                        content = content,
-                        tags = tags,
-                        backgroundResId = activeBackgroundImageResId,
-                        backgroundUri = activeBackgroundUri,
-                        fontFamily = selectedFontFamily,
-                        placeholder = stringResource(com.phew.core_design.R.string.write_card_content_placeholder),
-                        onContentChange = onContentChange,
-                        onContentClick = onContentClick, // Add this line
-                        onAddTag = onAddTag,
-                        onRemoveTag = onRemoveTag,
-                        shouldFocusTagInput = focusTagInput,
-                        onTagFocusHandled = onTagFocusHandled,
-                        currentTagInput = currentTagInput,
-                        onTagInputChange = onTagInputChange
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ){
+                    CardView(
+                        modifier = Modifier,
+                        data = BaseCardData.Write(
+                            content = content,
+                            tags = tags,
+                            backgroundResId = activeBackgroundImageResId,
+                            backgroundUri = activeBackgroundUri,
+                            fontFamily = selectedFontFamily,
+                            placeholder = stringResource(com.phew.core_design.R.string.write_card_content_placeholder),
+                            onContentChange = onContentChange,
+                            onContentClick = onContentClick, // Add this line
+                            onAddTag = onAddTag,
+                            onRemoveTag = onRemoveTag,
+                            shouldFocusTagInput = focusTagInput,
+                            onTagFocusHandled = onTagFocusHandled,
+                            currentTagInput = currentTagInput,
+                            onTagInputChange = onTagInputChange
+                        )
                     )
-                )
+                }
 
                 BackgroundSelect(
                     modifier = Modifier.fillMaxWidth(),

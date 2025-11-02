@@ -51,7 +51,7 @@ internal fun FontSelectorGrid(
                         FontType.PRETENDARD, null -> {
                             // 기본 스타일: subtitle1_m_16 (16sp, Medium, 150% 행간, -2.5% 자간)
                             TextComponent.SUBTITLE_1_M_16.copy(
-                                fontFamily = font.previewTypeface ?: FontFamily(Font(R.font.medium))
+                                fontFamily = font.previewTypeface ?: FontFamily(Font(R.font.extra_bold))
                             )
                         }
                     }

@@ -32,14 +32,6 @@ fun NavHostController.navigateToDetailGraph(
     this.navigate(DETAIL_GRAPH.asNavArg(cardDetailArgs), navOptions)
 }
 
-fun NavHostController.navigateToWriteFromDetail(
-    cardId: Long,
-    navOptions: NavOptions? = null,
-) {
-    SooumLog.i(TAG, "navigateToWriteFromDetail() cardId: $cardId")
-    // TODO: Write 모듈로 네비게이션 구현 필요
-}
-
 private fun NavHostController.navigateToDetailRoute(
     cardDetailArgs: CardDetailArgs,
     navOptions: NavOptions? = null,
