@@ -39,6 +39,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import androidx.core.net.toUri
 
+import com.phew.presentation.write.model.BackgroundFilterType
+
 @HiltViewModel
 class WriteViewModel @Inject constructor(
     private val deviceRepository: DeviceRepository,
@@ -56,7 +58,7 @@ class WriteViewModel @Inject constructor(
     )
 
     private val distanceOptionId = WriteOptions.DISTANCE_OPTION_ID
-    private val initialFilter: String = BackgroundConfig.filterNames.firstOrNull() ?: ""
+    private val initialFilter: BackgroundFilterType = BackgroundConfig.filterNames.firstOrNull() ?: BackgroundFilterType.COLOR
     private val initialImage: Int? = BackgroundConfig.imagesByFilter[initialFilter]?.firstOrNull()
 
     private val _uiState = MutableStateFlow(
@@ -250,7 +252,7 @@ class WriteViewModel @Inject constructor(
         }
     }
 
-    fun selectBackgroundFilter(filter: String) {
+    fun selectBackgroundFilter(filter: BackgroundFilterType) {
         _uiState.update { it.copy(selectedBackgroundFilter = filter) }
     }
 
@@ -267,7 +269,7 @@ class WriteViewModel @Inject constructor(
                 // 서버 기본 이미지인 경우
                 state.copy(
                     activeBackgroundResId = null,
-                    activeBackgroundUri = Uri.parse(serverImage.url),
+                    activeBackgroundUri = serverImage.url.toUri(),
                     selectedDefaultImageName = imageName
                 )
             } else {
@@ -515,12 +517,16 @@ private fun requestCameraImageForBackground() {
                 when (val result = getCardDefaultImage()) {
                     is DomainResult.Success -> {
                         _uiState.update { state ->
+                            val convertedMap = result.data.defaultImages.mapNotNull { (key, value) ->
+                                BackgroundFilterType.fromServerKey(key)?.let { it to value }
+                            }.toMap()
+
                             val newState = state.copy(
-                                cardDefaultImagesByCategory = result.data.defaultImages
+                                cardDefaultImagesByCategory = convertedMap
                             )
                             
                             // COLOR 카테고리의 첫 번째 이미지를 자동으로 선택
-                            val colorCategoryImages = result.data.defaultImages["COLOR"]
+                            val colorCategoryImages = convertedMap[BackgroundFilterType.COLOR]
                             val firstColorImage = colorCategoryImages?.firstOrNull()
                             
                             if (firstColorImage != null && state.selectedDefaultImageName == null) {
@@ -533,7 +539,7 @@ private fun requestCameraImageForBackground() {
                                     activeBackgroundUri = uri,
                                     activeBackgroundResId = null,
                                     selectedDefaultImageName = firstColorImage.imageName,
-                                    selectedBackgroundFilter = "컬러"  // 필터도 컬러로 설정
+                                    selectedBackgroundFilter = BackgroundFilterType.COLOR
                                 )
                             } else {
                                 newState

@@ -6,9 +6,10 @@ import com.phew.core.ui.model.CameraCaptureRequest
 import com.phew.domain.dto.CardImageDefault
 import com.phew.domain.dto.TagInfo
 import com.phew.presentation.write.component.NumberTagItem
+import com.phew.presentation.write.model.BackgroundConfig.imagesByFilter
 
-private val DefaultFilter: String = BackgroundConfig.filterNames.firstOrNull() ?: ""
-private val DefaultFilterSelection: Int? = BackgroundConfig.imagesByFilter[DefaultFilter]?.firstOrNull()
+private val DefaultFilter: BackgroundFilterType = BackgroundConfig.filterNames.firstOrNull() ?: BackgroundFilterType.COLOR
+private val DefaultFilterSelection: Int? = imagesByFilter[DefaultFilter]?.firstOrNull()
 
 data class WriteUiState(
     val content: String = "",
@@ -16,7 +17,7 @@ data class WriteUiState(
     val currentTagInput: String = "",
     val relatedTags: List<TagInfo> = emptyList(),
     val isLoadingRelatedTags: Boolean = false,
-    val selectedBackgroundFilter: String = DefaultFilter,
+    val selectedBackgroundFilter: BackgroundFilterType = DefaultFilter,
     val activeBackgroundResId: Int? = DefaultFilterSelection,
     val activeBackgroundUri: Uri? = null,
     val showBackgroundPickerSheet: Boolean = false,
@@ -35,7 +36,7 @@ data class WriteUiState(
     val shouldShowPermissionRationale: Boolean = false,
     val isWriteInProgress: Boolean = false,
     val parentCardId: Long? = null,
-    val cardDefaultImagesByCategory: Map<String, List<CardImageDefault>> = emptyMap(),
+    val cardDefaultImagesByCategory: Map<BackgroundFilterType, List<CardImageDefault>> = emptyMap(),
     val selectedDefaultImageName: String? = null
 ) {
     val isContentValid: Boolean
@@ -44,7 +45,7 @@ data class WriteUiState(
     val selectedGridImageResId: Int?
         get() {
             val active = activeBackgroundResId ?: return null
-            val images = BackgroundConfig.imagesByFilter[selectedBackgroundFilter].orEmpty()
+            val images = imagesByFilter[selectedBackgroundFilter].orEmpty()
             return if (images.contains(active)) active else null
         }
 

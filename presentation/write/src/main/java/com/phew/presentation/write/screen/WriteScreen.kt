@@ -82,6 +82,9 @@ import com.phew.presentation.write.screen.component.FontSelectorGrid
 import com.phew.presentation.write.viewmodel.WriteViewModel
 import androidx.compose.ui.res.stringResource
 import com.phew.core.ui.model.navigation.WriteArgs
+import com.phew.core_design.component.filter.SooumFilter
+import com.phew.presentation.write.model.BackgroundFilterType
+import com.phew.presentation.write.screen.component.ImageGrid
 import com.phew.presentation.write.R as WriteR
 
 /**
@@ -235,7 +238,7 @@ private fun WriteScreen(
     isWriteCompleted: Boolean,
     activeBackgroundImageResId: Int?,
     activeBackgroundUri: Uri?,
-    selectedBackgroundFilter: String,
+    selectedBackgroundFilter: BackgroundFilterType,
     selectedGridImageName: String?,
     selectedFont: String,
     selectedFontFamily: FontFamily?,
@@ -244,11 +247,11 @@ private fun WriteScreen(
     showLocationPermissionDialog: Boolean,
     showCameraPermissionDialog: Boolean,
     showGalleryPermissionDialog: Boolean,
-    cardDefaultImagesByCategory: Map<String, List<CardImageDefault>>,
+    cardDefaultImagesByCategory: Map<BackgroundFilterType, List<CardImageDefault>>,
     onBackPressed: () -> Unit,
     onContentChange: (String) -> Unit,
     onTagInputChange: (String) -> Unit,
-    onFilterChange: (filter: String) -> Unit,
+    onFilterChange: (filter: BackgroundFilterType) -> Unit,
     onImageSelected: (String) -> Unit,
     onCustomImageSelected: (Uri) -> Unit,
     onContentClick: () -> Unit, // Add this line
@@ -538,9 +541,9 @@ private enum class SettingsTarget {
 private fun BackgroundSelect(
     modifier: Modifier,
     selectedGridImageName: String?,
-    selectedBackgroundFilter: String,
-    cardDefaultImagesByCategory: Map<String, List<CardImageDefault>>,
-    onFilterChange: (filter: String) -> Unit,
+    selectedBackgroundFilter: BackgroundFilterType,
+    cardDefaultImagesByCategory: Map<BackgroundFilterType, List<CardImageDefault>>,
+    onFilterChange: (filter: BackgroundFilterType) -> Unit,
     onImageSelected: (String) -> Unit,
     onCameraClick: () -> Unit
 ) {
@@ -550,17 +553,32 @@ private fun BackgroundSelect(
             style = TextComponent.CAPTION_1_SB_12.copy(color = Primary.DARK),
         )
 
-        FilteredImageGrid(
-            filters = BackgroundConfig.filterNames,
-            selectedFilter = selectedBackgroundFilter,
-            selectedImageName = selectedGridImageName,
-            cardDefaultImagesByCategory = cardDefaultImagesByCategory,
-            onFilterSelected = { filter ->
-                onFilterChange(filter)
-            },
-            onImageSelected = onImageSelected,
-            onCameraClick = onCameraClick
-        )
+        Column(
+            modifier = modifier
+                .fillMaxWidth()
+        ) {
+            SooumFilter(
+                modifier = Modifier.fillMaxWidth(),
+                filters = BackgroundConfig.filterNames.map { it.displayName },
+                selectedFilter = selectedBackgroundFilter.displayName,
+                onFilterSelected = { displayName ->
+                    BackgroundFilterType.fromDisplayName(displayName)?.let { onFilterChange(it) }
+                }
+            )
+
+            val currentFilterImages = remember(selectedBackgroundFilter, cardDefaultImagesByCategory) {
+                cardDefaultImagesByCategory[selectedBackgroundFilter] ?: emptyList()
+            }
+
+            ImageGrid(
+                cardDefaultImages = currentFilterImages,
+                selectedImageName = selectedGridImageName,
+                onImageClick = { imageName ->
+                    onImageSelected(imageName)
+                },
+                onCameraClick = onCameraClick
+            )
+        }
     }
 }
 
