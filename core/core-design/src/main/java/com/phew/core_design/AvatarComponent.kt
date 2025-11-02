@@ -42,7 +42,11 @@ object AvatarComponent {
                 contentDescription = "profile image",
                 modifier = Modifier
                     .fillMaxSize()
-                    .border(width = 1.dp , color = NeutralColor.GRAY_300 , shape = RoundedCornerShape(100.dp))
+                    .border(
+                        width = 1.dp,
+                        color = NeutralColor.GRAY_300,
+                        shape = RoundedCornerShape(100.dp)
+                    )
                     .clip(shape = RoundedCornerShape(size = 100.dp)),
                 contentScale = ContentScale.FillBounds
             )
@@ -98,11 +102,18 @@ object AvatarComponent {
             modifier = Modifier
                 .width(40.dp)
                 .height(40.dp)
+                .border(
+                    width = 1.dp,
+                    color = NeutralColor.GRAY_300,
+                    shape = RoundedCornerShape(size = 100.dp)
+                )
+                .clip(shape = RoundedCornerShape(size = 100.dp))
         ) {
             AsyncImage(
                 model = if (url.trim().isEmpty()) R.drawable.ic_profile else url,
                 contentDescription = "profile image",
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
             )
         }
     }

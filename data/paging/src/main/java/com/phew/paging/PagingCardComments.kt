@@ -5,6 +5,7 @@ import androidx.paging.PagingState
 import com.phew.core_common.DataResult
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.HTTP_INVALID_TOKEN
+import com.phew.core_common.HTTP_NO_MORE_CONTENT
 import com.phew.domain.dto.CardComment
 import com.phew.domain.repository.network.CardDetailRepository
 import java.io.IOException
@@ -41,6 +42,13 @@ internal class PagingCardComments(
                 }
 
                 is DataResult.Fail -> {
+                    if (result.code == HTTP_NO_MORE_CONTENT) {
+                        return LoadResult.Page(
+                            data = emptyList(),
+                            prevKey = null,
+                            nextKey = null
+                        )
+                    }
                     val exception = if (result.code == HTTP_INVALID_TOKEN) {
                         SecurityException("Invalid token")
                     } else {
