@@ -1,6 +1,5 @@
 package com.phew.presentation.write.screen.component
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +16,9 @@ import androidx.compose.ui.unit.dp
 import com.phew.core_design.MediumButton.DisabledSecondary
 import com.phew.core_design.MediumButton.SelectedSecondary
 import com.phew.core_design.R
+import com.phew.core_design.TextComponent
+import com.phew.core_design.typography.FontTextStyle
+import com.phew.core_design.typography.FontType
 import com.phew.presentation.write.model.FontItem
 
 @Composable
@@ -28,7 +30,8 @@ internal fun FontSelectorGrid(
 ) {
     Column(
         modifier = modifier
-            .fillMaxWidth().padding(top = 10.dp),
+            .fillMaxWidth()
+            .padding(top = 10.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         fonts.chunked(2).forEach { rowFonts ->
@@ -38,6 +41,21 @@ internal fun FontSelectorGrid(
             ) {
                 rowFonts.forEach { font ->
                     val isSelected = font.name == selectedFont
+
+                    // FontType enum을 사용하여 스타일 선택
+                    val fontType = FontType.fromServerName(font.serverName)
+                    val fontTextStyle = when (fontType) {
+                        FontType.RIDIBATANG -> FontTextStyle.RIDIBATANG_BUTTON
+                        FontType.YOON -> FontTextStyle.YOON_BUTTON
+                        FontType.KKOKKO -> FontTextStyle.KKOKKO_BUTTON
+                        FontType.PRETENDARD, null -> {
+                            // 기본 스타일: subtitle1_m_16 (16sp, Medium, 150% 행간, -2.5% 자간)
+                            TextComponent.SUBTITLE_1_M_16.copy(
+                                fontFamily = font.previewTypeface ?: FontFamily(Font(R.font.extra_bold))
+                            )
+                        }
+                    }
+
                     Box(
                         modifier = Modifier.weight(1f)
                     ) {
@@ -46,21 +64,14 @@ internal fun FontSelectorGrid(
                                 buttonText = font.name,
                                 onClick = { font.previewTypeface?.let { onFontSelected(it) } },
                                 isEnable = true,
-                                fontFamily = font.previewTypeface ?: FontFamily(Font(R.font.medium))
+                                textStyle = fontTextStyle
                             )
                         } else {
                             DisabledSecondary(
                                 buttonText = font.name,
-                                onClick = {},
-                                isEnable = false,
-                                fontFamily = font.previewTypeface ?: FontFamily(Font(R.font.medium))
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .matchParentSize()
-                                    .clickable {
-                                        font.previewTypeface?.let { onFontSelected(it) }
-                                    }
+                                onClick = { font.previewTypeface?.let { onFontSelected(it) } },
+                                isEnable = true,
+                                textStyle = fontTextStyle
                             )
                         }
                     }
@@ -92,6 +103,6 @@ private fun FontSelectorGridPreview() {
     FontSelectorGrid(
         fonts = fontList,
         selectedFont = fontList.first().name,
-        onFontSelected = {  }
+        onFontSelected = { }
     )
 }

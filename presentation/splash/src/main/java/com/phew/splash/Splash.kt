@@ -37,12 +37,12 @@ import com.phew.core_design.Primary
 @Composable
 fun Splash(
     viewModel: SplashViewModel,
-    nextPage: () -> Unit,
+    signUp: () -> Unit,
     update: () -> Unit,
     finish: () -> Unit,
     home: () -> Unit,
 ) {
-    val uiState by viewModel.usState.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -63,8 +63,12 @@ fun Splash(
                 }
             }
 
-            UiState.NextPage -> {
-                nextPage()
+            UiState.SignUpPage -> {
+                signUp()
+            }
+
+            UiState.FeedPage -> {
+                home()
             }
 
             is UiState.Error -> {
@@ -74,7 +78,6 @@ fun Splash(
                 )
                 viewModel.initError()
             }
-
             else -> Unit
         }
     }
@@ -107,16 +110,16 @@ fun Splash(
                     .height(33.dp)
                     .padding(1.dp)
             )
-            if (uiState is UiState.Fail) {
+            if (uiState is UiState.Update) {
                 DialogComponent.DefaultButtonOne(
                     title = stringResource(R.string.splash_dialog_update_title),
                     description = stringResource(R.string.splash_dialog_update_description),
                     buttonText = stringResource(R.string.splash_dialog_update_btn),
                     onClick = {
-                        nextPage()
+                        update()
                     },
                     onDismiss = {
-                        nextPage()
+                        finish()
                     }
                 )
             }

@@ -1,30 +1,32 @@
 package com.phew.core_design
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 
 object BottomSheetComponent {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -32,58 +34,53 @@ object BottomSheetComponent {
     fun BottomSheet(
         data: ArrayList<BottomSheetItem>,
         onItemClick: (Int) -> Unit,
-        onDismiss: () -> Unit
+        onDismiss: () -> Unit,
     ) {
         val sheetState = rememberModalBottomSheetState(
-            skipPartiallyExpanded = false
+            skipPartiallyExpanded = true
         )
+
         ModalBottomSheet(
-            modifier = Modifier.padding(horizontal = 16.dp),
+            modifier = Modifier.padding(start= 16.dp , end = 16.dp)
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .padding(vertical = 10.dp),
             sheetState = sheetState,
             onDismissRequest = onDismiss,
-            dragHandle = {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp, bottom = 16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_handle),
-                        contentDescription = null,
-                        tint = NeutralColor.GRAY_300,
-                        modifier = Modifier
-                            .width(44.dp)
-                            .height(8.dp)
-                    )
-                }
-            },
-            containerColor = NeutralColor.WHITE
+            shape = RoundedCornerShape(28.dp),
+            dragHandle = { BottomSheetDefaults.DragHandle() },
+            containerColor = NeutralColor.WHITE,
         ) {
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        start = 16.dp,
-                        end = 16.dp,
-                        bottom = WindowInsets.navigationBars.asPaddingValues()
-                            .calculateBottomPadding()
-                    )
+                    .fillMaxWidth(),
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    bottom = 16.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(data) { viewItem ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(48.dp)
+                            .clip(RoundedCornerShape(12.dp))
                             .clickable { onItemClick(viewItem.id) }
-                            .padding(start = 16.dp, end = 16.dp),
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
-                        verticalAlignment = Alignment.CenterVertically,
+                        verticalAlignment = Alignment.CenterVertically, // 아이콘/텍스트 세로 정렬 유지
                     ) {
+                        if (viewItem.image != -1) {
+                            Image(
+                                painter = painterResource(viewItem.image),
+                                contentDescription = viewItem.title,
+                                colorFilter = ColorFilter.tint(viewItem.imageColor)
+                            )
+                        }
                         Text(
                             text = viewItem.title,
                             style = TextComponent.SUBTITLE_1_M_16,
-                            color = NeutralColor.GRAY_500,
+                            color = viewItem.textColor,
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -93,9 +90,13 @@ object BottomSheetComponent {
     }
 }
 
+
 data class BottomSheetItem(
     val id: Int,
-    val title: String
+    val title: String,
+    val image: Int = -1, // 이미지가 필요할 경우를 대비해 추가,
+    val textColor: Color = NeutralColor.GRAY_500,
+    val imageColor: Color = NeutralColor.GRAY_500,
 )
 
 @Composable

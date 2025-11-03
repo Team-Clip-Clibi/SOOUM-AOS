@@ -24,13 +24,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.compose.material3.Text
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.clickable
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.Color
 
 object DialogComponent {
     @Composable
@@ -67,7 +62,7 @@ object DialogComponent {
                 Spacer(modifier = Modifier.height(24.dp))
                 MediumButton.NoIconPrimary(
                     buttonText = buttonText,
-                    onClick = onClick
+                    onClick = onClick,
                 )
             }
         }
@@ -115,6 +110,9 @@ object DialogComponent {
         buttonTextEnd: String,
         onClick: () -> Unit,
         onDismiss: () -> Unit,
+        rightButtonBaseColor: Color = NeutralColor.BLACK,
+        rightButtonClickColor: Color = NeutralColor.GRAY_600,
+        rightButtonDisableColor: Color = NeutralColor.GRAY_200,
     ) {
         Dialog(
             onDismissRequest = onDismiss
@@ -156,6 +154,9 @@ object DialogComponent {
                         MediumButton.NoIconPrimary(
                             buttonText = buttonTextEnd,
                             onClick = onClick,
+                            baseColor = rightButtonBaseColor,
+                            blinkColor = rightButtonClickColor,
+                            disabledColor = rightButtonDisableColor
                         )
                     }
                 }
@@ -170,6 +171,9 @@ object DialogComponent {
         buttonTextEnd: String,
         onClick: () -> Unit,
         onDismiss: () -> Unit,
+        baseColor: Color = NeutralColor.BLACK,
+        blinkColor: Color = NeutralColor.GRAY_600,
+        disabledColor: Color = NeutralColor.GRAY_200,
     ) {
         Dialog(onDismissRequest = onDismiss) {
             Column(
@@ -206,6 +210,9 @@ object DialogComponent {
                         MediumButton.NoIconPrimary(
                             buttonText = buttonTextEnd,
                             onClick = onClick,
+                            baseColor = baseColor,
+                            blinkColor = blinkColor,
+                            disabledColor = disabledColor
                         )
                     }
                 }

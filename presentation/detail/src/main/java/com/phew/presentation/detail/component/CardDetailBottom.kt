@@ -69,7 +69,8 @@ internal fun CardDetailBottom(
         ) {
             Text(
                 text = stringResource(detailR.string.card_detail_bottom_search),
-                style = TextComponent.CAPTION_1_SB_12
+                style = TextComponent.CAPTION_1_SB_12,
+                color = NeutralColor.GRAY_500
             )
             Spacer(Modifier.width(2.dp))
             Text (

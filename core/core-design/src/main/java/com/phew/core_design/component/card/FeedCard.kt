@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -291,12 +292,19 @@ internal fun BodyContent(
     contentText: String = "",
     imgUrl: String = "",
     fontFamily: FontFamily,
-    textMaxLines: Int
+    textMaxLines: Int,
+    useFixedHeight: Boolean = true
 ) {
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .aspectRatio(2f) // 유지: 가로:세로 = 2:1
+            .then(
+                if (useFixedHeight) {
+                    Modifier.height(177.dp)
+                } else {
+                    Modifier.fillMaxWidth()
+                }
+            )
     ) {
         AsyncImage(
             model = imgUrl,

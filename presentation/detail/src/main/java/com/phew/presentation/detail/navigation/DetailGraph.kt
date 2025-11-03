@@ -5,7 +5,6 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
-import androidx.navigation.NavType
 import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
 import com.phew.core.ui.model.navigation.CardDetailArgs
@@ -18,6 +17,7 @@ import com.phew.core.ui.navigation.getNavArg
 import com.phew.core_common.log.SooumLog
 import com.phew.core_design.slideComposable
 import com.phew.presentation.detail.screen.CardDetailRoute
+import com.phew.presentation.detail.screen.CommentCardDetailScreen
 
 val DETAIL_GRAPH = "detail_graph".asNavParam()
 
@@ -26,23 +26,15 @@ private val COMMENT_ROUTE = "comment_route".asNavParam()
 
 fun NavHostController.navigateToDetailGraph(
     cardDetailArgs: CardDetailArgs,
-    navOptions: NavOptions? = null
+    navOptions: NavOptions? = null,
 ) {
     SooumLog.i(TAG, "navigateToDetailGraph() $cardDetailArgs")
     this.navigate(DETAIL_GRAPH.asNavArg(cardDetailArgs), navOptions)
 }
 
-fun NavHostController.navigateToWriteFromDetail(
-    cardId: Long,
-    navOptions: NavOptions? = null
-) {
-    SooumLog.i(TAG, "navigateToWriteFromDetail() cardId: $cardId")
-    // TODO: Write 모듈로 네비게이션 구현 필요
-}
-
 private fun NavHostController.navigateToDetailRoute(
     cardDetailArgs: CardDetailArgs,
-    navOptions: NavOptions? = null
+    navOptions: NavOptions? = null,
 ) {
     this.navigate(DETAIL_ROUTE.asNavArg(cardDetailArgs), navOptions)
 }
@@ -50,7 +42,7 @@ private fun NavHostController.navigateToDetailRoute(
 
 private fun NavHostController.navigateToDetailCommentRoute(
     cardDetailCommentArgs: CardDetailCommentArgs,
-    navOptions: NavOptions? = null
+    navOptions: NavOptions? = null,
 ) {
     SooumLog.i(TAG, "navigateToDetailRoute() $cardDetailCommentArgs")
     this.navigate(COMMENT_ROUTE.asNavArg(cardDetailCommentArgs), navOptions)
@@ -65,13 +57,14 @@ fun NavGraphBuilder.detailGraph(
     detailScreen: @Composable (
         CardDetailArgs,
         (CardDetailCommentArgs) -> Unit,
-        () -> Unit
+        () -> Unit,
     ) -> Unit = { _, _, _ -> },
     commentScreen: @Composable (
         CardDetailCommentArgs,
         (CardDetailCommentArgs) -> Unit,
-        () -> Unit
-    ) -> Unit = { _, _, _ -> }
+        () -> Unit,
+    ) -> Unit = { _, _, _ -> },
+    navToHome : () -> Unit
 ) {
     navigation(
         route = DETAIL_GRAPH,
@@ -117,15 +110,20 @@ fun NavGraphBuilder.detailGraph(
                 SooumLog.e(TAG, "CardDetailCommentArgs is null")
                 navController.popBackStack()
             } else {
-                // //   TODO 스크린 개발되면 수정 예정
-//                commentScreen(
-//                    args = args,
-//                    sooumAppState = sooumAppState,
-//                    onNavigateToChildComment = { childArgs ->
-//                        navController.navigate(COMMENT_ROUTE.asNavArg(childArgs))
-//                    },
-//                    onBackPressed = { navController.popBackStack() }
-//                )
+                CommentCardDetailScreen(
+                    args = args,
+                    onNavigateToComment = { commentArgs ->
+                        navController.navigate(COMMENT_ROUTE.asNavArg(commentArgs))
+                    },
+                    onBackPressed = {
+                        navController.popBackStack()
+                    },
+                    onFeedPressed = navToHome,
+                    onNavigateToWrite = { cardId ->
+                        onNavigateToWrite(cardId)
+                    },
+                    onNavigateToReport = onNavigateToReport
+                )
             }
         }
     }

@@ -33,7 +33,7 @@ fun NavGraphBuilder.splashNavGraph(
             val splashViewModel: SplashViewModel = hiltViewModel()
             Splash(
                 viewModel = splashViewModel,
-                nextPage = {
+                signUp = {
                     println("!! $TAG, navToOnBoarding")
                     navToOnBoarding()
                 },
