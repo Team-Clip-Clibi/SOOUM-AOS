@@ -10,43 +10,59 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.R
+import android.net.Uri
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.Alignment
 
 @Composable
 fun CardDetail(
     modifier: Modifier = Modifier,
     isDeleted: Boolean = false,
     previousCommentThumbnailUri: String? = null,
+    backgroundImageUrl : Uri? =null,
     cardContent: String,
     cardThumbnailUri: String,
     cardTags: List<String>,
     header: @Composable () -> Unit,
-    bottom: @Composable () -> Unit?
+    bottom: @Composable () -> Unit?,
+    onPreviousCardClick: () -> Unit = { }
 ) {
     Column(
         modifier = modifier
             .background(NeutralColor.WHITE)
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
+            .padding(
+                start = 16.dp,
+                end = 20.dp,
+            ),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         header()
 
-        if (isDeleted) {
-            CardView(
-                data = BaseCardData.Deleted(
-                    reason = stringResource(R.string.card_deleted)
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            if (isDeleted) {
+                CardView(
+                    data = BaseCardData.Deleted(
+                        reason = stringResource(R.string.card_deleted)
+                    ),
                 )
-            )
-        } else {
-            CardView(
-                modifier = modifier.padding(vertical = 2.dp),
-                data = BaseCardData.Reply(
-                    previousCommentThumbnailUri = previousCommentThumbnailUri,
-                    content = cardContent,
-                    tags = cardTags,
-                    hasPreviousCommentThumbnail = previousCommentThumbnailUri?.isNotBlank() == true,
-                    thumbnailUri = cardThumbnailUri
+            } else {
+                CardView(
+                    modifier = modifier.padding(vertical = 2.dp),
+                    data = BaseCardData.Reply(
+                        previousCommentThumbnailUri = previousCommentThumbnailUri,
+                        content = cardContent,
+                        tags = cardTags,
+                        hasPreviousCommentThumbnail = previousCommentThumbnailUri?.isNotBlank() == true,
+                        thumbnailUri = cardThumbnailUri,
+                        backgroundImage = backgroundImageUrl
+                    ),
+                    onPreviousCardClick = onPreviousCardClick
                 )
-            )
+            }
         }
 
         bottom()

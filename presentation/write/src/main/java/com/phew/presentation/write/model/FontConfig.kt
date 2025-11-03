@@ -3,6 +3,7 @@ package com.phew.presentation.write.model
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import com.phew.core_design.R
+import com.phew.core_design.typography.FontTextStyle
 
 object FontConfig {
     val availableFonts = listOf(
@@ -18,7 +19,7 @@ object FontConfig {
         ),
         FontItem(
             name = "윤우체",
-            serverName = "YOONWOO",
+            serverName = "YOONWOO", 
             previewTypeface = FontFamily(Font(R.font.yoon))
         ),
         FontItem(

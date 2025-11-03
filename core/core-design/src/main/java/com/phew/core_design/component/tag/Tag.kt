@@ -95,6 +95,7 @@ object TagDesignTokens {
     val TagRadius = 8.dp
     val TagColorfulRadius = 20.dp
     val TagHeight = 28.dp
+    val TagColorfulHeight = 21.dp
     val IconSize = 16.dp
 
     // 패딩
@@ -600,16 +601,16 @@ fun TagColorful(
 ) {
     Surface(
         onClick = onClick,
-        modifier = modifier.height(TagDesignTokens.TagHeight),
+        modifier = modifier.height(TagDesignTokens.TagColorfulHeight),
         shape = RoundedCornerShape(TagDesignTokens.TagColorfulRadius),
         color = TagDesignTokens.ColorfulBackground
     ) {
         Row(
             modifier = Modifier
+                .fillMaxHeight()
                 .padding(
                     horizontal = TagDesignTokens.ColorfulHorizontalPadding,
-                )
-                .fillMaxHeight(),
+                ),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(IconAndTextPadding)
         ) {
