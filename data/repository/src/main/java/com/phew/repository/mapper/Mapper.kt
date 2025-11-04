@@ -7,13 +7,13 @@ import com.phew.domain.dto.CardComment
 import com.phew.domain.dto.CardDetail
 import com.phew.domain.dto.CardDetailTag
 import com.phew.domain.dto.CardImageDefault
-import com.phew.domain.dto.CardReply
 import com.phew.domain.dto.CheckSignUp
 import com.phew.domain.dto.CheckedBaned
 import com.phew.domain.dto.DistanceCard
 import com.phew.domain.dto.FeedLikeNotification
 import com.phew.domain.dto.FollowNotification
 import com.phew.domain.dto.Latest
+import com.phew.domain.dto.MyProfileInfo
 import com.phew.domain.dto.Notice
 import com.phew.domain.dto.Notification
 import com.phew.domain.dto.Popular
@@ -38,7 +38,7 @@ import com.phew.network.dto.response.PopularDto
 import com.phew.network.dto.response.card.CardCommentResponseDTO
 import com.phew.network.dto.response.card.CardDetailResponseDTO
 import com.phew.network.dto.response.card.CardDetailTagDTO
-import com.phew.network.dto.response.card.CardReplyResponseDTO
+import com.phew.network.dto.response.profile.MyProfileDTO
 import com.phew.repository.TYPE_BLOCK
 import com.phew.repository.TYPE_COMMENT_LIKE
 import com.phew.repository.TYPE_COMMENT_WRITE
@@ -257,16 +257,17 @@ internal fun CardCommentResponseDTO.toDomain(): CardComment {
     )
 }
 
-internal fun CardReplyResponseDTO.toDomain(): CardReply {
-    return CardReply(
-        isDistanceShared = isDistanceShared,
-        latitude = latitude,
-        longitude = longitude,
-        content = content,
-        font = font,
-        imgType = imgType,
-        imgName = imgName,
-        tags = tags
+internal fun MyProfileDTO.toDomain() : MyProfileInfo{
+    return MyProfileInfo(
+        cardCnt = this.cardCnt,
+        followingCnt = this.followingCnt,
+        followerCnt = this.followerCnt,
+        nickname = this.nickname,
+        profileImageUrl = this.profileImageUrl ?: "",
+        profileImgName = this.profileImgName,
+        todayVisitCnt = this.todayVisitCnt,
+        totalVisitCnt = this.totalVisitCnt,
+        userId = this.userId
     )
 }
 
@@ -282,16 +283,15 @@ suspend fun <T, R> apiCall(
         )
         
         val body = response.body()
-        if (body == null) {
-            return DataResult.Fail(
+            ?: return DataResult.Fail(
                 code = response.code(),
                 message = "Response body is null or empty"
             )
-        }
-        
+
         return DataResult.Success(mapper(body))
     }  catch (e: Exception) {
         e.printStackTrace()
         return DataResult.Fail(code = APP_ERROR_CODE, message = e.message, throwable = e)
     }
 }
+

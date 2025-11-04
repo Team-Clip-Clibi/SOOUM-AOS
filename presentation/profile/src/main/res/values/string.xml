@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profile_top_bar">마이</string>
+    <string name="profile_txt_visit_total">Total</string>
+    <string name="profile_txt_visit_today">Today</string>
+    <string name="profile_txt_card">카드</string>
+    <string name="profile_txt_follower">팔로워</string>
+    <string name="profile_txt_following">팔로잉</string>
+</resources>
