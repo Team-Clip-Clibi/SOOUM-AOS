@@ -42,5 +42,5 @@ object OpacityColor {
 
 object UnKnowColor {
     val color = Color(0x1AABBED1)
-    val color2 = Color(0x3364686C)
+    val color2 = Color(0x33646868)
 }
