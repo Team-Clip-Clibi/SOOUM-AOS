@@ -6,6 +6,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
 import androidx.navigation.navigation
 import com.phew.core_design.slideComposable
+import com.phew.presentation.settings.screen.LoginOtherDeviceRoute
 import com.phew.presentation.settings.screen.SettingRoute
 
 const val SETTING_GRAPH = "setting_graph"
@@ -107,6 +108,16 @@ fun NavGraphBuilder.settingGraph(
                 },
                 onNavigateToAccountDeletion = {
                     navController.navigateToAccountDeletionRoute()
+                }
+            )
+        }
+        
+        slideComposable(
+            route = LOGIN_OTHER_DEVICE_ROUTE
+        ) {
+            LoginOtherDeviceRoute(
+                onBackPressed = {
+                    navController.popBackStack()
                 }
             )
         }

@@ -18,4 +18,10 @@
     <string name="setting_version_format">v%s</string>
     <string name="setting_app_new_version">최신버전</string>
     <string name="setting_update_available">116.2</string>
+
+    <!-- Login Other Device -->
+    <string name="other_device_top_title">다른 기기에서 로그인하기</string>
+    <string name="other_device_title">다른 기기로 계정을 옮길 수 있는 코드를 드릴게요</string>
+    <string name="other_device_one_hour_timeout">코드는 1시간 동안 유효해요</string>
+    <string name="other_device_retry_code">코드 재발급하기</string>
 </resources>

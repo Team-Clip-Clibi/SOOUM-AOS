@@ -105,6 +105,14 @@ object TextComponent {
             fontWeight = FontWeight(500),
             color = NeutralColor.BLACK
         )
+    val BODY_2_R_14
+        @Composable get() = fixFontSize(
+            fontSize = 14.sp,
+            lineHeight = 21.sp,
+            fontFamily = FontFamily(Font(R.font.regular)),
+            fontWeight = FontWeight(500),
+            color = NeutralColor.BLACK
+        )
     val CAPTION_1_SB_12
         @Composable get() = fixFontSize(
             fontSize = 12.sp,
