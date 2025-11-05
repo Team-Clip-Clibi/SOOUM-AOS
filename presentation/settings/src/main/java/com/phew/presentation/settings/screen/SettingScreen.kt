@@ -15,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -22,17 +23,17 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.phew.core_design.AppBar
 import com.phew.core_design.AppBar.IconLeftAppBar
-import com.phew.core_design.AppBar.TextButtonAppBar
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.R
-import com.phew.presentation.settings.component.SettingItemRow
-import com.phew.presentation.settings.component.SettingToggleRow
-import com.phew.presentation.settings.model.SettingItem
-import com.phew.presentation.settings.model.SettingItemId
-import com.phew.presentation.settings.model.SettingItemType
+import com.phew.presentation.settings.component.setting.SettingItemRow
+import com.phew.presentation.settings.component.setting.SettingToggleRow
+import com.phew.presentation.settings.model.setting.SettingNavigationEvent
+import com.phew.presentation.settings.model.setting.SettingItem
+import com.phew.presentation.settings.model.setting.SettingItemId
+import com.phew.presentation.settings.model.setting.SettingItemType
 import com.phew.presentation.settings.viewmodel.SettingViewModel
+import kotlinx.coroutines.flow.collectLatest
 import com.phew.presentation.settings.R as SettingsR
 
 @Composable
@@ -40,15 +41,29 @@ fun SettingRoute(
     modifier: Modifier = Modifier,
     viewModel: SettingViewModel = hiltViewModel(),
     onBackPressed: () -> Unit = {},
-    onLoginOtherDeviceClick: () -> Unit = {},
-    onLoadPreviousAccountClick: () -> Unit = {},
-    onBlockedUsersClick: () -> Unit = {},
-    onNoticeClick: () -> Unit = {},
-    onInquiryClick: () -> Unit = {},
-    onPrivacyPolicyClick: () -> Unit = {},
-    onAccountDeletionClick: () -> Unit = {}
+    onNavigateToLoginOtherDevice: () -> Unit = {},
+    onNavigateToLoadPreviousAccount: () -> Unit = {},
+    onNavigateToBlockedUsers: () -> Unit = {},
+    onNavigateToNotice: () -> Unit = {},
+    onNavigateToInquiry: () -> Unit = {},
+    onNavigateToPrivacyPolicy: () -> Unit = {},
+    onNavigateToAccountDeletion: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(viewModel) {
+        viewModel.navigationEvent.collectLatest { event ->
+            when (event) {
+                SettingNavigationEvent.NavigateToLoginOtherDevice -> onNavigateToLoginOtherDevice()
+                SettingNavigationEvent.NavigateToLoadPreviousAccount -> onNavigateToLoadPreviousAccount()
+                SettingNavigationEvent.NavigateToBlockedUsers -> onNavigateToBlockedUsers()
+                SettingNavigationEvent.NavigateToNotice -> onNavigateToNotice()
+                SettingNavigationEvent.NavigateToInquiry -> onNavigateToInquiry()
+                SettingNavigationEvent.NavigateToPrivacyPolicy -> onNavigateToPrivacyPolicy()
+                SettingNavigationEvent.NavigateToAccountDeletion -> onNavigateToAccountDeletion()
+            }
+        }
+    }
 
     SettingScreen(
         modifier = modifier,
@@ -60,13 +75,13 @@ fun SettingRoute(
         onBackPressed = onBackPressed,
         onNotificationToggle = viewModel::toggleNotification,
         onCheckForUpdates = viewModel::checkForUpdates,
-        onLoginOtherDeviceClick = onLoginOtherDeviceClick,
-        onLoadPreviousAccountClick = onLoadPreviousAccountClick,
-        onBlockedUsersClick = onBlockedUsersClick,
-        onNoticeClick = onNoticeClick,
-        onInquiryClick = onInquiryClick,
-        onPrivacyPolicyClick = onPrivacyPolicyClick,
-        onAccountDeletionClick = onAccountDeletionClick
+        onLoginOtherDeviceClick = viewModel::onLoginOtherDeviceClick,
+        onLoadPreviousAccountClick = viewModel::onLoadPreviousAccountClick,
+        onBlockedUsersClick = viewModel::onBlockedUsersClick,
+        onNoticeClick = viewModel::onNoticeClick,
+        onInquiryClick = viewModel::onInquiryClick,
+        onPrivacyPolicyClick = viewModel::onPrivacyPolicyClick,
+        onAccountDeletionClick = viewModel::onAccountDeletionClick
     )
 }
 

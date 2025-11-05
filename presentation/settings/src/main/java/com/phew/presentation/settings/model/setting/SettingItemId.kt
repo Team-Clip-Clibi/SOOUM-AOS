@@ -1,4 +1,4 @@
-package com.phew.presentation.settings.model
+package com.phew.presentation.settings.model.setting
 
 enum class SettingItemId {
     LOGIN_OTHER_DEVICE,

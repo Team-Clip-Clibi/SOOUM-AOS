@@ -2,13 +2,17 @@ package com.phew.presentation.settings.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.phew.presentation.settings.model.SettingItem
-import com.phew.presentation.settings.model.SettingItemId
-import com.phew.presentation.settings.model.SettingItemType
-import com.phew.presentation.settings.model.SettingUiState
+import com.phew.presentation.settings.model.setting.SettingNavigationEvent
+import com.phew.presentation.settings.model.setting.SettingItem
+import com.phew.presentation.settings.model.setting.SettingItemId
+import com.phew.presentation.settings.model.setting.SettingItemType
+import com.phew.presentation.settings.model.setting.SettingUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -25,6 +29,9 @@ class SettingViewModel @Inject constructor(
         )
     )
     val uiState: StateFlow<SettingUiState> = _uiState.asStateFlow()
+
+    private val _navigationEvent = MutableSharedFlow<SettingNavigationEvent>()
+    val navigationEvent: SharedFlow<SettingNavigationEvent> = _navigationEvent.asSharedFlow()
 
     private fun createSettingItems(): List<SettingItem> {
         return listOf(
@@ -94,30 +101,44 @@ class SettingViewModel @Inject constructor(
     }
 
     fun onLoginOtherDeviceClick() {
-        // TODO: Navigate to login from other device
+        viewModelScope.launch {
+            _navigationEvent.emit(SettingNavigationEvent.NavigateToLoginOtherDevice)
+        }
     }
 
     fun onLoadPreviousAccountClick() {
-        // TODO: Navigate to load previous account
+        viewModelScope.launch {
+            _navigationEvent.emit(SettingNavigationEvent.NavigateToLoadPreviousAccount)
+        }
     }
 
     fun onBlockedUsersClick() {
-        // TODO: Navigate to blocked users management
+        viewModelScope.launch {
+            _navigationEvent.emit(SettingNavigationEvent.NavigateToBlockedUsers)
+        }
     }
 
     fun onNoticeClick() {
-        // TODO: Navigate to notice
+        viewModelScope.launch {
+            _navigationEvent.emit(SettingNavigationEvent.NavigateToNotice)
+        }
     }
 
     fun onInquiryClick() {
-        // TODO: Navigate to inquiry
+        viewModelScope.launch {
+            _navigationEvent.emit(SettingNavigationEvent.NavigateToInquiry)
+        }
     }
 
     fun onPrivacyPolicyClick() {
-        // TODO: Navigate to privacy policy
+        viewModelScope.launch {
+            _navigationEvent.emit(SettingNavigationEvent.NavigateToPrivacyPolicy)
+        }
     }
 
     fun onAccountDeletionClick() {
-        // TODO: Navigate to account deletion
+        viewModelScope.launch {
+            _navigationEvent.emit(SettingNavigationEvent.NavigateToAccountDeletion)
+        }
     }
 }

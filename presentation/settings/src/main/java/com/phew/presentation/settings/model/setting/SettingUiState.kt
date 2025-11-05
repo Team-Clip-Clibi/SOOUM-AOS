@@ -1,4 +1,4 @@
-package com.phew.presentation.settings.model
+package com.phew.presentation.settings.model.setting
 
 data class SettingUiState(
     val notificationEnabled: Boolean = true,
