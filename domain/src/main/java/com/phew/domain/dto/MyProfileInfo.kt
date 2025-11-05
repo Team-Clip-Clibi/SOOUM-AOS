@@ -1,7 +1,7 @@
 package com.phew.domain.dto
 
 data class MyProfileInfo(
-    val userId: Int,
+    val userId: Long,
     val nickname: String,
     val profileImgName: String,
     val profileImageUrl: String,

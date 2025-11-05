@@ -6,11 +6,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -98,7 +100,7 @@ private fun CardViewCommentImpl(
 }
 
 @Composable
-private fun CommentBodyContent(
+fun CommentBodyContent(
     modifier: Modifier = Modifier,
     contentText: String = "",
     imgUrl: String = "",
@@ -107,8 +109,9 @@ private fun CommentBodyContent(
 ) {
     Box(
         modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = 160.dp)
+            .widthIn(min = 119.dp)
+            .heightIn(min = 119.dp)
+            .aspectRatio(1f)
     ) {
         AsyncImage(
             model = imgUrl,

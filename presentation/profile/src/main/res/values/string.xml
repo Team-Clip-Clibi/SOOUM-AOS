@@ -6,4 +6,6 @@
     <string name="profile_txt_card">카드</string>
     <string name="profile_txt_follower">팔로워</string>
     <string name="profile_txt_following">팔로잉</string>
+    <string name="profile_txt_comment_card">답카드</string>
+    <string name="profile_btn_edit_profile">프로필 편집</string>
 </resources>
