@@ -1,5 +1,7 @@
 package com.phew.presentation.settings.screen
 
+import android.content.Context
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -14,24 +16,28 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.phew.core_design.AppBar.IconLeftAppBar
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.R
+import com.phew.core_design.TextComponent
 import com.phew.presentation.settings.component.setting.SettingItemRow
 import com.phew.presentation.settings.component.setting.SettingToggleRow
-import com.phew.presentation.settings.model.setting.SettingNavigationEvent
 import com.phew.presentation.settings.model.setting.SettingItem
 import com.phew.presentation.settings.model.setting.SettingItemId
 import com.phew.presentation.settings.model.setting.SettingItemType
+import com.phew.presentation.settings.model.setting.SettingNavigationEvent
 import com.phew.presentation.settings.viewmodel.SettingViewModel
 import kotlinx.coroutines.flow.collectLatest
 import com.phew.presentation.settings.R as SettingsR
@@ -47,9 +53,11 @@ fun SettingRoute(
     onNavigateToNotice: () -> Unit = {},
     onNavigateToInquiry: () -> Unit = {},
     onNavigateToPrivacyPolicy: () -> Unit = {},
-    onNavigateToAccountDeletion: () -> Unit = {}
+    onNavigateToAccountDeletion: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    val context = LocalContext.current
 
     LaunchedEffect(viewModel) {
         viewModel.navigationEvent.collectLatest { event ->
@@ -61,6 +69,9 @@ fun SettingRoute(
                 SettingNavigationEvent.NavigateToInquiry -> onNavigateToInquiry()
                 SettingNavigationEvent.NavigateToPrivacyPolicy -> onNavigateToPrivacyPolicy()
                 SettingNavigationEvent.NavigateToAccountDeletion -> onNavigateToAccountDeletion()
+                SettingNavigationEvent.NavigateToAppStore -> {
+                    openAppStore(context)
+                }
             }
         }
     }
@@ -72,16 +83,18 @@ fun SettingRoute(
         isUpdateAvailable = uiState.isUpdateAvailable,
         isLoading = uiState.isLoading,
         settingItems = uiState.settingItems,
+        activityRestrictionDate = uiState.activityRestrictionDate,
+        latestVersion = uiState.latestVersion,
         onBackPressed = onBackPressed,
         onNotificationToggle = viewModel::toggleNotification,
-        onCheckForUpdates = viewModel::checkForUpdates,
         onLoginOtherDeviceClick = viewModel::onLoginOtherDeviceClick,
         onLoadPreviousAccountClick = viewModel::onLoadPreviousAccountClick,
         onBlockedUsersClick = viewModel::onBlockedUsersClick,
         onNoticeClick = viewModel::onNoticeClick,
         onInquiryClick = viewModel::onInquiryClick,
         onPrivacyPolicyClick = viewModel::onPrivacyPolicyClick,
-        onAccountDeletionClick = viewModel::onAccountDeletionClick
+        onAccountDeletionClick = viewModel::onAccountDeletionClick,
+        onAppUpdateClick = viewModel::onAppUpdateClick
     )
 }
 
@@ -93,16 +106,18 @@ private fun SettingScreen(
     isUpdateAvailable: Boolean,
     isLoading: Boolean,
     settingItems: List<SettingItem>,
+    activityRestrictionDate: String?,
+    latestVersion: String?,
     onBackPressed: () -> Unit,
     onNotificationToggle: (Boolean) -> Unit,
-    onCheckForUpdates: () -> Unit,
     onLoginOtherDeviceClick: () -> Unit,
     onLoadPreviousAccountClick: () -> Unit,
     onBlockedUsersClick: () -> Unit,
     onNoticeClick: () -> Unit,
     onInquiryClick: () -> Unit,
     onPrivacyPolicyClick: () -> Unit,
-    onAccountDeletionClick: () -> Unit
+    onAccountDeletionClick: () -> Unit,
+    onAppUpdateClick: () -> Unit
 ) {
     @Composable
     fun getLocalizedTitle(id: SettingItemId): String {
@@ -121,7 +136,20 @@ private fun SettingScreen(
     @Composable
     fun getLocalizedSubtitle(id: SettingItemId): String? {
         return when (id) {
-            SettingItemId.APP_UPDATE -> "${stringResource(SettingsR.string.setting_app_new_version)} ${stringResource(SettingsR.string.setting_version_format, appVersion)}"
+            SettingItemId.APP_UPDATE -> latestVersion?.let { version ->
+                "${stringResource(SettingsR.string.setting_app_new_version)} ${
+                    stringResource(
+                        SettingsR.string.setting_version_format,
+                        version
+                    )
+                }"
+            } ?: "${stringResource(SettingsR.string.setting_app_new_version)} ${
+                stringResource(
+                    SettingsR.string.setting_version_format,
+                    appVersion
+                )
+            }"
+
             else -> null
         }
     }
@@ -164,7 +192,7 @@ private fun SettingScreen(
                 checked = notificationEnabled,
                 onCheckedChange = onNotificationToggle
             )
-            
+
             // 16dp 간격
             Spacer(
                 modifier = Modifier
@@ -172,9 +200,10 @@ private fun SettingScreen(
                     .height(16.dp)
                     .background(NeutralColor.GRAY_100)
             )
-            
+
             // 2. 다른 기기에서 로그인하기, 이전 계정 불러오기 (그룹)
-            val loginOtherDeviceItem = settingItems.find { it.id == SettingItemId.LOGIN_OTHER_DEVICE }
+            val loginOtherDeviceItem =
+                settingItems.find { it.id == SettingItemId.LOGIN_OTHER_DEVICE }
             loginOtherDeviceItem?.let { item ->
                 val localizedItem = item.copy(
                     title = getLocalizedTitle(item.id),
@@ -186,8 +215,9 @@ private fun SettingScreen(
                     onClick = onLoginOtherDeviceClick
                 )
             }
-            
-            val loadPreviousAccountItem = settingItems.find { it.id == SettingItemId.LOAD_PREVIOUS_ACCOUNT }
+
+            val loadPreviousAccountItem =
+                settingItems.find { it.id == SettingItemId.LOAD_PREVIOUS_ACCOUNT }
             loadPreviousAccountItem?.let { item ->
                 val localizedItem = item.copy(
                     title = getLocalizedTitle(item.id),
@@ -200,7 +230,7 @@ private fun SettingScreen(
                     onClick = onLoadPreviousAccountClick
                 )
             }
-            
+
             // 16dp 간격
             Spacer(
                 modifier = Modifier
@@ -208,7 +238,7 @@ private fun SettingScreen(
                     .height(16.dp)
                     .background(NeutralColor.GRAY_100)
             )
-            
+
             // 3. 차단 사용자 관리
             val blockedUsersItem = settingItems.find { it.id == SettingItemId.BLOCKED_USERS }
             blockedUsersItem?.let { item ->
@@ -222,7 +252,7 @@ private fun SettingScreen(
                     onClick = onBlockedUsersClick
                 )
             }
-            
+
             // 16dp 간격
             Spacer(
                 modifier = Modifier
@@ -230,7 +260,7 @@ private fun SettingScreen(
                     .height(16.dp)
                     .background(NeutralColor.GRAY_100)
             )
-            
+
             // 4. 공지사항, 문의하기 (그룹)
             val noticeItem = settingItems.find { it.id == SettingItemId.NOTICE }
             noticeItem?.let { item ->
@@ -244,7 +274,7 @@ private fun SettingScreen(
                     onClick = onNoticeClick
                 )
             }
-            
+
             val inquiryItem = settingItems.find { it.id == SettingItemId.INQUIRY }
             inquiryItem?.let { item ->
                 val localizedItem = item.copy(
@@ -258,7 +288,7 @@ private fun SettingScreen(
                     onClick = onInquiryClick
                 )
             }
-            
+
             // 16dp 간격
             Spacer(
                 modifier = Modifier
@@ -266,7 +296,7 @@ private fun SettingScreen(
                     .height(16.dp)
                     .background(NeutralColor.GRAY_100)
             )
-            
+
             // 5. 약관 및 개인정보 처리 동의
             val privacyItem = settingItems.find { it.id == SettingItemId.PRIVACY_POLICY }
             privacyItem?.let { item ->
@@ -280,7 +310,7 @@ private fun SettingScreen(
                     onClick = onPrivacyPolicyClick
                 )
             }
-            
+
             // 16dp 간격
             Spacer(
                 modifier = Modifier
@@ -288,7 +318,7 @@ private fun SettingScreen(
                     .height(16.dp)
                     .background(NeutralColor.GRAY_100)
             )
-            
+
             // 6. 최신버전 업데이트
             val updateItem = settingItems.find { it.id == SettingItemId.APP_UPDATE }
             updateItem?.let { item ->
@@ -299,10 +329,10 @@ private fun SettingScreen(
                 )
                 SettingItemRow(
                     item = localizedItem,
-                    onClick = onCheckForUpdates
+                    onClick = onAppUpdateClick
                 )
             }
-            
+
             // 16dp 간격
             Spacer(
                 modifier = Modifier
@@ -310,7 +340,7 @@ private fun SettingScreen(
                     .height(16.dp)
                     .background(NeutralColor.GRAY_100)
             )
-            
+
             // 7. 탈퇴하기
             val deletionItem = settingItems.find { it.id == SettingItemId.ACCOUNT_DELETION }
             deletionItem?.let { item ->
@@ -324,7 +354,43 @@ private fun SettingScreen(
                     onClick = onAccountDeletionClick
                 )
             }
-            
+
+            // 8. 이용제한 안내 (activityRestrictionDate가 있을 때만 표시)
+            activityRestrictionDate?.let { date ->
+                // 16dp 간격
+                Spacer(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(16.dp)
+                        .background(NeutralColor.GRAY_100)
+                )
+
+                // 이용제한 안내
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(NeutralColor.GRAY_100)
+                        .padding(horizontal = 16.dp)
+                ) {
+                    Text(
+                        text = stringResource(SettingsR.string.activity_restriction_title),
+                        style = TextComponent.CAPTION_1_SB_12,
+                        color = NeutralColor.BLACK
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = stringResource(SettingsR.string.activity_restriction_guide_message),
+                        style = TextComponent.CAPTION_3_M_10,
+                        color = NeutralColor.GRAY_500
+                    )
+                    Text(
+                        text = stringResource(SettingsR.string.activity_restriction_message, date),
+                        style = TextComponent.CAPTION_3_M_10,
+                        color = NeutralColor.GRAY_500
+                    )
+                }
+            }
+
             // 탈퇴하기 밑 여백
             Spacer(
                 modifier = Modifier
@@ -346,7 +412,7 @@ private fun SettingScreenPreview() {
             type = SettingItemType.NAVIGATION
         ),
         SettingItem(
-            id = SettingItemId.LOAD_PREVIOUS_ACCOUNT, 
+            id = SettingItemId.LOAD_PREVIOUS_ACCOUNT,
             title = "이전 계정 불러오기",
             type = SettingItemType.NAVIGATION
         ),
@@ -383,22 +449,45 @@ private fun SettingScreenPreview() {
             type = SettingItemType.DANGER
         )
     )
-    
+
     SettingScreen(
         notificationEnabled = true,
         appVersion = "1.10.1",
         isUpdateAvailable = true,
         isLoading = false,
         settingItems = previewItems,
+        activityRestrictionDate = "2024년 12월 25일 14시 30분",
         onBackPressed = {},
         onNotificationToggle = {},
-        onCheckForUpdates = {},
         onLoginOtherDeviceClick = {},
         onLoadPreviousAccountClick = {},
         onBlockedUsersClick = {},
         onNoticeClick = {},
         onInquiryClick = {},
         onPrivacyPolicyClick = {},
-        onAccountDeletionClick = {}
+        onAccountDeletionClick = {},
+        onAppUpdateClick = {},
+        latestVersion = ""
     )
+}
+
+private fun openAppStore(context: Context) {
+    try {
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = "market://details?id=${context.packageName}".toUri()
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(intent)
+    } catch (e: Exception) {
+        try {
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                data =
+                    "https://play.google.com/store/apps/details?id=${context.packageName}".toUri()
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 }

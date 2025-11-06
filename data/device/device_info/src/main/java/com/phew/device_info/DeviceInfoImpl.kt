@@ -51,4 +51,14 @@ class DeviceInfoImpl @Inject constructor(@ApplicationContext private val context
             return ERROR
         }
     }
+
+    override suspend fun appVersion(): String {
+        try {
+            val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+            return packageInfo.versionName.toString()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw IllegalArgumentException("App Version not found ${e.message}")
+        }
+    }
 }

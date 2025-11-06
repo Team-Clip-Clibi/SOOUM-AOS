@@ -63,6 +63,43 @@ object TimeUtils {
     }
     
     /**
+     * ISO 8601 날짜 문자열을 "yyyy년MM월dd일HH시mm분" 형식으로 포맷팅
+     * @param dateString ISO 8601 형식의 날짜 문자열 (예: "2024-12-25T14:30:00.000Z")
+     * @return "yyyy년MM월dd일HH시mm분" 형식의 문자열, 파싱 실패시 원본 반환
+     */
+    fun formatToKoreanDateTime(dateString: String): String {
+        return try {
+            if (dateString.isBlank()) {
+                return dateString
+            }
+            
+            // 기존 ISO 8601 파싱 로직 활용 (마이크로초 우선, 밀리초 폴백)
+            val parsedTime = try {
+                iso8601Format.parse(dateString)?.time
+            } catch (e: Exception) {
+                try {
+                    iso8601FormatFallback.parse(dateString)?.time
+                } catch (e: Exception) {
+                    null
+                }
+            }
+            
+            if (parsedTime != null) {
+                val outputFormat = SimpleDateFormat("yyyy년 MM월 dd일 HH시 mm분", Locale.getDefault()).apply {
+                    timeZone = TimeZone.getTimeZone("Asia/Seoul") // 한국 시간대로 출력
+                }
+                outputFormat.format(parsedTime)
+            } else {
+                SooumLog.w(TAG, "Failed to parse ISO 8601 date: $dateString")
+                dateString
+            }
+        } catch (e: Exception) {
+            SooumLog.w(TAG, "Failed to format date: $dateString, ${e.message}")
+            dateString
+        }
+    }
+    
+    /**
      * createAt 시간을 기반으로 상대적 시간 표시
      * 8단계 시간 표기 정책:
      * 1. ~1분: "방금전"

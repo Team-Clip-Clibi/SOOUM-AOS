@@ -2,6 +2,9 @@ package com.phew.presentation.settings.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.phew.core_common.DomainResult
+import com.phew.domain.usecase.GetTransferCode
+import com.phew.domain.usecase.RefreshTransferCode
 import com.phew.presentation.settings.model.LoginOtherDeviceNavigationEvent
 import com.phew.presentation.settings.model.LoginOtherDeviceUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,11 +19,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.random.Random
 
 @HiltViewModel
 class LoginOtherDeviceViewModel @Inject constructor(
-    // TODO: Inject repositories when needed
+    private val getTransferCode: GetTransferCode,
+    private val refreshTransferCode: RefreshTransferCode
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginOtherDeviceUiState())
@@ -42,14 +45,32 @@ class LoginOtherDeviceViewModel @Inject constructor(
     }
 
     private fun generateCode() {
-        _uiState.update {
-            it.copy(
-                code = "임시", // 서버 구현시 수정 예정
-                isCodeGenerated = true,
-                isRetryEnabled = false
-            ) 
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            
+            when (val result = getTransferCode()) {
+                is DomainResult.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            code = result.data.transferCode,
+                            expiredAt = result.data.expiredAt,
+                            isCodeGenerated = true,
+                            isRetryEnabled = false,
+                            isLoading = false
+                        )
+                    }
+                    startTimer()
+                }
+                is DomainResult.Failure -> {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            isRetryEnabled = true
+                        )
+                    }
+                }
+            }
         }
-        startTimer()
     }
 
 
@@ -90,7 +111,36 @@ class LoginOtherDeviceViewModel @Inject constructor(
 
     fun onRetryCodeClick() {
         if (_uiState.value.isRetryEnabled) {
-            generateCode()
+            refreshCodeFromApi()
+        }
+    }
+    
+    private fun refreshCodeFromApi() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            
+            when (val result = refreshTransferCode()) {
+                is DomainResult.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            code = result.data.transferCode,
+                            expiredAt = result.data.expiredAt,
+                            isCodeGenerated = true,
+                            isRetryEnabled = false,
+                            isLoading = false
+                        )
+                    }
+                    startTimer()
+                }
+                is DomainResult.Failure -> {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            isRetryEnabled = true
+                        )
+                    }
+                }
+            }
         }
     }
 

@@ -2,6 +2,11 @@ package com.phew.presentation.settings.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.phew.core_common.DomainResult
+import com.phew.core_common.TimeUtils
+import com.phew.domain.model.AppVersionStatusType
+import com.phew.domain.usecase.CheckAppVersionNew
+import com.phew.domain.usecase.GetActivityRestrictionDate
 import com.phew.presentation.settings.model.setting.SettingNavigationEvent
 import com.phew.presentation.settings.model.setting.SettingItem
 import com.phew.presentation.settings.model.setting.SettingItemId
@@ -17,10 +22,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import androidx.core.net.toUri
 
 @HiltViewModel
 class SettingViewModel @Inject constructor(
-    // TODO: Inject repositories when needed
+    private val getActivityRestrictionDate: GetActivityRestrictionDate,
+    private val checkAppVersionNew: CheckAppVersionNew
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -32,6 +39,11 @@ class SettingViewModel @Inject constructor(
 
     private val _navigationEvent = MutableSharedFlow<SettingNavigationEvent>()
     val navigationEvent: SharedFlow<SettingNavigationEvent> = _navigationEvent.asSharedFlow()
+    
+    init {
+        loadActivityRestrictionDate()
+        checkAppVersion()
+    }
 
     private fun createSettingItems(): List<SettingItem> {
         return listOf(
@@ -86,16 +98,25 @@ class SettingViewModel @Inject constructor(
     fun checkForUpdates() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            try {
-                // TODO: Implement update check logic
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        isUpdateAvailable = false
-                    ) 
+            
+            val param = CheckAppVersionNew.Param(
+                type = "ANDROID"
+            )
+            
+            when (val result = checkAppVersionNew(param)) {
+                is DomainResult.Success -> {
+                    _uiState.update { 
+                        it.copy(
+                            isLoading = false,
+                            appVersionStatus = result.data,
+                            appVersionStatusType = result.data?.status,
+                            latestVersion = result.data?.latestVersion
+                        )
+                    }
                 }
-            } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false) }
+                is DomainResult.Failure -> {
+                    _uiState.update { it.copy(isLoading = false) }
+                }
             }
         }
     }
@@ -139,6 +160,55 @@ class SettingViewModel @Inject constructor(
     fun onAccountDeletionClick() {
         viewModelScope.launch {
             _navigationEvent.emit(SettingNavigationEvent.NavigateToAccountDeletion)
+        }
+    }
+
+    fun onAppUpdateClick() {
+        viewModelScope.launch {
+            val currentState = _uiState.value
+            if (currentState.appVersionStatusType == AppVersionStatusType.UPDATE) {
+                _navigationEvent.emit(SettingNavigationEvent.NavigateToAppStore)
+            }
+        }
+    }
+    
+    private fun loadActivityRestrictionDate() {
+        viewModelScope.launch {
+            when (val result = getActivityRestrictionDate()) {
+                is DomainResult.Success -> {
+                    _uiState.update { 
+                        it.copy(activityRestrictionDate = result.data?.let { dateString -> 
+                            TimeUtils.formatToKoreanDateTime(dateString) 
+                        }) 
+                    }
+                }
+                is DomainResult.Failure -> {
+                    // 실패시에는 null로 유지 (기본값)
+                }
+            }
+        }
+    }
+    
+    private fun checkAppVersion() {
+        viewModelScope.launch {
+            val param = CheckAppVersionNew.Param(
+                type = "ANDROID"
+            )
+            
+            when (val result = checkAppVersionNew(param)) {
+                is DomainResult.Success -> {
+                    _uiState.update { 
+                        it.copy(
+                            appVersionStatus = result.data,
+                            appVersionStatusType = result.data?.status,
+                            latestVersion = result.data?.latestVersion
+                        )
+                    }
+                }
+                is DomainResult.Failure -> {
+                    // 실패시에는 null로 유지 (기본값)
+                }
+            }
         }
     }
 }

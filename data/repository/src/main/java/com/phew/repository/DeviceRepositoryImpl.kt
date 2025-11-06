@@ -106,4 +106,8 @@ class DeviceRepositoryImpl @Inject constructor(
     override suspend fun getLocationPermission(): Boolean {
         return location.locationPermissionCheck()
     }
+
+    override suspend fun getAppVersion(): String {
+        return deviceInfo.appVersion()
+    }
 }

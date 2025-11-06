@@ -68,6 +68,7 @@ internal fun LoginOtherDeviceRoute(
         code = uiState.code,
         remainingTimeText = uiState.remainingTimeText,
         isRetryEnabled = uiState.isRetryEnabled,
+        isLoading = uiState.isLoading,
         onBackPressed = viewModel::onBackPressed,
         onRetryCodeClick = viewModel::onRetryCodeClick
     )
@@ -79,6 +80,7 @@ private fun LoginOtherDeviceScreen(
     code: String,
     remainingTimeText: String,
     isRetryEnabled: Boolean,
+    isLoading: Boolean = false,
     onBackPressed: () -> Unit,
     onRetryCodeClick: () -> Unit
 ) {
@@ -102,7 +104,7 @@ private fun LoginOtherDeviceScreen(
             ) {
                 LargeButton.NoIconPrimary(
                     buttonText = stringResource(R.string.other_device_retry_code),
-                    isEnable = true,
+                    isEnable = isRetryEnabled && !isLoading,
                     onClick = {
                         onRetryCodeClick()
                     }
@@ -182,6 +184,7 @@ private fun LoginOtherDeviceScreenPreview() {
         code = "eHq8kSd926",
         remainingTimeText = "48:48",
         isRetryEnabled = true,
+        isLoading = false,
         onBackPressed = {},
         onRetryCodeClick = {}
     )

@@ -8,4 +8,5 @@ sealed class SettingNavigationEvent {
     data object NavigateToInquiry : SettingNavigationEvent()
     data object NavigateToPrivacyPolicy : SettingNavigationEvent()
     data object NavigateToAccountDeletion : SettingNavigationEvent()
+    data object NavigateToAppStore : SettingNavigationEvent()
 }
