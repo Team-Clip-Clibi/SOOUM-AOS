@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -22,9 +21,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -54,7 +51,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.paging.LoadState
-import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import coil3.compose.AsyncImage
@@ -71,18 +67,18 @@ import com.phew.core_design.MediumButton
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
 import com.phew.domain.dto.MyProfileInfo
-import com.phew.domain.dto.ProfileCard
 import com.phew.profile.ProfileViewModel
 import com.phew.profile.R
 import com.phew.profile.TAB_MY_COMMENT_CARD
 import com.phew.profile.TAB_MY_FEED_CARD
 import com.phew.profile.UiState
 import com.phew.profile.component.ProfileTab
-import kotlinx.coroutines.flow.Flow
 import com.phew.core_design.component.card.CommentBodyContent
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.grid.GridItemSpan
-
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -191,129 +187,167 @@ internal fun MyProfile(
                         }
                     }
                 ) {
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(3),
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(NeutralColor.WHITE)
-                            .graphicsLayer {
-                                translationY =
-                                    refreshState.distanceFraction * with(density) { 72.dp.toPx() }
-                            },
-                        contentPadding = PaddingValues(top = paddingValues.calculateTopPadding()) ,
-                    ) {
-                        item(
-                            span = { GridItemSpan(maxLineSpan) }
-                        ) {
-                            MyProfileView(
-                                profile = profileState.data,
-                                onFollowerClick = onClickFollower,
-                                onFollowingClick = onClickFollowing,
-                                onEditProfileClick = onEditProfileClick
-                            )
-                        }
-                        stickyHeader {
-                            Box(
+                    when (cardData.itemCount) {
+                        0 -> {
+                            Column(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(NeutralColor.WHITE)
-                                    .padding(top = 16.dp)
+                                    .fillMaxSize()
+                                    .graphicsLayer {
+                                        translationY =
+                                            refreshState.distanceFraction * with(density) { 72.dp.toPx() }
+                                    }
+                                    .background(color = NeutralColor.WHITE)
+                                    .padding(
+                                        top = paddingValues.calculateTopPadding(),
+                                        bottom = paddingValues.calculateBottomPadding()
+                                    )
+                                    .verticalScroll(rememberScrollState())
                             ) {
-                                ProfileTab(
-                                    selectTabData = selectIndex,
-                                    onFeedCardClick = { selectIndex = TAB_MY_FEED_CARD },
-                                    onCommentCardClick = { selectIndex = TAB_MY_COMMENT_CARD }
+                                MyProfileView(
+                                    profile = profileState.data,
+                                    onFollowerClick = onClickFollower,
+                                    onFollowingClick = onClickFollowing,
+                                    onEditProfileClick = onEditProfileClick
                                 )
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(NeutralColor.WHITE)
+                                        .padding(top = 16.dp)
+                                ) {
+                                    ProfileTab(
+                                        selectTabData = selectIndex,
+                                        onFeedCardClick = { selectIndex = TAB_MY_FEED_CARD },
+                                        onCommentCardClick = { selectIndex = TAB_MY_COMMENT_CARD }
+                                    )
+                                }
+                                Column(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxWidth()
+                                        .background(color = NeutralColor.WHITE),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Image(
+                                        painter = painterResource(com.phew.core_design.R.drawable.ic_card_filled),
+                                        colorFilter = ColorFilter.tint(NeutralColor.GRAY_200),
+                                        contentDescription = "no card",
+                                        modifier = Modifier.padding(bottom = 8.dp)
+                                    )
+                                    Text(
+                                        text = if (selectIndex == TAB_MY_FEED_CARD) stringResource(
+                                            R.string.profile_txt_no_card
+                                        ) else stringResource(
+                                            R.string.profile_txt_no_comment_card
+                                        ),
+                                        style = TextComponent.BODY_1_M_14,
+                                        color = NeutralColor.GRAY_400
+                                    )
+                                }
                             }
                         }
-                        when {
-                            cardData.loadState.refresh is LoadState.Loading -> {
-                                item(span = { GridItemSpan(maxLineSpan) }) {
+
+                        else -> {
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(3),
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(NeutralColor.WHITE)
+                                    .graphicsLayer {
+                                        translationY =
+                                            refreshState.distanceFraction * with(density) { 72.dp.toPx() }
+                                    }
+                                    .padding(top = paddingValues.calculateTopPadding()),
+                                contentPadding = PaddingValues(bottom = paddingValues.calculateBottomPadding() + 63.dp),
+                            ) {
+                                item(
+                                    span = { GridItemSpan(maxLineSpan) }
+                                ) {
+                                    MyProfileView(
+                                        profile = profileState.data,
+                                        onFollowerClick = onClickFollower,
+                                        onFollowingClick = onClickFollowing,
+                                        onEditProfileClick = onEditProfileClick
+                                    )
+                                }
+                                stickyHeader {
                                     Column(
                                         modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(color = NeutralColor.WHITE),
-                                        verticalArrangement = Arrangement.Center,
-                                        horizontalAlignment = Alignment.CenterHorizontally
+                                            .fillMaxWidth()
+                                            .background(NeutralColor.WHITE)
+                                            .padding(top = 16.dp)
                                     ) {
-                                        LoadingView()
-                                    }
-                                }
-                            }
-
-                            cardData.loadState.refresh is LoadState.Error -> {
-                                item(span = { GridItemSpan(maxLineSpan) }) {
-                                    val networkErrorMsg =
-                                        stringResource(com.phew.core_design.R.string.error_network)
-                                    val appErrorMsg =
-                                        stringResource(com.phew.core_design.R.string.error_app)
-                                    val error =
-                                        (cardData.loadState.refresh as LoadState.Error).error
-                                    when (error.message) {
-                                        ERROR_NETWORK -> {
-                                            LaunchedEffect(error.message) {
-                                                snackBarHostState.showSnackbar(
-                                                    message = networkErrorMsg,
-                                                    withDismissAction = true
-                                                )
+                                        ProfileTab(
+                                            selectTabData = selectIndex,
+                                            onFeedCardClick = { selectIndex = TAB_MY_FEED_CARD },
+                                            onCommentCardClick = {
+                                                selectIndex = TAB_MY_COMMENT_CARD
                                             }
-                                        }
-
-                                        ERROR_LOGOUT -> onLogout()
-                                        else -> {
-                                            LaunchedEffect(error.message) {
-                                                snackBarHostState.showSnackbar(
-                                                    message = appErrorMsg,
-                                                    withDismissAction = true
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            cardData.itemCount == 0 -> {
-                                item(span = { GridItemSpan(maxLineSpan) }) {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(color = NeutralColor.WHITE),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                            Image(
-                                                painter = painterResource(com.phew.core_design.R.drawable.ic_card_filled),
-                                                colorFilter = ColorFilter.tint(NeutralColor.GRAY_200),
-                                                contentDescription = "no card",
-                                                modifier = Modifier.padding(bottom = 8.dp)
-                                            )
-                                            Text(
-                                                text = if (selectIndex == TAB_MY_FEED_CARD) stringResource(
-                                                    R.string.profile_txt_no_card
-                                                ) else stringResource(
-                                                    R.string.profile_txt_no_comment_card
-                                                ),
-                                                style = TextComponent.BODY_1_M_14,
-                                                color = NeutralColor.GRAY_400
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-
-                            else -> {
-                                items(
-                                    count = cardData.itemCount,
-                                    key = cardData.itemKey { data -> data.cardId }
-                                ) { index ->
-                                    val item = cardData[index]
-                                    if (item != null) {
-                                        CommentBodyContent(
-                                            contentText = item.cardContent,
-                                            imgUrl = item.cardImgUrl,
-                                            fontFamily = FontFamily(Font(com.phew.core_design.R.font.medium)),
-                                            textMaxLines = 3
                                         )
+                                    }
+                                }
+                                when {
+                                    cardData.loadState.refresh is LoadState.Loading -> {
+                                        item(span = { GridItemSpan(maxLineSpan) }) {
+                                            Column(
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .background(color = NeutralColor.WHITE),
+                                                verticalArrangement = Arrangement.Center,
+                                                horizontalAlignment = Alignment.CenterHorizontally
+                                            ) {
+                                                LoadingView()
+                                            }
+                                        }
+                                    }
+
+                                    cardData.loadState.refresh is LoadState.Error -> {
+                                        item(span = { GridItemSpan(maxLineSpan) }) {
+                                            val networkErrorMsg =
+                                                stringResource(com.phew.core_design.R.string.error_network)
+                                            val appErrorMsg =
+                                                stringResource(com.phew.core_design.R.string.error_app)
+                                            val error =
+                                                (cardData.loadState.refresh as LoadState.Error).error
+                                            when (error.message) {
+                                                ERROR_NETWORK -> {
+                                                    LaunchedEffect(error.message) {
+                                                        snackBarHostState.showSnackbar(
+                                                            message = networkErrorMsg,
+                                                            withDismissAction = true
+                                                        )
+                                                    }
+                                                }
+
+                                                ERROR_LOGOUT -> onLogout()
+                                                else -> {
+                                                    LaunchedEffect(error.message) {
+                                                        snackBarHostState.showSnackbar(
+                                                            message = appErrorMsg,
+                                                            withDismissAction = true
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    cardData.itemCount != 0 -> {
+                                        items(
+                                            count = cardData.itemCount,
+                                            key = cardData.itemKey { data -> data.cardId }
+                                        ) { index ->
+                                            val item = cardData[index]
+                                            if (item != null) {
+                                                CommentBodyContent(
+                                                    contentText = item.cardContent,
+                                                    imgUrl = item.cardImgUrl,
+                                                    fontFamily = FontFamily(Font(com.phew.core_design.R.font.medium)),
+                                                    textMaxLines = 3
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -324,7 +358,6 @@ internal fun MyProfile(
         }
     }
 }
-
 
 @Composable
 private fun MyProfileScaffold(
@@ -484,113 +517,6 @@ private fun MyProfileView(
             buttonText = stringResource(R.string.profile_btn_edit_profile),
             onClick = remember(onEditProfileClick) { onEditProfileClick },
         )
-    }
-}
-
-@Composable
-private fun ProfileFeedCardView(
-    modifier: Modifier = Modifier,
-    profileFeedCard: Flow<PagingData<ProfileCard>>,
-    snackBarHostState: SnackbarHostState,
-    onLogout: () -> Unit,
-    selectIndex: Int,
-) {
-    val cardData = profileFeedCard.collectAsLazyPagingItems()
-    val networkErrorMsg = stringResource(com.phew.core_design.R.string.error_network)
-    val appErrorMsg = stringResource(com.phew.core_design.R.string.error_app)
-    when {
-        cardData.loadState.refresh is LoadState.Loading -> {
-            Column(
-                modifier = modifier
-                    .fillMaxSize()
-                    .background(color = NeutralColor.WHITE),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                LoadingView()
-            }
-        }
-
-        cardData.loadState.refresh is LoadState.Error -> {
-            val error = (cardData.loadState.refresh as LoadState.Error).error
-            when (error.message) {
-                ERROR_NETWORK -> {
-                    LaunchedEffect(error.message) {
-                        snackBarHostState.showSnackbar(
-                            message = networkErrorMsg,
-                            withDismissAction = true
-                        )
-                    }
-                }
-
-                ERROR_LOGOUT -> onLogout()
-                else -> {
-                    LaunchedEffect(error.message) {
-                        snackBarHostState.showSnackbar(
-                            message = appErrorMsg,
-                            withDismissAction = true
-                        )
-                    }
-                }
-            }
-        }
-
-        cardData.itemCount == 0 -> {
-            Box(
-                modifier = modifier
-                    .fillMaxSize()
-                    .background(color = NeutralColor.WHITE)
-            ) {
-                Column(
-                    modifier = Modifier.align(Alignment.Center),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Image(
-                        painter = painterResource(com.phew.core_design.R.drawable.ic_card_filled),
-                        colorFilter = ColorFilter.tint(NeutralColor.GRAY_200),
-                        contentDescription = "no card",
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    Text(
-                        text = if (selectIndex == TAB_MY_FEED_CARD) stringResource(R.string.profile_txt_no_card) else stringResource(
-                            R.string.profile_txt_no_comment_card
-                        ),
-                        style = TextComponent.BODY_1_M_14,
-                        color = NeutralColor.GRAY_400
-                    )
-                }
-            }
-        }
-
-        else -> {
-            Column(
-                modifier = modifier
-                    .fillMaxSize()
-                    .background(color = NeutralColor.WHITE)
-            ) {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(3),
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalArrangement = Arrangement.spacedBy(1.dp),
-                    verticalArrangement = Arrangement.spacedBy(1.dp)
-                ) {
-                    items(
-                        count = cardData.itemCount,
-                        key = cardData.itemKey { data -> data.cardId }
-                    ) { index ->
-                        val item = cardData[index]
-                        if (item != null) {
-                            CommentBodyContent(
-                                contentText = item.cardContent,
-                                imgUrl = item.cardImgUrl,
-                                fontFamily = FontFamily(Font(com.phew.core_design.R.font.medium)),
-                                textMaxLines = 3
-                            )
-                        }
-                    }
-                }
-            }
-        }
     }
 }
 
