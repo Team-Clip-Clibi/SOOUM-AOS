@@ -34,12 +34,22 @@ class ProfileViewModel @Inject constructor(
         myProfile()
     }
 
+    fun refresh() {
+        _uiState.update { state -> state.copy(isRefreshing = true) }
+        myProfile()
+    }
+
     private fun myProfile() {
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { state -> state.copy(myProfileInfo = UiState.Loading) }
             when (val request = getMyProfile()) {
                 is DomainResult.Failure -> {
-                    _uiState.update { state -> state.copy(myProfileInfo = UiState.Fail(request.error)) }
+                    _uiState.update { state ->
+                        state.copy(
+                            myProfileInfo = UiState.Fail(request.error),
+                            isRefreshing = false
+                        )
+                    }
                 }
 
                 is DomainResult.Success -> {
@@ -49,7 +59,8 @@ class ProfileViewModel @Inject constructor(
                             profileFeedCard = getFeedCard(userId = request.data.userId).cachedIn(
                                 viewModelScope
                             ),
-                            profileCommentCard = getCommentCard().cachedIn(viewModelScope)
+                            profileCommentCard = getCommentCard().cachedIn(viewModelScope),
+                            isRefreshing = false
                         )
                     }
                 }
@@ -62,6 +73,7 @@ data class Profile(
     val myProfileInfo: UiState<MyProfileInfo> = UiState.Loading,
     val profileFeedCard: Flow<PagingData<ProfileCard>> = emptyFlow(),
     val profileCommentCard: Flow<PagingData<ProfileCard>> = emptyFlow(),
+    val isRefreshing: Boolean = false,
 )
 
 sealed interface UiState<out T> {

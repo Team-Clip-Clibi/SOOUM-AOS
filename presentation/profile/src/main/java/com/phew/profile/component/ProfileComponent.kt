@@ -32,7 +32,7 @@ internal fun ProfileTab(
         selectedTabIndex = selectTabData,
         modifier = Modifier
             .fillMaxWidth()
-            .height(56.dp)
+            .height(48.dp)
             .background(color = NeutralColor.WHITE),
         contentColor = NeutralColor.WHITE,
         containerColor = NeutralColor.WHITE,
