@@ -19,12 +19,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,9 +33,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
-
-const val blinkTime = 120
 
 /**
  * button 중복 클래스 에러 발생시 아래의 명령어 터미널 작성
@@ -791,32 +784,29 @@ object SignUpAgreeButton {
         @DrawableRes image: Int = R.drawable.ic_check,
         onClick: () -> Unit,
         isSelected: Boolean = false,
-        selectColor : Color = NeutralColor.BLACK
+        selectColor: Color = NeutralColor.BLACK,
     ) {
-        var clicked by remember { mutableStateOf(false) }
-        var animating by remember { mutableStateOf(false) }
-        var backgroundColor by remember { mutableStateOf(NeutralColor.GRAY_100) }
-        val latestOnClick by rememberUpdatedState(newValue = onClick)
-        LaunchedEffect(clicked) {
-            if (clicked && !animating) {
-                animating = true
-                backgroundColor = NeutralColor.GRAY_200
-                delay(blinkTime.toLong())
-                backgroundColor = NeutralColor.GRAY_100
-                latestOnClick()
-                animating = false
-                clicked = false
-            }
-        }
+        val interactionSource = remember { MutableInteractionSource() }
+        val clicked by interactionSource.collectIsPressedAsState()
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
-                .background(color = backgroundColor, shape = RoundedCornerShape(10.dp))
+                .background(color = NeutralColor.GRAY_100, shape = RoundedCornerShape(10.dp))
                 .clip(shape = RoundedCornerShape(10.dp))
+                .drawBehind {
+                    val color = when {
+                        !clicked -> NeutralColor.GRAY_100
+                        clicked -> NeutralColor.GRAY_200
+                        else -> NeutralColor.GRAY_100
+                    }
+                    drawRect(color)
+                }
                 .clickable(
-                    enabled = !animating,
-                ) { clicked = true }
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = onClick
+                )
                 .padding(start = 24.dp, end = 24.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start
@@ -843,33 +833,31 @@ object SignUpAgreeButton {
         @DrawableRes image: Int = R.drawable.ic_check,
         @DrawableRes endImage: Int = R.drawable.ic_right,
         onClick: () -> Unit,
-        endClick : () -> Unit,
+        endClick: () -> Unit,
         isSelected: Boolean = false,
     ) {
-        var clicked by remember { mutableStateOf(false) }
-        var animating by remember { mutableStateOf(false) }
-        var backgroundColor by remember { mutableStateOf(NeutralColor.WHITE) }
-        val latestOnClick by rememberUpdatedState(newValue = onClick)
-
-        LaunchedEffect(clicked) {
-            if (clicked && !animating) {
-                animating = true
-                backgroundColor = NeutralColor.GRAY_200
-                delay(blinkTime.toLong())
-                backgroundColor = NeutralColor.WHITE
-                latestOnClick()
-                animating = false
-                clicked = false
-            }
-        }
+        val interactionSource = remember { MutableInteractionSource() }
+        val clicked by interactionSource.collectIsPressedAsState()
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
                 .clip(RoundedCornerShape(10.dp))
-                .background(color = backgroundColor, shape = RoundedCornerShape(10.dp))
-                .clickable(enabled = !animating) { clicked = true }
+                .background(color = NeutralColor.WHITE, shape = RoundedCornerShape(10.dp))
+                .drawBehind {
+                    val color = when {
+                        clicked -> NeutralColor.GRAY_200
+                        !clicked -> NeutralColor.WHITE
+                        else -> NeutralColor.WHITE
+                    }
+                    drawRect(color)
+                }
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = onClick
+                )
                 .padding(horizontal = 24.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start
@@ -894,7 +882,11 @@ object SignUpAgreeButton {
                 modifier = Modifier
                     .size(32.dp)
                     .padding(vertical = 8.dp)
-                    .clickable { endClick() }
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                        onClick = endClick
+                    )
             )
         }
     }
