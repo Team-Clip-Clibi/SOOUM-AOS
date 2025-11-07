@@ -23,6 +23,7 @@ fun SooumApp(
     finish: () -> Unit,
     appState: SooumAppState = rememberSooumAppState(),
     webView: (String) -> Unit,
+    isExpend: Boolean,
 ) {
     Box(
         modifier = Modifier.fillMaxSize(),

@@ -7,11 +7,11 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -65,7 +65,7 @@ private fun CardViewCommentImpl(
     likeCnt: String,
     commentCnt: String,
     font: String,
-    onClick: () -> Unit,
+    onClick: () -> Unit
 ) {
 
     Surface(
@@ -112,17 +112,27 @@ private fun CardViewCommentImpl(
 }
 
 @Composable
-private fun CommentBodyContent(
+fun CommentBodyContent(
     modifier: Modifier = Modifier,
     contentText: String = "",
     imgUrl: String = "",
     fontFamily: FontFamily,
-    textMaxLines: Int
+    textMaxLines: Int,
+    cardId: Long,
+    onClick: (Long) -> Unit,
 ) {
     Box(
         modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = 160.dp)
+            .widthIn(min = 119.dp)
+            .heightIn(min = 119.dp)
+            .aspectRatio(1f)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = {
+                    onClick(cardId)
+                }
+            )
     ) {
         AsyncImage(
             model = imgUrl,

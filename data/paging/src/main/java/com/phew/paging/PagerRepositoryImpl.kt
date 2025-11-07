@@ -6,8 +6,10 @@ import androidx.paging.PagingData
 import com.phew.domain.dto.CardComment
 import com.phew.domain.dto.Notice
 import com.phew.domain.dto.Notification
+import com.phew.domain.dto.ProfileCard
 import com.phew.domain.repository.PagerRepository
 import com.phew.domain.repository.network.CardDetailRepository
+import com.phew.domain.repository.network.ProfileRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
@@ -15,7 +17,8 @@ class PagerRepositoryImpl @Inject constructor(
     private val pagingNotifyProvider: javax.inject.Provider<PagingNotify>,
     private val pagingNotificationProvider: javax.inject.Provider<PagingNotificationUnRead>,
     private val pagingUnReadNotificationProvider: javax.inject.Provider<PagingNotificationRead>,
-    private val cardDetailRepository: CardDetailRepository
+    private val cardDetailRepository: CardDetailRepository,
+    private val profileRepository: ProfileRepository,
 ) : PagerRepository {
     override fun noticePageStream(): Flow<PagingData<Notice>> =
         Pager(PagingConfig(pageSize = 30)) { pagingNotifyProvider.get() }.flow
@@ -31,9 +34,26 @@ class PagerRepositoryImpl @Inject constructor(
     override fun cardComments(
         cardId: Long,
         latitude: Double?,
-        longitude: Double?
+        longitude: Double?,
     ): Flow<PagingData<CardComment>> =
         Pager(
             PagingConfig(pageSize = 30)
         ) { PagingCardComments(cardDetailRepository, cardId, latitude, longitude) }.flow
+
+    override fun profileFeedCard(userId: Long): Flow<PagingData<ProfileCard>> = Pager(
+        config = PagingConfig(pageSize = 50),
+        pagingSourceFactory = {
+            PagingProfileFeedCard(
+                repository = profileRepository,
+                userId = userId
+            )
+        }
+    ).flow
+
+    override fun profileCommentCard(): Flow<PagingData<ProfileCard>> = Pager(
+        config = PagingConfig(pageSize = 50),
+        pagingSourceFactory = {
+            PagingProfileCommentCard(repository = profileRepository)
+        }
+    ).flow
 }

@@ -5,6 +5,7 @@ import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.network.CardDetailRepository
 import com.phew.domain.repository.network.CardFeedRepository
 import com.phew.domain.repository.network.NotifyRepository
+import com.phew.domain.repository.network.ProfileRepository
 import com.phew.domain.repository.network.ReportsRepository
 import com.phew.domain.repository.network.SignUpRepository
 import com.phew.domain.repository.network.SplashRepository
@@ -13,6 +14,7 @@ import com.phew.repository.NotifyRepositoryImpl
 import com.phew.repository.network.CardDetailRepositoryImpl
 import com.phew.repository.network.CardFeedRepositoryImpl
 import com.phew.repository.network.MockCardFeedRepositoryImpl
+import com.phew.repository.network.ProfileRepositoryImpl
 import com.phew.repository.network.ReportRepositoryImpl
 import com.phew.repository.network.SignUpRepositoryImpl
 import com.phew.repository.network.SplashRepositoryImpl
@@ -55,6 +57,10 @@ abstract class RepositoryModule {
     @Singleton
     abstract fun bindReportsRepository(impl: ReportRepositoryImpl): ReportsRepository
 
+    @Binds
+    @Singleton
+    abstract fun bindProfileRepository(impl: ProfileRepositoryImpl): ProfileRepository
+
     companion object {
         @Provides
         @Singleton
@@ -64,12 +70,6 @@ abstract class RepositoryModule {
             mockImpl: MockCardFeedRepositoryImpl,
         ): CardFeedRepository {
             return realImpl
-            // 임시로 mock 데이터로 확인하고 싶을떄 사용
-//            return if (isDebug) {
-//                mockImpl
-//            } else {
-//                realImpl
-//            }
         }
     }
 }

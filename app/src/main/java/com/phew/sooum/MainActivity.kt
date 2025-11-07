@@ -6,6 +6,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.CompositionLocalProvider
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.core.net.toUri
@@ -23,6 +26,7 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var lifecycleAwareComposables: LifecycleAwareComposables
 
+    @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -32,20 +36,17 @@ class MainActivity : ComponentActivity() {
         controller.isAppearanceLightNavigationBars = true
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
         setContent {
+            val windowSize = calculateWindowSizeClass(this)
+            val isExpandedScreen = windowSize.widthSizeClass != WindowWidthSizeClass.Compact
             CompositionLocalProvider(
                 LocalLifecycleAwareComposables provides lifecycleAwareComposables
             ) {
                 SooumTheme {
                     SooumApp(
-                        finish = {
-                            finish()
-                        },
-                        appVersionUpdate = {
-                            playStore()
-                        },
-                        webView = { url ->
-                            openWebPage(url)
-                        }
+                        finish = ::finish,
+                        appVersionUpdate = ::playStore,
+                        webView = ::openWebPage,
+                        isExpend = isExpandedScreen
                     )
                 }
             }
