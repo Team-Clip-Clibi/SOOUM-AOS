@@ -235,7 +235,9 @@ internal fun CardDetailResponseDTO.toDomain(): CardDetail {
         isOwnCard = isOwnCard,
         previousCardId = previousCardId,
         previousCardImgUrl = previousCardImgUrl,
-        visitedCnt = visitedCnt
+        visitedCnt = visitedCnt,
+        isFeedCard = isFeedCard,
+        storyExpirationTime = storyExpirationTime
     )
 }
 

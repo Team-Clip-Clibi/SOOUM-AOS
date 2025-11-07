@@ -2,28 +2,42 @@ package com.phew.presentation.detail.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -31,26 +45,49 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.phew.core.ui.model.CameraPickerAction
+import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemContentType
+import androidx.paging.compose.itemKey
+import androidx.paging.compose.itemContentType
+import androidx.paging.compose.itemKey
+import com.airbnb.lottie.LottieComposition
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.model.navigation.CardDetailCommentArgs
-import com.phew.core.ui.util.extension.nestedScrollWithStickyHeader
 import com.phew.core_common.TimeUtils
 import com.phew.core_common.log.SooumLog
-import com.phew.core_design.AppBar.IconBothAppBar
+import com.phew.core_design.AppBar.TextButtonAppBar
 import com.phew.core_design.BottomSheetComponent
 import com.phew.core_design.BottomSheetItem
+import com.phew.core_design.Danger
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.NeutralColor
+import com.phew.core_design.Primary
 import com.phew.core_design.R
 import com.phew.core_design.TextComponent
+import com.phew.core_design.UnKnowColor
 import com.phew.presentation.detail.R as DetailR
 import com.phew.core_design.component.card.CardDetail
 import com.phew.core_design.component.card.CardViewComment
@@ -60,8 +97,10 @@ import com.phew.presentation.detail.component.CardDetailHeader
 import com.phew.presentation.detail.model.MoreAction
 import com.phew.presentation.detail.viewmodel.CardDetailError
 import com.phew.presentation.detail.viewmodel.CardDetailViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun CardDetailRoute(
     modifier: Modifier = Modifier,
@@ -75,12 +114,33 @@ internal fun CardDetailRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackBarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
+    val isRefreshing = uiState.isRefresh
+    val lazyListState = rememberLazyListState()
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                return Offset.Zero
+            }
+        }
+    }
+
+    val commentsPagingItems = viewModel.commentsPagingData.collectAsLazyPagingItems()
+
+
+
+    var showBottomSheet by remember { mutableStateOf(false) }
+    var showBlockDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    val refreshingOffset = 56.dp
+    val refreshState = rememberPullToRefreshState()
+    val density = LocalDensity.current
 
     LaunchedEffect(args.cardId) {
         SooumLog.d(TAG, "cardId=${args.cardId}")
         viewModel.loadCardDetail(args.cardId)
     }
-
+    var isDelete by remember { mutableStateOf(false) }
     // 에러 처리
     uiState.error?.let { errorType ->
         val errorMessage = when (errorType) {
@@ -114,10 +174,22 @@ internal fun CardDetailRoute(
             viewModel.clearBlockSuccess()
         }
     }
+    if(uiState.deleteSuccess){
+        isDelete = true
+    }
+
+    val composition by rememberLottieComposition(
+        LottieCompositionSpec.RawRes(com.phew.core_design.R.raw.ic_refresh)
+    )
+    val progress by animateLottieCompositionAsState(
+        composition = composition,
+        iterations = LottieConstants.IterateForever,
+        isPlaying = isRefreshing
+    )
 
     // 로딩 중일 때는 로딩 화면 표시
-    if (uiState.isLoading) {
-        // TODO: 로딩 화면 표시
+    val isInitialLoading = uiState.isLoading && uiState.cardDetail == null
+    if (isInitialLoading) {
         return
     }
 
@@ -127,12 +199,22 @@ internal fun CardDetailRoute(
         // TODO: 데이터 없음 화면 표시
         return
     }
+    val storyExpirationTime = if(cardDetail.storyExpirationTime == null) "0" else cardDetail.endTime.toString()
+    var remainingTimeMillis by remember { mutableLongStateOf(storyExpirationTime.toLong()) }
 
+    LaunchedEffect(cardDetail.memberId) {
+        while (remainingTimeMillis > 0) {
+            delay(1000L)
+            remainingTimeMillis -= 1000L
+        }
+    }
+
+    SooumLog.d(TAG, "cardDetail.cardImgUrl = ${cardDetail.cardImgUrl}")
     CardDetailScreen(
         modifier = modifier,
         cardContent = cardDetail.cardContent,
         cardThumbnailUri = cardDetail.cardImgUrl,
-        cardTags = cardDetail.tags?.map { it.name } ?: emptyList(),
+        cardTags = cardDetail.tags.map { it.name },
         previousCommentThumbnailUri = cardDetail.previousCardImgUrl ?: "",
         profileUri = cardDetail.profileImgUrl ?: "",
         nickName = cardDetail.nickname,
@@ -143,7 +225,10 @@ internal fun CardDetailRoute(
         commentCnt = cardDetail.commentCardCount,
         searchCnt = cardDetail.visitedCnt,
         isLikeCard = cardDetail.isLike,
-        comments = uiState.comments,
+        commentsPagingItems = commentsPagingItems,
+        isRefreshing = isRefreshing,
+        composition = composition,
+        progress = progress,
         onBackPressed = onBackPressed,
         onClickLike = {
             viewModel.toggleLike(args.cardId)
@@ -151,20 +236,42 @@ internal fun CardDetailRoute(
         onClickCommentIcon = {
             onNavigateToWrite(args.cardId)
         },
-        onClickCommentView = {
-
+        onClickCommentView = { commentCardId ->
+            onNavigateToComment(CardDetailCommentArgs(cardId = commentCardId , parentId = args.cardId))
         },
         onBlockMember = { toMemberId, nickname ->
             viewModel.blockMember(toMemberId, nickname)
         },
         onNavigateToReport = onNavigateToReport,
+        onRefresh = {
+            viewModel.loadCardDetail(args.cardId)
+        },
+        lazyListState = lazyListState,
+        nestedScrollConnection = nestedScrollConnection,
         cardId = args.cardId,
-        snackBarHostState = snackBarHostState
+        snackBarHostState = snackBarHostState,
+        remainingTimeMillis = remainingTimeMillis,
+        isExpire = cardDetail.storyExpirationTime != null && TimeUtils.parseTimerToMillis(
+            cardDetail.storyExpirationTime ?: ""
+        ) <= 0L || isDelete,
+        isOwnCard = cardDetail.isOwnCard,
+        deleteCard = { cardId ->
+            viewModel.requestDeleteCard(cardId)
+        },
+        showBottomSheet = showBottomSheet,
+        onShowBottomSheetChange = { showBottomSheet = it },
+        showBlockDialog = showBlockDialog,
+        onShowBlockDialogChange = { showBlockDialog = it },
+        showDeleteDialog = showDeleteDialog,
+        onShowDeleteDialogChange = { showDeleteDialog = it },
+        refreshingOffset = refreshingOffset,
+        refreshState = refreshState,
+        density = density,
     )
-
 }
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CardDetailScreen(
     modifier: Modifier,
@@ -181,198 +288,351 @@ private fun CardDetailScreen(
     commentCnt: Int,
     searchCnt: Int,
     isLikeCard: Boolean,
-    comments: List<CardComment>,
+    commentsPagingItems: LazyPagingItems<CardComment>,
+    isRefreshing: Boolean,
+    progress: Float,
+    composition: LottieComposition?,
     onBackPressed: () -> Unit,
     onClickLike: () -> Unit,
     onClickCommentIcon: () -> Unit,
-    onClickCommentView: () -> Unit,
+    onClickCommentView: (Long) -> Unit,
     onBlockMember: (Long, String) -> Unit,
+    deleteCard: (Long) -> Unit,
     onNavigateToReport: (Long) -> Unit,
+    onRefresh: () -> Unit,
+    lazyListState: LazyListState,
+    nestedScrollConnection: NestedScrollConnection,
     cardId: Long,
     snackBarHostState: SnackbarHostState,
+    remainingTimeMillis: Long,
+    isExpire: Boolean,
+    isOwnCard: Boolean,
+    showBottomSheet: Boolean,
+    onShowBottomSheetChange: (Boolean) -> Unit,
+    showBlockDialog: Boolean,
+    onShowBlockDialogChange: (Boolean) -> Unit,
+    showDeleteDialog: Boolean,
+    onShowDeleteDialogChange: (Boolean) -> Unit,
+    refreshingOffset: androidx.compose.ui.unit.Dp,
+    refreshState: androidx.compose.material3.pulltorefresh.PullToRefreshState,
+    density: androidx.compose.ui.unit.Density,
 ) {
 
-    val pagerState = rememberPagerState(
-        initialPage = 0,
-        initialPageOffsetFraction = 0f,
-        pageCount = { comments.size }
-    )
-    
-    var showBottomSheet by remember { mutableStateOf(false) }
-    var showBlockDialog by remember { mutableStateOf(false) }
+    val commentPagerHeight = 236.dp
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Scaffold(
+    Scaffold(
         modifier = modifier,
         topBar = {
-            IconBothAppBar(
-                startImage = R.drawable.ic_left,
-                endImage = R.drawable.ic_more_stoke,
-                appBarText = stringResource(DetailR.string.card_title_comment),
-                startClick = onBackPressed,
-                endClick = { showBottomSheet = true }
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(NeutralColor.WHITE)
+                    .windowInsetsPadding(WindowInsets.statusBars)
+            ) {
+                TextButtonAppBar(
+                    startImage = R.drawable.ic_left,
+                    endImage = R.drawable.ic_more_stroke_circle,
+                    appBarText = stringResource(DetailR.string.card_title_comment),
+                    startClick = onBackPressed,
+                    endClick = { onShowBottomSheetChange(true) }
+                )
+                Text(
+                    text = if (remainingTimeMillis.toString().trim() == "0") {
+                        ""
+                    } else {
+                        TimeUtils.formatMillisToTimer(remainingTimeMillis)
+                    },
+                    color = Primary.DARK,
+                    style = TextComponent.CAPTION_3_M_10,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
+            }
         },
         snackbarHost = {
             SnackbarHost(hostState = snackBarHostState) { data ->
                 DialogComponent.SnackBar(data)
             }
+        },
+        floatingActionButton = {
+            Box(
+                modifier = Modifier
+                    .navigationBarsPadding()
+                    .padding(bottom = 32.dp, end = 16.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(54.dp)
+                        .shadow(
+                            elevation = 12.dp,
+                            spotColor = UnKnowColor.color2,
+                            ambientColor = UnKnowColor.color2
+                        )
+                        .background(
+                            color = NeutralColor.GRAY_600,
+                            shape = RoundedCornerShape(27.dp)
+                        )
+                        .clickable { onClickCommentIcon() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_plus),
+                        contentDescription = "Add",
+                        tint = NeutralColor.WHITE
+                    )
+                }
+            }
         }
     ) { paddingValues ->
-        val scrollState = rememberScrollState()
-
-        Box(
-            modifier = Modifier.fillMaxSize()
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = onRefresh,
+            state = refreshState,
+            modifier = Modifier
+                .fillMaxSize(),
+            indicator = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = paddingValues.calculateTopPadding()),
+                    contentAlignment = Alignment.Center
+                ) {
+                    val distanceFraction = refreshState.distanceFraction
+                    val lottieProgress = if (isRefreshing) progress else distanceFraction
+                    LottieAnimation(
+                        composition = composition,
+                        progress = { lottieProgress },
+                        modifier = Modifier
+                            .size(44.dp)
+                            .graphicsLayer {
+                                alpha = if (isRefreshing || distanceFraction > 0f) 1f else 0f
+                            }
+                    )
+                }
+            }
         ) {
-            Column(
-                modifier = modifier
+            LazyColumn(
+                modifier = Modifier
                     .background(NeutralColor.WHITE)
                     .fillMaxSize()
-                    .verticalScroll(scrollState)
                     .padding(paddingValues)
-            ) {
-                CardDetail(
-                    previousCommentThumbnailUri = previousCommentThumbnailUri,
-                    cardContent = cardContent,
-                    cardThumbnailUri = cardThumbnailUri,
-                    cardTags = cardTags,
-                    header = {
-                        CardDetailHeader(
-                            profileUri = profileUri,
-                            nickName = nickName,
-                            distance = distance,
-                            createAt = createAt
-                        )
+                    .nestedScroll(nestedScrollConnection)
+                    .graphicsLayer {
+                        val distanceFraction = refreshState.distanceFraction
+                        translationY = if (isRefreshing || distanceFraction > 0f) {
+                            distanceFraction * with(density) { refreshingOffset.toPx() }
+                        } else {
+                            0f
+                        }
                     },
-                    bottom = {
-                        CardDetailBottom(
-                            likeCnt = likeCnt,
-                            commentCnt = commentCnt,
-                            searchCnt = searchCnt,
-                            isLikeCard = isLikeCard,
-                            onClickLike = onClickLike,
-                            onClickComment = onClickCommentIcon
-                        )
-                    }
-                )
-                
-                if (comments.isNotEmpty()) {
-                    HorizontalPager(
+                state = lazyListState,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                item {
+                    Column(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .background(NeutralColor.GRAY_100)
-                            .nestedScrollWithStickyHeader(scrollState),
-                        state = pagerState,
-                        flingBehavior = PagerDefaults.flingBehavior(state = pagerState),
-                        pageSpacing = 10.dp,
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 10.dp),
-                        pageContent = { page ->
-                            CardViewComment(
-                                contentText = comments[page].cardContent,
-                                thumbnailUri = comments[page].cardImgUrl,
-                                distance = comments[page].distance ?: "",
-                                createAt = TimeUtils.getRelativeTimeString(comments[page].createdAt),
-                                likeCnt = comments[page].likeCount.toString(),
-                                commentCnt = comments[page].commentCardCount.toString(),
-                                font = comments[page].font,
-                                onClick = {
-                                    onClickCommentView()
+                            .fillParentMaxHeight()
+                            .fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .weight(1.4f)
+                                .fillMaxWidth()
+                                .verticalScroll(rememberScrollState())
+                        ) {
+                            CardDetail(
+                                previousCommentThumbnailUri = previousCommentThumbnailUri,
+                                cardContent = cardContent,
+                                cardThumbnailUri = cardThumbnailUri,
+                                cardTags = cardTags,
+                                isDeleted = isExpire,
+                                header = {
+                                    CardDetailHeader(
+                                        profileUri = profileUri,
+                                        nickName = nickName,
+                                        distance = distance,
+                                        createAt = createAt
+                                    )
+                                },
+                                bottom = {
+                                    CardDetailBottom(
+                                        likeCnt = likeCnt,
+                                        commentCnt = commentCnt,
+                                        searchCnt = searchCnt,
+                                        isLikeCard = isLikeCard,
+                                        onClickLike = onClickLike,
+                                        onClickComment = onClickCommentIcon
+                                    )
                                 }
                             )
                         }
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = stringResource(DetailR.string.card_no_comment),
-                            style = TextComponent.BODY_1_M_14
-                        )
-                    }
 
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
+                                .background(NeutralColor.GRAY_100),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (commentsPagingItems.loadState.refresh is LoadState.Loading) {
+                                CircularProgressIndicator()
+                            } else if (commentsPagingItems.itemCount == 0) {
+                                Text(
+                                    text = stringResource(DetailR.string.card_no_comment),
+                                    style = TextComponent.BODY_1_M_14,
+                                    color = NeutralColor.GRAY_400
+                                )
+                            } else {
+                                LazyRow(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentPadding = PaddingValues(
+                                        horizontal = 16.dp, 
+                                        vertical = 10.dp
+                                    ),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    items(
+                                        count = commentsPagingItems.itemCount,
+                                        key = commentsPagingItems.itemKey { it.cardId },
+                                        contentType = commentsPagingItems.itemContentType { "CardComment" }
+                                    ) { index ->
+                                        val comment = commentsPagingItems[index]
+                                        if (comment != null) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillParentMaxHeight()
+                                                    .aspectRatio(1f)
+                                            ) {
+                                                CardViewComment(
+                                                    contentText = comment.cardContent,
+                                                    thumbnailUri = comment.cardImgUrl,
+                                                    distance = comment.distance ?: "",
+                                                    createAt = TimeUtils.getRelativeTimeString(comment.createdAt),
+                                                    likeCnt = comment.likeCount.toString(),
+                                                    commentCnt = comment.commentCardCount.toString(),
+                                                    font = comment.font,
+                                                    onClick = {
+                                                        onClickCommentView(comment.cardId)
+                                                    }
+                                                )
+                                            }
+                                        }
+                                    }
+                                    if (commentsPagingItems.loadState.append is LoadState.Loading) {
+                                        item {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillParentMaxHeight()
+                                                    .padding(horizontal = 16.dp)
+                                            ) {
+                                                CircularProgressIndicator(
+                                                    modifier = Modifier.align(Alignment.Center)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
-
-            // Floating Action Button
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(bottom = 32.dp, end = 16.dp)
-                    .width(54.dp)
-                    .height(54.dp)
-                    .shadow(
-                        elevation = 8.dp,
-                        shape = RoundedCornerShape(27.dp),
-                        ambientColor = Color(0x64486C).copy(alpha = 0.2f), // TODO 컬러 수정 필요
-                        spotColor = Color(0x64486C).copy(alpha = 0.2f) // TODO 컬러 수정 필요
-                    )
-                    .background(
-                        color = NeutralColor.GRAY_600,
-                        shape = RoundedCornerShape(27.dp)
-                    )
-                    .clickable { onClickCommentIcon() },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_plus),
-                    contentDescription = "Add",
-                    tint = NeutralColor.WHITE
-                )
-            }
-            }
         }
-        
-        // BottomSheet
-        if (showBottomSheet) {
-            BottomSheetComponent.BottomSheet(
-                data = arrayListOf(
+    }
+
+    // BottomSheet
+    if (showBottomSheet) {
+        BottomSheetComponent.BottomSheet(
+            data = if (isOwnCard) {
+                arrayListOf(
+                    BottomSheetItem(
+                        id = MoreAction.DELETE.ordinal,
+                        title = stringResource(id = DetailR.string.card_detail_delete),
+                        image = R.drawable.ic_trash_stoke,
+                        imageColor = Danger.M_RED,
+                        textColor = Danger.M_RED,
+                    )
+                )
+            } else {
+                arrayListOf(
                     BottomSheetItem(
                         id = MoreAction.BLOCK.ordinal,
-                        title = stringResource(id = DetailR.string.card_detail_block)
+                        title = stringResource(id = DetailR.string.card_detail_block),
+                        image = R.drawable.ic_eye,
+                        textColor = NeutralColor.GRAY_500,
+                        imageColor = NeutralColor.BLACK
                     ),
                     BottomSheetItem(
                         id = MoreAction.DANGER.ordinal,
-                        title = stringResource(id = DetailR.string.card_detail_report)
+                        title = stringResource(id = DetailR.string.card_detail_report),
+                        image = R.drawable.ic_flag_stoke,
+                        imageColor = Danger.M_RED,
+                        textColor = Danger.M_RED,
                     )
-                ),
-                onItemClick = { id ->
-                    when (id) {
-                        MoreAction.BLOCK.ordinal -> {
-                            showBottomSheet = false
-                            showBlockDialog = true
-                        }
-                        MoreAction.DANGER.ordinal -> {
-                            showBottomSheet = false
-                            onNavigateToReport(cardId)
-                        }
+                )
+            },
+            onItemClick = { id ->
+                when (id) {
+                    MoreAction.BLOCK.ordinal -> {
+                        onShowBottomSheetChange(false)
+                        onShowBlockDialogChange(true)
                     }
-                },
-                onDismiss = {
-                    showBottomSheet = false
+
+                    MoreAction.DANGER.ordinal -> {
+                        onShowBottomSheetChange(false)
+                        onNavigateToReport(cardId)
+                    }
+
+                    MoreAction.DELETE.ordinal -> {
+                        onShowBottomSheetChange(false)
+                        onShowDeleteDialogChange(true)
+                    }
                 }
-            )
-        }
+            },
+            onDismiss = {
+                onShowBottomSheetChange(false)
+            }
+        )
+    }
 
+    if (showDeleteDialog) {
+        DialogComponent.DefaultButtonTwo(
+            title = stringResource(DetailR.string.card_detail_delete_dialog_title),
+            description = stringResource(DetailR.string.card_detail_delete_dialog_content),
+            buttonTextStart = stringResource(DetailR.string.card_detail_cancel),
+            buttonTextEnd = stringResource(DetailR.string.card_detail_delete),
+            onClick = {
+                onShowDeleteDialogChange(false)
+                deleteCard(cardId)
+            },
+            onDismiss = {
+                onShowDeleteDialogChange(false)
+            },
+            rightButtonBaseColor = Danger.M_RED,
+            rightButtonClickColor = Danger.D_RED
+        )
+    }
 
-        
-        // Block Dialog
-        if (showBlockDialog) {
-            DialogComponent.DefaultButtonTwo(
-                title = stringResource(DetailR.string.card_detail_block_dialog_title),
-                description = stringResource(DetailR.string.card_detail_block_dialog_subtitle, nickName),
-                buttonTextStart = stringResource(DetailR.string.card_detail_cancel),
-                buttonTextEnd = stringResource(DetailR.string.card_detail_block),
-                onClick = {
-                    showBlockDialog = false
-                    onBlockMember(memberId, nickName)
-                },
-                onDismiss = { showBlockDialog = false }
-            )
-        }
+    // Block Dialog
+    if (showBlockDialog) {
+        DialogComponent.DefaultButtonTwo(
+            title = stringResource(DetailR.string.card_detail_block_dialog_title),
+            description = stringResource(
+                DetailR.string.card_detail_block_dialog_subtitle,
+                nickName
+            ),
+            buttonTextStart = stringResource(DetailR.string.card_detail_cancel),
+            buttonTextEnd = stringResource(DetailR.string.card_detail_block),
+            onClick = {
+                onShowBlockDialogChange(false)
+                onBlockMember(memberId, nickName)
+            },
+            onDismiss = { onShowBlockDialogChange(false) }
+        )
     }
 }
+
 
 @Preview
 @Composable

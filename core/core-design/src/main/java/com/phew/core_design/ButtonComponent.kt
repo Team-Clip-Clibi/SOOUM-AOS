@@ -375,10 +375,16 @@ object MediumButton {
         buttonText: String,
         onClick: () -> Unit,
         isEnable: Boolean = true,
+        baseColor: Color = NeutralColor.BLACK,
+        blinkColor: Color = NeutralColor.GRAY_600,
+        disabledColor: Color = NeutralColor.GRAY_200,
     ) {
         BlinkMediumButton(
             onClick = onClick,
-            enabled = isEnable
+            enabled = isEnable,
+            baseColor = baseColor,
+            blinkColor = blinkColor,
+            disabledColor = disabledColor
         ) {
             Text(
                 text = buttonText,
@@ -482,10 +488,11 @@ object MediumButton {
         onClick: () -> Unit,
         isEnable: Boolean = true,
         fontFamily: FontFamily = FontFamily(Font(R.font.medium)),
+        textStyle: TextStyle? = null,
     ) {
         BlinkMediumButton(
             baseColor = Primary.LIGHT_1,
-            blinkColor = Primary.DARK,
+            blinkColor = NeutralColor.GRAY_600,
             disabledColor = NeutralColor.GRAY_100,
             borderColor = Primary.DARK,
             onClick = onClick,
@@ -493,8 +500,8 @@ object MediumButton {
         ) {
             Text(
                 text = buttonText,
-                style = TextComponent.SUBTITLE_1_M_16.let { textStyle: TextStyle ->
-                    textStyle.copy(
+                style = textStyle ?: TextComponent.SUBTITLE_1_M_16.let { defaultStyle: TextStyle ->
+                    defaultStyle.copy(
                         fontFamily = fontFamily
                     )
                 },
@@ -509,6 +516,7 @@ object MediumButton {
         onClick: () -> Unit,
         isEnable: Boolean = true,
         fontFamily: FontFamily = FontFamily(Font(R.font.medium)),
+        textStyle: TextStyle? = null,
     ) {
         BlinkMediumButton(
             baseColor = NeutralColor.GRAY_200,
@@ -519,8 +527,8 @@ object MediumButton {
         ) {
             Text(
                 text = buttonText,
-                style = TextComponent.SUBTITLE_1_M_16.let { textStyle: TextStyle ->
-                    textStyle.copy(
+                style = textStyle ?: TextComponent.SUBTITLE_1_M_16.let { defaultStyle: TextStyle ->
+                    defaultStyle.copy(
                         fontFamily = fontFamily
                     )
                 },

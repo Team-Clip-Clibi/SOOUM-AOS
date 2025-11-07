@@ -138,6 +138,16 @@ fun SooumNavHost(
                 },
                 commentScreen = { _, _, _ ->
 
+                },
+                navToHome = {
+                    navController.navigateToHomeGraph(
+                        navOptions = navOptions {
+                            popUpTo(SIGN_UP_GRAPH) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    )
                 }
             )
 
