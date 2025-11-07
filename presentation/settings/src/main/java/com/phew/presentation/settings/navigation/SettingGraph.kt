@@ -1,6 +1,5 @@
 package com.phew.presentation.settings.navigation
 
-import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
@@ -111,7 +110,7 @@ fun NavGraphBuilder.settingGraph(
                 }
             )
         }
-        
+
         slideComposable(
             route = LOGIN_OTHER_DEVICE_ROUTE
         ) {

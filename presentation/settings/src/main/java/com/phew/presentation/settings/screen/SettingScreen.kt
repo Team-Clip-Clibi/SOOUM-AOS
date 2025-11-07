@@ -169,7 +169,6 @@ private fun SettingScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(NeutralColor.WHITE)
-                    .windowInsetsPadding(WindowInsets.statusBars)
             ) {
                 IconLeftAppBar(
                     image = R.drawable.ic_left,

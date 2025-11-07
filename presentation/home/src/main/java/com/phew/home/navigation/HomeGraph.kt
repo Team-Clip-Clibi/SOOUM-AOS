@@ -61,6 +61,8 @@ fun NavGraphBuilder.homeGraph(
             }
         )
         profileGraph(
+            navController = navController,
+            onBackPressed = onBackPressed,
             onLogOut = onLogOut,
             cardClick = cardClick
         )
