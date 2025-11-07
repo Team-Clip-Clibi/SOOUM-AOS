@@ -30,8 +30,8 @@ class SignUpViewModel @Inject constructor(
     private val checkSignUp: CheckSignUp,
     private val requestLogin: Login,
     private val getNickName: GetNickName,
-    private val requestSignUp : RequestSignUp,
-    private val checkNickName : CheckNickName
+    private val requestSignUp: RequestSignUp,
+    private val checkNickName: CheckNickName,
 ) : ViewModel() {
 
     private var _uiState = MutableStateFlow(SignUp())
@@ -242,7 +242,7 @@ class SignUpViewModel @Inject constructor(
     /**
      * 프로필 사진 URL
      */
-    fun updateProfile(uri: Uri) {
+    private fun updateProfile(uri: Uri) {
         _uiState.update { state ->
             state.copy(profile = uri)
         }
@@ -317,7 +317,7 @@ class SignUpViewModel @Inject constructor(
     /**
      * 이미지 파일 생성기
      */
-    fun createImage() {
+    private fun createImage() {
         viewModelScope.launch(Dispatchers.IO) {
             when (val result = createFile()) {
                 is DomainResult.Failure -> {
@@ -341,7 +341,7 @@ class SignUpViewModel @Inject constructor(
     /**
      * 사진 만들기 종료
      */
-    fun closeFile(data: Uri) {
+    private fun closeFile(data: Uri) {
         viewModelScope.launch(Dispatchers.IO) {
             when (val result = finishPhoto(FinishTakePicture.Param(data))) {
                 is DomainResult.Failure -> {
@@ -374,7 +374,7 @@ data class SignUp(
     val pendingProfileCameraCapture: CameraCaptureRequest? = null,
     val finalizePending: Boolean = false,
     val checkSignUp: UiState<SignUpResult> = UiState.Loading,
-    val checkNickName : UiState<Boolean> = UiState.Loading,
+    val checkNickName: UiState<Boolean> = UiState.Loading,
     val login: UiState<Unit> = UiState.Loading,
     val signUp: UiState<Unit> = UiState.Loading,
 )
