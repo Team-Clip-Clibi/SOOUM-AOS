@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.navOptions
 import com.phew.core.ui.component.back.SooumOnBackPressed
+import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.state.SooumAppState
 import com.phew.core.ui.state.rememberSooumAppState
 import com.phew.home.navigation.homeGraph
@@ -14,6 +15,7 @@ import com.phew.home.navigation.navigateToHomeGraph
 import com.phew.home.navigation.navigateToReport
 import com.phew.presentation.detail.navigation.detailGraph
 import com.phew.core.ui.model.navigation.WriteArgs
+import com.phew.presentation.detail.navigation.navigateToDetailGraph
 import com.phew.presentation.write.navigation.navigateToWriteGraphWithArgs
 import com.phew.presentation.write.navigation.writeGraph
 import com.phew.reports.reportGraph
@@ -67,6 +69,19 @@ fun SooumNavHost(
                 onWriteComplete = {
                     // Feed에서 Write 완료 시 Feed 데이터 갱신
                     // TODO: FeedViewModel refresh 호출
+                },
+                onLogOut = {
+                    navController.navigateToSignUpGraph(
+                        navOptions = navOptions {
+                            popUpTo(SPLASH_GRAPH) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    )
+                },
+                cardClick = { id ->
+                    navController.navigateToDetailGraph(cardDetailArgs = CardDetailArgs(cardId = id))
                 }
             )
 

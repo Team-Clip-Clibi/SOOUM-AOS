@@ -33,6 +33,8 @@ fun NavGraphBuilder.homeGraph(
     onBackPressed: () -> Unit,
     webView: (String) -> Unit,
     onWriteComplete: () -> Unit = {},
+    cardClick: (Long) -> Unit,
+    onLogOut: () -> Unit,
 ) {
     navigation(route = HOME_GRAPH, startDestination = FEED_GRAPH) {
         // Feed Card Graph
@@ -59,9 +61,8 @@ fun NavGraphBuilder.homeGraph(
             }
         )
         profileGraph(
-            onBackPressed = {
-                navController.popBackStack()
-            }
+            onLogOut = onLogOut,
+            cardClick = cardClick
         )
         // TODO Tag 그래프 추가
     }

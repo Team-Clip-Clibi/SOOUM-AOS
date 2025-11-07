@@ -16,7 +16,7 @@ import com.phew.core.ui.navigation.getNavArg
 
 private val PROFILE_ROUTE_WITH_AGS = HomeTabType.MY.route.asNavParam()
 private val PROFILE_ROUTE = HomeTabType.MY.route
-private val PROFILE_ARGS_KEY = NavArgKey
+private const val PROFILE_ARGS_KEY = NavArgKey
 private val PROFILE_DESTINATION_ROUTE = "$PROFILE_ROUTE?$PROFILE_ARGS_KEY=$PROFILE_ROUTE_WITH_AGS"
 
 //TODO 추후 다른 사용자 프로필 화면을 위해
@@ -27,7 +27,8 @@ fun NavHostController.navigateToProfileGraphWithArgs(
 }
 
 fun NavGraphBuilder.profileGraph(
-    onBackPressed: () -> Unit,
+    onLogOut: () -> Unit,
+    cardClick: (Long) -> Unit,
 ) {
     navigation(
         route = HomeTabType.MY.graph,
@@ -45,14 +46,12 @@ fun NavGraphBuilder.profileGraph(
             val userId = navBackStackEntry.arguments?.getNavArg<ProfileArgs>()
             if (userId == null) {
                 MyProfile(
-                    onLogout = {
-                        //TODO 로그아웃 기능 추가
+                    onLogout = onLogOut,
+                    onClickCard = { id ->
+                        cardClick(id)
                     },
                     onClickSetting = {
                         //TODO 설정화면으로 이동
-                    },
-                    onClickCard = {
-                        //TODO 카드 디테일 혹은 카드 대댓글로 이동
                     },
                     onClickFollowing = {
                         //TODO 팔로잉 화면으로 이동
