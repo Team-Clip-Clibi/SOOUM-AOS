@@ -2,21 +2,24 @@ package com.phew.repository.mapper
 
 import com.phew.core_common.APP_ERROR_CODE
 import com.phew.core_common.DataResult
+import com.phew.core_common.ERROR_NETWORK
+import com.phew.core_common.HTTP_NO_MORE_CONTENT
 import com.phew.core_common.TimeUtils
 import com.phew.domain.dto.CardComment
 import com.phew.domain.dto.CardDetail
 import com.phew.domain.dto.CardDetailTag
 import com.phew.domain.dto.CardImageDefault
-import com.phew.domain.dto.CardReply
 import com.phew.domain.dto.CheckSignUp
 import com.phew.domain.dto.CheckedBaned
 import com.phew.domain.dto.DistanceCard
 import com.phew.domain.dto.FeedLikeNotification
 import com.phew.domain.dto.FollowNotification
 import com.phew.domain.dto.Latest
+import com.phew.domain.dto.MyProfileInfo
 import com.phew.domain.dto.Notice
 import com.phew.domain.dto.Notification
 import com.phew.domain.dto.Popular
+import com.phew.domain.dto.ProfileCard
 import com.phew.domain.dto.TagInfo
 import com.phew.domain.dto.Token
 import com.phew.domain.dto.UploadImageUrl
@@ -41,9 +44,10 @@ import com.phew.network.dto.response.DistanceDTO
 import com.phew.network.dto.response.LatestDto
 import com.phew.network.dto.response.PopularDto
 import com.phew.network.dto.response.card.CardCommentResponseDTO
+import com.phew.network.dto.response.card.CardContentDto
 import com.phew.network.dto.response.card.CardDetailResponseDTO
 import com.phew.network.dto.response.card.CardDetailTagDTO
-import com.phew.network.dto.response.card.CardReplyResponseDTO
+import com.phew.network.dto.response.profile.MyProfileDTO
 import com.phew.repository.TYPE_BLOCK
 import com.phew.repository.TYPE_COMMENT_LIKE
 import com.phew.repository.TYPE_COMMENT_WRITE
@@ -282,16 +286,26 @@ internal fun CardCommentResponseDTO.toDomain(): CardComment {
     )
 }
 
-internal fun CardReplyResponseDTO.toDomain(): CardReply {
-    return CardReply(
-        isDistanceShared = isDistanceShared,
-        latitude = latitude,
-        longitude = longitude,
-        content = content,
-        font = font,
-        imgType = imgType,
-        imgName = imgName,
-        tags = tags
+internal fun MyProfileDTO.toDomain() : MyProfileInfo{
+    return MyProfileInfo(
+        cardCnt = this.cardCnt,
+        followingCnt = this.followingCnt,
+        followerCnt = this.followerCnt,
+        nickname = this.nickname,
+        profileImageUrl = this.profileImageUrl ?: "",
+        profileImgName = this.profileImgName ?: "",
+        todayVisitCnt = this.todayVisitCnt,
+        totalVisitCnt = this.totalVisitCnt,
+        userId = this.userId
+    )
+}
+
+internal fun CardContentDto.toDomain(): ProfileCard {
+    return ProfileCard(
+        cardId = this.cardId,
+        cardImgUrl = this.cardImgUrl ?: "",
+        cardContent = this.cardContent ?: "",
+        cardImgName = this.cardImgName ?: ""
     )
 }
 
@@ -318,3 +332,41 @@ suspend fun <T, R> apiCall(
         return DataResult.Fail(code = APP_ERROR_CODE, message = e.message, throwable = e)
     }
 }
+
+/**
+ * T: Retrofit이 반환하는 DTO 타입 (e.g., List<NotificationDto> 또는 CardContentsResponse)
+ * R: 최종적으로 사용할 Domain 모델의 *아이템* 타입 (e.g., Notification 또는 ProfileCard)
+ */
+suspend fun <T, R> pagingCall(
+    apiCall: suspend () -> Response<T>,
+    mapper: (T) -> List<R>,
+): DataResult<Pair<Int, List<R>>> {
+    try {
+        val response = apiCall()
+        if (!response.isSuccessful) {
+            return DataResult.Fail(code = response.code(), message = response.message())
+        }
+        if (response.body() == null && response.code() == HTTP_NO_MORE_CONTENT) {
+            return DataResult.Success(Pair(response.code(), emptyList()))
+        }
+        val body = response.body()
+            ?: return DataResult.Fail(
+                code = response.code(),
+                message = ERROR_NETWORK
+            )
+        val domainList = mapper(body)
+        if (domainList.isEmpty()) {
+            return DataResult.Success(Pair(response.code(), emptyList()))
+        }
+        return DataResult.Success(Pair(response.code(), domainList))
+    } catch (e: Exception) {
+        e.printStackTrace()
+        return DataResult.Fail(
+            code = APP_ERROR_CODE,
+            message = e.message,
+            throwable = e
+        )
+    }
+}
+
+

@@ -14,7 +14,7 @@ private val SooumDarkBackgroundTheme = SooumBackgroundTheme(color = SooumDarkCol
 @Composable
 fun SooumTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val currentDensity = LocalDensity.current
     val background = if (darkTheme) SooumDarkBackgroundTheme else SooumLightBackgroundTheme

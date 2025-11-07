@@ -89,6 +89,43 @@ object AppBar {
     }
 
     @Composable
+    fun IconRightAppBar(
+        title: String,
+        onClick: () -> Unit,
+        @DrawableRes endImage: Int = R.drawable.ic_settings_stoke,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+                .background(color = NeutralColor.WHITE)
+                .zIndex(1f)
+                .padding(start = 16.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = title,
+                style = TextComponent.TITLE_1_SB_18,
+                color = NeutralColor.BLACK
+            )
+
+            Image(
+                painter = painterResource(endImage),
+                contentDescription = title,
+                modifier = Modifier
+                    .size(48.dp)
+                    .padding(12.dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = onClick
+                    )
+            )
+        }
+    }
+
+    @Composable
     fun IconBothAppBar(
         @DrawableRes startImage: Int = R.drawable.ic_left,
         @DrawableRes middleImage: Int = R.drawable.ic_home_stoke,

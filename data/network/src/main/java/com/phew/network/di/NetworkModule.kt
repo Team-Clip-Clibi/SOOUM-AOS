@@ -9,6 +9,7 @@ import com.phew.network.retrofit.CardDetailsInquiryHttp
 import com.phew.network.retrofit.FeedHttp
 import com.phew.network.retrofit.MembersHttp
 import com.phew.network.retrofit.NotifyHttp
+import com.phew.network.retrofit.ProfileHttp
 import com.phew.network.retrofit.ReportHttp
 import com.phew.network.retrofit.SignUpHttp
 import com.phew.network.retrofit.SplashHttp
@@ -134,6 +135,11 @@ object NetworkModule {
     @Provides
     fun provideCardDetailsHttp(retrofit: Retrofit): CardDetailsInquiryHttp =
         retrofit.create(CardDetailsInquiryHttp::class.java)
+
+    @Singleton
+    @Provides
+    fun provideProfileHttp(retrofit: Retrofit): ProfileHttp =
+        retrofit.create(ProfileHttp::class.java)
 
     @Singleton
     @Provides

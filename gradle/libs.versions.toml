@@ -32,8 +32,10 @@ lottie = "6.6.9"
 paging-version = "3.3.6"
 play-services-location = "21.3.0"
 cropper = "4.5.0"
+foundation = "1.9.4"
 
 [libraries]
+androidx-material3-windowSize = { group = "androidx.compose.material3", name = "material3-window-size-class" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
@@ -76,6 +78,7 @@ paging-runtime = { group = "androidx.paging", name = "paging-runtime", version.r
 paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "paging-version" }
 google-play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "play-services-location" }
 cropper = { group = "com.vanniktech", name = "android-image-cropper", version.ref = "cropper" }
+androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
