@@ -18,7 +18,7 @@ import com.phew.domain.usecase.GetRelatedTag
 import com.phew.domain.usecase.PostCard
 import com.phew.domain.usecase.PostCardReply
 import com.phew.presentation.write.model.BackgroundConfig
-import com.phew.presentation.write.model.FontConfig
+import com.phew.core_design.FontConfig
 import com.phew.presentation.write.model.WriteOptions
 import com.phew.presentation.write.model.WriteUiState
 import dagger.hilt.android.lifecycle.HiltViewModel

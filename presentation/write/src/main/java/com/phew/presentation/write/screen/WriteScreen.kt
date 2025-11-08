@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -70,17 +69,13 @@ import com.phew.core_design.component.card.CardView
 import com.phew.presentation.write.component.NumberTagFlowLayout
 import com.phew.presentation.write.component.NumberTagItem
 import com.phew.domain.dto.CardImageDefault
-import com.phew.core.ui.component.camera.CameraPickerBottomSheet
-import com.phew.core.ui.component.camera.CameraPickerEffect
 import com.phew.presentation.write.model.BackgroundConfig
-import com.phew.presentation.write.model.FontConfig
-import com.phew.presentation.write.model.FontItem
+import com.phew.core_design.FontConfig
+import com.phew.core_design.FontItem
 import com.phew.presentation.write.model.WriteOption
 import com.phew.presentation.write.model.WriteOptions
-import com.phew.presentation.write.screen.component.FilteredImageGrid
 import com.phew.presentation.write.screen.component.FontSelectorGrid
 import com.phew.presentation.write.viewmodel.WriteViewModel
-import androidx.compose.ui.res.stringResource
 import com.phew.core.ui.model.navigation.WriteArgs
 import com.phew.core_design.component.filter.SooumFilter
 import com.phew.presentation.write.model.BackgroundFilterType

@@ -129,4 +129,84 @@ object TextComponent {
             fontWeight = FontWeight(500),
             color = NeutralColor.BLACK
         )
+
+    val CAPTION_4_M_5
+        @Composable get() = fixFontSize(
+            fontSize = 5.sp,
+            lineHeight = 7.5.sp,
+            fontWeight = FontWeight(500),
+            color = NeutralColor.BLACK,
+            fontFamily = FontFamily(Font(R.font.medium)),
+        )
 }
+
+
+object FontConfig {
+    val availableFonts = listOf(
+        FontItem(
+            name = "프리텐다드",
+            serverName = "PRETENDARD",
+            previewTypeface = FontFamily(Font(R.font.regular))
+        ),
+        FontItem(
+            name = "리디바탕",
+            serverName = "RIDI",
+            previewTypeface = FontFamily(Font(R.font.ridibatang))
+        ),
+        FontItem(
+            name = "윤우체",
+            serverName = "YOONWOO",
+            previewTypeface = FontFamily(Font(R.font.yoon))
+        ),
+        FontItem(
+            name = "꾹꾹체",
+            serverName = "KKOOKKKOOK",
+            previewTypeface = FontFamily(Font(R.font.kkokko))
+        )
+    )
+    val defaultFont = availableFonts.first()
+}
+
+enum class CustomFont(val data: FontItem) {
+    KOKO_FONT(
+        FontItem(
+            name = "꾹꾹체",
+            serverName = "KKOOKKKOOK",
+            previewTypeface = FontFamily(Font(R.font.kkokko))
+        )
+    ),
+    YOONWOO_FONT(
+        FontItem(
+            name = "윤우체",
+            serverName = "YOONWOO",
+            previewTypeface = FontFamily(Font(R.font.yoon))
+        )
+    ),
+    RIDI_FONT(
+        FontItem(
+            name = "리디바탕",
+            serverName = "RIDI",
+            previewTypeface = FontFamily(Font(R.font.ridibatang))
+        )
+    ),
+    PRETENDARD_FONT(
+        FontItem(
+            name = "프리텐다드",
+            serverName = "PRETENDARD",
+            previewTypeface = FontFamily(Font(R.font.regular))
+        )
+    );
+
+    companion object {
+        fun findFontValue(serverName: String): CustomFont {
+            return entries.firstOrNull { data -> data.data.serverName == serverName }
+                ?: PRETENDARD_FONT
+        }
+    }
+}
+
+data class FontItem(
+    val name: String,
+    val serverName: String,
+    val previewTypeface: FontFamily
+)

@@ -7,6 +7,7 @@ import com.phew.domain.dto.CardImageDefault
 import com.phew.domain.dto.TagInfo
 import com.phew.presentation.write.component.NumberTagItem
 import com.phew.presentation.write.model.BackgroundConfig.imagesByFilter
+import com.phew.core_design.FontConfig
 
 private val DefaultFilter: BackgroundFilterType = BackgroundConfig.filterNames.firstOrNull() ?: BackgroundFilterType.COLOR
 private val DefaultFilterSelection: Int? = imagesByFilter[DefaultFilter]?.firstOrNull()

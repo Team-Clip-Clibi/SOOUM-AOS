@@ -153,7 +153,7 @@ fun CommentBodyContent(
         ) {
             Text(
                 text = contentText,
-                style = TextComponent.BODY_1_M_14.copy(
+                style = TextComponent.CAPTION_4_M_5.copy(
                     color = NeutralColor.WHITE,
                     fontFamily = fontFamily,
                     textAlign = TextAlign.Center
