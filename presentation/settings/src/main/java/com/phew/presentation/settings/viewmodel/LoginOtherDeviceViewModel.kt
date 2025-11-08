@@ -55,7 +55,6 @@ class LoginOtherDeviceViewModel @Inject constructor(
                             code = result.data.transferCode,
                             expiredAt = result.data.expiredAt,
                             isCodeGenerated = true,
-                            isRetryEnabled = false,
                             isLoading = false
                         )
                     }
@@ -65,7 +64,6 @@ class LoginOtherDeviceViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            isRetryEnabled = true
                         )
                     }
                 }
@@ -87,9 +85,8 @@ class LoginOtherDeviceViewModel @Inject constructor(
             // 타이머 종료
             _uiState.update { 
                 it.copy(
-                    remainingTimeText = "00:00",
-                    isRetryEnabled = true
-                ) 
+                    remainingTimeText = "00:00"
+                )
             }
         }
     }
@@ -110,9 +107,7 @@ class LoginOtherDeviceViewModel @Inject constructor(
     }
 
     fun onRetryCodeClick() {
-        if (_uiState.value.isRetryEnabled) {
-            refreshCodeFromApi()
-        }
+        refreshCodeFromApi()
     }
     
     private fun refreshCodeFromApi() {
@@ -126,7 +121,6 @@ class LoginOtherDeviceViewModel @Inject constructor(
                             code = result.data.transferCode,
                             expiredAt = result.data.expiredAt,
                             isCodeGenerated = true,
-                            isRetryEnabled = false,
                             isLoading = false
                         )
                     }
@@ -136,7 +130,6 @@ class LoginOtherDeviceViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            isRetryEnabled = true
                         )
                     }
                 }

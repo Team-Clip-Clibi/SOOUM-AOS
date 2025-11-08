@@ -157,7 +157,7 @@ private fun SettingScreen(
     @Composable
     fun getEndText(id: SettingItemId): String? {
         return when (id) {
-            SettingItemId.APP_UPDATE -> if (isUpdateAvailable) stringResource(SettingsR.string.setting_update_available) else null
+            SettingItemId.APP_UPDATE -> appVersion
             else -> null
         }
     }

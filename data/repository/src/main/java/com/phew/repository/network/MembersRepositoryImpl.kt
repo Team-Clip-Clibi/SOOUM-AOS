@@ -1,5 +1,6 @@
 package com.phew.repository.network
 
+import com.phew.core_common.log.SooumLog
 import com.phew.domain.model.TransferCode
 import com.phew.domain.repository.network.MembersRepository
 import com.phew.network.retrofit.MembersHttp
@@ -14,6 +15,7 @@ class MembersRepositoryImpl @Inject constructor(
     
     override suspend fun getActivityRestrictionDate(): Result<String?> {
         return try {
+            SooumLog.d(TAG, "getActivityRestrictionDate")
             val response = membersHttp.getActivityRestrictionDate()
             if (response.isSuccessful) {
                 Result.success(response.body()?.activityRestrictionDate)
@@ -55,3 +57,5 @@ class MembersRepositoryImpl @Inject constructor(
         }
     }
 }
+
+private const val TAG = "MembersRepository"
