@@ -198,9 +198,18 @@ enum class CustomFont(val data: FontItem) {
     );
 
     companion object {
-        fun findFontValue(serverName: String): CustomFont {
+        fun findFontValueByServerName(serverName: String): CustomFont {
             return entries.firstOrNull { data -> data.data.serverName == serverName }
                 ?: PRETENDARD_FONT
+        }
+
+        fun findFontValueByPreviewType(data: FontFamily): CustomFont {
+            return entries.firstOrNull { font -> font.data.previewTypeface == data }
+                ?: PRETENDARD_FONT
+        }
+
+        fun fundFontValueByName(name: String): CustomFont {
+            return entries.firstOrNull { font -> font.data.name == name } ?: PRETENDARD_FONT
         }
     }
 }

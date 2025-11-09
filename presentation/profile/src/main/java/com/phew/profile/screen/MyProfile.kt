@@ -517,7 +517,7 @@ private fun ProfileCardView(
                                 CommentBodyContent(
                                     contentText = item.cardContent,
                                     imgUrl = item.cardImgUrl,
-                                    fontFamily = CustomFont.findFontValue(item.font).data.previewTypeface,
+                                    fontFamily = CustomFont.findFontValueByServerName(item.font).data.previewTypeface,
                                     textMaxLines = 4,
                                     cardId = item.cardId,
                                     onClick = onClickCard
