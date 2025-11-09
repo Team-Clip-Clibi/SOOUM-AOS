@@ -45,38 +45,18 @@ fun NickNameView(viewModel: SignUpViewModel, onBack: () -> Unit, nextPage: () ->
     val snackBarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     LaunchedEffect(uiState) {
-        when (val result = uiState.nickNameHint) {
+        when (uiState.checkNickName) {
             is UiState.Fail -> {
                 snackBarHostState.showSnackbar(
                     message = context.getString(com.phew.core_design.R.string.error_network),
                     duration = SnackbarDuration.Short
                 )
-            }
-
-            is UiState.Success -> {
-                viewModel.nickName(result.data)
-            }
-
-            else -> Unit
-        }
-        when (val result = uiState.checkNickName) {
-            is UiState.Fail -> {
-                snackBarHostState.showSnackbar(
-                    message = context.getString(com.phew.core_design.R.string.error_network),
-                    duration = SnackbarDuration.Short
-                )
-            }
-
-            is UiState.Success -> {
-                if (result.data) {
-                    nextPage()
-                    viewModel.initNickName()
-                }
             }
 
             else -> Unit
         }
     }
+
     Scaffold(
         topBar = {
             AppBar.IconLeftAppBar(
@@ -95,9 +75,12 @@ fun NickNameView(viewModel: SignUpViewModel, onBack: () -> Unit, nextPage: () ->
             ) {
                 LargeButton.NoIconPrimary(
                     buttonText = stringResource(com.phew.core_design.R.string.common_next),
-                    onClick = viewModel::checkName,
+                    onClick = remember(nextPage) {
+                        viewModel.initNickName()
+                        nextPage
+                    },
                     isEnable = uiState.nickName.trim()
-                        .isNotEmpty() && uiState.nickName.trim().length > 2
+                        .isNotEmpty() && uiState.nickName.trim().length > 2 && (uiState.checkNickName is UiState.Success) && (uiState.checkNickName as UiState.Success<Boolean>).data
                 )
             }
         },
