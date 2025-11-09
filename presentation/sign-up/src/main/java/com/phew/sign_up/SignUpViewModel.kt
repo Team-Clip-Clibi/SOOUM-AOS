@@ -30,12 +30,13 @@ class SignUpViewModel @Inject constructor(
     private val checkSignUp: CheckSignUp,
     private val requestLogin: Login,
     private val getNickName: GetNickName,
-    private val requestSignUp : RequestSignUp,
-    private val checkNickName : CheckNickName
+    private val requestSignUp: RequestSignUp,
+    private val checkNickName: CheckNickName,
 ) : ViewModel() {
 
     private var _uiState = MutableStateFlow(SignUp())
     val uiState: StateFlow<SignUp> = _uiState.asStateFlow()
+
     init {
         generateNickName()
         checkRegister()
@@ -49,13 +50,13 @@ class SignUpViewModel @Inject constructor(
             when (val result = getNickName()) {
                 is DomainResult.Failure -> {
                     _uiState.update { state ->
-                        state.copy(nickNameHint = UiState.Fail(result.error))
+                        state.copy(nickName = "ERROR")
                     }
                 }
 
                 is DomainResult.Success -> {
                     _uiState.update { state ->
-                        state.copy(nickNameHint = UiState.Success(result.data))
+                        state.copy(nickName = result.data)
 
                     }
                 }
@@ -82,6 +83,7 @@ class SignUpViewModel @Inject constructor(
                         state.copy(signUp = UiState.Fail(result.error))
                     }
                 }
+
                 is DomainResult.Success -> {
                     _uiState.update { state ->
                         state.copy(signUp = UiState.Success(Unit))
@@ -94,14 +96,15 @@ class SignUpViewModel @Inject constructor(
     /**
      * 닉네임 검증 함수
      */
-    fun checkName(){
+    private fun checkName() {
         viewModelScope.launch(Dispatchers.IO) {
-            when(val result = checkNickName(CheckNickName.Param(_uiState.value.nickName))){
+            when (val result = checkNickName(CheckNickName.Param(_uiState.value.nickName))) {
                 is DomainResult.Failure -> {
                     _uiState.update { state ->
                         state.copy(checkNickName = UiState.Fail(result.error))
                     }
                 }
+
                 is DomainResult.Success -> {
                     _uiState.update { state ->
                         state.copy(checkNickName = UiState.Success(result.data))
@@ -224,7 +227,7 @@ class SignUpViewModel @Inject constructor(
     /**
      * 닉네임 중복 검사 여부 초기화
      */
-    fun initNickName(){
+    fun initNickName() {
         _uiState.update { state ->
             state.copy(checkNickName = UiState.Loading)
         }
@@ -237,12 +240,13 @@ class SignUpViewModel @Inject constructor(
         _uiState.update { state ->
             state.copy(nickName = name)
         }
+        checkName()
     }
 
     /**
      * 프로필 사진 URL
      */
-    fun updateProfile(uri: Uri) {
+    private fun updateProfile(uri: Uri) {
         _uiState.update { state ->
             state.copy(profile = uri)
         }
@@ -317,7 +321,7 @@ class SignUpViewModel @Inject constructor(
     /**
      * 이미지 파일 생성기
      */
-    fun createImage() {
+    private fun createImage() {
         viewModelScope.launch(Dispatchers.IO) {
             when (val result = createFile()) {
                 is DomainResult.Failure -> {
@@ -341,7 +345,7 @@ class SignUpViewModel @Inject constructor(
     /**
      * 사진 만들기 종료
      */
-    fun closeFile(data: Uri) {
+    private fun closeFile(data: Uri) {
         viewModelScope.launch(Dispatchers.IO) {
             when (val result = finishPhoto(FinishTakePicture.Param(data))) {
                 is DomainResult.Failure -> {
@@ -366,7 +370,6 @@ data class SignUp(
     val agreedToLocationTerms: Boolean = false,
     val agreedToPrivacyPolicy: Boolean = false,
     val nickName: String = "",
-    val nickNameHint: UiState<String> = UiState.Loading,
     val profile: Uri = Uri.EMPTY,
     val profileBottom: Boolean = false,
     val shouldLaunchProfileAlbum: Boolean = false,
@@ -374,7 +377,7 @@ data class SignUp(
     val pendingProfileCameraCapture: CameraCaptureRequest? = null,
     val finalizePending: Boolean = false,
     val checkSignUp: UiState<SignUpResult> = UiState.Loading,
-    val checkNickName : UiState<Boolean> = UiState.Loading,
+    val checkNickName: UiState<Boolean> = UiState.Loading,
     val login: UiState<Unit> = UiState.Loading,
     val signUp: UiState<Unit> = UiState.Loading,
 )
