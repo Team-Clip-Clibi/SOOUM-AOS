@@ -174,16 +174,12 @@ class SettingViewModel @Inject constructor(
     
     private fun loadActivityRestrictionDate() {
         viewModelScope.launch {
-            when (val result = getActivityRestrictionDate()) {
-                is DomainResult.Success -> {
-                    _uiState.update { 
-                        it.copy(activityRestrictionDate = result.data?.let { dateString -> 
-                            TimeUtils.formatToKoreanDateTime(dateString) 
-                        }) 
-                    }
-                }
-                is DomainResult.Failure -> {
-                    // 실패시에는 null로 유지 (기본값)
+            val result = getActivityRestrictionDate()
+            if (result is DomainResult.Success) {
+                _uiState.update { 
+                    it.copy(activityRestrictionDate = result.data?.let { dateString -> 
+                        TimeUtils.formatToKoreanDateTime(dateString) 
+                    }) 
                 }
             }
         }
