@@ -90,6 +90,13 @@ object FeedUi {
             initialPage = Int.MAX_VALUE / 2 - ((Int.MAX_VALUE / 2) % feedNotice.size),
             pageCount = { Int.MAX_VALUE }
         )
+        LaunchedEffect(Unit) {
+            while (true) {
+                delay(5000L)
+                val nextPage = pagerState.currentPage + 1
+                pagerState.animateScrollToPage(nextPage)
+            }
+        }
         Box(
             modifier = Modifier
                 .fillMaxWidth()
