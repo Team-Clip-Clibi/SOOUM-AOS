@@ -140,33 +140,6 @@ object TextComponent {
         )
 }
 
-
-object FontConfig {
-    val availableFonts = listOf(
-        FontItem(
-            name = "프리텐다드",
-            serverName = "PRETENDARD",
-            previewTypeface = FontFamily(Font(R.font.regular))
-        ),
-        FontItem(
-            name = "리디바탕",
-            serverName = "RIDI",
-            previewTypeface = FontFamily(Font(R.font.ridibatang))
-        ),
-        FontItem(
-            name = "윤우체",
-            serverName = "YOONWOO",
-            previewTypeface = FontFamily(Font(R.font.yoon))
-        ),
-        FontItem(
-            name = "꾹꾹체",
-            serverName = "KKOOKKKOOK",
-            previewTypeface = FontFamily(Font(R.font.kkokko))
-        )
-    )
-    val defaultFont = availableFonts.first()
-}
-
 enum class CustomFont(val data: FontItem) {
     KOKO_FONT(
         FontItem(
@@ -211,6 +184,12 @@ enum class CustomFont(val data: FontItem) {
         fun fundFontValueByName(name: String): CustomFont {
             return entries.firstOrNull { font -> font.data.name == name } ?: PRETENDARD_FONT
         }
+        val fontData = listOf<FontItem>(
+            PRETENDARD_FONT.data,
+            RIDI_FONT.data,
+            YOONWOO_FONT.data,
+            KOKO_FONT.data
+        )
     }
 }
 

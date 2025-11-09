@@ -18,7 +18,6 @@ import com.phew.domain.usecase.GetRelatedTag
 import com.phew.domain.usecase.PostCard
 import com.phew.domain.usecase.PostCardReply
 import com.phew.presentation.write.model.BackgroundConfig
-import com.phew.core_design.FontConfig
 import com.phew.presentation.write.model.WriteOptions
 import com.phew.presentation.write.model.WriteUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -38,6 +37,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import androidx.core.net.toUri
+import com.phew.core_design.CustomFont
 
 import com.phew.presentation.write.model.BackgroundFilterType
 
@@ -364,12 +364,12 @@ class WriteViewModel @Inject constructor(
     }
 
     fun selectFont(fontFamily: FontFamily) {
-        val selectedFont = FontConfig.availableFonts.find { it.previewTypeface == fontFamily }
-        selectedFont?.let { font ->
+        val selectedFont = CustomFont.findFontValueByPreviewType(data = fontFamily)
+        selectedFont.let { font ->
             _uiState.update { state ->
                 state.copy(
-                    selectedFont = font.name,
-                    selectedFontFamily = font.previewTypeface
+                    selectedFont = font.data.name,
+                    selectedFontFamily = font.data.previewTypeface
                 )
             }
         }
@@ -431,11 +431,11 @@ private fun requestCameraImageForBackground() {
             _uiState.update { it.copy(isWriteInProgress = true) }
             viewModelScope.launch {
                 val state = _uiState.value
-                val selectedFontServerName = FontConfig.availableFonts
-                    .find { it.name == state.selectedFont }?.serverName 
-                    ?: FontConfig.defaultFont.serverName
-                
-                SooumLog.d(TAG, "onWriteComplete state: selectedDefaultImageName=${state.selectedDefaultImageName}, activeBackgroundUri=${state.activeBackgroundUri}")
+                val selectedFontServerName = CustomFont.fundFontValueByName(state.selectedFont)
+                SooumLog.d(
+                    TAG,
+                    "onWriteComplete state: selectedDefaultImageName=${state.selectedDefaultImageName}, activeBackgroundUri=${state.activeBackgroundUri}"
+                )
 
                 val result = try {
                     if (state.parentCardId != null) {
@@ -446,12 +446,15 @@ private fun requestCameraImageForBackground() {
                             else -> "DEFAULT" to ""
                         }
 
-                        SooumLog.d(TAG, "onWriteComplete reply imgType: $imgType, imgName: $imgName")
+                        SooumLog.d(
+                            TAG,
+                            "onWriteComplete reply imgType: $imgType, imgName: $imgName"
+                        )
 
                         val replyParam = PostCardReply.Param(
                             cardId = state.parentCardId,
                             content = state.content,
-                            font = selectedFontServerName,
+                            font = selectedFontServerName.data.serverName,
                             imgType = imgType,
                             imgName = imgName,
                             tags = state.tags,
@@ -462,12 +465,25 @@ private fun requestCameraImageForBackground() {
                     } else {
                         // 새 카드 작성 (PostCard 사용)
                         val (isFromDevice, imgName, imageUrl) = when {
-                            state.selectedDefaultImageName != null -> Triple(false, state.selectedDefaultImageName, null)
-                            state.activeBackgroundUri != null -> Triple(true, null, state.activeBackgroundUri.toString())
+                            state.selectedDefaultImageName != null -> Triple(
+                                false,
+                                state.selectedDefaultImageName,
+                                null
+                            )
+
+                            state.activeBackgroundUri != null -> Triple(
+                                true,
+                                null,
+                                state.activeBackgroundUri.toString()
+                            )
+
                             else -> Triple(false, null, null)
                         }
 
-                        SooumLog.d(TAG, "onWriteComplete card isFromDevice: $isFromDevice, imgName: $imgName, imageUrl: $imageUrl")
+                        SooumLog.d(
+                            TAG,
+                            "onWriteComplete card isFromDevice: $isFromDevice, imgName: $imgName, imageUrl: $imageUrl"
+                        )
 
                         val cardParam = PostCard.Param(
                             isFromDevice = isFromDevice,
@@ -475,7 +491,7 @@ private fun requestCameraImageForBackground() {
                             cardId = null,
                             imageUrl = imageUrl,
                             content = state.content,
-                            font = selectedFontServerName,
+                            font = selectedFontServerName.data.serverName,
                             imgName = imgName,
                             isStory = state.selectedOptionIds.contains("twenty_four_hours"),
                             tags = state.tags
@@ -487,12 +503,18 @@ private fun requestCameraImageForBackground() {
                     SooumLog.e(TAG, "onWriteComplete exception during API call: ${e.message}")
                     DomainResult.Failure("API 호출 중 예외 발생: ${e.message}")
                 }
-                
+
                 when (result) {
                     is DomainResult.Success -> {
-                        _uiState.update { it.copy(isWriteCompleted = true, isWriteInProgress = false) }
+                        _uiState.update {
+                            it.copy(
+                                isWriteCompleted = true,
+                                isWriteInProgress = false
+                            )
+                        }
                         _writeCompleteEvent.emit(Unit)
                     }
+
                     is DomainResult.Failure -> {
                         _uiState.update { it.copy(isWriteInProgress = false) }
                         SooumLog.e(TAG, "onWriteComplete failed: ${result.error}")

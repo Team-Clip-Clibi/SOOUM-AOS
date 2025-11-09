@@ -70,13 +70,13 @@ import com.phew.presentation.write.component.NumberTagFlowLayout
 import com.phew.presentation.write.component.NumberTagItem
 import com.phew.domain.dto.CardImageDefault
 import com.phew.presentation.write.model.BackgroundConfig
-import com.phew.core_design.FontConfig
 import com.phew.core_design.FontItem
 import com.phew.presentation.write.model.WriteOption
 import com.phew.presentation.write.model.WriteOptions
 import com.phew.presentation.write.screen.component.FontSelectorGrid
 import com.phew.presentation.write.viewmodel.WriteViewModel
 import com.phew.core.ui.model.navigation.WriteArgs
+import com.phew.core_design.CustomFont
 import com.phew.core_design.component.filter.SooumFilter
 import com.phew.presentation.write.model.BackgroundFilterType
 import com.phew.presentation.write.screen.component.ImageGrid
@@ -437,7 +437,7 @@ private fun WriteScreen(
                 )
 
                 FontSelect(
-                    fontItem = FontConfig.availableFonts,
+                    fontItem = CustomFont.fontData,
                     selectedFont = selectedFont,
                     onFontSelected = onFontSelected
                 )
