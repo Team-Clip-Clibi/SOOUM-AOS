@@ -27,7 +27,12 @@ import com.phew.domain.dto.UserBlockNotification
 import com.phew.domain.dto.UserCommentLike
 import com.phew.domain.dto.UserCommentWrite
 import com.phew.domain.dto.UserDeleteNotification
+import com.phew.domain.model.AppVersionStatus
+import com.phew.domain.model.AppVersionStatusType
+import com.phew.domain.model.TransferCode
+import com.phew.network.dto.AppVersionStatusDTO
 import com.phew.network.dto.CheckSignUpDTO
+import com.phew.network.dto.TransferCodeDTO
 import com.phew.network.dto.NoticeData
 import com.phew.network.dto.NotificationDTO
 import com.phew.network.dto.TokenDTO
@@ -210,6 +215,24 @@ internal fun ImageInfoDTO.toDomain(): CardImageDefault {
 internal fun CheckBanedDTO.toDomain(): CheckedBaned {
     return CheckedBaned(
         isBaned = this.isBaned,
+        expiredAt = this.expiredAt
+    )
+}
+
+internal fun AppVersionStatusDTO.toDomain(): AppVersionStatus {
+    return AppVersionStatus(
+        status = when (this.status) {
+            com.phew.network.dto.AppVersionStatus.UPDATE -> AppVersionStatusType.UPDATE
+            com.phew.network.dto.AppVersionStatus.PENDING -> AppVersionStatusType.PENDING
+            com.phew.network.dto.AppVersionStatus.OK -> AppVersionStatusType.OK
+        },
+        latestVersion = this.latestVersion
+    )
+}
+
+internal fun TransferCodeDTO.toDomain(): TransferCode {
+    return TransferCode(
+        transferCode = this.transferCode,
         expiredAt = this.expiredAt
     )
 }

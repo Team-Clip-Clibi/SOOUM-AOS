@@ -1,5 +1,6 @@
 package com.phew.profile
 
+import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.navigation
@@ -13,6 +14,8 @@ import com.phew.core.ui.navigation.NavArgKey
 import com.phew.core.ui.navigation.asNavArg
 import com.phew.core.ui.navigation.createNavType
 import com.phew.core.ui.navigation.getNavArg
+import com.phew.presentation.settings.navigation.navigateToSettingGraph
+import com.phew.presentation.settings.navigation.settingGraph
 
 private val PROFILE_ROUTE_WITH_AGS = HomeTabType.MY.route.asNavParam()
 private val PROFILE_ROUTE = HomeTabType.MY.route
@@ -27,6 +30,8 @@ fun NavHostController.navigateToProfileGraphWithArgs(
 }
 
 fun NavGraphBuilder.profileGraph(
+    navController: NavHostController,
+    onBackPressed: () -> Unit,
     onLogOut: () -> Unit,
     cardClick: (Long) -> Unit,
 ) {
@@ -51,7 +56,7 @@ fun NavGraphBuilder.profileGraph(
                         cardClick(id)
                     },
                     onClickSetting = {
-                        //TODO 설정화면으로 이동
+                        navController.navigateToSettingGraph()
                     },
                     onClickFollowing = {
                         //TODO 팔로잉 화면으로 이동
@@ -65,5 +70,10 @@ fun NavGraphBuilder.profileGraph(
                 )
             }
         }
+
+        settingGraph(
+            navController = navController,
+            onBackPressed = onBackPressed
+        )
     }
 }

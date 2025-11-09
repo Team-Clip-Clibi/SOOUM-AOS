@@ -75,7 +75,8 @@ internal fun CardDetailBottom(
             Spacer(Modifier.width(2.dp))
             Text (
                 text = searchCnt.toString(),
-                style = TextComponent.CAPTION_1_SB_12
+                style = TextComponent.CAPTION_1_SB_12,
+                color = NeutralColor.GRAY_500
             )
         }
     }

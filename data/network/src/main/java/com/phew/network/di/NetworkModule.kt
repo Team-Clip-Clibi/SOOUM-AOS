@@ -4,8 +4,10 @@ import com.phew.domain.token.TokenManger
 import com.phew.network.AuthInterceptor
 import com.phew.network.BuildConfig
 import com.phew.network.TokenAuthenticator
+import com.phew.network.retrofit.AppVersionHttp
 import com.phew.network.retrofit.CardDetailsInquiryHttp
 import com.phew.network.retrofit.FeedHttp
+import com.phew.network.retrofit.MembersHttp
 import com.phew.network.retrofit.NotifyHttp
 import com.phew.network.retrofit.ProfileHttp
 import com.phew.network.retrofit.ReportHttp
@@ -138,4 +140,14 @@ object NetworkModule {
     @Provides
     fun provideProfileHttp(retrofit: Retrofit): ProfileHttp =
         retrofit.create(ProfileHttp::class.java)
+
+    @Singleton
+    @Provides
+    fun provideMembersHttp(retrofit: Retrofit): MembersHttp =
+        retrofit.create(MembersHttp::class.java)
+
+    @Singleton
+    @Provides
+    fun provideAppVersionHttp(retrofit: Retrofit): AppVersionHttp =
+        retrofit.create(AppVersionHttp::class.java)
 }

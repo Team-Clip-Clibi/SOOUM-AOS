@@ -62,6 +62,7 @@ class ApplicationConvention : Plugin<Project> {
             "implementation"(libs.findLibrary("androidx-ui-graphics").get())
             "implementation"(libs.findLibrary("androidx-ui-tooling-preview").get())
             "implementation"(libs.findLibrary("androidx-material3").get())
+            "implementation"(libs.findLibrary("androidx-material3-windowSize").get())
             "debugImplementation"(libs.findLibrary("androidx-ui-tooling").get())
             "debugImplementation"(libs.findLibrary("androidx-ui-test-manifest").get())
             "androidTestImplementation"(platform(libs.findLibrary("androidx-compose-bom").get()))
@@ -102,6 +103,7 @@ class ApplicationConvention : Plugin<Project> {
             add("implementation", project(":core:ui"))
             add("implementation", project(":presentation:write"))
             add("implementation", project(":presentation:detail"))
+            add("implementation", project(":presentation:profile"))
         }
     }
 }

@@ -210,7 +210,7 @@ private fun FeedCardImpl(
             ),
         shape = RoundedCornerShape(16.dp),
         color = Primary.MAIN,
-        border = BorderStroke(1.dp, NeutralColor.GRAY_200)
+        border = BorderStroke(1.dp, NeutralColor.GRAY_100)
     ) {
         Column(
             modifier = Modifier

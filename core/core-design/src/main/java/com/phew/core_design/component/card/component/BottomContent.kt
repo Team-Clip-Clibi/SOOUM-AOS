@@ -43,7 +43,7 @@ internal fun TimerLabel(
         Image(
             painter = painterResource(R.drawable.ic_bomb),
             contentDescription = "Time Limit card",
-            modifier = Modifier.size(12.dp)
+            modifier = Modifier.size(16.dp)
         )
         if (isExpired) {
             Text(

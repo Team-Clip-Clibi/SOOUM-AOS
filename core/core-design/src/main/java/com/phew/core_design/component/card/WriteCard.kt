@@ -82,7 +82,7 @@ object CardDesignTokens {
     val TextBackTint = NeutralColor.GRAY_300
 
     // 크기
-    val CardRadius = 12.dp
+    val CardRadius = 16.dp
     val ContentBoxRadius = 8.dp
     val TagRadius = 4.dp
     val AvatarSize = 40.dp

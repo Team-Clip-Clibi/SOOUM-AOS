@@ -2,6 +2,7 @@ package com.phew.presentation.detail.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -318,8 +320,6 @@ private fun CardDetailScreen(
     density: androidx.compose.ui.unit.Density,
 ) {
 
-    val commentPagerHeight = 236.dp
-
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -357,22 +357,26 @@ private fun CardDetailScreen(
         floatingActionButton = {
             Box(
                 modifier = Modifier
+                    .padding(bottom = 10.dp)
                     .navigationBarsPadding()
-                    .padding(bottom = 32.dp, end = 16.dp)
             ) {
                 Box(
                     modifier = Modifier
                         .size(54.dp)
                         .shadow(
                             elevation = 12.dp,
-                            spotColor = UnKnowColor.color2,
+                            shape = RoundedCornerShape(27.dp),
+                            spotColor = UnKnowColor.color2, // #64686C with 20% opacity
                             ambientColor = UnKnowColor.color2
                         )
                         .background(
                             color = NeutralColor.GRAY_600,
                             shape = RoundedCornerShape(27.dp)
                         )
-                        .clickable { onClickCommentIcon() },
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() }
+                        ) { onClickCommentIcon() },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -438,7 +442,6 @@ private fun CardDetailScreen(
                             modifier = Modifier
                                 .weight(1.4f)
                                 .fillMaxWidth()
-                                .verticalScroll(rememberScrollState())
                         ) {
                             CardDetail(
                                 previousCommentThumbnailUri = previousCommentThumbnailUri,
