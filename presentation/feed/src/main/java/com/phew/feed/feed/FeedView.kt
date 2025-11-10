@@ -121,6 +121,11 @@ fun FeedView(
         }
     }
 
+    // 화면 진입 시 스크롤 초기화
+    LaunchedEffect(Unit) {
+        lazyListState.animateScrollToItem(0)
+    }
+
     // 리컴포지션 최적화: 페이징 상태 직접 참조
     val currentPagingState = uiState.currentPagingState
 

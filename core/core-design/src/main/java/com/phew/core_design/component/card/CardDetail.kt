@@ -12,10 +12,8 @@ import com.phew.core_design.NeutralColor
 import com.phew.core_design.R
 import android.net.Uri
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.ui.Alignment
-import com.phew.core_design.theme.GRAY_400
+import androidx.core.net.toUri
 
 @Composable
 fun CardDetail(
@@ -53,22 +51,20 @@ fun CardDetail(
                     ),
                 )
             } else {
+                //  TODO 처리 필요
                 CardView(
                     modifier = modifier.padding(vertical = 2.dp),
-                    data = BaseCardData.Reply(
-                        previousCommentThumbnailUri = previousCommentThumbnailUri,
+                    data = BaseCardData.Write(
                         content = cardContent,
+                        isEditable = false,
                         tags = cardTags,
-                        hasPreviousCommentThumbnail = previousCommentThumbnailUri?.isNotBlank() == true,
-                        thumbnailUri = cardThumbnailUri,
-                        backgroundImage = backgroundImageUrl
-                    ),
-                    onPreviousCardClick = onPreviousCardClick
+                        backgroundUri = if (cardThumbnailUri.isNotEmpty()) cardThumbnailUri.toUri() else backgroundImageUrl,
+                        showAddButton = false
+                    )
                 )
             }
         }
 
         bottom()
-        Spacer(modifier.height(1.dp).background(GRAY_400))
     }
 }

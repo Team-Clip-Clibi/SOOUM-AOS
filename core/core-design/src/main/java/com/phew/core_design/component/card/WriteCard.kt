@@ -34,8 +34,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Rect
@@ -105,6 +110,7 @@ enum class CardType {
 sealed class BaseCardData(open val id: String, open val type: CardType) {
     data class Write(
         val content: String,
+        val isEditable: Boolean = true,
         val tags: List<String> = emptyList(),
         val backgroundResId: Int? = null,
         val backgroundUri: Uri? = null,
@@ -183,12 +189,13 @@ private fun BaseCard(
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 private fun EditableWriteContentBox(
+    modifier: Modifier = Modifier,
     content: String,
     placeholder: String = "",
-    modifier: Modifier = Modifier,
     onContentChange: (String) -> Unit,
     onContentClick: () -> Unit,
-    fontFamily: FontFamily?
+    fontFamily: FontFamily?,
+    isEditable: Boolean
 ) {
     BoxWithConstraints(
         modifier = modifier
@@ -199,6 +206,7 @@ private fun EditableWriteContentBox(
                 shape = RoundedCornerShape(12.dp)
             )
             .clickable(
+                enabled = isEditable,
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = onContentClick
@@ -206,37 +214,53 @@ private fun EditableWriteContentBox(
         contentAlignment = Alignment.Center
     ) {
         val scrollState = rememberScrollState()
-        val boundedHeight = maxHeight.takeIf { it.isFinite } ?: 200.dp
+        var isFocused by remember { mutableStateOf(false) }
+
+        if (isEditable) {
+            LaunchedEffect(content) {
+                scrollState.animateScrollTo(scrollState.maxValue)
+            }
+        }
 
         val baseStyle = TextComponent.BODY_1_M_14
         val textStyle = fontFamily?.let { baseStyle.copy(fontFamily = it) } ?: baseStyle
+
+        val maxHeight = with(androidx.compose.ui.platform.LocalDensity.current) {
+            val verticalPadding = 40.dp // 20dp top + 20dp bottom
+            (textStyle.lineHeight.toDp() * 8) + verticalPadding
+        }
 
         CompositionLocalProvider(LocalTextToolbar provides DisabledTextToolbar) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 61.dp, max = boundedHeight)
+                    .heightIn(min = 61.dp, max = maxHeight)
                     .verticalScroll(scrollState),
                 contentAlignment = Alignment.Center
             ) {
                 BasicTextField(
                     value = content,
-                    onValueChange = { newValue ->
-                        onContentChange(newValue)
-                    },
+                    onValueChange = onContentChange,
+                    enabled = isEditable,
                     textStyle = textStyle.copy(
                         color = CardDesignTokens.TextPrimary,
                         textAlign = TextAlign.Center
                     ),
                     cursorBrush = SolidColor(CardDesignTokens.TextPrimary),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onFocusChanged { focusState ->
+                            if (isEditable) isFocused = focusState.isFocused
+                        },
                     maxLines = Int.MAX_VALUE,
                     decorationBox = { innerTextField ->
                         Box(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp, vertical = 20.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            if (content.isBlank()) {
+                            if (content.isBlank() && !isFocused && isEditable) {
                                 Text(
                                     text = placeholder,
                                     style = textStyle.copy(color = NeutralColor.WHITE),
@@ -269,23 +293,36 @@ private fun ReadOnlyContentBox(
         contentAlignment = Alignment.Center
     ) {
         val scrollState = rememberScrollState()
-        val boundedHeight = maxHeight.takeIf { it.isFinite } ?: 200.dp
+
+        val baseStyle = TextComponent.BODY_1_M_14
+        val textStyle = baseStyle.copy(color = CardDesignTokens.TextPrimary)
+
+        val maxHeight = with(androidx.compose.ui.platform.LocalDensity.current) {
+            val verticalPadding = 40.dp // 20dp top + 20dp bottom
+            (textStyle.lineHeight.toDp() * 8) + verticalPadding
+        }
 
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 61.dp, max = boundedHeight)
+                .heightIn(min = 61.dp, max = maxHeight)
                 .verticalScroll(scrollState),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp),
-                text = content.ifBlank { " " },
-                style = TextComponent.BODY_1_M_14.copy(color = CardDesignTokens.TextPrimary),
-                maxLines = Int.MAX_VALUE,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 20.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = content.ifBlank { " " },
+                    style = textStyle,
+                    maxLines = Int.MAX_VALUE,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
     }
 }
@@ -350,7 +387,8 @@ private fun WriteCard(
                         placeholder = data.placeholder,
                         onContentChange = data.onContentChange,
                         onContentClick = data.onContentClick,
-                        fontFamily = data.fontFamily
+                        fontFamily = data.fontFamily,
+                        isEditable = data.isEditable
                     )
                 }
 
@@ -371,7 +409,8 @@ private fun WriteCard(
                             shouldFocus = data.shouldFocusTagInput,
                             onFocusHandled = data.onTagFocusHandled,
                             currentInput = data.currentTagInput,
-                            onInputChange = data.onTagInputChange
+                            onInputChange = data.onTagInputChange,
+                            fontFamily = data.fontFamily ?: FontFamily.Default
                         )
                     }
                 }
@@ -473,8 +512,7 @@ private fun ReplyCard(
                 ) {
                     ReadOnlyContentBox(
                         modifier = Modifier.fillMaxWidth(),
-                        content = data.content,
-                        )
+                        content = data.content)
                 }
 
                 // 하단 태그 영역
@@ -491,8 +529,11 @@ private fun ReplyCard(
                             enableAdd = false,
                             onAdd = { },
                             onRemove = { },
+                            shouldFocus = false,
+                            onFocusHandled = { },
                             currentInput = "",
-                            onInputChange = {}
+                            onInputChange = { },
+                            fontFamily = FontFamily.Default
                         )
                     }
                 }
@@ -562,7 +603,7 @@ fun CardViewPreview() {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
-            CardView(BaseCardData.Write("짧은 글 예시입니다.\n스크롤 안전!", listOf("Tag1", "Tag2")))
+            CardView(BaseCardData.Write(content = "짧은 글 예시입니다.\n스크롤 안전!", tags = listOf("Tag1", "Tag2")))
         }
         item {
             CardView(

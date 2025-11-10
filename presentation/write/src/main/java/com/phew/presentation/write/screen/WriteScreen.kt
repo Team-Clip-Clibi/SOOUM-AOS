@@ -186,7 +186,12 @@ internal fun WriteRoute(
             viewModel.onBackgroundAlbumImagePicked(it)
             viewModel.hideRelatedTags()
         },
-        onContentClick = viewModel::hideRelatedTags, // Add this line
+        onContentClick = {
+            viewModel.hideRelatedTags()
+            if (uiState.content == "숨에서 편하게 이야기 나눠요") {
+                viewModel.updateContent("")
+            }
+        },
         onFontSelected = {
             viewModel.selectFont(it)
             viewModel.hideRelatedTags()
@@ -371,8 +376,14 @@ private fun WriteScreen(
             )
         },
         bottomBar = {
+            val filteredOptions = if (args?.parentCardId != null) {
+                // CardDetailScreen에서 왔을 때는 twenty_four_hours 옵션 숨김
+                WriteOptions.availableOptions.filter { it.id != "twenty_four_hours" }
+            } else {
+                WriteOptions.availableOptions
+            }
             OptionButtons(
-                options = WriteOptions.availableOptions,
+                options = filteredOptions,
                 selectedOptionIds = selectedOptionIds,
                 hasLocationPermission = hasLocationPermission,
                 onOptionSelected = { option -> onOptionSelected(option.id) },
