@@ -10,4 +10,10 @@
     <string name="profile_btn_edit_profile">프로필 편집</string>
     <string name="profile_txt_no_card">카드가 없어요</string>
     <string name="profile_txt_no_comment_card">답카드가 없어요</string>
+    <string name="follow_txt_tab_follower">팔로워 %d</string>
+    <string name="follow_txt_tab_following">팔로잉 %d</string>
+    <string name="follow_btn_follow">팔로우</string>
+    <string name="follow_btn_following">팔로잉</string>
+    <string name="follow_txt_empty_follower">팔로우하는 사람이 없어요</string>
+    <string name="follow_txt_empty_following">팔로우하고 있는 사람이 없어요</string>
 </resources>

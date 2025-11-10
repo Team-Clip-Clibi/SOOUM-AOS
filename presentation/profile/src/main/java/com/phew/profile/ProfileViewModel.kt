@@ -5,8 +5,11 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.phew.core_common.DomainResult
+import com.phew.domain.dto.FollowData
 import com.phew.domain.dto.MyProfileInfo
 import com.phew.domain.dto.ProfileCard
+import com.phew.domain.usecase.GetFollower
+import com.phew.domain.usecase.GetFollowing
 import com.phew.domain.usecase.GetMyProfileInfo
 import com.phew.domain.usecase.GetProfileCommentCard
 import com.phew.domain.usecase.GetProfileFeedCard
@@ -26,6 +29,8 @@ class ProfileViewModel @Inject constructor(
     private val getMyProfile: GetMyProfileInfo,
     private val getFeedCard: GetProfileFeedCard,
     private val getCommentCard: GetProfileCommentCard,
+    private val getFollower: GetFollower,
+    private val getFollowing: GetFollowing,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(Profile())
     val uiState: StateFlow<Profile> = _uiState.asStateFlow()
@@ -60,6 +65,12 @@ class ProfileViewModel @Inject constructor(
                                 viewModelScope
                             ),
                             profileCommentCard = getCommentCard().cachedIn(viewModelScope),
+                            follow = getFollower(profileId = request.data.userId).cachedIn(
+                                viewModelScope
+                            ),
+                            following = getFollowing(profileId = request.data.userId).cachedIn(
+                                viewModelScope
+                            ),
                             isRefreshing = false
                         )
                     }
@@ -73,6 +84,8 @@ data class Profile(
     val myProfileInfo: UiState<MyProfileInfo> = UiState.Loading,
     val profileFeedCard: Flow<PagingData<ProfileCard>> = emptyFlow(),
     val profileCommentCard: Flow<PagingData<ProfileCard>> = emptyFlow(),
+    val follow: Flow<PagingData<FollowData>> = emptyFlow(),
+    val following: Flow<PagingData<FollowData>> = emptyFlow(),
     val isRefreshing: Boolean = false,
 )
 

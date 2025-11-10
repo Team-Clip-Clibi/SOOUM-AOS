@@ -685,13 +685,15 @@ object SmallButton {
         blinkColor: Color = NeutralColor.GRAY_600,
         disabledColor: Color = NeutralColor.GRAY_200,
         onClick: () -> Unit,
+        modifier: Modifier,
         content: @Composable RowScope.() -> Unit,
+
     ) {
         val interactionSource = remember { MutableInteractionSource() }
         val isPressed by interactionSource.collectIsPressedAsState()
 
         Row(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
                 .height(32.dp)
                 .clip(shape = RoundedCornerShape(8.dp))
@@ -720,16 +722,19 @@ object SmallButton {
     fun NoIconPrimary(
         buttonText: String,
         onClick: () -> Unit,
-        isEnable: Boolean = true,
+        textColor : Color = NeutralColor.WHITE,
+        baseColor: Color = NeutralColor.BLACK,
+        modifier: Modifier
     ) {
         BlinkSmallButton(
             onClick = onClick,
-            enabled = isEnable
+            baseColor = baseColor,
+            modifier = modifier
         ) {
             Text(
                 text = buttonText,
                 style = TextComponent.BODY_1_M_14,
-                color = if (isEnable) NeutralColor.WHITE else NeutralColor.GRAY_400
+                color = textColor,
             )
         }
     }
@@ -739,13 +744,15 @@ object SmallButton {
         buttonText: String,
         onClick: () -> Unit,
         isEnable: Boolean = true,
+        modifier: Modifier
     ) {
         BlinkSmallButton(
             baseColor = NeutralColor.GRAY_100,
             blinkColor = NeutralColor.GRAY_200,
             disabledColor = NeutralColor.GRAY_200,
             onClick = onClick,
-            enabled = isEnable
+            enabled = isEnable,
+            modifier = modifier
         ) {
             Text(
                 text = buttonText,
@@ -760,13 +767,15 @@ object SmallButton {
         buttonText: String,
         onClick: () -> Unit,
         isEnable: Boolean = true,
+        modifier: Modifier
     ) {
         BlinkSmallButton(
             baseColor = NeutralColor.WHITE,
             blinkColor = NeutralColor.GRAY_100,
             disabledColor = NeutralColor.GRAY_200,
             onClick = onClick,
-            enabled = isEnable
+            enabled = isEnable,
+            modifier = modifier
         ) {
             Text(
                 text = buttonText,

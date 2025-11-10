@@ -1,6 +1,7 @@
 package com.phew.profile
 
-import androidx.navigation.NavController
+import androidx.compose.runtime.remember
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.navigation
@@ -16,11 +17,13 @@ import com.phew.core.ui.navigation.createNavType
 import com.phew.core.ui.navigation.getNavArg
 import com.phew.presentation.settings.navigation.navigateToSettingGraph
 import com.phew.presentation.settings.navigation.settingGraph
+import com.phew.profile.screen.FollowerScreen
 
 private val PROFILE_ROUTE_WITH_AGS = HomeTabType.MY.route.asNavParam()
 private val PROFILE_ROUTE = HomeTabType.MY.route
 private const val PROFILE_ARGS_KEY = NavArgKey
 private val PROFILE_DESTINATION_ROUTE = "$PROFILE_ROUTE?$PROFILE_ARGS_KEY=$PROFILE_ROUTE_WITH_AGS"
+private val FOLLOW_ROUTE = "FOLLOW_ROUTE"
 
 //TODO 추후 다른 사용자 프로필 화면을 위해
 fun NavHostController.navigateToProfileGraphWithArgs(
@@ -48,9 +51,14 @@ fun NavGraphBuilder.profileGraph(
                     nullable = true
                 }
             )) { navBackStackEntry ->
+            val parentEntry = remember(navBackStackEntry) {
+                navController.getBackStackEntry(HomeTabType.MY.graph)
+            }
+            val viewModel: ProfileViewModel = hiltViewModel(parentEntry)
             val userId = navBackStackEntry.arguments?.getNavArg<ProfileArgs>()
             if (userId == null) {
                 MyProfile(
+                    viewModel = viewModel,
                     onLogout = onLogOut,
                     onClickCard = { id ->
                         cardClick(id)
@@ -59,16 +67,32 @@ fun NavGraphBuilder.profileGraph(
                         navController.navigateToSettingGraph()
                     },
                     onClickFollowing = {
-                        //TODO 팔로잉 화면으로 이동
+                        navController.navigate(FOLLOW_ROUTE)
                     },
                     onClickFollower = {
-                        //TODO 팔로워 화면으로 이동
+                        navController.navigate(FOLLOW_ROUTE)
                     },
                     onEditProfileClick = {
                         //TODO 프로필 수정 화면으로 이동
                     },
                 )
             }
+        }
+
+        slideComposable(
+            route = FOLLOW_ROUTE
+        ) { navBackStackEntry ->
+            val parentEntry = remember(navBackStackEntry) {
+                navController.getBackStackEntry(HomeTabType.MY.graph)
+            }
+            val viewModel: ProfileViewModel = hiltViewModel(parentEntry)
+            FollowerScreen(
+                viewModel = viewModel,
+                onBackPressed = onBackPressed,
+                onLogout = {
+
+                }
+            )
         }
 
         settingGraph(

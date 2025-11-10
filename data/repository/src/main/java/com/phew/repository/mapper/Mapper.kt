@@ -13,6 +13,7 @@ import com.phew.domain.dto.CheckSignUp
 import com.phew.domain.dto.CheckedBaned
 import com.phew.domain.dto.DistanceCard
 import com.phew.domain.dto.FeedLikeNotification
+import com.phew.domain.dto.FollowData
 import com.phew.domain.dto.FollowNotification
 import com.phew.domain.dto.Latest
 import com.phew.domain.dto.MyProfileInfo
@@ -47,6 +48,8 @@ import com.phew.network.dto.response.card.CardCommentResponseDTO
 import com.phew.network.dto.response.card.CardContentDto
 import com.phew.network.dto.response.card.CardDetailResponseDTO
 import com.phew.network.dto.response.card.CardDetailTagDTO
+import com.phew.network.dto.response.profile.FollowDTO
+import com.phew.network.dto.response.profile.FollowDataDTO
 import com.phew.network.dto.response.profile.MyProfileDTO
 import com.phew.repository.TYPE_BLOCK
 import com.phew.repository.TYPE_COMMENT_LIKE
@@ -307,6 +310,16 @@ internal fun CardContentDto.toDomain(): ProfileCard {
         cardContent = this.cardContent ?: "",
         cardImgName = this.cardImgName ?: "",
         font = this.font
+    )
+}
+
+internal fun FollowDataDTO.toDomain(): FollowData {
+    return FollowData(
+        memberId = this.memberId,
+        nickname = this.nickname,
+        profileImageUrl = this.profileImageUrl,
+        isFollowing = this.isFollowing,
+        isRequester = this.isRequester
     )
 }
 

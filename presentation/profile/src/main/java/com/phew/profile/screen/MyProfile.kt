@@ -10,15 +10,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -70,19 +67,20 @@ import com.phew.profile.R
 import com.phew.profile.TAB_MY_COMMENT_CARD
 import com.phew.profile.TAB_MY_FEED_CARD
 import com.phew.profile.UiState
-import com.phew.profile.component.ProfileTab
 import com.phew.core_design.component.card.CommentBodyContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.paging.compose.LazyPagingItems
 import com.phew.core_design.CustomFont
+import com.phew.core_design.LoadingAnimation
+import com.phew.core_design.TabBar
 import com.phew.domain.dto.ProfileCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun MyProfile(
-    viewModel: ProfileViewModel = hiltViewModel(),
+    viewModel: ProfileViewModel,
     onClickFollower: () -> Unit,
     onClickFollowing: () -> Unit,
     onClickSetting: () -> Unit,
@@ -153,7 +151,7 @@ internal fun MyProfile(
         }
 
         UiState.Loading -> {
-            LoadingView()
+            LoadingAnimation.LoadingView()
         }
 
         is UiState.Success -> {
@@ -236,29 +234,6 @@ private fun MyProfileScaffold(
         },
         content = content
     )
-}
-
-@Composable
-private fun LoadingView(modifier: Modifier = Modifier) {
-    val composition by rememberLottieComposition(
-        LottieCompositionSpec.RawRes(com.phew.core_design.R.raw.ic_refresh)
-    )
-    val refreshProgress by animateLottieCompositionAsState(
-        composition = composition,
-        iterations = LottieConstants.IterateForever,
-    )
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.statusBars),
-        contentAlignment = Alignment.Center
-    ) {
-        LottieAnimation(
-            composition = composition,
-            progress = { refreshProgress },
-            modifier = Modifier.size(44.dp)
-        )
-    }
 }
 
 @Composable
@@ -384,10 +359,14 @@ private fun CardTabView(
             .background(color = NeutralColor.WHITE)
             .padding(top = 16.dp, start = 16.dp, end = 16.dp)
     ) {
-        ProfileTab(
+        TabBar.TabBarTwo(
+            data = listOf(
+                stringResource(R.string.profile_txt_card),
+                stringResource(R.string.profile_txt_comment_card)
+            ),
             selectTabData = selectIndex,
-            onFeedCardClick = onFeedCardClick,
-            onCommentCardClick = onCommentCardClick
+            onFirstItemClick = onFeedCardClick,
+            onSecondItemClick = onCommentCardClick
         )
     }
 }
@@ -459,7 +438,7 @@ private fun ProfileCardView(
         when (cardData.loadState.refresh) {
             LoadState.Loading -> {
                 item(span = { GridItemSpan(maxLineSpan) }) {
-                    LoadingView(modifier = Modifier.padding(top = 80.dp))
+                    LoadingAnimation.LoadingView(modifier = Modifier.padding(top = 80.dp))
                 }
             }
 

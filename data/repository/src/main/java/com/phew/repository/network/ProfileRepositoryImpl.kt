@@ -1,6 +1,7 @@
 package com.phew.repository.network
 
 import com.phew.core_common.DataResult
+import com.phew.domain.dto.FollowData
 import com.phew.domain.dto.MyProfileInfo
 import com.phew.domain.dto.ProfileCard
 import com.phew.domain.repository.network.ProfileRepository
@@ -47,6 +48,42 @@ class ProfileRepositoryImpl @Inject constructor(private val http: ProfileHttp) :
         return pagingCall(
             apiCall = { http.requestMyProfileCommentCardNext(lastId = cardId) },
             mapper = { data -> data.cardContents.map { cardContentDto -> cardContentDto.toDomain() } }
+        )
+    }
+
+    override suspend fun requestFollower(profileId: Long): DataResult<Pair<Int, List<FollowData>>> {
+        return pagingCall(
+            apiCall = { http.requestFollower(profileOwnerId = profileId) },
+            mapper = { data -> data.followerData.map { followData -> followData.toDomain() } }
+        )
+    }
+
+    override suspend fun requestFollowerNext(
+        profileId: Long,
+        lastId: Long,
+    ): DataResult<Pair<Int, List<FollowData>>> {
+        return pagingCall(
+            apiCall = { http.requestFollowerNext(profileOwnerId = profileId, lastId = lastId) },
+            mapper = { data -> data.followerData.map { followData -> followData.toDomain() } }
+        )
+    }
+
+    override suspend fun requestFollowing(
+        profileId: Long,
+    ): DataResult<Pair<Int, List<FollowData>>> {
+        return pagingCall(
+            apiCall = { http.requestFollowing(profileOwnerId = profileId) },
+            mapper = { data -> data.followerData.map { followerData -> followerData.toDomain() } }
+        )
+    }
+
+    override suspend fun requestFollowingNext(
+        profileId: Long,
+        lastId: Long,
+    ): DataResult<Pair<Int, List<FollowData>>> {
+        return pagingCall(
+            apiCall = { http.requestFollowingNext(profileOwnerId = profileId, lastId = lastId) },
+            mapper = { data -> data.followerData.map { followerData -> followerData.toDomain() } }
         )
     }
 }

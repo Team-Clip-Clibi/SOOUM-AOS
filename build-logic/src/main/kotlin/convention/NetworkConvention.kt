@@ -75,6 +75,8 @@ class NetworkConvention : Plugin<Project> {
                 val myProfileCommentCard: String =
                     properties.getProperty("api_url_profile_comment_card", "")
                 val myProfileCard: String = properties.getProperty("api_url_profile_card", "")
+                val following: String = properties.getProperty("api_url_following", "")
+                val follower: String = properties.getProperty("api_url_follower", "")
 
                 buildConfigField("String", "BASE_URL", baseUrl)
                 buildConfigField("String", "API_URL", apiUrl)
@@ -117,6 +119,8 @@ class NetworkConvention : Plugin<Project> {
                 buildConfigField("String", "API_URL_MY_PROFILE", myProfile)
                 buildConfigField("String", "API_URL_MY_PROFILE_COMMENT_CARD", myProfileCommentCard)
                 buildConfigField("String", "API_URL_MY_PROFILE_CARD", myProfileCard)
+                buildConfigField("String", "API_URL_FOLLOWING", following)
+                buildConfigField("String", "API_URL_FOLLOWER", follower)
             }
             buildFeatures.buildConfig = true
             compileOptions {
