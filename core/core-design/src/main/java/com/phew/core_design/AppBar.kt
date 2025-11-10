@@ -106,7 +106,7 @@ object AppBar {
         ) {
             Text(
                 text = title,
-                style = TextComponent.TITLE_1_SB_18,
+                style = TextComponent.HEAD_3_B_20,
                 color = NeutralColor.BLACK
             )
 

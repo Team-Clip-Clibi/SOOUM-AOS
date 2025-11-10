@@ -46,8 +46,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.paging.LoadState
@@ -78,6 +76,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.paging.compose.LazyPagingItems
+import com.phew.core_design.CustomFont
 import com.phew.domain.dto.ProfileCard
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -518,8 +517,8 @@ private fun ProfileCardView(
                                 CommentBodyContent(
                                     contentText = item.cardContent,
                                     imgUrl = item.cardImgUrl,
-                                    fontFamily = FontFamily(Font(com.phew.core_design.R.font.medium)),
-                                    textMaxLines = 3,
+                                    fontFamily = CustomFont.findFontValueByServerName(item.font).data.previewTypeface,
+                                    textMaxLines = 4,
                                     cardId = item.cardId,
                                     onClick = onClickCard
                                 )

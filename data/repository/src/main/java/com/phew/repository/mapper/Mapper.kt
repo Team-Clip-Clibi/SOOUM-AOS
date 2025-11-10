@@ -305,7 +305,8 @@ internal fun CardContentDto.toDomain(): ProfileCard {
         cardId = this.cardId,
         cardImgUrl = this.cardImgUrl ?: "",
         cardContent = this.cardContent ?: "",
-        cardImgName = this.cardImgName ?: ""
+        cardImgName = this.cardImgName ?: "",
+        font = this.font
     )
 }
 
