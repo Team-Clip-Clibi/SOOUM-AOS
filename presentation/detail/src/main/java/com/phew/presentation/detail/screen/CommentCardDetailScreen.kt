@@ -80,6 +80,7 @@ import com.phew.presentation.detail.component.CardDetailHeader
 import com.phew.presentation.detail.model.MoreAction
 import com.phew.presentation.detail.viewmodel.CardDetailError
 import com.phew.presentation.detail.viewmodel.CardDetailViewModel
+import com.phew.core_design.CustomFont
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -384,6 +385,7 @@ private fun CardView(
                     cardTags = cardDetail.tags.map { data -> data.name },
                     isDeleted = isExpire,
                     backgroundImageUrl = cardDetail.cardImgUrl.toUri(),
+                    fontFamily = CustomFont.findFontValueByServerName(cardDetail.font).data.previewTypeface,
                     header = {
                         CardDetailHeader(
                             profileUri = cardDetail.profileImgUrl ?: "",

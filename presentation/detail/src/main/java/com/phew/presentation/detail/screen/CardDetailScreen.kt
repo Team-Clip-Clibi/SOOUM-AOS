@@ -106,6 +106,7 @@ import com.phew.presentation.detail.component.CardDetailHeader
 import com.phew.presentation.detail.model.MoreAction
 import com.phew.presentation.detail.viewmodel.CardDetailError
 import com.phew.presentation.detail.viewmodel.CardDetailViewModel
+import com.phew.core_design.CustomFont
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -239,6 +240,7 @@ internal fun CardDetailRoute(
         cardContent = cardDetail.cardContent,
         cardThumbnailUri = cardDetail.cardImgUrl,
         cardTags = cardDetail.tags.map { it.name },
+        cardFont = cardDetail.font,
         previousCommentThumbnailUri = cardDetail.previousCardImgUrl ?: "",
         profileUri = cardDetail.profileImgUrl ?: "",
         nickName = cardDetail.nickname,
@@ -303,6 +305,7 @@ private fun CardDetailScreen(
     cardContent: String,
     cardThumbnailUri: String,
     cardTags: List<String>,
+    cardFont: String,
     previousCommentThumbnailUri: String,
     profileUri: String,
     nickName: String,
@@ -469,6 +472,7 @@ private fun CardDetailScreen(
                                 cardContent = cardContent,
                                 cardThumbnailUri = cardThumbnailUri,
                                 cardTags = cardTags,
+                                fontFamily = CustomFont.findFontValueByServerName(cardFont).data.previewTypeface,
                                 isDeleted = isExpire,
                                 header = {
                                     CardDetailHeader(

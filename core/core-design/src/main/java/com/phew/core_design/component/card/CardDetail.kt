@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.R
@@ -24,6 +25,7 @@ fun CardDetail(
     cardContent: String,
     cardThumbnailUri: String,
     cardTags: List<String>,
+    fontFamily: FontFamily = FontFamily.Default,
     header: @Composable () -> Unit,
     bottom: @Composable () -> Unit?,
     onPreviousCardClick: () -> Unit = { }
@@ -59,7 +61,8 @@ fun CardDetail(
                         isEditable = false,
                         tags = cardTags,
                         backgroundUri = if (cardThumbnailUri.isNotEmpty()) cardThumbnailUri.toUri() else backgroundImageUrl,
-                        showAddButton = false
+                        showAddButton = false,
+                        fontFamily = fontFamily
                     )
                 )
             }
