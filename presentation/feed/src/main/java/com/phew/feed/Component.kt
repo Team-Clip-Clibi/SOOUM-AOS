@@ -38,7 +38,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color.Companion.Red
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -60,7 +59,6 @@ import com.phew.core_design.component.card.FeedDeletedCard
 import com.phew.core_design.component.card.FeedPungCard
 import com.phew.core_design.component.card.NotiCard
 import com.phew.core_design.component.card.NotiCardData
-import com.phew.core_design.component.card.NoticeCardPager
 import com.phew.core_design.component.card.component.IndicatorDot
 import com.phew.core_design.component.tab.SooumTab
 import com.phew.core_design.component.tab.SooumTabRow
@@ -92,6 +90,13 @@ object FeedUi {
             initialPage = Int.MAX_VALUE / 2 - ((Int.MAX_VALUE / 2) % feedNotice.size),
             pageCount = { Int.MAX_VALUE }
         )
+        LaunchedEffect(Unit) {
+            while (true) {
+                delay(5000L)
+                val nextPage = pagerState.currentPage + 1
+                pagerState.animateScrollToPage(nextPage)
+            }
+        }
         Box(
             modifier = Modifier
                 .fillMaxWidth()

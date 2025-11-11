@@ -105,7 +105,13 @@ fun SooumBottomBar(
 
                                 HomeTabType.TAG,
                                 HomeTabType.MY -> {
-                                    // TODO 나머지 탭 구현 시 라우팅 처리
+                                    navController.navigate(tab.graph) {
+                                        popUpTo(HomeTabType.MY.route) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
                                 }
                             }
                         }

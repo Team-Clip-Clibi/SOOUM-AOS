@@ -19,7 +19,7 @@ import com.phew.core_design.R
 import com.phew.core_design.TextComponent
 import com.phew.core_design.typography.FontTextStyle
 import com.phew.core_design.typography.FontType
-import com.phew.presentation.write.model.FontItem
+import com.phew.core_design.FontItem
 
 @Composable
 internal fun FontSelectorGrid(

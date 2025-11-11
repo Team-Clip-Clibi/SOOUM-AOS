@@ -28,4 +28,5 @@ interface DeviceRepository {
     suspend fun requestLocation() : Location
     suspend fun deleteDataStoreInfo(key : String) : Boolean
     suspend fun getLocationPermission() : Boolean
+    suspend fun getAppVersion(): String
 }

@@ -5,4 +5,5 @@ interface DeviceInfo {
     suspend fun osVersion(): String
     suspend fun modelName(): String
     suspend fun firebaseToken(): String
+    suspend fun appVersion(): String
 }

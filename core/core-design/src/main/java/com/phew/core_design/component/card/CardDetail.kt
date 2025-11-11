@@ -12,7 +12,10 @@ import com.phew.core_design.NeutralColor
 import com.phew.core_design.R
 import android.net.Uri
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.ui.Alignment
+import com.phew.core_design.theme.GRAY_400
 
 @Composable
 fun CardDetail(
@@ -66,5 +69,6 @@ fun CardDetail(
         }
 
         bottom()
+        Spacer(modifier.height(1.dp).background(GRAY_400))
     }
 }

@@ -9,6 +9,7 @@ import com.phew.feed.navigation.FEED_GRAPH
 import com.phew.feed.navigation.feedGraph
 import com.phew.presentation.write.navigation.writeGraph
 import com.phew.reports.REPORT_GRAPH_ROUTE_PREFIX
+import com.phew.profile.profileGraph
 
 private const val HOME_GRAPH = "home_graph"
 
@@ -31,7 +32,9 @@ fun NavGraphBuilder.homeGraph(
     finish: () -> Unit,
     onBackPressed: () -> Unit,
     webView: (String) -> Unit,
-    onWriteComplete: () -> Unit = {}
+    onWriteComplete: () -> Unit = {},
+    cardClick: (Long) -> Unit,
+    onLogOut: () -> Unit,
 ) {
     navigation(route = HOME_GRAPH, startDestination = FEED_GRAPH) {
         // Feed Card Graph
@@ -57,9 +60,13 @@ fun NavGraphBuilder.homeGraph(
                 navController.popBackStack()
             }
         )
-
+        profileGraph(
+            navController = navController,
+            onBackPressed = onBackPressed,
+            onLogOut = onLogOut,
+            cardClick = cardClick
+        )
         // TODO Tag 그래프 추가
-        // TODO My 그래프 추가
     }
 
 }

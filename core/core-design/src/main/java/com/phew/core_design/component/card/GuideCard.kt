@@ -72,7 +72,6 @@ fun SooumGuideCard(
     }
 }
 
-
 @Preview
 @Composable
 private fun SooumGuideCardPreview() {

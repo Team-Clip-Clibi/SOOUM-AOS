@@ -3,8 +3,6 @@ package com.phew.sign_up
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,7 +14,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
@@ -36,7 +33,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.LargeButton
@@ -56,16 +52,15 @@ fun OnBoarding(
     signUp: () -> Unit,
     alreadySignUp: () -> Unit,
     back: () -> Unit,
-    home : () -> Unit
+    home: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
     val dialogShow = remember { mutableStateOf(false) }
     val context = LocalContext.current
-    BackHandler {
-        back()
-    }
-    LaunchedEffect(uiState) {
+    val onHome = remember(home) { { home() } }
+    BackHandler(onBack = remember(back) { { back() } })
+    LaunchedEffect(uiState, onHome, snackBarHostState, context) {
         if (uiState.checkSignUp is UiState.Fail || uiState.login is UiState.Fail) {
             snackBarHostState.showSnackbar(
                 message = context.getString(com.phew.core_design.R.string.error_network),
@@ -73,7 +68,7 @@ fun OnBoarding(
             )
         }
         if (uiState.login is UiState.Success) {
-            home()
+            onHome()
         }
     }
     Scaffold(
@@ -96,13 +91,10 @@ fun OnBoarding(
                                 else -> dialogShow.value = true
                             }
                         }
-
-                        else -> UInt
+                        else -> Unit
                     }
                 },
-                onClickAlreadySignUp = {
-                    alreadySignUp()
-                }
+                onClickAlreadySignUp = remember(alreadySignUp) { alreadySignUp }
             )
         },
         snackbarHost = {
@@ -126,9 +118,10 @@ fun OnBoarding(
             TitleView()
             ContentView()
             if (dialogShow.value) {
-                DialogView((uiState.checkSignUp as UiState.Success<SignUpResult>).data, onclick = {
-                    dialogShow.value = false
-                })
+                DialogView(
+                    (uiState.checkSignUp as UiState.Success<SignUpResult>).data,
+                    onclick = remember { { dialogShow.value = false } }
+                )
             }
         }
     }
@@ -164,7 +157,7 @@ private fun ContentView() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
-            painter = painterResource(com.phew.core_design.R.drawable.ic_app_character_onboarding),
+            painter = painterResource(com.phew.core_design.R.drawable.img_onboarding_down),
             contentDescription = "onBoarding character",
             contentScale = ContentScale.Fit,
             modifier = Modifier
@@ -234,12 +227,8 @@ private fun DialogView(data: SignUpResult, onclick: () -> Unit) {
             DialogComponent.DefaultButtonOne(
                 title = stringResource(R.string.onBoarding_dialog_banned_title),
                 description = stringResource(R.string.onBoarding_dialog_banned_content),
-                onClick = {
-                    onclick()
-                },
-                onDismiss = {
-                    onclick()
-                },
+                onClick = onclick,
+                onDismiss = onclick,
                 buttonText = stringResource(com.phew.core_design.R.string.common_okay)
             )
         }
@@ -248,12 +237,8 @@ private fun DialogView(data: SignUpResult, onclick: () -> Unit) {
             DialogComponent.DefaultButtonOne(
                 title = stringResource(R.string.onBoarding_dialog_withdraw_title),
                 description = stringResource(R.string.onBoarding_dialog_withdraw_content),
-                onClick = {
-                    onclick()
-                },
-                onDismiss = {
-                    onclick()
-                },
+                onClick = onclick,
+                onDismiss = onclick,
                 buttonText = stringResource(com.phew.core_design.R.string.common_okay)
             )
         }
