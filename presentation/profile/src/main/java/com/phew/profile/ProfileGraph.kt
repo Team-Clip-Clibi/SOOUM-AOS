@@ -18,18 +18,22 @@ import com.phew.core.ui.navigation.getNavArg
 import com.phew.presentation.settings.navigation.navigateToSettingGraph
 import com.phew.presentation.settings.navigation.settingGraph
 import com.phew.profile.screen.FollowerScreen
+import com.phew.profile.screen.OtherProfile
 
 private val PROFILE_ROUTE_WITH_AGS = HomeTabType.MY.route.asNavParam()
 private val PROFILE_ROUTE = HomeTabType.MY.route
 private const val PROFILE_ARGS_KEY = NavArgKey
 private val PROFILE_DESTINATION_ROUTE = "$PROFILE_ROUTE?$PROFILE_ARGS_KEY=$PROFILE_ROUTE_WITH_AGS"
-private val FOLLOW_ROUTE = "FOLLOW_ROUTE"
+private const val FOLLOW_ROUTE = "FOLLOW_ROUTE"
+private const val OTHER_PROFILE_ROUTE = "OTHER_PROFILE_ROUTE"
+private val OTHER_PROFILE_ROUTE_WITH_AGS = OTHER_PROFILE_ROUTE.asNavParam()
+private val OTHER_PROFILE_DESTINATION_ROUTE = "$OTHER_PROFILE_ROUTE?$PROFILE_ARGS_KEY=$OTHER_PROFILE_ROUTE_WITH_AGS"
 
 //TODO 추후 다른 사용자 프로필 화면을 위해
 fun NavHostController.navigateToProfileGraphWithArgs(
     profileArgs: ProfileArgs,
 ) {
-    this.navigate(PROFILE_ROUTE_WITH_AGS.asNavArg(profileArgs))
+    this.navigate(OTHER_PROFILE_DESTINATION_ROUTE.asNavArg(profileArgs))
 }
 
 fun NavGraphBuilder.profileGraph(
@@ -55,28 +59,54 @@ fun NavGraphBuilder.profileGraph(
                 navController.getBackStackEntry(HomeTabType.MY.graph)
             }
             val viewModel: ProfileViewModel = hiltViewModel(parentEntry)
-            val userId = navBackStackEntry.arguments?.getNavArg<ProfileArgs>()
-            if (userId == null) {
-                MyProfile(
-                    viewModel = viewModel,
-                    onLogout = onLogOut,
-                    onClickCard = { id ->
-                        cardClick(id)
-                    },
-                    onClickSetting = {
-                        navController.navigateToSettingGraph()
-                    },
-                    onClickFollowing = {
-                        navController.navigate(FOLLOW_ROUTE)
-                    },
-                    onClickFollower = {
-                        navController.navigate(FOLLOW_ROUTE)
-                    },
-                    onEditProfileClick = {
-                        //TODO 프로필 수정 화면으로 이동
-                    },
-                )
+            MyProfile(
+                viewModel = viewModel,
+                onLogout = onLogOut,
+                onClickCard = { id ->
+                    cardClick(id)
+                },
+                onClickSetting = {
+                    navController.navigateToSettingGraph()
+                },
+                onClickFollowing = {
+                    navController.navigate(FOLLOW_ROUTE)
+                },
+                onClickFollower = {
+                    navController.navigate(FOLLOW_ROUTE)
+                },
+                onEditProfileClick = {
+                    //TODO 프로필 수정 화면으로 이동
+                },
+            )
+        }
+
+        slideComposable(
+            route = OTHER_PROFILE_DESTINATION_ROUTE,
+            arguments = listOf(
+                navArgument(PROFILE_ARGS_KEY) {
+                    type = createNavType<ProfileArgs>(isNullableAllowed = true)
+                    defaultValue = null
+                    nullable = true
+                }
+            )
+        ) { navBackStackEntry ->
+            val parentEntry = remember(navBackStackEntry) {
+                navController.getBackStackEntry(HomeTabType.MY.graph)
             }
+            val viewModel: ProfileViewModel = hiltViewModel(parentEntry)
+            val userId = navBackStackEntry.arguments?.getNavArg<ProfileArgs>()
+            OtherProfile(
+                viewModel = viewModel,
+                userId = userId?.userId ?: 0,
+                onLogOut = onLogOut,
+                onBackPress = onBackPressed,
+                onClickFollower = {
+                    navController.navigate(FOLLOW_ROUTE)
+                },
+                onClickCard = { id ->
+                    cardClick(id)
+                }
+            )
         }
 
         slideComposable(
@@ -89,9 +119,7 @@ fun NavGraphBuilder.profileGraph(
             FollowerScreen(
                 viewModel = viewModel,
                 onBackPressed = onBackPressed,
-                onLogout = {
-
-                }
+                onLogout = onLogOut
             )
         }
 

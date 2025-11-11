@@ -8,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.navOptions
 import com.phew.core.ui.component.back.SooumOnBackPressed
 import com.phew.core.ui.model.navigation.CardDetailArgs
+import com.phew.core.ui.model.navigation.ProfileArgs
 import com.phew.core.ui.state.SooumAppState
 import com.phew.core.ui.state.rememberSooumAppState
 import com.phew.home.navigation.homeGraph
@@ -18,6 +19,7 @@ import com.phew.core.ui.model.navigation.WriteArgs
 import com.phew.presentation.detail.navigation.navigateToDetailGraph
 import com.phew.presentation.write.navigation.navigateToWriteGraphWithArgs
 import com.phew.presentation.write.navigation.writeGraph
+import com.phew.profile.navigateToProfileGraphWithArgs
 import com.phew.reports.reportGraph
 import com.phew.sign_up.navigation.SIGN_UP_GRAPH
 import com.phew.sign_up.navigation.navigateToSignUpGraph
@@ -148,6 +150,9 @@ fun SooumNavHost(
                             launchSingleTop = true
                         }
                     )
+                },
+                onProfileScreen = { profileId ->
+                    navController.navigateToProfileGraphWithArgs(ProfileArgs(profileId))
                 }
             )
 

@@ -2,10 +2,14 @@ package com.phew.profile.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,8 +22,10 @@ import coil3.compose.AsyncImage
 import com.phew.core_design.NeutralColor
 import com.phew.domain.dto.FollowData
 import androidx.compose.material3.Text
+import androidx.compose.runtime.remember
 import androidx.compose.ui.res.stringResource
 import com.phew.core_design.SmallButton
+import com.phew.core_design.TabBar
 import com.phew.core_design.TextComponent
 import com.phew.profile.R
 
@@ -69,4 +75,61 @@ object ProfileComponent {
             )
         }
     }
+
+    @Composable
+    fun CardTabView(
+        selectIndex: Int,
+        onFeedCardClick: () -> Unit,
+        onCommentCardClick: () -> Unit,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(color = NeutralColor.WHITE)
+                .padding(top = 16.dp, start = 16.dp, end = 16.dp)
+        ) {
+            TabBar.TabBarTwo(
+                data = listOf(
+                    stringResource(R.string.profile_txt_card),
+                    stringResource(R.string.profile_txt_comment_card)
+                ),
+                selectTabData = selectIndex,
+                onFirstItemClick = onFeedCardClick,
+                onSecondItemClick = onCommentCardClick
+            )
+        }
+    }
+
+    @Composable
+    fun CardFollowerView(
+        title: String,
+        data: String,
+        onClick: () -> Unit,
+    ) {
+        Column(
+            modifier = Modifier
+                .width(72.dp)
+                .height(64.dp)
+                .padding(top = 8.dp, bottom = 8.dp)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onClick
+                ),
+            verticalArrangement = Arrangement.spacedBy(0.dp, Alignment.Top),
+            horizontalAlignment = Alignment.Start,
+        ) {
+            Text(
+                text = title,
+                style = TextComponent.BODY_1_M_14,
+                color = NeutralColor.GRAY_500
+            )
+            Text(
+                text = data,
+                style = TextComponent.TITLE_1_SB_18,
+                color = NeutralColor.BLACK
+            )
+        }
+    }
+
 }

@@ -12,19 +12,14 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerDefaults
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -46,7 +41,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -66,8 +60,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemContentType
-import androidx.paging.compose.itemKey
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import com.airbnb.lottie.LottieComposition
@@ -111,7 +103,8 @@ internal fun CardDetailRoute(
     onNavigateToComment: (CardDetailCommentArgs) -> Unit,
     onNavigateToWrite: (Long) -> Unit,
     onNavigateToReport: (Long) -> Unit,
-    onBackPressed: () -> Unit
+    onBackPressed: () -> Unit,
+    profileClick: (Long) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackBarHostState = remember { SnackbarHostState() }
@@ -239,7 +232,12 @@ internal fun CardDetailRoute(
             onNavigateToWrite(args.cardId)
         },
         onClickCommentView = { commentCardId ->
-            onNavigateToComment(CardDetailCommentArgs(cardId = commentCardId , parentId = args.cardId))
+            onNavigateToComment(
+                CardDetailCommentArgs(
+                    cardId = commentCardId,
+                    parentId = args.cardId
+                )
+            )
         },
         onBlockMember = { toMemberId, nickname ->
             viewModel.blockMember(toMemberId, nickname)
@@ -269,6 +267,11 @@ internal fun CardDetailRoute(
         refreshingOffset = refreshingOffset,
         refreshState = refreshState,
         density = density,
+        profileClick = { id ->
+            if(!cardDetail.isOwnCard){
+                profileClick(id)
+            }
+        }
     )
 }
 
@@ -318,6 +321,7 @@ private fun CardDetailScreen(
     refreshingOffset: androidx.compose.ui.unit.Dp,
     refreshState: androidx.compose.material3.pulltorefresh.PullToRefreshState,
     density: androidx.compose.ui.unit.Density,
+    profileClick : (Long) -> Unit
 ) {
 
     Scaffold(
@@ -454,7 +458,9 @@ private fun CardDetailScreen(
                                         profileUri = profileUri,
                                         nickName = nickName,
                                         distance = distance,
-                                        createAt = createAt
+                                        createAt = createAt,
+                                        memberId = memberId,
+                                        onClick = profileClick
                                     )
                                 },
                                 bottom = {
@@ -656,7 +662,9 @@ private fun CardDetailPreview() {
                     profileUri = "",
                     nickName = "닉네임",
                     distance = "10km",
-                    createAt = "2025-10-09T03:54:10.026919"
+                    createAt = "2025-10-09T03:54:10.026919",
+                    memberId = 12321453,
+                    onClick = {}
                 )
             },
             bottom = {
@@ -684,7 +692,9 @@ private fun CardDetailPreview() {
                     profileUri = "",
                     nickName = "닉네임",
                     distance = "10km",
-                    createAt = "2025-10-09T03:54:10.026919"
+                    createAt = "2025-10-09T03:54:10.026919",
+                    memberId = 12321453,
+                    onClick = {}
                 )
             },
             bottom = {
@@ -703,7 +713,9 @@ private fun CardDetailPreview() {
                     profileUri = "",
                     nickName = "닉네임",
                     distance = "10km",
-                    createAt = "2025-10-09T03:54:10.026919"
+                    createAt = "2025-10-09T03:54:10.026919",
+                    memberId = 12321453,
+                    onClick = {}
                 )
             },
             bottom = {

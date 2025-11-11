@@ -113,6 +113,8 @@ object DialogComponent {
         rightButtonBaseColor: Color = NeutralColor.BLACK,
         rightButtonClickColor: Color = NeutralColor.GRAY_600,
         rightButtonDisableColor: Color = NeutralColor.GRAY_200,
+        startButtonTextColor: Color = NeutralColor.WHITE,
+        endButtonTextColor: Color = NeutralColor.WHITE,
     ) {
         Dialog(
             onDismissRequest = onDismiss
@@ -146,6 +148,7 @@ object DialogComponent {
                     Box(Modifier.weight(1f)) {
                         MediumButton.NoIconSecondary(
                             buttonText = buttonTextStart,
+                            selectTextColor = startButtonTextColor,
                             onClick = onDismiss,
 
                             )
@@ -156,7 +159,8 @@ object DialogComponent {
                             onClick = onClick,
                             baseColor = rightButtonBaseColor,
                             blinkColor = rightButtonClickColor,
-                            disabledColor = rightButtonDisableColor
+                            disabledColor = rightButtonDisableColor,
+                            textColor = endButtonTextColor
                         )
                     }
                 }

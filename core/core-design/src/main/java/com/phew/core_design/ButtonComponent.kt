@@ -368,6 +368,7 @@ object MediumButton {
         buttonText: String,
         onClick: () -> Unit,
         isEnable: Boolean = true,
+        textColor: Color = NeutralColor.WHITE,
         baseColor: Color = NeutralColor.BLACK,
         blinkColor: Color = NeutralColor.GRAY_600,
         disabledColor: Color = NeutralColor.GRAY_200,
@@ -382,7 +383,7 @@ object MediumButton {
             Text(
                 text = buttonText,
                 style = TextComponent.SUBTITLE_1_M_16,
-                color = if (isEnable) NeutralColor.WHITE else NeutralColor.GRAY_400
+                color = textColor
             )
         }
     }

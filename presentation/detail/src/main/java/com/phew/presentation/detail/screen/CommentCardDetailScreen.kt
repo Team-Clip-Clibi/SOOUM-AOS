@@ -6,16 +6,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -78,12 +75,14 @@ import com.phew.presentation.detail.viewmodel.CardDetailViewModel
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
+import com.airbnb.lottie.compose.LottieConstants
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -95,6 +94,7 @@ internal fun CommentCardDetailScreen(
     onNavigateToReport: (Long) -> Unit,
     onBackPressed: (Long) -> Unit,
     onFeedPressed: () -> Unit,
+    onProfileClick: (Long) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val comments: LazyPagingItems<CardComment> = viewModel.commentsPagingData
@@ -113,7 +113,7 @@ internal fun CommentCardDetailScreen(
     )
     val refreshProgress by animateLottieCompositionAsState(
         composition = composition,
-        iterations = com.airbnb.lottie.compose.LottieConstants.IterateForever,
+        iterations = LottieConstants.IterateForever,
         restartOnPlay = isRefreshing
     )
     if (uiState.isLoading && cardDetail == null) {
@@ -259,7 +259,8 @@ internal fun CommentCardDetailScreen(
                             progress = { refreshProgress },
                             modifier = Modifier.size(44.dp)
                         )
-                    }
+                    },
+                    onProfileClick = onProfileClick,
                 )
                 PlusButton(
                     modifier = Modifier.align(Alignment.BottomEnd),
@@ -338,7 +339,8 @@ private fun CardView(
     comments: LazyPagingItems<CardComment>,
     onCommentClick: (Long) -> Unit,
     onPreviousCardClick: () -> Unit,
-    playProgression: @Composable () -> Unit
+    playProgression: @Composable () -> Unit,
+    onProfileClick : (Long) -> Unit
 ) {
     Column(
         modifier = modifier
@@ -363,7 +365,9 @@ private fun CardView(
                         profileUri = cardDetail.profileImgUrl ?: "",
                         nickName = cardDetail.nickname,
                         distance = cardDetail.distance ?: "",
-                        createAt = cardDetail.createdAt
+                        createAt = cardDetail.createdAt,
+                        memberId = cardDetail.memberId,
+                        onClick = onProfileClick
                     )
                 },
                 bottom = {
@@ -420,10 +424,7 @@ private fun CardView(
                                         count = comments.itemCount,
                                         key = comments.itemKey { it.cardId }
                                     ) { index ->
-                                        val comment = comments[index]
-                                        if (comment == null) {
-                                            return@items
-                                        }
+                                        val comment = comments[index] ?: return@items
                                         Box(
                                             modifier = Modifier
                                                 .fillParentMaxHeight()
@@ -614,7 +615,7 @@ private fun HandleBlockUser(
                 message = message,
                 actionLabel = cancelText
             )
-            if (result == androidx.compose.material3.SnackbarResult.ActionPerformed) {
+            if (result == SnackbarResult.ActionPerformed) {
                 unBlockMember()
             }
             clearBlockSuccess()

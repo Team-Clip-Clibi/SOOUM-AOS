@@ -64,7 +64,8 @@ fun NavGraphBuilder.detailGraph(
         (CardDetailCommentArgs) -> Unit,
         () -> Unit,
     ) -> Unit = { _, _, _ -> },
-    navToHome : () -> Unit
+    navToHome: () -> Unit,
+    onProfileScreen: (Long) -> Unit,
 ) {
     navigation(
         route = DETAIL_GRAPH,
@@ -92,7 +93,8 @@ fun NavGraphBuilder.detailGraph(
                         onNavigateToWrite(cardId)
                     },
                     onNavigateToReport = onNavigateToReport,
-                    onBackPressed = onBackPressed
+                    onBackPressed = onBackPressed,
+                    profileClick = onProfileScreen
                 )
             }
         }
@@ -122,7 +124,8 @@ fun NavGraphBuilder.detailGraph(
                     onNavigateToWrite = { cardId ->
                         onNavigateToWrite(cardId)
                     },
-                    onNavigateToReport = onNavigateToReport
+                    onNavigateToReport = onNavigateToReport,
+                    onProfileClick = onProfileScreen
                 )
             }
         }

@@ -53,7 +53,7 @@ import com.phew.core_design.NeutralColor
 import com.phew.core_design.TabBar
 import com.phew.core_design.TextComponent
 import com.phew.domain.dto.FollowData
-import com.phew.domain.dto.MyProfileInfo
+import com.phew.domain.dto.ProfileInfo
 import com.phew.profile.ProfileViewModel
 import com.phew.profile.R
 import com.phew.profile.TAB_FOLLOWER
@@ -84,10 +84,10 @@ internal fun FollowerScreen(
         restartOnPlay = isRefreshing
     )
     var selectIndex by remember { mutableIntStateOf(TAB_FOLLOWER) }
-    when (val result = uiState.myProfileInfo) {
+    when (val result = uiState.profileInfo) {
         is UiState.Fail -> {
             FollowerTopBar(
-                myProfileInfo = uiState.myProfileInfo,
+                myProfileInfo = uiState.profileInfo,
                 onBackPressed = onBackPressed,
                 snackBarHostState = snackBarHostState
             ) { paddingValues ->
@@ -144,13 +144,13 @@ internal fun FollowerScreen(
 
         is UiState.Success -> {
             FollowerTopBar(
-                myProfileInfo = uiState.myProfileInfo,
+                myProfileInfo = uiState.profileInfo,
                 onBackPressed = onBackPressed,
                 snackBarHostState = snackBarHostState
             ) { paddingValues ->
                 PullToRefreshBox(
                     isRefreshing = isRefreshing,
-                    onRefresh = remember(viewModel::refresh) { { viewModel.refresh() } },
+                    onRefresh = remember(viewModel::refreshMyProfile) { { viewModel.refreshMyProfile() } },
                     modifier = Modifier.fillMaxWidth(),
                     state = refreshState,
                     indicator = {
@@ -190,7 +190,7 @@ internal fun FollowerScreen(
 
 @Composable
 private fun FollowerTopBar(
-    myProfileInfo: UiState<MyProfileInfo>,
+    myProfileInfo: UiState<ProfileInfo>,
     onBackPressed: () -> Unit,
     snackBarHostState: SnackbarHostState = remember { SnackbarHostState() },
     content: @Composable (PaddingValues) -> Unit,
@@ -214,7 +214,7 @@ private fun FollowerTopBar(
 
 @Composable
 private fun ContentView(
-    profileData: MyProfileInfo,
+    profileData: ProfileInfo,
     paddingValues: PaddingValues,
     selectIndex: Int,
     onFollowerClick: () -> Unit,

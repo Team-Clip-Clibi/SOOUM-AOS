@@ -3,8 +3,6 @@ package com.phew.profile.screen
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -44,7 +42,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
@@ -61,7 +58,7 @@ import com.phew.core_design.DialogComponent.SnackBar
 import com.phew.core_design.MediumButton
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
-import com.phew.domain.dto.MyProfileInfo
+import com.phew.domain.dto.ProfileInfo
 import com.phew.profile.ProfileViewModel
 import com.phew.profile.R
 import com.phew.profile.TAB_MY_COMMENT_CARD
@@ -74,8 +71,8 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.paging.compose.LazyPagingItems
 import com.phew.core_design.CustomFont
 import com.phew.core_design.LoadingAnimation
-import com.phew.core_design.TabBar
 import com.phew.domain.dto.ProfileCard
+import com.phew.profile.component.ProfileComponent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,6 +85,9 @@ internal fun MyProfile(
     onLogout: () -> Unit,
     onEditProfileClick: () -> Unit,
 ) {
+    LaunchedEffect(Unit) {
+        viewModel.myProfile()
+    }
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val isRefreshing = uiState.isRefreshing
@@ -102,7 +102,7 @@ internal fun MyProfile(
         restartOnPlay = isRefreshing
     )
     val refreshState = rememberPullToRefreshState()
-    when (val profileState = uiState.myProfileInfo) {
+    when (val profileState = uiState.profileInfo) {
         is UiState.Fail -> {
             MyProfileScaffold(
                 onClickSetting = onClickSetting,
@@ -161,7 +161,7 @@ internal fun MyProfile(
             MyProfileScaffold(onClickSetting = onClickSetting) { paddingValues ->
                 PullToRefreshBox(
                     isRefreshing = isRefreshing,
-                    onRefresh = remember(viewModel::refresh) { { viewModel.refresh() } },
+                    onRefresh = remember(viewModel::refreshMyProfile) { { viewModel.refreshMyProfile() } },
                     modifier = Modifier.fillMaxWidth(),
                     state = refreshState,
                     indicator = {
@@ -238,7 +238,7 @@ private fun MyProfileScaffold(
 
 @Composable
 private fun MyProfileView(
-    profile: MyProfileInfo,
+    profile: ProfileInfo,
     onFollowerClick: () -> Unit,
     onFollowingClick: () -> Unit,
     onEditProfileClick: () -> Unit,
@@ -324,17 +324,17 @@ private fun MyProfileView(
                 .padding(bottom = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            CardFollowerView(
+            ProfileComponent.CardFollowerView(
                 title = stringResource(R.string.profile_txt_card),
                 data = profile.cardCnt.toString(),
                 onClick = { }
             )
-            CardFollowerView(
+            ProfileComponent.CardFollowerView(
                 title = stringResource(R.string.profile_txt_follower),
                 data = profile.followerCnt.toString(),
                 onClick = remember(onFollowerClick) { onFollowerClick }
             )
-            CardFollowerView(
+            ProfileComponent.CardFollowerView(
                 title = stringResource(R.string.profile_txt_following),
                 data = profile.followingCnt.toString(),
                 onClick = remember(onFollowingClick) { onFollowingClick }
@@ -343,30 +343,6 @@ private fun MyProfileView(
         MediumButton.NoIconSecondary(
             buttonText = stringResource(R.string.profile_btn_edit_profile),
             onClick = remember(onEditProfileClick) { onEditProfileClick },
-        )
-    }
-}
-
-@Composable
-private fun CardTabView(
-    selectIndex: Int,
-    onFeedCardClick: () -> Unit,
-    onCommentCardClick: () -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(color = NeutralColor.WHITE)
-            .padding(top = 16.dp, start = 16.dp, end = 16.dp)
-    ) {
-        TabBar.TabBarTwo(
-            data = listOf(
-                stringResource(R.string.profile_txt_card),
-                stringResource(R.string.profile_txt_comment_card)
-            ),
-            selectTabData = selectIndex,
-            onFirstItemClick = onFeedCardClick,
-            onSecondItemClick = onCommentCardClick
         )
     }
 }
@@ -401,7 +377,7 @@ private fun EmptyCardView(
 
 @Composable
 private fun ProfileCardView(
-    profile: MyProfileInfo,
+    profile: ProfileInfo,
     cardData: LazyPagingItems<ProfileCard>,
     selectIndex: Int,
     onFollowerClick: () -> Unit,
@@ -429,7 +405,7 @@ private fun ProfileCardView(
             )
         }
         stickyHeader {
-            CardTabView(
+            ProfileComponent.CardTabView(
                 onCommentCardClick = onCommentCardClick,
                 onFeedCardClick = onFeedCardClick,
                 selectIndex = selectIndex
@@ -510,34 +486,3 @@ private fun ProfileCardView(
     }
 }
 
-@Composable
-private fun CardFollowerView(
-    title: String,
-    data: String,
-    onClick: () -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .width(72.dp)
-            .height(64.dp)
-            .padding(top = 8.dp, bottom = 8.dp)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onClick
-            ),
-        verticalArrangement = Arrangement.spacedBy(0.dp, Alignment.Top),
-        horizontalAlignment = Alignment.Start,
-    ) {
-        Text(
-            text = title,
-            style = TextComponent.BODY_1_M_14,
-            color = NeutralColor.GRAY_500
-        )
-        Text(
-            text = data,
-            style = TextComponent.TITLE_1_SB_18,
-            color = NeutralColor.BLACK
-        )
-    }
-}

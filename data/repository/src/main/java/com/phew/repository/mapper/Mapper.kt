@@ -16,7 +16,7 @@ import com.phew.domain.dto.FeedLikeNotification
 import com.phew.domain.dto.FollowData
 import com.phew.domain.dto.FollowNotification
 import com.phew.domain.dto.Latest
-import com.phew.domain.dto.MyProfileInfo
+import com.phew.domain.dto.ProfileInfo
 import com.phew.domain.dto.Notice
 import com.phew.domain.dto.Notification
 import com.phew.domain.dto.Popular
@@ -48,9 +48,8 @@ import com.phew.network.dto.response.card.CardCommentResponseDTO
 import com.phew.network.dto.response.card.CardContentDto
 import com.phew.network.dto.response.card.CardDetailResponseDTO
 import com.phew.network.dto.response.card.CardDetailTagDTO
-import com.phew.network.dto.response.profile.FollowDTO
 import com.phew.network.dto.response.profile.FollowDataDTO
-import com.phew.network.dto.response.profile.MyProfileDTO
+import com.phew.network.dto.response.profile.ProfileDTO
 import com.phew.repository.TYPE_BLOCK
 import com.phew.repository.TYPE_COMMENT_LIKE
 import com.phew.repository.TYPE_COMMENT_WRITE
@@ -289,8 +288,8 @@ internal fun CardCommentResponseDTO.toDomain(): CardComment {
     )
 }
 
-internal fun MyProfileDTO.toDomain() : MyProfileInfo{
-    return MyProfileInfo(
+internal fun ProfileDTO.toDomain() : ProfileInfo{
+    return ProfileInfo(
         cardCnt = this.cardCnt,
         followingCnt = this.followingCnt,
         followerCnt = this.followerCnt,
@@ -299,7 +298,9 @@ internal fun MyProfileDTO.toDomain() : MyProfileInfo{
         profileImgName = this.profileImgName ?: "",
         todayVisitCnt = this.todayVisitCnt,
         totalVisitCnt = this.totalVisitCnt,
-        userId = this.userId
+        userId = this.userId,
+        isBlocked = this.isBlocked,
+        isAlreadyFollowing = this.isAlreadyFollowing
     )
 }
 
