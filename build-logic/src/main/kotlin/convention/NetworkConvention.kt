@@ -76,7 +76,9 @@ class NetworkConvention : Plugin<Project> {
                     properties.getProperty("api_url_profile_comment_card", "")
                 val myProfileCard: String = properties.getProperty("api_url_profile_card", "")
                 val following: String = properties.getProperty("api_url_following", "")
+                val followingNext : String = properties.getProperty("api_url_following_next", "")
                 val follower: String = properties.getProperty("api_url_follower", "")
+                val followerNext : String = properties.getProperty("api_url_follower_next" ,"")
                 val otherProfile: String = properties.getProperty("api_url_other_profile", "")
                 val follow : String = properties.getProperty("api_url_follow" , "")
                 val unFollow : String = properties.getProperty("api_url_un_follow","")
@@ -125,12 +127,15 @@ class NetworkConvention : Plugin<Project> {
                 buildConfigField("String", "API_URL_MY_PROFILE_COMMENT_CARD", myProfileCommentCard)
                 buildConfigField("String", "API_URL_MY_PROFILE_CARD", myProfileCard)
                 buildConfigField("String", "API_URL_FOLLOWING", following)
+                buildConfigField("String", "API_URL_FOLLOWING_NEXT", followingNext)
                 buildConfigField("String", "API_URL_FOLLOWER", follower)
+                buildConfigField("String", "API_URL_FOLLOWER_NEXT", followerNext)
                 buildConfigField("String", "API_URL_OTHER_PROFILE", otherProfile)
                 buildConfigField("String", "API_URL_FOLLOW_USER", follow)
                 buildConfigField("String", "API_URL_UN_FOLLOW_USER", unFollow)
                 buildConfigField("String", "API_URL_BLOCK", block)
                 buildConfigField("String", "API_URL_UN_BLOCK", unBlock)
+
             }
             buildFeatures.buildConfig = true
             compileOptions {

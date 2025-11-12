@@ -1,5 +1,6 @@
 package com.phew.profile.screen
 
+import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -26,14 +27,18 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
@@ -47,6 +52,8 @@ import com.airbnb.lottie.compose.rememberLottieComposition
 import com.phew.core_common.ERROR_LOGOUT
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_design.AppBar
+import com.phew.core_design.Danger
+import com.phew.core_design.DialogComponent
 import com.phew.core_design.DialogComponent.SnackBar
 import com.phew.core_design.LoadingAnimation
 import com.phew.core_design.NeutralColor
@@ -67,6 +74,8 @@ internal fun FollowerScreen(
     viewModel: ProfileViewModel,
     onBackPressed: () -> Unit,
     onLogout: () -> Unit,
+    isMyProfileView: Boolean,
+    selectTab: Int,
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val follower = uiState.follow.collectAsLazyPagingItems()
@@ -83,7 +92,14 @@ internal fun FollowerScreen(
         iterations = LottieConstants.IterateForever,
         restartOnPlay = isRefreshing
     )
-    var selectIndex by remember { mutableIntStateOf(TAB_FOLLOWER) }
+    var selectIndex by remember { mutableIntStateOf(selectTab) }
+    var unFollowDialogShow by remember { mutableStateOf(false) }
+    LaunchedEffect(uiState.event) {
+        if(uiState.event is UiState.Success){
+            follower.refresh()
+            following.refresh()
+        }
+    }
     when (val result = uiState.profileInfo) {
         is UiState.Fail -> {
             FollowerTopBar(
@@ -150,7 +166,13 @@ internal fun FollowerScreen(
             ) { paddingValues ->
                 PullToRefreshBox(
                     isRefreshing = isRefreshing,
-                    onRefresh = remember(viewModel::refreshMyProfile) { { viewModel.refreshMyProfile() } },
+                    onRefresh = remember(viewModel, isMyProfileView, result.data.userId) {
+                        {
+                            if (isMyProfileView) viewModel.refreshMyProfile() else viewModel.refreshOtherProfile(
+                                result.data.userId
+                            )
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     state = refreshState,
                     indicator = {
@@ -174,13 +196,71 @@ internal fun FollowerScreen(
                     }
                 ) {
                     ContentView(
-                        profileData = result.data,
+                        followerCnt = follower.itemCount,
+                        followIngCnt = following.itemCount,
                         paddingValues = paddingValues,
                         selectIndex = selectIndex,
                         following = following,
                         follow = follower,
                         onFollowingClick = { selectIndex = TAB_FOLLOWING },
-                        onFollowerClick = { selectIndex = TAB_FOLLOWER }
+                        onFollowerClick = { selectIndex = TAB_FOLLOWER },
+                        distanceFraction = refreshState.distanceFraction,
+                        density = LocalDensity.current,
+                        isMyProfileView = isMyProfileView,
+                        onChangeFollowClick = remember(selectIndex, isMyProfileView, viewModel) {
+                            { data ->
+                                when (selectIndex) {
+                                    TAB_FOLLOWING -> {
+                                        when (isMyProfileView) {
+                                            true -> {
+                                                unFollowDialogShow = true
+                                                viewModel.setFollowUserId(data)
+                                            }
+
+                                            false -> {
+                                                if (data.isFollowing) viewModel.unFollowUser(data.memberId) else viewModel.followUser(
+                                                    data.memberId
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    TAB_FOLLOWER -> {
+                                        if (data.isFollowing) viewModel.unFollowUser(data.memberId) else viewModel.followUser(
+                                            data.memberId
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    )
+                    if (unFollowDialogShow) {
+                        DialogComponent.NoDescriptionButtonTwo(
+                            title = stringResource(
+                                R.string.follow_dialog_un_follow_content,
+                                uiState.nickname
+                            ),
+                            buttonTextStart = stringResource(com.phew.core_design.R.string.common_close),
+                            buttonTextEnd = stringResource(com.phew.core_design.R.string.common_cancel_polite),
+                            baseColor = Danger.M_RED,
+                            blinkColor = Danger.D_RED,
+                            onClick = remember(viewModel::unFollowUser , uiState.userId , isMyProfileView) {
+                                {
+                                    viewModel.unFollowUser(
+                                        userId = uiState.userId,
+                                        isMyProfile = isMyProfileView
+                                    )
+                                    unFollowDialogShow = false
+                                }
+                            },
+                            onDismiss = { unFollowDialogShow = false }
+                        )
+                    }
+                    HandleErrorView(
+                        event = uiState.event,
+                        snackBarHostState = snackBarHostState,
+                        onLogout = onLogout,
+                        context = context
                     )
                 }
             }
@@ -214,18 +294,26 @@ private fun FollowerTopBar(
 
 @Composable
 private fun ContentView(
-    profileData: ProfileInfo,
     paddingValues: PaddingValues,
     selectIndex: Int,
+    distanceFraction: Float,
     onFollowerClick: () -> Unit,
     onFollowingClick: () -> Unit,
     following: LazyPagingItems<FollowData>,
     follow: LazyPagingItems<FollowData>,
+    density: Density,
+    onChangeFollowClick: (FollowData) -> Unit,
+    followerCnt : Int,
+    followIngCnt : Int,
+    isMyProfileView: Boolean
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(color = NeutralColor.WHITE)
+            .graphicsLayer {
+                translationY = distanceFraction * with(density) { 56.dp.toPx() }
+            }
             .padding(
                 top = paddingValues.calculateTopPadding(),
                 bottom = paddingValues.calculateBottomPadding(),
@@ -235,22 +323,38 @@ private fun ContentView(
     ) {
         TabBar.TabBarTwo(
             data = listOf(
-                stringResource(R.string.follow_txt_tab_follower, profileData.followerCnt),
-                stringResource(R.string.follow_txt_tab_following, profileData.followingCnt)
+                stringResource(R.string.follow_txt_tab_follower, followerCnt),
+                stringResource(R.string.follow_txt_tab_following, followIngCnt)
             ),
             onFirstItemClick = onFollowerClick,
             onSecondItemClick = onFollowingClick,
             selectTabData = selectIndex
         )
         when (selectIndex) {
-            TAB_FOLLOWER -> FollowerView(data = follow, selectIndex = selectIndex)
-            TAB_FOLLOWING -> FollowerView(data = following, selectIndex = selectIndex)
+            TAB_FOLLOWER -> FollowerView(
+                data = follow,
+                selectIndex = selectIndex,
+                profileClick = onChangeFollowClick,
+                isMyProfileView = isMyProfileView
+            )
+
+            TAB_FOLLOWING -> FollowerView(
+                data = following,
+                selectIndex = selectIndex,
+                profileClick = onChangeFollowClick,
+                isMyProfileView = isMyProfileView
+            )
         }
     }
 }
 
 @Composable
-private fun FollowerView(data: LazyPagingItems<FollowData>, selectIndex: Int) {
+private fun FollowerView(
+    data: LazyPagingItems<FollowData>,
+    selectIndex: Int,
+    profileClick: (FollowData) -> Unit,
+    isMyProfileView: Boolean
+) {
     when (val refreshState = data.loadState.refresh) {
         is LoadState.Error -> {
             Column(
@@ -295,12 +399,11 @@ private fun FollowerView(data: LazyPagingItems<FollowData>, selectIndex: Int) {
                             if (item != null) {
                                 ProfileComponent.FollowView(
                                     data = item,
-                                    onClick = {},
-                                    isGrayColor = when (selectIndex) {
-                                        TAB_FOLLOWER -> item.isFollowing && item.isRequester
-                                        TAB_FOLLOWING -> true
-                                        else -> true
-                                    }
+                                    onClick = {
+                                        profileClick(item)
+                                    },
+                                    isGrayColor = if (isMyProfileView) item.isFollowing else true,
+                                    isButtonShow = if (isMyProfileView) !item.isRequester else true
                                 )
                             }
                         }
@@ -330,5 +433,41 @@ private fun EmptyView(selectIndex: Int) {
             style = TextComponent.BODY_1_M_14,
             color = NeutralColor.GRAY_400
         )
+    }
+}
+
+@Composable
+private fun HandleErrorView(
+    event: UiState<Unit>,
+    snackBarHostState: SnackbarHostState,
+    context: Context,
+    onLogout: () -> Unit,
+) {
+    if (event is UiState.Fail) {
+        LaunchedEffect(event.errorMessage) {
+            when (event.errorMessage) {
+                ERROR_LOGOUT -> {
+                    snackBarHostState.showSnackbar(
+                        message = context.getString(com.phew.core_design.R.string.error_log_out),
+                        duration = SnackbarDuration.Short
+                    )
+                    onLogout()
+                }
+
+                ERROR_NETWORK -> {
+                    snackBarHostState.showSnackbar(
+                        message = context.getString(com.phew.core_design.R.string.error_network),
+                        duration = SnackbarDuration.Short
+                    )
+                }
+
+                else -> {
+                    snackBarHostState.showSnackbar(
+                        message = context.getString(com.phew.core_design.R.string.error_app),
+                        duration = SnackbarDuration.Short
+                    )
+                }
+            }
+        }
     }
 }

@@ -35,6 +35,7 @@ object ProfileComponent {
         data: FollowData,
         onClick: (Long) -> Unit,
         isGrayColor: Boolean,
+        isButtonShow : Boolean
     ) {
         Row(
             modifier = Modifier
@@ -62,17 +63,19 @@ object ProfileComponent {
                 color = NeutralColor.GRAY_600,
                 modifier = Modifier.weight(1f)
             )
-            SmallButton.NoIconPrimary(
-                baseColor = if (isGrayColor) NeutralColor.GRAY_100 else NeutralColor.BLACK,
-                onClick = {
-                    onClick(data.memberId)
-                },
-                buttonText = if (isGrayColor) stringResource(R.string.follow_btn_following) else stringResource(
-                    R.string.follow_btn_follow
-                ),
-                textColor = if (isGrayColor) NeutralColor.GRAY_600 else NeutralColor.WHITE,
-                modifier = Modifier.width(68.dp)
-            )
+            if(isButtonShow) {
+                SmallButton.NoIconPrimary(
+                    baseColor = if (isGrayColor) NeutralColor.GRAY_100 else NeutralColor.BLACK,
+                    onClick = {
+                        onClick(data.memberId)
+                    },
+                    buttonText = if (isGrayColor) stringResource(R.string.follow_btn_following) else stringResource(
+                        R.string.follow_btn_follow
+                    ),
+                    textColor = if (isGrayColor) NeutralColor.GRAY_600 else NeutralColor.WHITE,
+                    modifier = Modifier.width(68.dp)
+                )
+            }
         }
     }
 

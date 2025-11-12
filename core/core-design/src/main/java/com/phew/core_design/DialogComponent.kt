@@ -183,7 +183,7 @@ object DialogComponent {
             Column(
                 modifier = Modifier
                     .width(271.dp)
-                    .height(132.dp)
+                    .height(160.dp)
                     .background(
                         color = NeutralColor.WHITE,
                         shape = RoundedCornerShape(size = 20.dp)

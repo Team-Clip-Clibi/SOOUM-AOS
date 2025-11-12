@@ -37,10 +37,10 @@ class ProfileViewModel @Inject constructor(
     private val getFollower: GetFollower,
     private val getFollowing: GetFollowing,
     private val getOtherProfile: GetOtherProfile,
-    private val followUser : SendFollowUser,
-    private val unFollowUser : SendUnFollowUser,
-    private val blockUser : SendBlockUser,
-    private val unBlockUser : SendUnBlockUser
+    private val followUser: SendFollowUser,
+    private val unFollowUser: SendUnFollowUser,
+    private val blockUser: SendBlockUser,
+    private val unBlockUser: SendUnBlockUser,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(Profile())
     val uiState: StateFlow<Profile> = _uiState.asStateFlow()
@@ -82,7 +82,9 @@ class ProfileViewModel @Inject constructor(
                             following = getFollowing(profileId = request.data.userId).cachedIn(
                                 viewModelScope
                             ),
-                            isRefreshing = false
+                            isRefreshing = false,
+                            nickname = "",
+                            userId = 0L
                         )
                     }
                 }
@@ -92,7 +94,12 @@ class ProfileViewModel @Inject constructor(
 
     fun otherProfile(profileId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
-            _uiState.update { state -> state.copy(profileInfo = UiState.Loading) }
+            _uiState.update { state ->
+                state.copy(
+                    profileInfo = UiState.Loading,
+                    otherProfileId = 0L
+                )
+            }
             when (val request = getOtherProfile(GetOtherProfile.Param(profileId = profileId))) {
                 is DomainResult.Failure -> {
                     _uiState.update { state ->
@@ -117,7 +124,8 @@ class ProfileViewModel @Inject constructor(
                             following = getFollowing(profileId = request.data.userId).cachedIn(
                                 viewModelScope
                             ),
-                            isRefreshing = false
+                            isRefreshing = false,
+                            otherProfileId = profileId
                         )
                     }
                 }
@@ -141,7 +149,7 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun unBlock(userId: Long){
+    fun unBlock(userId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { state -> state.copy(event = UiState.Loading) }
             when (val request = unBlockUser(SendUnBlockUser.Param(userId = userId))) {
@@ -157,7 +165,7 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun followUser(userId: Long){
+    fun followUser(userId: Long, isRefresh: Boolean = false, isMyProfile: Boolean = false) {
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { state -> state.copy(event = UiState.Loading) }
             when (val request = followUser(SendFollowUser.Param(userId = userId))) {
@@ -167,13 +175,14 @@ class ProfileViewModel @Inject constructor(
 
                 is DomainResult.Success -> {
                     _uiState.update { state -> state.copy(event = UiState.Success(Unit)) }
-                    refreshOtherProfile(profileId = userId)
+                    if (!isRefresh) return@launch
+                    if (isMyProfile) refreshMyProfile() else otherProfile(_uiState.value.otherProfileId)
                 }
             }
         }
     }
 
-    fun unFollowUser(userId: Long) {
+    fun unFollowUser(userId: Long, isRefresh: Boolean = false, isMyProfile: Boolean = false) {
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { state -> state.copy(event = UiState.Loading) }
             when (val request = unFollowUser(SendUnFollowUser.Param(userId = userId))) {
@@ -183,10 +192,15 @@ class ProfileViewModel @Inject constructor(
 
                 is DomainResult.Success -> {
                     _uiState.update { state -> state.copy(event = UiState.Success(Unit)) }
-                    refreshOtherProfile(profileId = userId)
+                    if (!isRefresh) return@launch
+                    if (isMyProfile) refreshMyProfile() else otherProfile(_uiState.value.otherProfileId)
                 }
             }
         }
+    }
+
+    fun setFollowUserId(data: FollowData) {
+        _uiState.update { state -> state.copy(userId = data.memberId, nickname = data.nickname) }
     }
 
 }
@@ -197,8 +211,11 @@ data class Profile(
     val profileCommentCard: Flow<PagingData<ProfileCard>> = emptyFlow(),
     val follow: Flow<PagingData<FollowData>> = emptyFlow(),
     val following: Flow<PagingData<FollowData>> = emptyFlow(),
-    val event : UiState<Unit> = UiState.Success(Unit),
+    val event: UiState<Unit> = UiState.Success(Unit),
     val isRefreshing: Boolean = false,
+    val userId: Long = 0L,
+    val nickname: String = "",
+    val otherProfileId: Long = 0L,
 )
 
 sealed interface UiState<out T> {

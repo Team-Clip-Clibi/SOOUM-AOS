@@ -2,7 +2,7 @@ package com.phew.network.retrofit
 
 import com.phew.network.BuildConfig
 import com.phew.network.dto.response.card.ProfileCardDTO
-import com.phew.network.dto.response.profile.FollowDTO
+import com.phew.network.dto.response.profile.FollowDataDTO
 import com.phew.network.dto.response.profile.ProfileDTO
 import retrofit2.Response
 import retrofit2.http.DELETE
@@ -55,13 +55,13 @@ interface ProfileHttp {
     @GET(BuildConfig.API_URL_FOLLOWER)
     suspend fun requestFollower(
         @Path("profileOwnerId") profileOwnerId: Long,
-    ): Response<FollowDTO>
+    ): Response<List<FollowDataDTO>>
 
-    @GET(BuildConfig.API_URL_FOLLOWER)
+    @GET(BuildConfig.API_URL_FOLLOWER_NEXT)
     suspend fun requestFollowerNext(
         @Path("profileOwnerId") profileOwnerId: Long,
         @Path("lastId") lastId: Long,
-    ): Response<FollowDTO>
+    ): Response<List<FollowDataDTO>>
 
     /**
      * 내 프로필 팔로우 API
@@ -69,13 +69,13 @@ interface ProfileHttp {
     @GET(BuildConfig.API_URL_FOLLOWING)
     suspend fun requestFollowing(
         @Path("profileOwnerId") profileOwnerId: Long,
-    ): Response<FollowDTO>
+    ): Response<List<FollowDataDTO>>
 
-    @GET(BuildConfig.API_URL_FOLLOWING)
+    @GET(BuildConfig.API_URL_FOLLOWING_NEXT)
     suspend fun requestFollowingNext(
         @Path("profileOwnerId") profileOwnerId: Long,
         @Path("lastId") lastId: Long,
-    ): Response<FollowDTO>
+    ): Response<List<FollowDataDTO>>
 
     /**
      * 상대방 프로필 조회

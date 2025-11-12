@@ -62,7 +62,7 @@ class ProfileRepositoryImpl @Inject constructor(private val http: ProfileHttp) :
     override suspend fun requestFollower(profileId: Long): DataResult<Pair<Int, List<FollowData>>> {
         return pagingCall(
             apiCall = { http.requestFollower(profileOwnerId = profileId) },
-            mapper = { data -> data.followerData.map { followData -> followData.toDomain() } }
+            mapper = { data -> data.map { followData -> followData.toDomain() } }
         )
     }
 
@@ -72,7 +72,7 @@ class ProfileRepositoryImpl @Inject constructor(private val http: ProfileHttp) :
     ): DataResult<Pair<Int, List<FollowData>>> {
         return pagingCall(
             apiCall = { http.requestFollowerNext(profileOwnerId = profileId, lastId = lastId) },
-            mapper = { data -> data.followerData.map { followData -> followData.toDomain() } }
+            mapper = { data -> data.map { followData -> followData.toDomain() } }
         )
     }
 
@@ -81,7 +81,7 @@ class ProfileRepositoryImpl @Inject constructor(private val http: ProfileHttp) :
     ): DataResult<Pair<Int, List<FollowData>>> {
         return pagingCall(
             apiCall = { http.requestFollowing(profileOwnerId = profileId) },
-            mapper = { data -> data.followerData.map { followerData -> followerData.toDomain() } }
+            mapper = { data -> data.map { followerData -> followerData.toDomain() } }
         )
     }
 
@@ -91,7 +91,7 @@ class ProfileRepositoryImpl @Inject constructor(private val http: ProfileHttp) :
     ): DataResult<Pair<Int, List<FollowData>>> {
         return pagingCall(
             apiCall = { http.requestFollowingNext(profileOwnerId = profileId, lastId = lastId) },
-            mapper = { data -> data.followerData.map { followerData -> followerData.toDomain() } }
+            mapper = { data -> data.map { followerData -> followerData.toDomain() } }
         )
     }
 

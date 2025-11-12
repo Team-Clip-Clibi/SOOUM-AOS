@@ -85,6 +85,7 @@ internal fun OtherProfile(
     onLogOut: () -> Unit,
     onBackPress: () -> Unit,
     onClickFollower: () -> Unit,
+    onClickFollowing: () -> Unit,
     onClickCard: (Long) -> Unit,
 ) {
     if (userId == 0L) {
@@ -202,7 +203,7 @@ internal fun OtherProfile(
                         cardData = cardData,
                         selectIndex = selectIndex,
                         onFollowerClick = onClickFollower,
-                        onFollowingClick = onClickFollower,
+                        onFollowingClick = onClickFollowing,
                         onClickFollow = remember(viewModel) {
                             { userId: Long ->
                                 val currentState = viewModel.uiState.value.profileInfo
@@ -213,11 +214,19 @@ internal fun OtherProfile(
                                         }
 
                                         currentState.data.isAlreadyFollowing -> {
-                                            viewModel.unFollowUser(userId = userId)
+                                            viewModel.unFollowUser(
+                                                userId = userId,
+                                                isRefresh = true,
+                                                isMyProfile = false
+                                            )
                                         }
 
                                         !currentState.data.isAlreadyFollowing -> {
-                                            viewModel.followUser(userId = userId)
+                                            viewModel.followUser(
+                                                userId = userId,
+                                                isRefresh = true,
+                                                isMyProfile = false
+                                            )
                                         }
                                     }
                                 }
@@ -539,15 +548,15 @@ private fun ProfileView(
                 }
 
                 profile.isAlreadyFollowing -> {
-                    stringResource(R.string.profile_txt_un_follow)
+                    stringResource(R.string.profile_txt_following)
                 }
 
                 else -> {
                     stringResource(R.string.follow_btn_follow)
                 }
             },
-            textColor = NeutralColor.WHITE,
-            baseColor = NeutralColor.BLACK,
+            textColor = if(profile.isAlreadyFollowing) NeutralColor.BLACK else NeutralColor.WHITE,
+            baseColor =if(profile.isAlreadyFollowing) NeutralColor.GRAY_100 else NeutralColor.BLACK,
             isEnable = buttonIsEnable
         )
     }
