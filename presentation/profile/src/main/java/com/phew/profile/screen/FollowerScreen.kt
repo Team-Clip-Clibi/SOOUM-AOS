@@ -206,7 +206,6 @@ internal fun FollowerScreen(
                         onFollowerClick = { selectIndex = TAB_FOLLOWER },
                         distanceFraction = refreshState.distanceFraction,
                         density = LocalDensity.current,
-                        isMyProfileView = isMyProfileView,
                         onChangeFollowClick = remember(selectIndex, isMyProfileView, viewModel) {
                             { data ->
                                 when (selectIndex) {
@@ -305,7 +304,6 @@ private fun ContentView(
     onChangeFollowClick: (FollowData) -> Unit,
     followerCnt : Int,
     followIngCnt : Int,
-    isMyProfileView: Boolean
 ) {
     Column(
         modifier = Modifier
@@ -335,14 +333,12 @@ private fun ContentView(
                 data = follow,
                 selectIndex = selectIndex,
                 profileClick = onChangeFollowClick,
-                isMyProfileView = isMyProfileView
             )
 
             TAB_FOLLOWING -> FollowerView(
                 data = following,
                 selectIndex = selectIndex,
                 profileClick = onChangeFollowClick,
-                isMyProfileView = isMyProfileView
             )
         }
     }
@@ -353,7 +349,6 @@ private fun FollowerView(
     data: LazyPagingItems<FollowData>,
     selectIndex: Int,
     profileClick: (FollowData) -> Unit,
-    isMyProfileView: Boolean
 ) {
     when (val refreshState = data.loadState.refresh) {
         is LoadState.Error -> {
@@ -402,8 +397,8 @@ private fun FollowerView(
                                     onClick = {
                                         profileClick(item)
                                     },
-                                    isGrayColor = if (isMyProfileView) item.isFollowing else true,
-                                    isButtonShow = if (isMyProfileView) !item.isRequester else true
+                                    isGrayColor = item.isFollowing,
+                                    isButtonShow = !item.isRequester
                                 )
                             }
                         }

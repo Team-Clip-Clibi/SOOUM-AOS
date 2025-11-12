@@ -32,7 +32,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -72,8 +71,6 @@ import com.phew.domain.dto.ProfileCard
 import com.phew.domain.dto.ProfileInfo
 import com.phew.profile.ProfileViewModel
 import com.phew.profile.R
-import com.phew.profile.TAB_MY_COMMENT_CARD
-import com.phew.profile.TAB_MY_FEED_CARD
 import com.phew.profile.UiState
 import com.phew.profile.component.ProfileComponent
 
@@ -108,7 +105,6 @@ internal fun OtherProfile(
         restartOnPlay = isRefreshing
     )
     val refreshState = rememberPullToRefreshState()
-    var selectIndex by remember { mutableIntStateOf(TAB_MY_FEED_CARD) }
     var showBlockDialog by remember { mutableStateOf(false) }
     HandelEventError(
         event = uiState.event,
@@ -195,13 +191,9 @@ internal fun OtherProfile(
                     }
                 ) {
                     val feedCardData = uiState.profileFeedCard.collectAsLazyPagingItems()
-                    val commentCardData = uiState.profileCommentCard.collectAsLazyPagingItems()
-                    val cardData =
-                        if (selectIndex == TAB_MY_FEED_CARD) feedCardData else commentCardData
                     ProfileContentView(
                         profile = profileState.data,
-                        cardData = cardData,
-                        selectIndex = selectIndex,
+                        cardData = feedCardData,
                         onFollowerClick = onClickFollower,
                         onFollowingClick = onClickFollowing,
                         onClickFollow = remember(viewModel) {
@@ -232,8 +224,6 @@ internal fun OtherProfile(
                                 }
                             }
                         },
-                        onFeedCardClick = { selectIndex = TAB_MY_FEED_CARD },
-                        onCommentCardClick = { selectIndex = TAB_MY_COMMENT_CARD },
                         onClickCard = onClickCard,
                         onLogout = onLogOut,
                         snackBarHostState = snackBarHostState,
@@ -252,7 +242,7 @@ internal fun OtherProfile(
                     if (showBlockDialog) {
                         DialogComponent.DefaultButtonTwo(
                             title = stringResource(R.string.profile_dialog_un_block_title),
-                            description = stringResource(R.string.profile_dialog_un_block_content),
+                            description = stringResource(R.string.profile_dialog_un_block_content , profileState.data.nickname),
                             buttonTextStart = stringResource(com.phew.core_design.R.string.common_cancel),
                             buttonTextEnd = stringResource(R.string.profile_dialog_un_block_btn_okay),
                             onClick = remember(viewModel::unBlock) {
@@ -317,12 +307,9 @@ private fun OtherProfileScaffold(
 private fun ProfileContentView(
     profile: ProfileInfo,
     cardData: LazyPagingItems<ProfileCard>,
-    selectIndex: Int,
     onFollowerClick: () -> Unit,
     onFollowingClick: () -> Unit,
     onClickFollow: (userId: Long) -> Unit,
-    onFeedCardClick: () -> Unit,
-    onCommentCardClick: () -> Unit,
     onClickCard: (Long) -> Unit,
     onLogout: () -> Unit,
     snackBarHostState: SnackbarHostState,
@@ -340,13 +327,6 @@ private fun ProfileContentView(
                 onFollowingClick = onFollowingClick,
                 onClickFollow = onClickFollow,
                 buttonIsEnable = buttonIsEnable
-            )
-        }
-        stickyHeader {
-            ProfileComponent.CardTabView(
-                onCommentCardClick = onCommentCardClick,
-                onFeedCardClick = onFeedCardClick,
-                selectIndex = selectIndex
             )
         }
         when (cardData.loadState.refresh) {
@@ -372,7 +352,6 @@ private fun ProfileContentView(
                     0 -> {
                         item(span = { GridItemSpan(maxLineSpan) }) {
                             EmptyCardView(
-                                selectIndex = selectIndex,
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .heightIn(382.dp)
@@ -447,7 +426,7 @@ private fun ProfileView(
         modifier = Modifier
             .fillMaxSize()
             .background(color = NeutralColor.WHITE)
-            .padding(start = 16.dp, end = 16.dp, top = 12.dp)
+            .padding(start = 16.dp, end = 16.dp, top = 12.dp , bottom = 16.dp)
     ) {
         Row(
             modifier = Modifier
@@ -564,7 +543,6 @@ private fun ProfileView(
 
 @Composable
 private fun EmptyCardView(
-    selectIndex: Int,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -579,10 +557,8 @@ private fun EmptyCardView(
             modifier = Modifier.padding(bottom = 8.dp)
         )
         Text(
-            text = if (selectIndex == TAB_MY_FEED_CARD) stringResource(
+            text = stringResource(
                 R.string.profile_txt_no_card
-            ) else stringResource(
-                R.string.profile_txt_no_comment_card
             ),
             style = TextComponent.BODY_1_M_14,
             color = NeutralColor.GRAY_400

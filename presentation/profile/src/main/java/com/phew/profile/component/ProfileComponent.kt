@@ -23,6 +23,7 @@ import com.phew.core_design.NeutralColor
 import com.phew.domain.dto.FollowData
 import androidx.compose.material3.Text
 import androidx.compose.runtime.remember
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import com.phew.core_design.SmallButton
 import com.phew.core_design.TabBar
@@ -55,7 +56,8 @@ object ProfileComponent {
                         color = NeutralColor.GRAY_300,
                         shape = RoundedCornerShape(size = 100.dp)
                     )
-                    .clip(shape = RoundedCornerShape(size = 100.dp))
+                    .clip(shape = RoundedCornerShape(size = 100.dp)),
+                contentScale = ContentScale.Crop
             )
             Text(
                 text = data.nickname,
