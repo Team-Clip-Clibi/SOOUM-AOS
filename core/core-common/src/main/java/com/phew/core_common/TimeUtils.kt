@@ -100,6 +100,34 @@ object TimeUtils {
             dateString
         }
     }
+
+    @JvmStatic
+    fun formatToWithdrawalDate(dateString: String): String {
+        try {
+            // yyyy-MM-dd 형식 처리
+            val simpleDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            val parsedTime = simpleDateFormat.parse(dateString)?.time
+            
+            if (parsedTime != null) {
+                val outputFormat = SimpleDateFormat("yyyy년 MM월 dd일", Locale.getDefault())
+                return outputFormat.format(parsedTime)
+            }
+            
+            // ISO 8601 형식도 시도
+            val isoFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS", Locale.getDefault())
+            val isoParsedTime = isoFormat.parse(dateString)?.time
+            
+            if (isoParsedTime != null) {
+                val outputFormat = SimpleDateFormat("yyyy년 MM월 dd일", Locale.getDefault())
+                return outputFormat.format(isoParsedTime)
+            }
+            
+            return dateString
+        } catch (e: Exception) {
+            SooumLog.w(TAG, "Failed to format withdrawal date: $dateString, ${e.message}")
+            return dateString
+        }
+    }
     
     /**
      * 날짜 문자열을 yyyy.MM.dd 형식으로 포맷팅

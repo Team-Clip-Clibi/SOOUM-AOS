@@ -31,6 +31,10 @@ const val HTTP_INVALID_TOKEN = 403
 const val HTTP_NOT_FOUND = 404
 const val APP_ERROR_CODE = 505
 const val HTTP_UN_GOOD_IMAGE = 422
+const val WITHDRAWAL_USER = 418
+
+//error messages
+const val ERROR_ACCOUNT_SUSPENDED = "계정이 정지되었습니다."
 //server api success code
 const val HTTP_SUCCESS = 200
 //banner category

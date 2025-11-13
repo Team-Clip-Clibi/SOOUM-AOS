@@ -19,6 +19,7 @@ import com.phew.presentation.settings.screen.NoticeRoute
 import com.phew.presentation.settings.screen.PrivacyPolicyRoute
 import com.phew.presentation.settings.screen.SettingRoute
 import com.phew.presentation.settings.screen.SooumWebViewRoute
+import com.phew.presentation.settings.screen.WithdrawalRoute
 
 const val SETTING_GRAPH = "setting_graph"
 
@@ -173,6 +174,19 @@ fun NavGraphBuilder.settingGraph(
                 },
                 onNavigateToWebView = { webViewArgs ->
                     navController.navigateToWebViewRoute(webViewArgs)
+                }
+            )
+        }
+
+        slideComposable(
+            route = ACCOUNT_DELETION_ROUTE
+        ) {
+            WithdrawalRoute(
+                onBackPressed = {
+                    navController.popBackStack()
+                },
+                onWithdrawalComplete = {
+                    navController.popBackStack()
                 }
             )
         }

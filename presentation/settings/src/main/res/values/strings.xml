@@ -13,12 +13,18 @@
     <string name="setting_privacy_policy">약관 및 개인정보 처리 동의</string>
     <string name="setting_app_update">최신버전 업데이트</string>
     <string name="setting_account_deletion">탈퇴하기</string>
-    
+
+    <!-- 탈퇴 여부 -->
+    <string name="setting_withdrawal_dialog_title">정말 탈퇴하기겠습니까?</string>
+    <string name="setting_withdrawal_dialog_rejoin_seven_date">계정이 삭제되면 모든 정보가 영구적으로 삭제되며, 탈퇴일 기준 7일 후부터 재가입이 가능합니다.</string>
+    <string name="setting_withdrawal_dialog_rejoin_date">계정이 삭제되면 모든 정보가 영구적으로 삭제되며, 재가입은 이용 제한 해지 날짜인 $s부터 가능합니다.</string>
+    <string name="setting_withdrawal_dialog_cancel">취소</string>
+    <string name="setting_withdrawal_dialog_ok">탈퇴하기</string>
+
     <!-- Version -->
     <string name="setting_version_format">v%s</string>
     <string name="setting_app_new_version">최신버전</string>
     <string name="setting_current_new_version">현재 최신버전을 사용중입니다.</string>
-
 
     <!-- Login Other Device -->
     <string name="other_device_top_title">다른 기기에서 로그인하기</string>
@@ -60,4 +66,20 @@
     <!-- WebView -->
     <string name="webview_load_failed">웹페이지 로드 실패: %1$s</string>
     <string name="no_url_message">URL이 없습니다.</string>
+
+    <!-- 탈퇴하기 -->
+    <string name="withdrawal_top_app_bar">탈퇴하기</string>
+    <string name="withdrawal_title">탈퇴하려는 이유가 무엇인가요?</string>
+    <string name="withdrawal_reason_1">자주 사용하지 않아요</string>
+    <string name="withdrawal_reason_2">원하는 기능이 없어요</string>
+    <string name="withdrawal_reason_3">오류가 잦아서 사용하기 어려워요</string>
+    <string name="withdrawal_reason_4">앱 사용법을 모르겠어요</string>
+    <string name="withdrawal_reason_5">새로운 계정을 만들고 싶어요</string>
+    <string name="withdrawal_reason_6">기타</string>
+    <string name="withdrawal_reason">계정을 삭제하려는 이유를 알려주세요</string>
+    <string name="withdrawal_button">탈퇴하기</string>
+    <string name="withdrawal_dialog_title">탈퇴 완료</string>
+    <string name="withdrawal_dialog_content">탈퇴 처리가 성공적으로 완료되었습니다.</string>
+    <string name="withdrawal_dialog_ok">확인</string>
+
 </resources>

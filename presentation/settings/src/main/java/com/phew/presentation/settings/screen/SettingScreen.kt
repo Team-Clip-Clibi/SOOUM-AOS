@@ -37,7 +37,9 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
+import com.phew.core_common.TimeUtils
 import com.phew.core_design.AppBar.IconLeftAppBar
+import com.phew.core_design.DialogComponent
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.R
 import com.phew.core_design.TextComponent
@@ -143,6 +145,26 @@ fun SettingRoute(
         onAccountDeletionClick = viewModel::onAccountDeletionClick,
         onAppUpdateClick = viewModel::onAppUpdateClick
     )
+    
+    // 탈퇴 확인 다이얼로그
+    if (uiState.showWithdrawalDialog) {
+        val rejoinableDate = uiState.rejoinableDate
+        val dialogMessage = if (rejoinableDate?.isActivityRestricted == true) {
+            stringResource(SettingsR.string.setting_withdrawal_dialog_rejoin_date, 
+                TimeUtils.formatToWithdrawalDate(rejoinableDate.rejoinableDate))
+        } else {
+            stringResource(SettingsR.string.setting_withdrawal_dialog_rejoin_seven_date)
+        }
+        
+        DialogComponent.DefaultButtonTwo(
+            title = stringResource(SettingsR.string.setting_withdrawal_dialog_title),
+            description = dialogMessage,
+            buttonTextStart = stringResource(SettingsR.string.setting_withdrawal_dialog_cancel),
+            buttonTextEnd = stringResource(SettingsR.string.setting_withdrawal_dialog_ok),
+            onClick = viewModel::onConfirmWithdrawal,
+            onDismiss = viewModel::onDismissWithdrawalDialog
+        )
+    }
 }
 
 @Composable

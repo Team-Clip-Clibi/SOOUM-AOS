@@ -7,6 +7,7 @@ import com.phew.core_common.TimeUtils
 import com.phew.domain.model.AppVersionStatusType
 import com.phew.domain.usecase.CheckAppVersionNew
 import com.phew.domain.usecase.GetActivityRestrictionDate
+import com.phew.domain.usecase.GetRejoinableDate
 import com.phew.presentation.settings.model.setting.SettingNavigationEvent
 import com.phew.presentation.settings.model.setting.SettingItem
 import com.phew.presentation.settings.model.setting.SettingItemId
@@ -28,7 +29,8 @@ import androidx.core.net.toUri
 @HiltViewModel
 class SettingViewModel @Inject constructor(
     private val getActivityRestrictionDate: GetActivityRestrictionDate,
-    private val checkAppVersionNew: CheckAppVersionNew
+    private val checkAppVersionNew: CheckAppVersionNew,
+    private val getRejoinableDate: GetRejoinableDate
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -47,6 +49,7 @@ class SettingViewModel @Inject constructor(
     init {
         loadActivityRestrictionDate()
         checkAppVersion()
+        loadRejoinableDate()
     }
 
     private fun createSettingItems(): List<SettingItem> {
@@ -162,6 +165,15 @@ class SettingViewModel @Inject constructor(
     }
 
     fun onAccountDeletionClick() {
+        _uiState.update { it.copy(showWithdrawalDialog = true) }
+    }
+    
+    fun onDismissWithdrawalDialog() {
+        _uiState.update { it.copy(showWithdrawalDialog = false) }
+    }
+    
+    fun onConfirmWithdrawal() {
+        _uiState.update { it.copy(showWithdrawalDialog = false) }
         viewModelScope.launch {
             _navigationEvent.emit(SettingNavigationEvent.NavigateToAccountDeletion)
         }
@@ -216,6 +228,17 @@ class SettingViewModel @Inject constructor(
                 is DomainResult.Failure -> {
                     // 실패시에는 null로 유지 (기본값)
                 }
+            }
+        }
+    }
+    
+    private fun loadRejoinableDate() {
+        viewModelScope.launch {
+            val result = getRejoinableDate()
+            result.onSuccess { rejoinableDate ->
+                _uiState.update { it.copy(rejoinableDate = rejoinableDate) }
+            }.onFailure {
+                // 실패시 처리 (필요시)
             }
         }
     }
