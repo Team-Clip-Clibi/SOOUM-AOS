@@ -22,4 +22,5 @@
     <string name="write_card_content_placeholder">숨에서 편하게 이야기 나눠요</string>
     <string name="permission_settings_positive">설정 이동</string>
     <string name="permission_settings_negative">취소</string>
+    <string name="btn_save">저장</string>
 </resources>

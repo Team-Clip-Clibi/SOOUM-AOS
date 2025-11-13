@@ -203,6 +203,12 @@ class ProfileViewModel @Inject constructor(
         _uiState.update { state -> state.copy(userId = data.memberId, nickname = data.nickname) }
     }
 
+    fun changeNickName(data: String) {
+        _uiState.update { state ->
+            state.copy(changeNickName = data)
+        }
+    }
+
 }
 
 data class Profile(
@@ -216,6 +222,7 @@ data class Profile(
     val userId: Long = 0L,
     val nickname: String = "",
     val otherProfileId: Long = 0L,
+    var changeNickName : String = ""
 )
 
 sealed interface UiState<out T> {

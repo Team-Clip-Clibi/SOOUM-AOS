@@ -22,4 +22,8 @@
     <string name="profile_dialog_un_block_title">차단 해제하시겠어요?</string>
     <string name="profile_dialog_un_block_content">%s님을 팔로우하고, 카드를 볼 수 있어요.</string>
     <string name="profile_dialog_un_block_btn_okay">차단 해제</string>
+    <string name="edit_profile_top_bar">프로필 편집</string>
+    <string name="edit_profile_nickName_helper">최대 8자까지 입력할 수 있어요</string>
+    <string name="edit_profile_nickName_helper_error">부적절한 닉네임이에요. 다시 입력해주세요</string>
+    <string name="edit_profile_nickName_helper_one_more">한 글자 이상 입력해주세요</string>
 </resources>
