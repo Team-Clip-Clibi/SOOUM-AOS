@@ -4,6 +4,7 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import com.phew.domain.dto.CardComment
+import com.phew.domain.dto.FollowData
 import com.phew.domain.dto.Notice
 import com.phew.domain.dto.Notification
 import com.phew.domain.dto.ProfileCard
@@ -54,6 +55,20 @@ class PagerRepositoryImpl @Inject constructor(
         config = PagingConfig(pageSize = 50),
         pagingSourceFactory = {
             PagingProfileCommentCard(repository = profileRepository)
+        }
+    ).flow
+
+    override fun follower(profileId: Long): Flow<PagingData<FollowData>> = Pager(
+        config = PagingConfig(pageSize = 50),
+        pagingSourceFactory = {
+            PagingFollower(repository = profileRepository, profileId = profileId)
+        }
+    ).flow
+
+    override fun following(profileId: Long): Flow<PagingData<FollowData>> = Pager(
+        config = PagingConfig(pageSize = 50),
+        pagingSourceFactory = {
+            PagingFollowing(repository = profileRepository, profileId = profileId)
         }
     ).flow
 }

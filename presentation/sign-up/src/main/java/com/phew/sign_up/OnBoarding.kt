@@ -216,6 +216,7 @@ private fun BottomView(
         SmallButton.NoIconTertiary(
             buttonText = stringResource(R.string.onBoarding_btn_already_sign_up),
             onClick = onClickAlreadySignUp,
+            modifier = Modifier.fillMaxWidth()
         )
     }
 }

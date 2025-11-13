@@ -2,6 +2,9 @@
 <resources>
     <string name="common_okay">확인</string>
     <string name="common_next">다음</string>
+    <string name="common_cancel">취소</string>
+    <string name="common_cancel_polite">취소하기</string>
+    <string name="common_close">닫기</string>
     <string name="common_finish">완료</string>
     <string name="common_skip">건너뛰기</string>
     <string name="common_permission">권한 승인이 필요합니다.</string>
