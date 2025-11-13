@@ -13,9 +13,7 @@ import com.phew.network.retrofit.MembersHttp
 import com.phew.repository.mapper.apiCall
 import com.phew.repository.mapper.toDomain
 import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
 class MembersRepositoryImpl @Inject constructor(
     private val membersHttp: MembersHttp,
     private val deviceInfo: DeviceInfo,

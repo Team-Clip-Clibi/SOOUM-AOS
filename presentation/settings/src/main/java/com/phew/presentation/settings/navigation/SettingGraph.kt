@@ -13,6 +13,7 @@ import com.phew.core.ui.model.navigation.WebViewUrlArgs
 import com.phew.core.ui.navigation.NavArgKey
 import com.phew.core.ui.navigation.asNavArg
 import com.phew.core.ui.navigation.asNavParam
+import com.phew.presentation.settings.screen.BlockUserManagementRoute
 import com.phew.presentation.settings.screen.LoadPreviousAccountRoute
 import com.phew.presentation.settings.screen.LoginOtherDeviceRoute
 import com.phew.presentation.settings.screen.NoticeRoute
@@ -28,7 +29,6 @@ private const val LOGIN_OTHER_DEVICE_ROUTE = "login_other_device_route"
 private const val LOAD_PREVIOUS_ACCOUNT_ROUTE = "load_previous_account_route"
 private const val BLOCKED_USERS_ROUTE = "blocked_users_route"
 private const val NOTICE_ROUTE = "notice_route"
-private const val INQUIRY_ROUTE = "inquiry_route"
 private const val PRIVACY_POLICY_ROUTE = "privacy_policy_route"
 private const val APP_UPDATE_ROUTE = "app_update_route"
 private const val ACCOUNT_DELETION_ROUTE = "account_deletion_route"
@@ -62,12 +62,6 @@ private fun NavHostController.navigateToNoticeRoute(
     navOptions: NavOptions? = null
 ) {
     this.navigate(NOTICE_ROUTE)
-}
-
-private fun NavHostController.navigateToInquiryRoute(
-    navOptions: NavOptions? = null
-) {
-    this.navigate(INQUIRY_ROUTE)
 }
 
 private fun NavHostController.navigateToPrivacyPolicyRoute(
@@ -120,9 +114,6 @@ fun NavGraphBuilder.settingGraph(
                 onNavigateToNotice = {
                     navController.navigateToNoticeRoute()
                 },
-                onNavigateToInquiry = {
-                    navController.navigateToInquiryRoute()
-                },
                 onNavigateToPrivacyPolicy = {
                     navController.navigateToPrivacyPolicyRoute()
                 },
@@ -150,6 +141,17 @@ fun NavGraphBuilder.settingGraph(
                     navController.popBackStack()
                 }
             )
+        }
+
+        slideComposable(
+            route = BLOCKED_USERS_ROUTE
+        ) {
+            BlockUserManagementRoute (
+                onBackPressed = {
+                    navController.popBackStack()
+                }
+            )
+
         }
 
         slideComposable(

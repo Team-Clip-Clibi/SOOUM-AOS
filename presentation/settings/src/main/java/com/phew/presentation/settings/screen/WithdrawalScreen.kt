@@ -16,6 +16,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -190,7 +191,7 @@ private fun WithdrawalScreen(
             if (uiState.selectedReason == WithdrawalReason.OTHER) {
                 OutlinedTextField(
                     value = uiState.customReasonText,
-                    onValueChange = { text ->
+                    onValueChange = { text: String ->
                         if (text.length <= 250) {
                             onUpdateCustomReason(text)
                         }
@@ -211,17 +212,11 @@ private fun WithdrawalScreen(
                     colors = OutlinedTextFieldDefaults.colors(
                         unfocusedBorderColor = NeutralColor.GRAY_100,
                         focusedBorderColor = NeutralColor.GRAY_100,
-                        unfocusedContainerColor = NeutralColor.GRAY_50,
-                        focusedContainerColor = NeutralColor.GRAY_50
+                        unfocusedContainerColor = NeutralColor.GRAY_100,
+                        focusedContainerColor = NeutralColor.GRAY_100
                     ),
                     textStyle = TextComponent.SUBTITLE_1_M_16.copy(
                         color = NeutralColor.BLACK
-                    ),
-                    contentPadding = OutlinedTextFieldDefaults.contentPadding(
-                        start = 24.dp,
-                        end = 24.dp,
-                        top = 16.dp,
-                        bottom = 16.dp
                     )
                 )
                 

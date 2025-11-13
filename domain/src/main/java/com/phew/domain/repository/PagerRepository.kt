@@ -5,6 +5,7 @@ import com.phew.domain.dto.CardComment
 import com.phew.domain.dto.Notice
 import com.phew.domain.dto.Notification
 import com.phew.domain.dto.ProfileCard
+import com.phew.domain.model.BlockMember
 import kotlinx.coroutines.flow.Flow
 
 interface PagerRepository {
@@ -13,13 +14,11 @@ interface PagerRepository {
     fun notificationRead(): Flow<PagingData<Notification>>
     fun cardComments(
         cardId: Long,
-        latitude: Double? = null,
-        longitude: Double? = null,
+        latitude: Double?,
+        longitude: Double?,
     ): Flow<PagingData<CardComment>>
 
-    fun profileFeedCard(
-        userId: Long,
-    ): Flow<PagingData<ProfileCard>>
-
+    fun profileFeedCard(userId: Long): Flow<PagingData<ProfileCard>>
     fun profileCommentCard(): Flow<PagingData<ProfileCard>>
+    fun getBlockUserPaging(): Flow<PagingData<BlockMember>>
 }

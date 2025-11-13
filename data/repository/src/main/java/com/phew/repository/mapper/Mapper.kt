@@ -31,6 +31,7 @@ import com.phew.domain.dto.UserCommentWrite
 import com.phew.domain.dto.UserDeleteNotification
 import com.phew.domain.model.AppVersionStatus
 import com.phew.domain.model.AppVersionStatusType
+import com.phew.domain.model.BlockMember
 import com.phew.domain.model.RejoinableDate
 import com.phew.domain.model.TransferCode
 import com.phew.network.dto.AppVersionStatusDTO
@@ -40,6 +41,7 @@ import com.phew.network.dto.NoticeData
 import com.phew.network.dto.NotificationDTO
 import com.phew.network.dto.TokenDTO
 import com.phew.network.dto.UploadImageUrlDTO
+import com.phew.network.dto.response.BlockMemberResponseDTO
 import com.phew.network.dto.response.RejoinableDateResponseDTO
 import com.phew.network.dto.request.feed.CheckBanedDTO
 import com.phew.network.dto.request.feed.ImageInfoDTO
@@ -245,6 +247,15 @@ internal fun RejoinableDateResponseDTO.toDomain(): RejoinableDate {
     return RejoinableDate(
         rejoinableDate = this.rejoinableDate,
         isActivityRestricted = this.isActivityRestricted
+    )
+}
+
+internal fun BlockMemberResponseDTO.toDomain(): BlockMember {
+    return BlockMember(
+        blockId = this.blockId,
+        blockMemberId = this.blockMemberId,
+        blockMemberNickname = this.blockMemberNickname,
+        blockMemberProfileImageUrl = this.blockMemberProfileImageUrl
     )
 }
 

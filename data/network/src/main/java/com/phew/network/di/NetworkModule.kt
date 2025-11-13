@@ -5,6 +5,7 @@ import com.phew.network.AuthInterceptor
 import com.phew.network.BuildConfig
 import com.phew.network.TokenAuthenticator
 import com.phew.network.retrofit.AppVersionHttp
+import com.phew.network.retrofit.BlockHttp
 import com.phew.network.retrofit.CardDetailsInquiryHttp
 import com.phew.network.retrofit.FeedHttp
 import com.phew.network.retrofit.MembersHttp
@@ -150,4 +151,9 @@ object NetworkModule {
     @Provides
     fun provideAppVersionHttp(retrofit: Retrofit): AppVersionHttp =
         retrofit.create(AppVersionHttp::class.java)
+
+    @Singleton
+    @Provides
+    fun provideBlockHttp(retrofit: Retrofit): BlockHttp =
+        retrofit.create(BlockHttp::class.java)
 }

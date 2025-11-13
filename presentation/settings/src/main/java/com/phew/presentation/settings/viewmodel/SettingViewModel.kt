@@ -7,6 +7,7 @@ import com.phew.core_common.TimeUtils
 import com.phew.domain.model.AppVersionStatusType
 import com.phew.domain.usecase.CheckAppVersionNew
 import com.phew.domain.usecase.GetActivityRestrictionDate
+import com.phew.domain.usecase.GetRefreshToken
 import com.phew.domain.usecase.GetRejoinableDate
 import com.phew.presentation.settings.model.setting.SettingNavigationEvent
 import com.phew.presentation.settings.model.setting.SettingItem
@@ -24,13 +25,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import androidx.core.net.toUri
 
 @HiltViewModel
 class SettingViewModel @Inject constructor(
     private val getActivityRestrictionDate: GetActivityRestrictionDate,
     private val checkAppVersionNew: CheckAppVersionNew,
-    private val getRejoinableDate: GetRejoinableDate
+    private val getRejoinableDate: GetRejoinableDate,
+    private val getRefreshToken: GetRefreshToken
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -154,7 +155,10 @@ class SettingViewModel @Inject constructor(
 
     fun onInquiryClick() {
         viewModelScope.launch {
-            _navigationEvent.emit(SettingNavigationEvent.NavigateToInquiry)
+            val refreshToken = getRefreshToken()
+            _navigationEvent.emit(
+                SettingNavigationEvent.SendInquiryMail(refreshToken = refreshToken)
+            )
         }
     }
 

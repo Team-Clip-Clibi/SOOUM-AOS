@@ -1,5 +1,6 @@
 package com.phew.presentation.settings.screen
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
@@ -63,7 +64,6 @@ fun SettingRoute(
     onNavigateToLoadPreviousAccount: () -> Unit = {},
     onNavigateToBlockedUsers: () -> Unit = {},
     onNavigateToNotice: () -> Unit = {},
-    onNavigateToInquiry: () -> Unit = {},
     onNavigateToPrivacyPolicy: () -> Unit = {},
     onNavigateToAccountDeletion: () -> Unit = {},
 ) {
@@ -78,11 +78,16 @@ fun SettingRoute(
                 SettingNavigationEvent.NavigateToLoadPreviousAccount -> onNavigateToLoadPreviousAccount()
                 SettingNavigationEvent.NavigateToBlockedUsers -> onNavigateToBlockedUsers()
                 SettingNavigationEvent.NavigateToNotice -> onNavigateToNotice()
-                SettingNavigationEvent.NavigateToInquiry -> onNavigateToInquiry()
                 SettingNavigationEvent.NavigateToPrivacyPolicy -> onNavigateToPrivacyPolicy()
                 SettingNavigationEvent.NavigateToAccountDeletion -> onNavigateToAccountDeletion()
                 SettingNavigationEvent.NavigateToAppStore -> {
                     openAppStore(context)
+                }
+                is SettingNavigationEvent.SendInquiryMail -> {
+                    openInquiryMail(
+                        context = context,
+                        refreshToken = event.refreshToken
+                    )
                 }
             }
         }
@@ -554,6 +559,48 @@ private fun openAppStore(context: Context) {
             context.startActivity(intent)
         } catch (e: Exception) {
             e.printStackTrace()
+        }
+    }
+}
+
+private fun openInquiryMail(
+    context: Context,
+    refreshToken: String
+) {
+    val emailAddress = context.getString(SettingsR.string.setting_inquiry_email_address)
+    val emailSubject = context.getString(SettingsR.string.setting_inquiry_email_subject)
+    val emailBody = context.getString(
+        SettingsR.string.setting_inquiry_email_body,
+        refreshToken
+    )
+    val chooserTitle = context.getString(SettingsR.string.setting_inquiry_email_chooser_title)
+    val noClientMessage =
+        context.getString(SettingsR.string.setting_inquiry_email_client_not_found)
+
+    val gmailIntent = Intent(Intent.ACTION_SENDTO).apply {
+        data = "mailto:".toUri()
+        putExtra(Intent.EXTRA_EMAIL, arrayOf(emailAddress))
+        putExtra(Intent.EXTRA_SUBJECT, emailSubject)
+        putExtra(Intent.EXTRA_TEXT, emailBody)
+        `package` = "com.google.android.gm"
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+
+    try {
+        context.startActivity(gmailIntent)
+    } catch (gmailNotFound: ActivityNotFoundException) {
+        val fallbackIntent = Intent(Intent.ACTION_SENDTO).apply {
+            data = "mailto:".toUri()
+            putExtra(Intent.EXTRA_EMAIL, arrayOf(emailAddress))
+            putExtra(Intent.EXTRA_SUBJECT, emailSubject)
+            putExtra(Intent.EXTRA_TEXT, emailBody)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+
+        try {
+            context.startActivity(Intent.createChooser(fallbackIntent, chooserTitle))
+        } catch (noEmailClient: Exception) {
+            Toast.makeText(context, noClientMessage, Toast.LENGTH_SHORT).show()
         }
     }
 }

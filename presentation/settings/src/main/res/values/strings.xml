@@ -10,6 +10,11 @@
     <string name="setting_blocked_users">차단 사용자 관리</string>
     <string name="setting_notice">공지사항</string>
     <string name="setting_inquiry">문의하기</string>
+    <string name="setting_inquiry_email_address">sooum1004@gmail.com</string>
+    <string name="setting_inquiry_email_subject">[문의하기]</string>
+    <string name="setting_inquiry_email_body">식별정보 : %1$s\n문의 내용: 식별 정보 삭제에 주의하여 주시고, 이곳에 자유롭게 문의하실 내용을 적어주세요.\n단, 본 양식에 비방, 욕설, 허위 사실 유포 등의 부적절한 내용이 포함될 경우,\n관련 법령에 따라 민·형사상 법적 조치가 이루어질 수 있음을 알려드립니다.</string>
+    <string name="setting_inquiry_email_chooser_title">이메일 앱을 선택하세요</string>
+    <string name="setting_inquiry_email_client_not_found">이메일 앱을 찾을 수 없습니다.</string>
     <string name="setting_privacy_policy">약관 및 개인정보 처리 동의</string>
     <string name="setting_app_update">최신버전 업데이트</string>
     <string name="setting_account_deletion">탈퇴하기</string>
@@ -81,5 +86,15 @@
     <string name="withdrawal_dialog_title">탈퇴 완료</string>
     <string name="withdrawal_dialog_content">탈퇴 처리가 성공적으로 완료되었습니다.</string>
     <string name="withdrawal_dialog_ok">확인</string>
+
+    <!-- 차단 사용자 관리 -->
+    <string name="block_user_top_title">차단 사용자 관리</string>
+    <string name="block_user_diable">차단 해제</string>
+    <string name="block_no_user">차단한 사용자가 없어요</string>
+
+    <string name="block_user_dialog_title">차단 해제하시겠어요?</string>
+    <string name="block_user_dialog_content">%s님을 팔로우하고, 카드를 볼 수 있어요.</string>
+    <string name="block_user_dialog_cancel">취소</string>
+    <string name="block_user_dialog_disable">차단 해제</string>
 
 </resources>

@@ -71,6 +71,8 @@ class NetworkConvention : Plugin<Project> {
                 val cardReports: String = properties.getProperty("api_url_reports_card", "")
                 val cardBlock: String = properties.getProperty("api_url_block_member", "")
                 val cardUnblock: String = properties.getProperty("api_url_unblock_member", "")
+                val blocks: String = properties.getProperty("api_url_blocks", "")
+                val blocksPaging: String = properties.getProperty("api_url_blocks_paging", "")
                 val myProfile: String = properties.getProperty("api_url_my_profile", "")
                 val myProfileCommentCard: String =
                     properties.getProperty("api_url_profile_comment_card", "")
@@ -114,6 +116,8 @@ class NetworkConvention : Plugin<Project> {
                 buildConfigField("String", "API_URL_CARD_COMMENT_MORE", cardCommentMore)
                 buildConfigField("String", "API_URL_BLOCK_MEMBER", cardBlock)
                 buildConfigField("String", "API_URL_UNBLOCK_MEMBER", cardUnblock)
+                buildConfigField("String", "API_URL_BLOCKS", blocks)
+                buildConfigField("String", "API_URL_BLOCKS_PAGING", blocksPaging)
                 buildConfigField("String", "API_URL_MY_PROFILE", myProfile)
                 buildConfigField("String", "API_URL_MY_PROFILE_COMMENT_CARD", myProfileCommentCard)
                 buildConfigField("String", "API_URL_MY_PROFILE_CARD", myProfileCard)
