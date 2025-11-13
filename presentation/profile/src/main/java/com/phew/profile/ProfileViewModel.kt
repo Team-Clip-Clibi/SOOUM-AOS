@@ -8,6 +8,7 @@ import com.phew.core_common.DomainResult
 import com.phew.domain.dto.FollowData
 import com.phew.domain.dto.ProfileInfo
 import com.phew.domain.dto.ProfileCard
+import com.phew.domain.usecase.CheckNickName
 import com.phew.domain.usecase.GetFollower
 import com.phew.domain.usecase.GetFollowing
 import com.phew.domain.usecase.GetMyProfileInfo
@@ -41,6 +42,7 @@ class ProfileViewModel @Inject constructor(
     private val unFollowUser: SendUnFollowUser,
     private val blockUser: SendBlockUser,
     private val unBlockUser: SendUnBlockUser,
+    private val checkNickName: CheckNickName,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(Profile())
     val uiState: StateFlow<Profile> = _uiState.asStateFlow()
@@ -203,6 +205,27 @@ class ProfileViewModel @Inject constructor(
         _uiState.update { state -> state.copy(userId = data.memberId, nickname = data.nickname) }
     }
 
+    fun changeNickName(data: String) {
+        _uiState.update { state ->
+            state.copy(changeNickName = data)
+        }
+        viewModelScope.launch(Dispatchers.IO) {
+            when (val result = checkNickName(CheckNickName.Param(data))) {
+                is DomainResult.Failure -> {
+                    _uiState.update { state ->
+                        state.copy(nickNameHint = UiState.Fail(result.error))
+                    }
+                }
+
+                is DomainResult.Success -> {
+                    _uiState.update { state ->
+                        state.copy(nickNameHint = UiState.Success(result.data))
+                    }
+                }
+            }
+        }
+    }
+
 }
 
 data class Profile(
@@ -216,6 +239,8 @@ data class Profile(
     val userId: Long = 0L,
     val nickname: String = "",
     val otherProfileId: Long = 0L,
+    val nickNameHint : UiState<Boolean> = UiState.Loading,
+    var changeNickName : String = ""
 )
 
 sealed interface UiState<out T> {
