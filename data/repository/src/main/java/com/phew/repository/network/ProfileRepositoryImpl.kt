@@ -5,11 +5,14 @@ import com.phew.core_common.DataResult
 import com.phew.domain.dto.FollowData
 import com.phew.domain.dto.ProfileInfo
 import com.phew.domain.dto.ProfileCard
+import com.phew.domain.dto.UploadImageUrl
 import com.phew.domain.repository.network.ProfileRepository
+import com.phew.network.dto.request.profile.UpdateProfileDTO
 import com.phew.network.retrofit.ProfileHttp
 import com.phew.repository.mapper.apiCall
 import com.phew.repository.mapper.pagingCall
 import com.phew.repository.mapper.toDomain
+import okhttp3.RequestBody
 import javax.inject.Inject
 
 class ProfileRepositoryImpl @Inject constructor(private val http: ProfileHttp) :
@@ -141,6 +144,37 @@ class ProfileRepositoryImpl @Inject constructor(private val http: ProfileHttp) :
         } catch (e: Exception) {
             return DataResult.Fail(code = APP_ERROR_CODE, message = e.message, throwable = e)
         }
+    }
+
+    override suspend fun requestUploadImageUrl(): DataResult<UploadImageUrl> {
+        return apiCall(
+            apiCall = { http.requestUploadImageUrl() },
+            mapper = { data -> data.toDomain() }
+        )
+    }
+
+    override suspend fun requestUploadImage(uri: String, body: RequestBody): DataResult<Unit> {
+        return apiCall(
+            apiCall = { http.requestUploadImage(url = uri, body = body) },
+            mapper = { result -> result }
+        )
+    }
+
+    override suspend fun requestUpdateProfile(
+        nickName: String?,
+        profileImageName: String,
+    ): DataResult<Unit> {
+        return apiCall(
+            apiCall = {
+                http.requestProfileUpdate(
+                    UpdateProfileDTO(
+                        nickName = nickName,
+                        profileImgName = profileImageName
+                    )
+                )
+            },
+            mapper = { result -> result }
+        )
     }
 
 }

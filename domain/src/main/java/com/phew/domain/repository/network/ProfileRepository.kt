@@ -4,6 +4,8 @@ import com.phew.core_common.DataResult
 import com.phew.domain.dto.FollowData
 import com.phew.domain.dto.ProfileInfo
 import com.phew.domain.dto.ProfileCard
+import com.phew.domain.dto.UploadImageUrl
+import okhttp3.RequestBody
 
 interface ProfileRepository {
     suspend fun requestMyProfile(): DataResult<ProfileInfo>
@@ -32,4 +34,7 @@ interface ProfileRepository {
     suspend fun requestUnFollowUser(profileId: Long): DataResult<Boolean>
     suspend fun requestBlockUser(profileId: Long): DataResult<Boolean>
     suspend fun requestUnBlockUser(profileId: Long): DataResult<Boolean>
+    suspend fun requestUploadImageUrl(): DataResult<UploadImageUrl>
+    suspend fun requestUploadImage(uri: String, body: RequestBody): DataResult<Unit>
+    suspend fun requestUpdateProfile(nickName: String?, profileImageName: String): DataResult<Unit>
 }
