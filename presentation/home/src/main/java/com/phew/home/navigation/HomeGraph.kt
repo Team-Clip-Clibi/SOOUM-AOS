@@ -35,6 +35,7 @@ fun NavGraphBuilder.homeGraph(
     onWriteComplete: () -> Unit = {},
     cardClick: (Long) -> Unit,
     onLogOut: () -> Unit,
+    onWithdrawalComplete: () -> Unit,
 ) {
     navigation(route = HOME_GRAPH, startDestination = FEED_GRAPH) {
         // Feed Card Graph
@@ -64,6 +65,7 @@ fun NavGraphBuilder.homeGraph(
             navController = navController,
             onBackPressed = onBackPressed,
             onLogOut = onLogOut,
+            onWithdrawalComplete = onWithdrawalComplete,
             cardClick = cardClick
         )
         // TODO Tag 그래프 추가

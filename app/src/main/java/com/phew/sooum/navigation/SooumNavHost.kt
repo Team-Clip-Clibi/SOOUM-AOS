@@ -8,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.navOptions
 import com.phew.core.ui.component.back.SooumOnBackPressed
 import com.phew.core.ui.model.navigation.CardDetailArgs
+import com.phew.core.ui.model.navigation.OnBoardingArgs
 import com.phew.core.ui.state.SooumAppState
 import com.phew.core.ui.state.rememberSooumAppState
 import com.phew.home.navigation.homeGraph
@@ -20,6 +21,7 @@ import com.phew.presentation.write.navigation.navigateToWriteGraphWithArgs
 import com.phew.presentation.write.navigation.writeGraph
 import com.phew.reports.reportGraph
 import com.phew.sign_up.navigation.SIGN_UP_GRAPH
+import com.phew.sign_up.navigation.navigateToOnBoarding
 import com.phew.sign_up.navigation.navigateToSignUpGraph
 import com.phew.sign_up.navigation.signUpGraph
 import com.phew.splash.navigation.SPLASH_GRAPH
@@ -72,6 +74,17 @@ fun SooumNavHost(
                 },
                 onLogOut = {
                     navController.navigateToSignUpGraph(
+                        navOptions = navOptions {
+                            popUpTo(SPLASH_GRAPH) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    )
+                },
+                onWithdrawalComplete = {
+                    navController.navigateToOnBoarding(
+                        args = OnBoardingArgs(showWithdrawalDialog = true),
                         navOptions = navOptions {
                             popUpTo(SPLASH_GRAPH) {
                                 inclusive = true

@@ -5,7 +5,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
-import com.phew.core.ui.model.navigation.CardDetailCommentArgs
 import com.phew.core.ui.navigation.createNavType
 import com.phew.core.ui.navigation.getNavArg
 import com.phew.core_design.slideComposable
@@ -91,7 +90,8 @@ private fun NavHostController.navigateToWebViewRoute(
 
 fun NavGraphBuilder.settingGraph(
     navController: NavHostController,
-    onBackPressed: () -> Unit
+    onBackPressed: () -> Unit,
+    onWithdrawalComplete: () -> Unit
 ) {
     navigation(
         route = SETTING_GRAPH,
@@ -187,9 +187,7 @@ fun NavGraphBuilder.settingGraph(
                 onBackPressed = {
                     navController.popBackStack()
                 },
-                onWithdrawalComplete = {
-                    navController.popBackStack()
-                }
+                onWithdrawalComplete = onWithdrawalComplete
             )
         }
 

@@ -53,10 +53,12 @@ fun OnBoarding(
     alreadySignUp: () -> Unit,
     back: () -> Unit,
     home: () -> Unit,
+    showWithdrawalDialog: Boolean = false
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
     val dialogShow = remember { mutableStateOf(false) }
+    val withdrawalDialogShow = remember { mutableStateOf(showWithdrawalDialog) }
     val context = LocalContext.current
     val onHome = remember(home) { { home() } }
     BackHandler(onBack = remember(back) { { back() } })
@@ -121,6 +123,12 @@ fun OnBoarding(
                 DialogView(
                     (uiState.checkSignUp as UiState.Success<SignUpResult>).data,
                     onclick = remember { { dialogShow.value = false } }
+                )
+            }
+            
+            if (withdrawalDialogShow.value) {
+                WithdrawalCompleteDialog(
+                    onDismiss = remember { { withdrawalDialogShow.value = false } }
                 )
             }
         }
@@ -243,5 +251,16 @@ private fun DialogView(data: SignUpResult, onclick: () -> Unit) {
             )
         }
     }
+}
+
+@Composable
+private fun WithdrawalCompleteDialog(onDismiss: () -> Unit) {
+    DialogComponent.DefaultButtonOne(
+        title = stringResource(R.string.onBoarding_withdrawal_complete_title),
+        description = stringResource(R.string.onBoarding_withdrawal_complete_content),
+        onClick = onDismiss,
+        onDismiss = onDismiss,
+        buttonText = stringResource(com.phew.core_design.R.string.common_okay)
+    )
 }
 

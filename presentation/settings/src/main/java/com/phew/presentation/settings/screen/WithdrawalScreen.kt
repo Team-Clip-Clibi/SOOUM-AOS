@@ -63,7 +63,7 @@ internal fun WithdrawalRoute(
         viewModel.uiEffect.collect { effect ->
             when (effect) {
                 is WithdrawalUiEffect.ShowSuccessDialog -> {
-                    showSuccessDialog = true
+                    onWithdrawalComplete()
                 }
                 is WithdrawalUiEffect.ShowError -> {
                     errorMessage = effect.message
@@ -81,22 +81,6 @@ internal fun WithdrawalRoute(
         onUpdateCustomReason = viewModel::updateCustomReason
     )
     
-    // 성공 다이얼로그 (withdrawal_dialog_* 키 사용)
-    if (showSuccessDialog) {
-        DialogComponent.DefaultButtonOne(
-            title = stringResource(R.string.withdrawal_dialog_title),
-            description = stringResource(R.string.withdrawal_dialog_content),
-            buttonText = stringResource(R.string.withdrawal_dialog_ok),
-            onClick = {
-                showSuccessDialog = false
-                onWithdrawalComplete()
-            },
-            onDismiss = {
-                showSuccessDialog = false
-                onWithdrawalComplete()
-            }
-        )
-    }
     
     errorMessage?.let { message ->
         // TODO: 에러 처리 구현
@@ -112,7 +96,7 @@ private fun WithdrawalScreen(
     onSelectReason: (WithdrawalReason) -> Unit,
     onUpdateCustomReason: (String) -> Unit
 ) {
-    val reasons = WithdrawalReason.values()
+    val reasons = WithdrawalReason.entries.toTypedArray()
     
     val scrollState = rememberScrollState()
     val focusRequester = remember { FocusRequester() }
@@ -187,7 +171,6 @@ private fun WithdrawalScreen(
                 }
             }
             
-            // OTHER 선택 시 TextField 표시
             if (uiState.selectedReason == WithdrawalReason.OTHER) {
                 OutlinedTextField(
                     value = uiState.customReasonText,
@@ -220,7 +203,6 @@ private fun WithdrawalScreen(
                     )
                 )
                 
-                // OTHER 선택 시 TextField로 스크롤하고 포커스
                 LaunchedEffect(uiState.selectedReason) {
                     if (uiState.selectedReason == WithdrawalReason.OTHER) {
                         delay(100) // UI 업데이트를 위한 약간의 지연
