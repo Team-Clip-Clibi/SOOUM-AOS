@@ -53,17 +53,18 @@ fun CardDetail(
                     ),
                 )
             } else {
-                //  TODO 처리 필요
                 CardView(
                     modifier = modifier.padding(vertical = 2.dp),
-                    data = BaseCardData.Write(
+                    data = BaseCardData.Reply(
+                        previousCommentThumbnailUri = previousCommentThumbnailUri,
                         content = cardContent,
-                        isEditable = false,
                         tags = cardTags,
-                        backgroundUri = if (cardThumbnailUri.isNotEmpty()) cardThumbnailUri.toUri() else backgroundImageUrl,
-                        showAddButton = false,
+                        hasPreviousCommentThumbnail = !previousCommentThumbnailUri.isNullOrEmpty(),
+                        thumbnailUri = cardThumbnailUri,
+                        backgroundImage = backgroundImageUrl,
                         fontFamily = fontFamily
-                    )
+                    ),
+                    onPreviousCardClick = onPreviousCardClick
                 )
             }
         }

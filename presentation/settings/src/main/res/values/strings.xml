@@ -17,7 +17,8 @@
     <!-- Version -->
     <string name="setting_version_format">v%s</string>
     <string name="setting_app_new_version">최신버전</string>
-    <string name="setting_update_available">116.2</string>
+    <string name="setting_current_new_version">현재 최신버전을 사용중입니다.</string>
+
 
     <!-- Login Other Device -->
     <string name="other_device_top_title">다른 기기에서 로그인하기</string>
@@ -47,5 +48,16 @@
     <string name="load_previous_account_dialog_success_message">이전 계정 불러오기가 성공적으로 완료되었습니다.</string>
     <string name="load_previous_account_dialog_success_ok">확인</string>
 
+    <!-- 공지사항 -->
+    <string name="notification_title">공지사항</string>
 
+    <!-- 약관동의 -->
+    <string name="privacy_policy_title">약관 및 개인 정보 처리 동의</string>
+    <string name="privacy_policy_person_info">개인정보처리방침</string>
+    <string name="privacy_policy_service">서비스 이용약관</string>
+    <string name="privacy_policy_location">위치정보 이용약관</string>
+
+    <!-- WebView -->
+    <string name="webview_load_failed">웹페이지 로드 실패: %1$s</string>
+    <string name="no_url_message">URL이 없습니다.</string>
 </resources>

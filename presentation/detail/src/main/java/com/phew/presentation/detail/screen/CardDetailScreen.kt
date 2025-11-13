@@ -1,6 +1,7 @@
 package com.phew.presentation.detail.screen
 
 import android.annotation.SuppressLint
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -21,6 +22,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
@@ -58,6 +61,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -119,7 +123,8 @@ internal fun CardDetailRoute(
     onNavigateToComment: (CardDetailCommentArgs) -> Unit,
     onNavigateToWrite: (Long) -> Unit,
     onNavigateToReport: (Long) -> Unit,
-    onBackPressed: () -> Unit
+    onBackPressed: () -> Unit,
+    onPreviousCardClick: () -> Unit = { }
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackBarHostState = remember { SnackbarHostState() }
@@ -136,8 +141,6 @@ internal fun CardDetailRoute(
 
     val commentsPagingItems = viewModel.commentsPagingData.collectAsLazyPagingItems()
 
-
-
     var showBottomSheet by remember { mutableStateOf(false) }
     var showBlockDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -151,13 +154,27 @@ internal fun CardDetailRoute(
         viewModel.loadCardDetail(args.cardId)
     }
     
-    // WriteScreen에서 복귀 시 새로고침 처리
+    // WriteScreen에서 복귀 시에만 새로고침 처리
     val lifecycleOwner = LocalLifecycleOwner.current
+    var hasResumed by remember { mutableStateOf(false) }
+    
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                SooumLog.d(TAG, "CardDetailScreen resumed - refreshing data")
-                viewModel.loadCardDetail(args.cardId)
+            when (event) {
+                Lifecycle.Event.ON_PAUSE -> {
+                    // 화면을 벗어날 때 flag 설정
+                    hasResumed = false
+                }
+                Lifecycle.Event.ON_RESUME -> {
+                    // 두 번째 Resume부터만 새로고침 (WriteScreen에서 복귀 시)
+                    if (hasResumed) {
+                        SooumLog.d(TAG, "CardDetailScreen resumed from WriteScreen - refreshing data")
+                        viewModel.loadCardDetail(args.cardId)
+                    } else {
+                        hasResumed = true
+                    }
+                }
+                else -> {}
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -167,6 +184,8 @@ internal fun CardDetailRoute(
         }
     }
     var isDelete by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
     // 에러 처리
     uiState.error?.let { errorType ->
         val errorMessage = when (errorType) {
@@ -176,8 +195,7 @@ internal fun CardDetailRoute(
         }
         
         LaunchedEffect(errorType) {
-            // TODO: 에러 메시지 표시 (Toast, SnackBar 등)
-            // errorMessage를 사용하여 에러 표시
+            Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
             viewModel.clearError()
         }
     }
@@ -216,13 +234,53 @@ internal fun CardDetailRoute(
     // 로딩 중일 때는 로딩 화면 표시
     val isInitialLoading = uiState.isLoading && uiState.cardDetail == null
     if (isInitialLoading) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            LottieAnimation(
+                composition = composition,
+                progress = { progress },
+                modifier = Modifier.size(44.dp)
+            )
+        }
         return
     }
 
     // cardDetail이 없으면 빈 화면 또는 에러 표시
     val cardDetail = uiState.cardDetail
     if (cardDetail == null) {
-        // TODO: 데이터 없음 화면 표시
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.statusBars),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = stringResource(DetailR.string.card_detail_not_found),
+                    style = TextComponent.BODY_1_M_14,
+                    color = NeutralColor.GRAY_500,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = onBackPressed,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = NeutralColor.GRAY_600
+                    )
+                ) {
+                    Text(
+                        text = stringResource(DetailR.string.card_detail_go_back),
+                        style = TextComponent.BODY_1_M_14,
+                        color = NeutralColor.WHITE
+                    )
+                }
+            }
+        }
         return
     }
     val storyExpirationTime = if(cardDetail.storyExpirationTime == null) "0" else cardDetail.endTime.toString()
@@ -293,6 +351,7 @@ internal fun CardDetailRoute(
         refreshingOffset = refreshingOffset,
         refreshState = refreshState,
         density = density,
+        onPreviousCardClick = onPreviousCardClick,
     )
 }
 
@@ -344,6 +403,7 @@ private fun CardDetailScreen(
     refreshingOffset: androidx.compose.ui.unit.Dp,
     refreshState: androidx.compose.material3.pulltorefresh.PullToRefreshState,
     density: androidx.compose.ui.unit.Density,
+    onPreviousCardClick: () -> Unit = { },
 ) {
 
     Scaffold(
@@ -492,7 +552,8 @@ private fun CardDetailScreen(
                                         onClickComment = onClickCommentIcon
                                     )
                                 },
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth(),
+                                onPreviousCardClick = onPreviousCardClick
                             )
                             Spacer(modifier
                                 .fillMaxWidth()

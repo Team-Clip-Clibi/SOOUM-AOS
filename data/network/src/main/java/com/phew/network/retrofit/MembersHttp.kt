@@ -2,9 +2,12 @@ package com.phew.network.retrofit
 
 import com.phew.network.dto.ActivityRestrictionDateDTO
 import com.phew.network.dto.TransferCodeDTO
+import com.phew.network.dto.request.account.TransferAccountRequestDTO
 import retrofit2.Response
+import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.PATCH
+import retrofit2.http.POST
 
 interface MembersHttp {
     @GET("/api/members/activity-restriction-date")
@@ -15,4 +18,7 @@ interface MembersHttp {
     
     @PATCH("/api/members/account/transfer-code")
     suspend fun refreshTransferCode(): Response<TransferCodeDTO>
+    
+    @POST("/api/members/account/transfer")
+    suspend fun transferAccount(@Body request: TransferAccountRequestDTO): Response<Unit>
 }

@@ -3,7 +3,9 @@ package com.phew.core_common
 import com.phew.core_common.log.SooumLog
 import java.text.SimpleDateFormat
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Locale
 import java.util.TimeZone
@@ -95,6 +97,45 @@ object TimeUtils {
             }
         } catch (e: Exception) {
             SooumLog.w(TAG, "Failed to format date: $dateString, ${e.message}")
+            dateString
+        }
+    }
+    
+    /**
+     * 날짜 문자열을 yyyy.MM.dd 형식으로 포맷팅
+     * @param dateString yyyy-MM-dd 또는 ISO 8601 형식의 날짜 문자열
+     * @return yyyy.MM.dd 형식의 문자열, 파싱 실패시 원본 반환
+     */
+    fun formatToSimpleDate(dateString: String): String {
+        return try {
+            if (dateString.isBlank()) {
+                return dateString
+            }
+            
+            // yyyy-MM-dd 형식으로 파싱 시도
+            val parsedDate = try {
+                val localDate = LocalDate.parse(dateString, DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                localDate.format(DateTimeFormatter.ofPattern("yyyy.MM.dd"))
+            } catch (e: Exception) {
+                // ISO 8601 형식으로 파싱 시도
+                try {
+                    val parsedTime = iso8601Format.parse(dateString)?.time
+                    if (parsedTime != null) {
+                        val outputFormat = SimpleDateFormat("yyyy.MM.dd", Locale.getDefault()).apply {
+                            timeZone = TimeZone.getTimeZone("Asia/Seoul")
+                        }
+                        outputFormat.format(parsedTime)
+                    } else {
+                        dateString
+                    }
+                } catch (e: Exception) {
+                    dateString
+                }
+            }
+            
+            parsedDate
+        } catch (e: Exception) {
+            SooumLog.w(TAG, "Failed to format simple date: $dateString, ${e.message}")
             dateString
         }
     }

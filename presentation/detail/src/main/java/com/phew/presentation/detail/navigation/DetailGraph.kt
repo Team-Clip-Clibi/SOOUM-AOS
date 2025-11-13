@@ -92,7 +92,10 @@ fun NavGraphBuilder.detailGraph(
                         onNavigateToWrite(cardId)
                     },
                     onNavigateToReport = onNavigateToReport,
-                    onBackPressed = onBackPressed
+                    onBackPressed = onBackPressed,
+                    onPreviousCardClick = { 
+                        // TODO: 이전 카드로 네비게이션 구현 필요
+                    }
                 )
             }
         }

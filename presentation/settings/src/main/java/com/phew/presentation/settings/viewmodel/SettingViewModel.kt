@@ -12,6 +12,7 @@ import com.phew.presentation.settings.model.setting.SettingItem
 import com.phew.presentation.settings.model.setting.SettingItemId
 import com.phew.presentation.settings.model.setting.SettingItemType
 import com.phew.presentation.settings.model.setting.SettingUiState
+import com.phew.presentation.settings.model.setting.ToastEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,6 +40,9 @@ class SettingViewModel @Inject constructor(
 
     private val _navigationEvent = MutableSharedFlow<SettingNavigationEvent>()
     val navigationEvent: SharedFlow<SettingNavigationEvent> = _navigationEvent.asSharedFlow()
+
+    private val _toastEvent = MutableSharedFlow<ToastEvent>()
+    val toastEvent: SharedFlow<ToastEvent> = _toastEvent.asSharedFlow()
     
     init {
         loadActivityRestrictionDate()
@@ -166,8 +170,16 @@ class SettingViewModel @Inject constructor(
     fun onAppUpdateClick() {
         viewModelScope.launch {
             val currentState = _uiState.value
-            if (currentState.appVersionStatusType == AppVersionStatusType.UPDATE) {
-                _navigationEvent.emit(SettingNavigationEvent.NavigateToAppStore)
+            when (currentState.appVersionStatusType) {
+                AppVersionStatusType.UPDATE -> {
+                    _navigationEvent.emit(SettingNavigationEvent.NavigateToAppStore)
+                }
+                AppVersionStatusType.OK, AppVersionStatusType.PENDING -> {
+                    _toastEvent.emit(ToastEvent.ShowCurrentVersionToast)
+                }
+                null -> {
+                    // 상태가 없는 경우 아무 동작 하지 않음
+                }
             }
         }
     }

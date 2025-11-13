@@ -136,7 +136,8 @@ sealed class BaseCardData(open val id: String, open val type: CardType) {
         val hasPreviousCommentThumbnail: Boolean = false,
         val thumbnailUri: String = "",
         override val id: String = "",
-        val backgroundImage: Uri? = null
+        val backgroundImage: Uri? = null,
+        val fontFamily: FontFamily? = null
     ) : BaseCardData(id, CardType.REPLY)
 
     data class Deleted(
@@ -280,7 +281,8 @@ private fun EditableWriteContentBox(
 @Composable
 private fun ReadOnlyContentBox(
     content: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    fontFamily: FontFamily? = null
 ) {
     BoxWithConstraints(
         modifier = modifier
@@ -295,7 +297,8 @@ private fun ReadOnlyContentBox(
         val scrollState = rememberScrollState()
 
         val baseStyle = TextComponent.BODY_1_M_14
-        val textStyle = baseStyle.copy(color = CardDesignTokens.TextPrimary)
+        val textStyle = fontFamily?.let { baseStyle.copy(color = CardDesignTokens.TextPrimary, fontFamily = it) } 
+            ?: baseStyle.copy(color = CardDesignTokens.TextPrimary)
 
         val maxHeight = with(androidx.compose.ui.platform.LocalDensity.current) {
             val verticalPadding = 40.dp // 20dp top + 20dp bottom
@@ -319,7 +322,7 @@ private fun ReadOnlyContentBox(
                     text = content.ifBlank { " " },
                     style = textStyle,
                     maxLines = Int.MAX_VALUE,
-                    overflow = TextOverflow.Ellipsis,
+                    overflow = TextOverflow.Clip,
                     textAlign = TextAlign.Center
                 )
             }
@@ -512,7 +515,8 @@ private fun ReplyCard(
                 ) {
                     ReadOnlyContentBox(
                         modifier = Modifier.fillMaxWidth(),
-                        content = data.content)
+                        content = data.content,
+                        fontFamily = data.fontFamily)
                 }
 
                 // 하단 태그 영역
@@ -533,7 +537,7 @@ private fun ReplyCard(
                             onFocusHandled = { },
                             currentInput = "",
                             onInputChange = { },
-                            fontFamily = FontFamily.Default
+                            fontFamily = data.fontFamily ?: FontFamily.Default
                         )
                     }
                 }

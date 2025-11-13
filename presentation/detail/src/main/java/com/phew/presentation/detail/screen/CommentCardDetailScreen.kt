@@ -39,6 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -90,6 +91,7 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -112,13 +114,28 @@ internal fun CommentCardDetailScreen(
         viewModel.requestComment(args.cardId)
     }
     
-    // WriteScreen에서 복귀 시 새로고침 처리
+    // WriteScreen에서 복귀 시에만 새로고침 처리
     val lifecycleOwner = LocalLifecycleOwner.current
+    var hasResumed by remember { mutableStateOf(false) }
+    
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                SooumLog.d(TAG, "CommentCardDetailScreen resumed - refreshing data")
-                viewModel.loadCardDetail(args.cardId)
+            when (event) {
+                Lifecycle.Event.ON_PAUSE -> {
+                    // 화면을 벗어날 때 flag 설정
+                    hasResumed = false
+                }
+                Lifecycle.Event.ON_RESUME -> {
+                    // 두 번째 Resume부터만 새로고침 (WriteScreen에서 복귀 시)
+                    if (hasResumed) {
+                        SooumLog.d(TAG, "CommentCardDetailScreen resumed from WriteScreen - refreshing data")
+                        viewModel.loadCardDetail(args.cardId)
+                        viewModel.requestComment(args.cardId)
+                    } else {
+                        hasResumed = true
+                    }
+                }
+                else -> {}
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -187,10 +204,20 @@ internal fun CommentCardDetailScreen(
     val unBlockMemberLambda = remember { { viewModel.unblockMember() } }
     val clearErrorLambda =
         remember { { viewModel.clearError() } }
+    var isManualRefreshing by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+    
     val onRefresh = remember(args.cardId) {
         {
+            isManualRefreshing = true
             viewModel.loadCardDetail(args.cardId)
             viewModel.requestComment(args.cardId)
+            // 새로고침 완료를 기다린 후 상태 초기화
+            coroutineScope.launch {
+                kotlinx.coroutines.delay(500) // 최소 500ms 표시
+                isManualRefreshing = false
+            }
+            Unit // 명시적으로 Unit 반환
         }
     }
     HandleBlockUser(
@@ -228,7 +255,7 @@ internal fun CommentCardDetailScreen(
         }
     ) { paddingValues ->
         PullToRefreshBox(
-            isRefreshing = uiState.isRefresh,
+            isRefreshing = isManualRefreshing,
             onRefresh = onRefresh,
             modifier = Modifier.fillMaxWidth(),
             state = refreshState,
@@ -241,8 +268,8 @@ internal fun CommentCardDetailScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     val progress =
-                        if (isRefreshing) refreshProgress else refreshState.distanceFraction
-                    if (isRefreshing || refreshState.distanceFraction > 0f) {
+                        if (isManualRefreshing) refreshProgress else refreshState.distanceFraction
+                    if (isManualRefreshing || refreshState.distanceFraction > 0f) {
                         LottieAnimation(
                             composition = composition,
                             progress = { progress },

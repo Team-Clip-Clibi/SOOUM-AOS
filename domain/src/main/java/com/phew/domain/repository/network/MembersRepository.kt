@@ -6,4 +6,5 @@ interface MembersRepository {
     suspend fun getActivityRestrictionDate(): Result<String?>
     suspend fun getTransferCode(): Result<TransferCode>
     suspend fun refreshTransferCode(): Result<TransferCode>
+    suspend fun transferAccount(transferCode: String): Result<Unit>
 }
