@@ -53,6 +53,7 @@ class CoreConvention : Plugin<Project> {
             add("implementation", libs.findLibrary("coil-compose").get())
             add("implementation", libs.findLibrary("coil-network").get())
             add("implementation", libs.findLibrary("compose-nav").get())
+            add("implementation", libs.findLibrary("lottie-compose").get())
             add("debugImplementation", libs.findLibrary("androidx-ui-tooling").get())
             add("debugImplementation", libs.findLibrary("androidx-ui-test-manifest").get())
             add("implementation", project(":core:core-common"))

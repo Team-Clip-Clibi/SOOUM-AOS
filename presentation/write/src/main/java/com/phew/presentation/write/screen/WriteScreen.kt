@@ -362,7 +362,7 @@ private fun WriteScreen(
             } else {
                 WriteR.string.write_screen_title
             }
-            AppBar.TextButtonAppBar(
+            AppBar.TextButtonAppBarText(
                 appBarText = stringResource(titleRes),
                 buttonText = stringResource(WriteR.string.write_screen_complete),
                 onButtonClick = onWriteComplete,

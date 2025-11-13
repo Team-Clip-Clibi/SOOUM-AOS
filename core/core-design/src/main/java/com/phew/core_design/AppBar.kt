@@ -318,7 +318,7 @@ object AppBar {
      *  TODO 추후 TopAppBar 에 통합 예정
      */
     @Composable
-    fun TextButtonAppBar(
+    fun TextButtonAppBarText(
         @DrawableRes image: Int = R.drawable.ic_left,
         onClick: () -> Unit,
         appBarText: String = "Title",

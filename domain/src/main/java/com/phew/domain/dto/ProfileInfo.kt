@@ -1,6 +1,6 @@
 package com.phew.domain.dto
 
-data class MyProfileInfo(
+data class ProfileInfo(
     val userId: Long,
     val nickname: String,
     val profileImgName: String,
@@ -10,4 +10,6 @@ data class MyProfileInfo(
     val cardCnt: Int,
     val followingCnt: Int,
     val followerCnt: Int,
+    val isBlocked: Boolean,
+    val isAlreadyFollowing: Boolean,
 )
