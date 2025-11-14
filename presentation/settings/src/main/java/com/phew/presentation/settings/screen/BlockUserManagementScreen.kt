@@ -243,7 +243,8 @@ private fun BlockUserItem(
 
         SmallButton.NoIconPrimary(
             buttonText = stringResource(R.string.block_user_diable),
-            onClick = onUnblockClick
+            onClick = onUnblockClick,
+            modifier = Modifier
         )
     }
 }

@@ -4,6 +4,7 @@ import com.phew.core_common.APP_ERROR_CODE
 import com.phew.core_common.DataResult
 import com.phew.core_common.HTTP_NOT_FOUND
 import com.phew.core_common.HTTP_SUCCESS
+import com.phew.core_common.HTTP_NO_MORE_CONTENT
 import com.phew.domain.dto.CardDefaultImagesResponse
 import com.phew.domain.dto.CardImageDefault
 import com.phew.domain.dto.CheckedBaned
@@ -90,6 +91,8 @@ class CardFeedRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 val latestList = response.body()?.map { it.toDomain() } ?: emptyList()
                 DataResult.Success(latestList)
+            } else if (response.code() == HTTP_NO_MORE_CONTENT) {
+                DataResult.Success(emptyList())
             } else {
                 DataResult.Fail(
                     code = response.code(),
@@ -125,11 +128,14 @@ class CardFeedRepositoryImpl @Inject constructor(
                     lastId = lastId
                 )
             }
-            if (!response.isSuccessful) {
+            if (response.isSuccessful) {
+                val result = response.body()?.map { data -> data.toDomain() } ?: emptyList()
+                return DataResult.Success(result)
+            } else if (response.code() == HTTP_NO_MORE_CONTENT) {
+                return DataResult.Success(emptyList())
+            } else {
                 return DataResult.Fail(code = response.code(), message = response.message())
             }
-            val result = response.body()?.map { data -> data.toDomain() } ?: emptyList()
-            return DataResult.Success(result)
         } catch (e: Exception) {
             e.printStackTrace()
             return DataResult.Fail(

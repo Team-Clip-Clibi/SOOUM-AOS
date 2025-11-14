@@ -74,6 +74,7 @@ fun NavGraphBuilder.feedGraph(
             }
             FeedView(
                 viewModel = homeViewModel,
+                navController = navController,
                 finish = onBackPressed,
                 requestPermission = {
                     homeViewModel.onPermissionRequest(

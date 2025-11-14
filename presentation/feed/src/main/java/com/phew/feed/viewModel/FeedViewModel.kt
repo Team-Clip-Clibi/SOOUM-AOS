@@ -23,6 +23,7 @@ import com.phew.domain.usecase.CheckLocationPermission
 import com.phew.domain.usecase.CreateImageFile
 import com.phew.domain.usecase.FinishTakePicture
 import com.phew.domain.usecase.GetFeedNotification
+import com.phew.domain.usecase.GetLatestFeed
 import com.phew.domain.usecase.GetNotification
 import com.phew.domain.usecase.GetReadNotification
 import com.phew.domain.usecase.GetUnReadNotification
@@ -36,6 +37,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -48,6 +50,7 @@ class HomeViewModel @Inject constructor(
     getNotificationPage: GetNotification,
     getUnReadNotification: GetUnReadNotification,
     getReadNotification: GetReadNotification,
+    private val getLatestFeed: GetLatestFeed,
     private val cardFeedRepository: CardFeedRepository,
     private val deviceRepository: DeviceRepository,
     private val notification: GetFeedNotification,
@@ -111,6 +114,10 @@ class HomeViewModel @Inject constructor(
 
     private fun loadInitialFeeds() {
         viewModelScope.launch {
+            // Location 초기 설정
+            val location = getLocationSafely()
+            _latestFeedLocation.value = location.latitude.takeIf { it != 0.0 } to location.longitude.takeIf { it != 0.0 }
+            
             _uiState.update { it.copy(latestPagingState = FeedPagingState.Loading) }
             loadLatestFeeds(isInitial = true)
         }
@@ -121,6 +128,14 @@ class HomeViewModel @Inject constructor(
         getUnReadNotification().cachedIn(viewModelScope)
     val readNotification: Flow<PagingData<Notification>> =
         getReadNotification().cachedIn(viewModelScope)
+
+    // Latest Feed Paging
+    private val _latestFeedLocation = MutableStateFlow<Pair<Double?, Double?>>(null to null)
+    val latestFeedPaging: Flow<PagingData<Latest>> = _latestFeedLocation
+        .flatMapLatest { (latitude, longitude) ->
+            getLatestFeed(latitude, longitude)
+        }
+        .cachedIn(viewModelScope)
 
     /**
      * 권한 요청
@@ -155,6 +170,8 @@ class HomeViewModel @Inject constructor(
             _uiState.update { state ->
                 state.copy(location = location, currentTab = FeedType.Distance)
             }
+            // Latest feed location도 업데이트
+            _latestFeedLocation.value = location.latitude.takeIf { it != 0.0 } to location.longitude.takeIf { it != 0.0 }
         }
     }
 
@@ -293,7 +310,7 @@ class HomeViewModel @Inject constructor(
                                 location = location,
                                 popularPagingState = FeedPagingState.Success(
                                     feedCards = existingCards + newFeedCards,
-                                    hasNextPage = result.data.isNotEmpty(),
+                                    hasNextPage = false, // Popular는 페이징이 없음
                                     lastId = null // Popular는 페이징이 없으므로 null
                                 )
                             )
