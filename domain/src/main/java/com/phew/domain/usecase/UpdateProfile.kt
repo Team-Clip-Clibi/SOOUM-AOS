@@ -31,15 +31,31 @@ class UpdateProfile @Inject constructor(
         val nickName: String?,
         val imgName: String?,
         val profileImage: String?,
-        val isImageChange: Boolean,
+        val isImageChange: Boolean
     )
 
     suspend operator fun invoke(param: Param): DomainResult<Unit, String> {
         when (param.isImageChange) {
+            //이미지 변경이 없을 시
+            false -> {
+                val request = repository.requestUpdateProfile(
+                    nickName = param.nickName,
+                    profileImageName = param.imgName
+                )
+                return handleResult(request = request)
+            }
+            // 이미지 변경이 있을 시
             true -> {
+                //이미지 변경은 있지만 Default Image 사용 시
+                if (param.profileImage == null) {
+                    val request = repository.requestUpdateProfile(
+                        nickName = param.nickName,
+                        profileImageName = null
+                    )
+                    return handleResult(request = request)
+                }
                 val requestImageUrl = repository.requestUploadImageUrl()
                 if (requestImageUrl is DataResult.Fail) return DomainResult.Failure(ERROR_NETWORK)
-                if(param.profileImage == null) return DomainResult.Failure(ERROR_FAIL_JOB)
                 val file = try {
                     contextResolver.readAsCompressedJpegRequestBody(uri = param.profileImage.toUri())
                 } catch (e: Exception) {
@@ -62,47 +78,27 @@ class UpdateProfile @Inject constructor(
                     }
                 }
                 val requestUpdateProfile = repository.requestUpdateProfile(
-                    nickName = param.nickName,
+                    nickName = null,
                     profileImageName = requestImageUrl.data.imgName
                 )
-                return when (requestUpdateProfile) {
-                    is DataResult.Fail -> {
-                        when (requestUpdateProfile.code) {
-                            HTTP_INVALID_TOKEN -> DomainResult.Failure(ERROR_LOGOUT)
-                            HTTP_NOT_FOUND -> DomainResult.Failure(ERROR_NETWORK)
-                            else -> DomainResult.Failure(ERROR_FAIL_JOB)
-                        }
-                    }
-
-                    is DataResult.Success -> {
-                        DomainResult.Success(Unit)
-                    }
-                }
-            }
-
-            false -> {
-                if (param.imgName == null) return DomainResult.Failure(ERROR_FAIL_JOB)
-                val requestUpdateProfile = repository.requestUpdateProfile(
-                    nickName = param.nickName,
-                    profileImageName = param.imgName
-                )
-                return when (requestUpdateProfile) {
-                    is DataResult.Fail -> {
-                        when (requestUpdateProfile.code) {
-                            HTTP_INVALID_TOKEN -> DomainResult.Failure(ERROR_LOGOUT)
-                            HTTP_NOT_FOUND -> DomainResult.Failure(ERROR_NETWORK)
-                            else -> DomainResult.Failure(ERROR_FAIL_JOB)
-                        }
-                    }
-
-                    is DataResult.Success -> {
-                        DomainResult.Success(Unit)
-                    }
-                }
+                return handleResult(request = requestUpdateProfile)
             }
         }
     }
 
+    private fun handleResult(request: DataResult<Unit>): DomainResult<Unit, String> {
+        return when (request) {
+            is DataResult.Fail -> {
+                when (request.code) {
+                    HTTP_INVALID_TOKEN -> DomainResult.Failure(ERROR_LOGOUT)
+                    HTTP_NOT_FOUND -> DomainResult.Failure(ERROR_NETWORK)
+                    else -> DomainResult.Failure(ERROR_FAIL_JOB)
+                }
+            }
+
+            is DataResult.Success -> DomainResult.Success(Unit)
+        }
+    }
 
     private fun ContentResolver.readAsCompressedJpegRequestBody(
         uri: Uri,

@@ -162,7 +162,7 @@ class ProfileRepositoryImpl @Inject constructor(private val http: ProfileHttp) :
 
     override suspend fun requestUpdateProfile(
         nickName: String?,
-        profileImageName: String,
+        profileImageName: String?,
     ): DataResult<Unit> {
         return apiCall(
             apiCall = {

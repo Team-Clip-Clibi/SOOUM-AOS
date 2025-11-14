@@ -82,8 +82,6 @@ class NetworkConvention : Plugin<Project> {
                 val otherProfile: String = properties.getProperty("api_url_other_profile", "")
                 val follow : String = properties.getProperty("api_url_follow" , "")
                 val unFollow : String = properties.getProperty("api_url_un_follow","")
-                val block : String = properties.getProperty("api_url_block","")
-                val unBlock: String = properties.getProperty("api_url_un_block", "")
                 val updateProfile : String = properties.getProperty("api_url_update_profile" ,"")
 
                 buildConfigField("String", "BASE_URL", baseUrl)
@@ -134,8 +132,6 @@ class NetworkConvention : Plugin<Project> {
                 buildConfigField("String", "API_URL_OTHER_PROFILE", otherProfile)
                 buildConfigField("String", "API_URL_FOLLOW_USER", follow)
                 buildConfigField("String", "API_URL_UN_FOLLOW_USER", unFollow)
-                buildConfigField("String", "API_URL_BLOCK", block)
-                buildConfigField("String", "API_URL_UN_BLOCK", unBlock)
                 buildConfigField("String", "API_URL_UPDATE_PROFILE", updateProfile)
             }
             buildFeatures.buildConfig = true

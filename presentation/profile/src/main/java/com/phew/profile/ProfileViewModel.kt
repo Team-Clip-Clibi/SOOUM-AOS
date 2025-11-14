@@ -219,9 +219,16 @@ class ProfileViewModel @Inject constructor(
             when (val result = updateProfile(
                 UpdateProfile.Param(
                     nickName = if (_uiState.value.changeNickName == (_uiState.value.profileInfo as UiState.Success).data.nickname) null else _uiState.value.changeNickName,
-                    imgName = if (_uiState.value.newProfileImageUri == Uri.EMPTY) (_uiState.value.profileInfo as UiState.Success).data.profileImgName else "",
-                    profileImage = (if (_uiState.value.defaultImage) null else if (_uiState.value.newProfileImageUri == Uri.EMPTY) (_uiState.value.profileInfo as UiState.Success).data.profileImgName else _uiState.value.newProfileImageUri).toString(),
-                    isImageChange = _uiState.value.newProfileImageUri != Uri.EMPTY
+                    imgName = when {
+                        !_uiState.value.defaultImage && !_uiState.value.useAlbum && !_uiState.value.useCamera -> (_uiState.value.profileInfo as UiState.Success).data.profileImgName
+                        else -> ""
+                    },
+                    profileImage = when {
+                        _uiState.value.defaultImage -> null
+                        !_uiState.value.imageChange -> (_uiState.value.profileInfo as UiState.Success).data.profileImgName
+                        else -> _uiState.value.newProfileImageUri.toString()
+                    },
+                    isImageChange = _uiState.value.imageChange
                 )
             )) {
                 is DomainResult.Failure -> {
@@ -269,7 +276,8 @@ class ProfileViewModel @Inject constructor(
             state.copy(
                 useAlbum = true,
                 useCamera = false,
-                defaultImage = false
+                defaultImage = false,
+                imageChange = true
             )
         }
     }
@@ -279,7 +287,8 @@ class ProfileViewModel @Inject constructor(
             state.copy(
                 useAlbum = false,
                 useCamera = true,
-                defaultImage = false
+                defaultImage = false,
+                imageChange = true
             )
         }
     }
@@ -290,7 +299,8 @@ class ProfileViewModel @Inject constructor(
                 defaultImage = true,
                 useAlbum = false,
                 useCamera = false,
-                changeProfile = true
+                changeProfile = true,
+                imageChange = true
             )
         }
     }
@@ -365,7 +375,7 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun onProfileCameraCaptureLaunched(request: CameraCaptureRequest) {
+    fun onProfileCameraCaptureLaunched() {
         _uiState.update { state ->
             state.copy(pendingProfileCameraCapture = null)
         }
@@ -379,7 +389,8 @@ class ProfileViewModel @Inject constructor(
                 errorMessage = "",
                 useCamera = false,
                 useAlbum = false,
-                defaultImage = false
+                defaultImage = false,
+                updateProfile = UiState.Loading
             )
         }
     }
@@ -406,6 +417,7 @@ data class Profile(
     var newProfileImageUri: Uri = Uri.EMPTY,
     val errorMessage: String = "",
     val changeProfile: Boolean = false,
+    val imageChange : Boolean = false,
 )
 
 sealed interface UiState<out T> {

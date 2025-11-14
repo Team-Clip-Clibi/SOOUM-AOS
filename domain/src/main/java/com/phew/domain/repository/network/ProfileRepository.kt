@@ -36,5 +36,5 @@ interface ProfileRepository {
     suspend fun requestUnBlockUser(profileId: Long): DataResult<Boolean>
     suspend fun requestUploadImageUrl(): DataResult<UploadImageUrl>
     suspend fun requestUploadImage(uri: String, body: RequestBody): DataResult<Unit>
-    suspend fun requestUpdateProfile(nickName: String?, profileImageName: String): DataResult<Unit>
+    suspend fun requestUpdateProfile(nickName: String?, profileImageName: String?): DataResult<Unit>
 }

@@ -44,7 +44,7 @@ class PagingFollower(
                     return LoadResult.Page(
                         data = sortedList,
                         prevKey = null,
-                        nextKey = request.data.second.last().memberId
+                        nextKey = request.data.second.last().followId
                     )
                 }
             }

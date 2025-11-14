@@ -65,7 +65,10 @@ internal fun EditProfileScreen(viewModel: ProfileViewModel, onBackPress: () -> U
     } else {
         arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
     }
-    ObserverUpdateState(updateProfile = uiState.updateProfile ,onBackPress = onBackPress , snackbarHostState = snackBarHostState)
+    ObserverUpdateState(updateProfile = uiState.updateProfile, onBackPress = {
+        viewModel.initEditProfile()
+        onBackPress()
+    }, snackbarHostState = snackBarHostState)
     CameraPickerEffect(
         effectState = CameraPickerEffectState(
             launchAlbum = uiState.useAlbum,
@@ -81,7 +84,9 @@ internal fun EditProfileScreen(viewModel: ProfileViewModel, onBackPress: () -> U
         },
         cameraPermissions = arrayOf(Manifest.permission.CAMERA),
         albumPermissions = albumPermissions,
-        onCameraCaptureLaunched = viewModel::onProfileCameraCaptureLaunched,
+        onCameraCaptureLaunched = { _ ->
+            viewModel.onProfileCameraCaptureLaunched()
+        }
     )
 
     Scaffold(
@@ -113,7 +118,7 @@ internal fun EditProfileScreen(viewModel: ProfileViewModel, onBackPress: () -> U
                     .padding(vertical = 12.dp, horizontal = 16.dp)
             ) {
                 LargeButton.NoIconPrimary(
-                    isEnable = !uiState.changeNickName.isNullOrEmpty() && uiState.changeProfile,
+                    isEnable = uiState.changeProfile,
                     buttonText = stringResource(com.phew.core_design.R.string.btn_save),
                     onClick = remember(viewModel) { { viewModel.update() } }
                 )
