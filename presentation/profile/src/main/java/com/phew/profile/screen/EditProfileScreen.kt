@@ -1,8 +1,11 @@
 package com.phew.profile.screen
 
+import android.Manifest
+import android.net.Uri
+import android.os.Build
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -14,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -28,6 +32,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.phew.core.ui.component.camera.CameraPickerEffect
+import com.phew.core.ui.model.CameraPickerEffectState
 import com.phew.core_design.AppBar
 import com.phew.core_design.AvatarComponent
 import com.phew.core_design.BottomSheetComponent
@@ -43,16 +49,50 @@ import com.phew.profile.ITEM_PICTURE
 import com.phew.profile.ProfileViewModel
 import com.phew.profile.R
 import com.phew.profile.UiState
+import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
+import com.phew.core_common.ERROR_LOGOUT
+import com.phew.core_common.ERROR_NETWORK
+import com.phew.core_design.TextComponent
 
 @Composable
 internal fun EditProfileScreen(viewModel: ProfileViewModel, onBackPress: () -> Unit) {
     val snackBarHostState = remember { SnackbarHostState() }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var bottomSheetView by remember { mutableStateOf(false) }
+    val albumPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        arrayOf(Manifest.permission.READ_MEDIA_IMAGES)
+    } else {
+        arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+    }
+    ObserverUpdateState(updateProfile = uiState.updateProfile ,onBackPress = onBackPress , snackbarHostState = snackBarHostState)
+    CameraPickerEffect(
+        effectState = CameraPickerEffectState(
+            launchAlbum = uiState.useAlbum,
+            requestCameraPermission = uiState.useCamera,
+            pendingCapture = uiState.pendingProfileCameraCapture
+        ),
+        onAlbumRequestConsumed = viewModel::onProfileAlbumRequestConsumed,
+        onAlbumPicked = viewModel::onAlbumPicked,
+        onCameraPermissionRequestConsumed = viewModel::onProfileCameraPermissionRequestConsumed,
+        onCameraPermissionResult = viewModel::onProfileCameraPermissionResult,
+        onCameraCaptureResult = { success, uri ->
+            viewModel.closeFile(success = success, data = uri)
+        },
+        cameraPermissions = arrayOf(Manifest.permission.CAMERA),
+        albumPermissions = albumPermissions,
+        onCameraCaptureLaunched = viewModel::onProfileCameraCaptureLaunched,
+    )
+
     Scaffold(
         topBar = {
             AppBar.IconLeftAppBar(
-                onClick = remember(onBackPress) { { onBackPress() } },
+                onClick = remember(onBackPress, viewModel) {
+                    {
+                        onBackPress()
+                        viewModel.initEditProfile()
+                    }
+                },
                 appBarText = stringResource(R.string.edit_profile_top_bar)
             )
         },
@@ -73,9 +113,9 @@ internal fun EditProfileScreen(viewModel: ProfileViewModel, onBackPress: () -> U
                     .padding(vertical = 12.dp, horizontal = 16.dp)
             ) {
                 LargeButton.NoIconPrimary(
-                    isEnable = uiState.changeNickName.isNotEmpty(),
+                    isEnable = !uiState.changeNickName.isNullOrEmpty() && uiState.changeProfile,
                     buttonText = stringResource(com.phew.core_design.R.string.btn_save),
-                    onClick = {}
+                    onClick = remember(viewModel) { { viewModel.update() } }
                 )
             }
         }) { paddingValues ->
@@ -88,32 +128,45 @@ internal fun EditProfileScreen(viewModel: ProfileViewModel, onBackPress: () -> U
             is UiState.Success -> {
                 ChangeProfileView(
                     paddingValues = paddingValues,
-                    imageUrl = result.data.profileImageUrl,
-                    nickName = if (uiState.changeNickName.isEmpty()) result.data.nickname else uiState.nickname,
+                    imageUrl = if (uiState.newProfileImageUri == Uri.EMPTY) result.data.profileImageUrl else uiState.newProfileImageUri.toString(),
+                    nickName = uiState.changeNickName ?: result.data.nickname,
                     onAvatarClick = { bottomSheetView = true },
                     onValueChange = remember(viewModel::changeNickName) {
                         viewModel::changeNickName
                     },
-                    hint = when {
-                        uiState.changeNickName.length < 2 -> stringResource(R.string.edit_profile_nickName_helper_one_more)
-                        uiState.nickNameHint is UiState.Success -> {
-                            if (!(uiState.nickNameHint as UiState.Success<Boolean>).data) {
-                                stringResource(R.string.edit_profile_nickName_helper_error)
-                            } else {
-                                stringResource(R.string.edit_profile_nickName_helper)
-                            }
+                    hint = stringResource(
+                        when {
+                            uiState.changeNickName == null -> R.string.edit_profile_nickName_helper
+                            uiState.changeNickName!!.length < 2 -> R.string.edit_profile_nickName_helper_one_more
+                            (uiState.nickNameHint as? UiState.Success<Boolean>)?.data == false -> R.string.edit_profile_nickName_helper_error
+                            else -> R.string.edit_profile_nickName_helper
                         }
-
-                        else -> stringResource(R.string.edit_profile_nickName_helper)
-                    },
+                    ),
                     showError = if (uiState.nickNameHint is UiState.Success) !(uiState.nickNameHint as UiState.Success<Boolean>).data else false,
                 )
                 CameraPickerBottomSheet(
                     visible = bottomSheetView,
-                    albumClick = {},
-                    cameraClick = {},
-                    defaultClick = {},
-                    onDismiss = { bottomSheetView = false },
+                    albumClick = remember(viewModel) {
+                        {
+                            viewModel.selectAlbum()
+                            bottomSheetView = false
+                        }
+                    },
+                    cameraClick = remember(viewModel) {
+                        {
+
+                            viewModel.selectCamera()
+                            bottomSheetView = false
+
+                        }
+                    },
+                    defaultClick = remember(viewModel) {
+                        {
+                            viewModel.selectDefaultImage()
+                            bottomSheetView = false
+                        }
+                    },
+                    onDismiss = remember { { bottomSheetView = false } },
                     profileImage = result.data.profileImageUrl
                 )
             }
@@ -141,7 +194,8 @@ private fun ChangeProfileView(
                 start = 16.dp,
                 end = 16.dp
             )
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         AvatarComponent.LargeAvatar(
             url = imageUrl.toUri(),
@@ -149,13 +203,9 @@ private fun ChangeProfileView(
         )
         Spacer(modifier = Modifier.height(40.dp))
         TextFiledComponent.RightIcon(
-            rightImageClick = {
-                onValueChange("")
-            },
+            rightImageClick = remember(onValueChange) { { onValueChange("") } },
             value = nickName,
-            onValueChange = { input ->
-                onValueChange(input)
-            },
+            onValueChange = remember(onValueChange) { { input -> onValueChange(input) } },
             helperUse = true,
             helperText = hint,
             showError = showError
@@ -212,10 +262,12 @@ private fun CameraPickerBottomSheet(
 
 @Composable
 private fun ErrorView(errorMessage: String) {
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(color = NeutralColor.WHITE)
+            .background(color = NeutralColor.WHITE),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
             painter = painterResource(com.phew.core_design.R.drawable.ic_deleted_card),
@@ -223,7 +275,44 @@ private fun ErrorView(errorMessage: String) {
             modifier = Modifier
                 .height(130.dp)
                 .width(220.dp)
-                .align(Alignment.Center)
         )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = errorMessage,
+            style = TextComponent.BODY_1_M_14
+        )
+    }
+}
+
+@Composable
+private fun ObserverUpdateState(
+    updateProfile: UiState<Unit>,
+    onBackPress: () -> Unit,
+    snackbarHostState: SnackbarHostState,
+) {
+    when (updateProfile) {
+        is UiState.Fail -> {
+            val message = when (updateProfile.errorMessage) {
+                ERROR_NETWORK -> stringResource(com.phew.core_design.R.string.error_network)
+                ERROR_LOGOUT -> stringResource(com.phew.core_design.R.string.error_log_out)
+                else -> stringResource(com.phew.core_design.R.string.error_app)
+            }
+            LaunchedEffect(updateProfile.errorMessage) {
+                snackbarHostState.showSnackbar(
+                    message = message,
+                    duration = SnackbarDuration.Short
+                )
+                if (updateProfile.errorMessage == ERROR_LOGOUT) {
+                    onBackPress()
+                    return@LaunchedEffect
+                }
+            }
+        }
+
+        is UiState.Success -> {
+            onBackPress()
+        }
+
+        else -> Unit
     }
 }

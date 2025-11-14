@@ -1,14 +1,18 @@
 package com.phew.profile
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import com.phew.core.ui.model.CameraCaptureRequest
 import com.phew.core_common.DomainResult
 import com.phew.domain.dto.FollowData
 import com.phew.domain.dto.ProfileInfo
 import com.phew.domain.dto.ProfileCard
 import com.phew.domain.usecase.CheckNickName
+import com.phew.domain.usecase.CreateImageFile
+import com.phew.domain.usecase.FinishTakePicture
 import com.phew.domain.usecase.GetFollower
 import com.phew.domain.usecase.GetFollowing
 import com.phew.domain.usecase.GetMyProfileInfo
@@ -19,6 +23,7 @@ import com.phew.domain.usecase.SendBlockUser
 import com.phew.domain.usecase.SendFollowUser
 import com.phew.domain.usecase.SendUnBlockUser
 import com.phew.domain.usecase.SendUnFollowUser
+import com.phew.domain.usecase.UpdateProfile
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -43,6 +48,9 @@ class ProfileViewModel @Inject constructor(
     private val blockUser: SendBlockUser,
     private val unBlockUser: SendUnBlockUser,
     private val checkNickName: CheckNickName,
+    private val createFile: CreateImageFile,
+    private val finishPhoto: FinishTakePicture,
+    private val updateProfile: UpdateProfile,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(Profile())
     val uiState: StateFlow<Profile> = _uiState.asStateFlow()
@@ -205,6 +213,33 @@ class ProfileViewModel @Inject constructor(
         _uiState.update { state -> state.copy(userId = data.memberId, nickname = data.nickname) }
     }
 
+    fun update() {
+        if (!_uiState.value.changeProfile) return
+        viewModelScope.launch(Dispatchers.IO) {
+            when (val result = updateProfile(
+                UpdateProfile.Param(
+                    nickName = if (_uiState.value.changeNickName != null && _uiState.value.changeProfile) _uiState.value.changeNickName else _uiState.value.nickname,
+                    imgName = if (_uiState.value.newProfileImageUri == Uri.EMPTY) (_uiState.value.profileInfo as UiState.Success).data.profileImgName else "",
+                    profileImage = if (_uiState.value.newProfileImageUri == Uri.EMPTY) (_uiState.value.profileInfo as UiState.Success).data.profileImageUrl else _uiState.value.newProfileImageUri.toString(),
+                    isImageChange = _uiState.value.newProfileImageUri != Uri.EMPTY
+                )
+            )) {
+                is DomainResult.Failure -> {
+                    _uiState.update { state -> state.copy(updateProfile = UiState.Fail(result.error)) }
+                }
+
+                is DomainResult.Success -> {
+                    _uiState.update { state ->
+                        state.copy(
+                            updateProfile = UiState.Success(Unit),
+                        )
+                    }
+                    myProfile()
+                }
+            }
+        }
+    }
+
     fun changeNickName(data: String) {
         _uiState.update { state ->
             state.copy(changeNickName = data)
@@ -213,19 +248,140 @@ class ProfileViewModel @Inject constructor(
             when (val result = checkNickName(CheckNickName.Param(data))) {
                 is DomainResult.Failure -> {
                     _uiState.update { state ->
-                        state.copy(nickNameHint = UiState.Fail(result.error))
+                        state.copy(nickNameHint = UiState.Fail(result.error), changeProfile = false)
                     }
                 }
 
                 is DomainResult.Success -> {
                     _uiState.update { state ->
-                        state.copy(nickNameHint = UiState.Success(result.data))
+                        state.copy(
+                            nickNameHint = UiState.Success(result.data),
+                            changeProfile = result.data
+                        )
                     }
                 }
             }
         }
     }
 
+    fun selectAlbum() {
+        _uiState.update { state ->
+            state.copy(
+                useAlbum = true,
+                useCamera = false,
+                defaultImage = false
+            )
+        }
+    }
+
+    fun selectCamera() {
+        _uiState.update { state ->
+            state.copy(
+                useAlbum = false,
+                useCamera = true,
+                defaultImage = false
+            )
+        }
+    }
+
+    fun selectDefaultImage() {
+        _uiState.update { state ->
+            state.copy(
+                defaultImage = true,
+                useAlbum = false,
+                useCamera = false
+            )
+        }
+    }
+
+    fun onProfileAlbumRequestConsumed() {
+        _uiState.update { state ->
+            state.copy(useAlbum = false)
+        }
+    }
+
+    fun onProfileCameraPermissionRequestConsumed() {
+        _uiState.update { state -> state.copy(useCamera = false) }
+    }
+
+    fun onAlbumPicked(uri: Uri) {
+        _uiState.update {
+            it.copy(
+                newProfileImageUri = uri,
+                defaultImage = false,
+                changeProfile = true
+            )
+        }
+    }
+
+    fun onProfileCameraPermissionResult(granted: Boolean) {
+        if (!granted) return
+        viewModelScope.launch(Dispatchers.IO) {
+            when (val result = createFile()) {
+                is DomainResult.Failure -> {
+                    _uiState.update { state ->
+                        state.copy(errorMessage = result.error, changeProfile = false)
+                    }
+                }
+
+                is DomainResult.Success -> {
+                    _uiState.update { state ->
+                        state.copy(
+                            pendingProfileCameraCapture = CameraCaptureRequest(
+                                id = System.currentTimeMillis(),
+                                uri = result.data
+                            ),
+                            changeProfile = true
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    fun closeFile(data: Uri, success: Boolean) {
+        if (!success) return
+        viewModelScope.launch(Dispatchers.IO) {
+            when (val result = finishPhoto(FinishTakePicture.Param(data))) {
+                is DomainResult.Failure -> {
+                    _uiState.update { state ->
+                        state.copy(
+                            errorMessage = result.error,
+                            changeProfile = false
+                        )
+                    }
+                }
+
+                is DomainResult.Success -> {
+                    _uiState.update { state ->
+                        state.copy(
+                            newProfileImageUri = result.data,
+                            changeProfile = true
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    fun onProfileCameraCaptureLaunched(request: CameraCaptureRequest) {
+        _uiState.update { state ->
+            state.copy(pendingProfileCameraCapture = null)
+        }
+    }
+    fun initEditProfile(){
+        _uiState.update { state ->
+            state.copy(
+                pendingProfileCameraCapture = null,
+                changeNickName = null,
+                newProfileImageUri = Uri.EMPTY,
+                errorMessage = "",
+                useCamera = false,
+                useAlbum = false,
+                defaultImage = false
+            )
+        }
+    }
 }
 
 data class Profile(
@@ -235,12 +391,20 @@ data class Profile(
     val follow: Flow<PagingData<FollowData>> = emptyFlow(),
     val following: Flow<PagingData<FollowData>> = emptyFlow(),
     val event: UiState<Unit> = UiState.Success(Unit),
+    val updateProfile : UiState<Unit> = UiState.Loading,
     val isRefreshing: Boolean = false,
     val userId: Long = 0L,
     val nickname: String = "",
     val otherProfileId: Long = 0L,
-    val nickNameHint : UiState<Boolean> = UiState.Loading,
-    var changeNickName : String = ""
+    val nickNameHint: UiState<Boolean> = UiState.Loading,
+    val pendingProfileCameraCapture: CameraCaptureRequest? = null,
+    val useAlbum: Boolean = false,
+    val useCamera: Boolean = false,
+    val defaultImage: Boolean = false,
+    var changeNickName: String? = null,
+    var newProfileImageUri: Uri = Uri.EMPTY,
+    val errorMessage: String = "",
+    val changeProfile: Boolean = false,
 )
 
 sealed interface UiState<out T> {
