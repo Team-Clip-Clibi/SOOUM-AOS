@@ -13,6 +13,7 @@ import com.phew.domain.dto.FeedCardType
 import com.phew.domain.dto.Latest
 import com.phew.domain.dto.Location
 import com.phew.domain.dto.Notice
+import com.phew.domain.dto.NoticeSource
 import com.phew.domain.dto.Notification
 import com.phew.domain.dto.Notify
 import com.phew.domain.dto.Popular
@@ -115,7 +116,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    val notice: Flow<PagingData<Notice>> = getNotificationPage().cachedIn(viewModelScope)
+    val notice: Flow<PagingData<Notice>> = getNotificationPage(NoticeSource.NOTIFICATION).cachedIn(viewModelScope)
     val unReadNotification: Flow<PagingData<Notification>> =
         getUnReadNotification().cachedIn(viewModelScope)
     val readNotification: Flow<PagingData<Notification>> =
@@ -159,7 +160,7 @@ class HomeViewModel @Inject constructor(
 
     private fun getFeedNotice() {
         viewModelScope.launch(Dispatchers.IO) {
-            when (val request = notification()) {
+            when (val request = notification(NoticeSource.NOTIFICATION)) {
                 is DomainResult.Failure -> {
                     _uiState.update { state -> state.copy(feedNotification = UiState.Fail(request.error)) }
                 }

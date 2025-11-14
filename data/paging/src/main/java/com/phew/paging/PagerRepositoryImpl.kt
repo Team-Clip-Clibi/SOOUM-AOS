@@ -6,11 +6,13 @@ import androidx.paging.PagingData
 import com.phew.domain.dto.CardComment
 import com.phew.domain.dto.FollowData
 import com.phew.domain.dto.Notice
+import com.phew.domain.dto.NoticeSource
 import com.phew.domain.dto.Notification
 import com.phew.domain.dto.ProfileCard
 import com.phew.domain.model.BlockMember
 import com.phew.domain.repository.PagerRepository
 import com.phew.domain.repository.network.CardDetailRepository
+import com.phew.domain.repository.network.NotifyRepository
 import com.phew.domain.repository.network.ProfileRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
@@ -23,9 +25,10 @@ class PagerRepositoryImpl @Inject constructor(
     private val blockListPagingSourceProvider: Provider<BlockListPagingSource>,
     private val cardDetailRepository: CardDetailRepository,
     private val profileRepository: ProfileRepository,
+    private val notifyRepository: NotifyRepository,
 ) : PagerRepository {
-    override fun noticePageStream(): Flow<PagingData<Notice>> =
-        Pager(PagingConfig(pageSize = 30)) { pagingNotifyProvider.get() }.flow
+    override fun noticePageStream(source: NoticeSource): Flow<PagingData<Notice>> =
+        Pager(PagingConfig(pageSize = 30)) { PagingNotify(notifyRepository, source) }.flow
 
     override fun notificationUnRead(): Flow<PagingData<Notification>> = Pager(
         PagingConfig(pageSize = 30)

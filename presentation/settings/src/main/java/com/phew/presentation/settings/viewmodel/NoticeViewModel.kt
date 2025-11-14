@@ -6,6 +6,7 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.phew.core_common.DomainResult
 import com.phew.domain.dto.Notice
+import com.phew.domain.dto.NoticeSource
 import com.phew.domain.usecase.GetFeedNotification
 import com.phew.domain.usecase.GetNotification
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -32,7 +33,7 @@ class NoticeViewModel @Inject constructor(
     private val _navigationEvent = MutableSharedFlow<NoticeNavigationEvent>()
     val navigationEvent: SharedFlow<NoticeNavigationEvent> = _navigationEvent.asSharedFlow()
 
-    val notice: Flow<PagingData<Notice>> = getNotificationPage().cachedIn(viewModelScope)
+    val notice: Flow<PagingData<Notice>> = getNotificationPage(NoticeSource.SETTINGS).cachedIn(viewModelScope)
 
     init {
         getFeedNotice()
@@ -42,7 +43,7 @@ class NoticeViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { it.copy(isLoading = true) }
             
-            when (val request = notification()) {
+            when (val request = notification(NoticeSource.SETTINGS)) {
                 is DomainResult.Failure -> {
                     _uiState.update { 
                         it.copy(

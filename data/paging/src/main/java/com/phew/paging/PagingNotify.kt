@@ -6,12 +6,14 @@ import com.phew.core_common.DataResult
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.HTTP_INVALID_TOKEN
 import com.phew.domain.dto.Notice
+import com.phew.domain.dto.NoticeSource
 import com.phew.domain.repository.network.NotifyRepository
 import java.io.IOException
 import javax.inject.Inject
 
 class PagingNotify @Inject constructor(
     private val notifyRepository: NotifyRepository,
+    private val source: NoticeSource = NoticeSource.SETTINGS,
 ) : PagingSource<Int, Notice>() {
 
     override fun getRefreshKey(state: PagingState<Int, Notice>): Int? {
@@ -26,9 +28,9 @@ class PagingNotify @Inject constructor(
 
         return try {
             val result = if (key == -1) {
-                notifyRepository.requestNotice(pageSize = 30)
+                notifyRepository.requestNotice(pageSize = 30, source = source)
             } else {
-                notifyRepository.requestNoticePatch(lastId = key, pageSize = 30)
+                notifyRepository.requestNoticePatch(lastId = key, pageSize = 30, source = source)
             }
 
             when (result) {
