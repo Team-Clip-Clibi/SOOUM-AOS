@@ -303,7 +303,7 @@ private fun MyProfileView(
                 )
             }
             AsyncImage(
-                model = profile.profileImageUrl.ifEmpty { com.phew.core_design.R.drawable.ic_profile },
+                model = if (profile.profileImgName.isEmpty() || profile.profileImageUrl.isEmpty()) com.phew.core_design.R.drawable.ic_profile else profile.profileImageUrl,
                 contentDescription = "profile image",
                 modifier = Modifier
                     .size(60.dp)

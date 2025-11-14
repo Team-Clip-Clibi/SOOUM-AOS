@@ -128,7 +128,11 @@ internal fun EditProfileScreen(viewModel: ProfileViewModel, onBackPress: () -> U
             is UiState.Success -> {
                 ChangeProfileView(
                     paddingValues = paddingValues,
-                    imageUrl = if (uiState.newProfileImageUri == Uri.EMPTY) result.data.profileImageUrl else uiState.newProfileImageUri.toString(),
+                    imageUrl = when{
+                        uiState.defaultImage -> ""
+                        uiState.newProfileImageUri == Uri.EMPTY -> result.data.profileImageUrl
+                        else -> uiState.newProfileImageUri.toString()
+                    },
                     nickName = uiState.changeNickName ?: result.data.nickname,
                     onAvatarClick = { bottomSheetView = true },
                     onValueChange = remember(viewModel::changeNickName) {
@@ -198,7 +202,7 @@ private fun ChangeProfileView(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         AvatarComponent.LargeAvatar(
-            url = imageUrl.toUri(),
+            url = if (imageUrl.isEmpty()) Uri.EMPTY else imageUrl.toUri(),
             onClick = onAvatarClick
         )
         Spacer(modifier = Modifier.height(40.dp))

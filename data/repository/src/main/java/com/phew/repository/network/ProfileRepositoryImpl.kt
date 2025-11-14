@@ -168,7 +168,7 @@ class ProfileRepositoryImpl @Inject constructor(private val http: ProfileHttp) :
             apiCall = {
                 http.requestProfileUpdate(
                     UpdateProfileDTO(
-                        nickName = nickName,
+                        nickname = nickName,
                         profileImgName = profileImageName
                     )
                 )

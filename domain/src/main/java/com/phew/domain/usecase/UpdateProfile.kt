@@ -30,7 +30,7 @@ class UpdateProfile @Inject constructor(
     data class Param(
         val nickName: String?,
         val imgName: String?,
-        val profileImage: String,
+        val profileImage: String?,
         val isImageChange: Boolean,
     )
 
@@ -39,6 +39,7 @@ class UpdateProfile @Inject constructor(
             true -> {
                 val requestImageUrl = repository.requestUploadImageUrl()
                 if (requestImageUrl is DataResult.Fail) return DomainResult.Failure(ERROR_NETWORK)
+                if(param.profileImage == null) return DomainResult.Failure(ERROR_FAIL_JOB)
                 val file = try {
                     contextResolver.readAsCompressedJpegRequestBody(uri = param.profileImage.toUri())
                 } catch (e: Exception) {

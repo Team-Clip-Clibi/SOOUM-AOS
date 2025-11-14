@@ -4,6 +4,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class UpdateProfileDTO(
-    val nickName: String?,
-    val profileImgName: String,
+    val nickname: String?,
+    val profileImgName: String?,
 )

@@ -218,9 +218,9 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             when (val result = updateProfile(
                 UpdateProfile.Param(
-                    nickName = if (_uiState.value.changeNickName != null && _uiState.value.changeProfile) _uiState.value.changeNickName else _uiState.value.nickname,
+                    nickName = if (_uiState.value.changeNickName == (_uiState.value.profileInfo as UiState.Success).data.nickname) null else _uiState.value.changeNickName,
                     imgName = if (_uiState.value.newProfileImageUri == Uri.EMPTY) (_uiState.value.profileInfo as UiState.Success).data.profileImgName else "",
-                    profileImage = if (_uiState.value.newProfileImageUri == Uri.EMPTY) (_uiState.value.profileInfo as UiState.Success).data.profileImageUrl else _uiState.value.newProfileImageUri.toString(),
+                    profileImage = (if (_uiState.value.defaultImage) null else if (_uiState.value.newProfileImageUri == Uri.EMPTY) (_uiState.value.profileInfo as UiState.Success).data.profileImgName else _uiState.value.newProfileImageUri).toString(),
                     isImageChange = _uiState.value.newProfileImageUri != Uri.EMPTY
                 )
             )) {
@@ -289,7 +289,8 @@ class ProfileViewModel @Inject constructor(
             state.copy(
                 defaultImage = true,
                 useAlbum = false,
-                useCamera = false
+                useCamera = false,
+                changeProfile = true
             )
         }
     }
