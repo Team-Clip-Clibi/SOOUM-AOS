@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -49,6 +50,8 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.LoadState
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.paging.compose.itemContentType
+import androidx.paging.compose.itemKey
 import com.airbnb.lottie.LottieComposition
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
@@ -56,6 +59,7 @@ import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.phew.core.ui.model.navigation.CardDetailArgs
+import com.phew.core.ui.navigation.NavigationKeys
 import com.phew.core_design.AppBar
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.NeutralColor
@@ -71,19 +75,20 @@ import com.phew.feed.NAV_HOME_POPULAR_INDEX
 import com.phew.feed.viewModel.DistanceType
 import com.phew.feed.viewModel.FeedPagingState
 import com.phew.feed.viewModel.FeedType
-import com.phew.feed.viewModel.HomeViewModel
+import com.phew.feed.viewModel.FeedViewModel
 import com.phew.feed.viewModel.NavigationEvent
 import com.phew.feed.viewModel.UiState
 import com.phew.presentation.feed.R
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
+import kotlin.text.append
 import com.phew.core.ui.R as CoreUiR
 
 
 @OptIn(FlowPreview::class)
 @Composable
 fun FeedView(
-    viewModel: HomeViewModel,
+    viewModel: FeedViewModel,
     navController: NavHostController,
     finish: () -> Unit,
     requestPermission: () -> Unit,
@@ -138,6 +143,18 @@ fun FeedView(
         }
     }
 
+    // Refresh handling after writing a card
+    LaunchedEffect(navBackStackEntry) {
+        navBackStackEntry?.savedStateHandle?.let { savedStateHandle ->
+            if (savedStateHandle.remove<Boolean>(NavigationKeys.CARD_ADDED) == true) {
+                when (uiState.currentTab) {
+                    FeedType.Latest -> latestFeedItems.refresh()
+                    FeedType.Popular, FeedType.Distance -> viewModel.refreshCurrentTab()
+                }
+            }
+        }
+    }
+
     // 하단 탭 이동 시 스크롤 초기화 플래그 갱신
     LaunchedEffect(currentHomeTab) {
         if (previousHomeTab != currentHomeTab) {
@@ -166,22 +183,25 @@ fun FeedView(
     // 무한 스크롤 감지
     val isLoadingMore = currentPagingState is FeedPagingState.LoadingMore
 
-    LaunchedEffect(lazyListState) {
-        snapshotFlow { lazyListState.layoutInfo.visibleItemsInfo }
-            .debounce(100)
-            .collect { visibleItems ->
-                val lastVisibleIndex = visibleItems.lastOrNull()?.index ?: 0
-                val totalItems = lazyListState.layoutInfo.totalItemsCount
+    // 기존 커스텀 페이징 무한 스크롤 (Popular, Distance 탭에서만 사용)
+    LaunchedEffect(lazyListState, uiState.currentTab) {
+        if (uiState.currentTab != FeedType.Latest) {
+            snapshotFlow { lazyListState.layoutInfo.visibleItemsInfo }
+                .debounce(100)
+                .collect { visibleItems ->
+                    val lastVisibleIndex = visibleItems.lastOrNull()?.index ?: 0
+                    val totalItems = lazyListState.layoutInfo.totalItemsCount
 
-                val state = currentPagingState
-                if (lastVisibleIndex >= totalItems - 5 &&
-                    state is FeedPagingState.Success &&
-                    state.hasNextPage &&
-                    totalItems > 0
-                ) {
-                    viewModel.loadMoreFeeds()
+                    val state = currentPagingState
+                    if (lastVisibleIndex >= totalItems - 5 &&
+                        state is FeedPagingState.Success &&
+                        state.hasNextPage &&
+                        totalItems > 0
+                    ) {
+                        viewModel.loadMoreFeeds()
+                    }
                 }
-            }
+        }
     }
 
     Column(
@@ -240,7 +260,8 @@ fun FeedView(
                 },
                 onDismiss = {
                     closeDialog()
-                }
+                },
+                startButtonTextColor = NeutralColor.GRAY_600
             )
         }
     }
@@ -553,8 +574,8 @@ private fun LatestFeedPagingContent(
     feedNotice: List<Notice>,
     feedNoticeClick: (String) -> Unit,
 ) {
-    // Paging 3 상태 확인
     val isLoading = latestFeedItems.loadState.refresh is LoadState.Loading
+    val isAppending = latestFeedItems.loadState.append is LoadState.Loading
     val isPagingRefreshing = isRefreshing || isLoading
     
     // 빈 화면 처리
@@ -566,7 +587,7 @@ private fun LatestFeedPagingContent(
     val refreshingOffset = 56.dp
     val refreshState = rememberPullToRefreshState()
     val density = LocalDensity.current
-
+    
     PullToRefreshBox(
         isRefreshing = isPagingRefreshing,
         onRefresh = {
@@ -624,7 +645,11 @@ private fun LatestFeedPagingContent(
                 Spacer(modifier = Modifier.height(10.dp))
             }
 
-            items(latestFeedItems.itemCount) { index ->
+            items(
+                count = latestFeedItems.itemCount,
+                key = latestFeedItems.itemKey { it.cardId }, // 고유 키
+                contentType = latestFeedItems.itemContentType { "LatestFeed" }
+            ) { index ->
                 latestFeedItems[index]?.let { latest ->
                     val feedCardType = classifyLatestFeedType(latest)
                     FeedUi.TypedFeedCardView(
@@ -633,6 +658,14 @@ private fun LatestFeedPagingContent(
                         onRemoveCard = onRemoveCard
                     )
                     Spacer(modifier = Modifier.height(10.dp))
+                }
+            }
+            // 다음 페이지 로딩 중 상태 표시
+            if (latestFeedItems.loadState.append is LoadState.Loading) {
+                item {
+                    Box(modifier = Modifier.fillParentMaxWidth()) {
+                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    }
                 }
             }
         }

@@ -19,14 +19,14 @@ interface CardFeedRepository {
     suspend fun requestFeedLatest(
         latitude: Double? = null,
         longitude: Double? = null,
-        lastId: Int? = null,
+        lastId: Long? = null,
     ): DataResult<List<Latest>>
 
     suspend fun requestFeedDistance(
         latitude: Double? = null,
         longitude: Double? = null,
         distance: Double? = null,
-        lastId: Int? = null,
+        lastId: Long? = null,
     ): DataResult<List<DistanceCard>>
 
     suspend fun requestRelatedTag(resultCnt: Int = 8, tag: String): DataResult<List<TagInfo>>

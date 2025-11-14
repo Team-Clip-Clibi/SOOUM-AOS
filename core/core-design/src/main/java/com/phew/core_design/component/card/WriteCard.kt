@@ -73,40 +73,19 @@ object CardDesignTokens {
     val CardBackgroundCyan = Primary.MAIN
     val CardBackgroundGray = NeutralColor.GRAY_100
 
-    // 콘텐츠 박스 배경색
-    val ContentBoxDark = NeutralColor.GRAY_600
-    val ContentBoxGray = NeutralColor.GRAY_200
-
-    // 태그 배경색
-    val TagBackground = OpacityColor.blackSmallColor
 
     // 텍스트 색상
     val TextPrimary = NeutralColor.WHITE
-    val TextSecondary = NeutralColor.GRAY_400
     val TextDelete = NeutralColor.GRAY_400
-    val TextBackTint = NeutralColor.GRAY_300
 
     // 크기
     val CardRadius = 16.dp
-    val ContentBoxRadius = 8.dp
-    val TagRadius = 4.dp
-    val AvatarSize = 40.dp
-    val CornerRadius = 12.dp
-
-    // 패딩
-    val CardPadding = 32.dp
-    val ContentPadding = 16.dp
-
-    // Typography
-    val BodyFontSize = 14.sp
-    val BodyLineHeight = 20.sp
 }
 
 enum class CardType {
     WRITE, REPLY, DELETED
 }
 
-// TODO 사용이 어렵군.. 수정해..
 sealed class BaseCardData(open val id: String, open val type: CardType) {
     data class Write(
         val content: String,
@@ -308,14 +287,14 @@ private fun ReadOnlyContentBox(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 20.dp)
                 .heightIn(min = 61.dp, max = maxHeight)
                 .verticalScroll(scrollState),
             contentAlignment = Alignment.Center
         ) {
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 20.dp),
+                    .fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
                 Text(

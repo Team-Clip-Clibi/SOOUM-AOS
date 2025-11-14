@@ -63,7 +63,7 @@ class CardFeedRepositoryImpl @Inject constructor(
     override suspend fun requestFeedLatest(
         latitude: Double?,
         longitude: Double?,
-        lastId: Int?
+        lastId: Long?
     ): DataResult<List<Latest>> {
         return try {
 
@@ -72,7 +72,6 @@ class CardFeedRepositoryImpl @Inject constructor(
                 longitude = longitude,
                 lastId = lastId
             )
-
             val response = if (feedDto.lastId != null) {
                 // 페이징이 있는 경우 - 다음 페이지 요청
                 feedHttp.requestLatestFeed(
@@ -111,7 +110,7 @@ class CardFeedRepositoryImpl @Inject constructor(
         latitude: Double?,
         longitude: Double?,
         distance: Double?,
-        lastId: Int?
+        lastId: Long?
     ): DataResult<List<DistanceCard>> {
         try {
             val response = if (lastId == null) {

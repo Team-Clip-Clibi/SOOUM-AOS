@@ -3,6 +3,7 @@ package com.phew.presentation.detail.screen
 import android.annotation.SuppressLint
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -334,9 +336,7 @@ internal fun CardDetailRoute(
         cardId = args.cardId,
         snackBarHostState = snackBarHostState,
         remainingTimeMillis = remainingTimeMillis,
-        isExpire = cardDetail.storyExpirationTime != null && TimeUtils.parseTimerToMillis(
-            cardDetail.storyExpirationTime ?: ""
-        ) <= 0L || isDelete,
+        isExpire = (cardDetail.storyExpirationTime != null && (cardDetail.endTime ?: 0L) <= 0L) || isDelete,
         isOwnCard = cardDetail.isOwnCard,
         deleteCard = { cardId ->
             viewModel.requestDeleteCard(cardId)
@@ -417,7 +417,8 @@ private fun CardDetailScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(NeutralColor.WHITE)
+                    .background(NeutralColor.WHITE),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 TextButtonAppBar(
                     startImage = R.drawable.ic_left,
@@ -426,17 +427,27 @@ private fun CardDetailScreen(
                     startClick = onBackPressed,
                     endClick = { onShowBottomSheetChange(true) }
                 )
-                Text(
-                    text = if (remainingTimeMillis.toString().trim() == "0") {
-                        ""
-                    } else {
-                        TimeUtils.formatMillisToTimer(remainingTimeMillis)
-                    },
-                    color = Primary.DARK,
-                    style = TextComponent.CAPTION_3_M_10,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center
-                )
+                Box(
+                    modifier = Modifier
+                        .width(53.dp)
+                        .height(23.dp)
+                        .background(NeutralColor.WHITE)
+                        .border(1.dp, NeutralColor.GRAY_200, RoundedCornerShape(100.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = if (remainingTimeMillis.toString().trim() == "0") {
+                            ""
+                        } else {
+                            TimeUtils.formatMillisToTimer(remainingTimeMillis)
+                        },
+                        color = Primary.DARK,
+                        style = TextComponent.CAPTION_3_M_10,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center
+                    )
+                }
+
             }
         },
         snackbarHost = {

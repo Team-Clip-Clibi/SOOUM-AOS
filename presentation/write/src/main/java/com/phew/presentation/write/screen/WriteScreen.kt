@@ -86,9 +86,12 @@ import com.phew.presentation.write.R as WriteR
  *  추후 작업
  *  1. 완료 되면 어디로 이동해야 하는지
  */
+import androidx.navigation.NavController
+
 @Composable
 internal fun WriteRoute(
     modifier: Modifier = Modifier,
+    navController: NavController,
     args: WriteArgs? = null,
     viewModel: WriteViewModel = hiltViewModel(),
     onBackPressed: () -> Unit,
@@ -133,6 +136,7 @@ internal fun WriteRoute(
     // 완료 이벤트 처리
     LaunchedEffect(Unit) {
         viewModel.writeCompleteEvent.collect {
+            navController.previousBackStackEntry?.savedStateHandle?.set("card_added", true)
             onWriteComplete()
         }
     }

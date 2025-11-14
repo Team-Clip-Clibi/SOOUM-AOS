@@ -4,6 +4,8 @@ import com.phew.core_common.log.SooumLog
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -101,6 +103,44 @@ object TimeUtils {
         }
     }
 
+    /**
+     * ISO 8601 종료 시각에서 현재까지 남은 시간을 밀리초로 환산
+     */
+    fun remainingMillisUntil(expirationIsoString: String?): Long {
+        if (expirationIsoString.isNullOrBlank()) return 0L
+        val expirationMillis = parseExpirationMillis(expirationIsoString) ?: return 0L
+        return (expirationMillis - System.currentTimeMillis()).coerceAtLeast(0L)
+    }
+
+    private fun parseExpirationMillis(value: String): Long? {
+        // OffsetDateTime + timezone
+        val offsetResult = runCatching {
+            OffsetDateTime.parse(value).toInstant().toEpochMilli()
+        }.getOrNull()
+        if (offsetResult != null) return offsetResult
+
+        // LocalDateTime with microseconds
+        val microFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
+        val microResult = runCatching {
+            LocalDateTime.parse(value, microFormatter)
+                .toInstant(ZoneOffset.UTC)
+                .toEpochMilli()
+        }.getOrNull()
+        if (microResult != null) return microResult
+
+        // LocalDateTime with milliseconds
+        val milliFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")
+        val milliResult = runCatching {
+            LocalDateTime.parse(value, milliFormatter)
+                .toInstant(ZoneOffset.UTC)
+                .toEpochMilli()
+        }.getOrNull()
+        if (milliResult != null) return milliResult
+
+        SooumLog.w(TAG, "Failed to parse expiration time: $value")
+        return null
+    }
+
     @JvmStatic
     fun formatToWithdrawalDate(dateString: String): String {
         try {
@@ -192,15 +232,12 @@ object TimeUtils {
             }
             
             // 여러 포맷으로 파싱 시도
-            // TODO 해당 부분 정리 필요 (서버와 다시 확인 필요)
             val createdTime = try {
                 val time = iso8601Format.parse(createAt)?.time
-                SooumLog.d(TAG, "Parsed with main format (microseconds)")
                 time
             } catch (e: Exception) {
                 try {
                     val time = iso8601FormatFallback.parse(createAt)?.time
-                    SooumLog.d(TAG, "Parsed with fallback format (milliseconds)")
                     time
                 } catch (e: Exception) {
                     SooumLog.e(TAG, "Failed to parse date: $createAt ${e.message}")

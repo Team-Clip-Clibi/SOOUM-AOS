@@ -87,7 +87,8 @@ class PagerRepositoryImpl @Inject constructor(
     ).flow
 
     override fun latestFeed(latitude: Double?, longitude: Double?): Flow<PagingData<Latest>> = Pager(
-        config = PagingConfig(pageSize = 30),
+        config = PagingConfig(pageSize = 30,
+            enablePlaceholders = false),
         pagingSourceFactory = {
             PagingLatestFeed(cardFeedRepository, latitude, longitude)
         }

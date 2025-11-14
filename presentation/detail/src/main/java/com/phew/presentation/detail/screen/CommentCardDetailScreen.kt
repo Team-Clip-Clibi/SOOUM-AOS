@@ -241,7 +241,7 @@ internal fun CommentCardDetailScreen(
     Scaffold(
         topBar = {
             TopLayout(
-                storyExpirationTime = if (cardDetail.storyExpirationTime == null) "0" else cardDetail.endTime.toString(),
+                storyRemainingMillis = cardDetail.endTime ?: 0L,
                 onFeedPressed = onFeedPressed,
                 onBackPressed = onBackPressedLambda,
                 showBottomSheet = showBottomSheetLambda,
@@ -334,16 +334,14 @@ internal fun CommentCardDetailScreen(
 
 @Composable
 private fun TopLayout(
-    storyExpirationTime: String,
+    storyRemainingMillis: Long,
     memberId: Long,
     onFeedPressed: () -> Unit,
     onBackPressed: () -> Unit,
     showBottomSheet: () -> Unit,
     onExpire: () -> Unit,
 ) {
-    var remainingTimeMillis by remember {
-        mutableLongStateOf(storyExpirationTime.toLong())
-    }
+    var remainingTimeMillis by remember { mutableLongStateOf(storyRemainingMillis) }
     var isExpired by remember { mutableStateOf(false) }
     LaunchedEffect(memberId) {
         if (remainingTimeMillis > 0) {

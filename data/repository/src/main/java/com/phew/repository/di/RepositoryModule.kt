@@ -19,7 +19,6 @@ import com.phew.repository.network.BlockRepositoryImpl
 import com.phew.repository.network.CardDetailRepositoryImpl
 import com.phew.repository.network.CardFeedRepositoryImpl
 import com.phew.repository.network.MembersRepositoryImpl
-import com.phew.repository.network.MockCardFeedRepositoryImpl
 import com.phew.repository.network.ProfileRepositoryImpl
 import com.phew.repository.network.ReportRepositoryImpl
 import com.phew.repository.network.SignUpRepositoryImpl
@@ -84,8 +83,7 @@ abstract class RepositoryModule {
         @Singleton
         fun provideCardFeedRepository(
             @IsDebug isDebug: Boolean,
-            realImpl: CardFeedRepositoryImpl,
-            mockImpl: MockCardFeedRepositoryImpl,
+            realImpl: CardFeedRepositoryImpl
         ): CardFeedRepository {
             return realImpl
         }

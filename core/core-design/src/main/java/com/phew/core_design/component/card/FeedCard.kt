@@ -226,7 +226,7 @@ private fun FeedCardImpl(
                 contentText = contentText,
                 imgUrl = imgUrl,
                 fontFamily = resolveFontFamily(font = font),
-                textMaxLines = 3
+                textMaxLines = 4
             )
 
             BottomContent(
@@ -275,7 +275,7 @@ private fun FeedAdminCardImpl(
                 contentText = contentText,
                 imgUrl = imgUrl,
                 fontFamily = resolveFontFamily(font = font),
-                textMaxLines = 3
+                textMaxLines = 4
             )
 
             BottomContent(

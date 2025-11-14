@@ -211,13 +211,11 @@ internal fun BottomContent(
     
     // 타이머 표시 조건: FeedDeletedCard(만료된 타이머) 또는 FeedPungCard(남은 시간이 있을 때)
     val showTimer = when (cardType) {
-        FeedCardType.DELETED -> !remainingTimeMillis.isNullOrEmpty() // 만료된 타이머 표시
         FeedCardType.PUNG -> !remainingTimeMillis.isNullOrEmpty() && remaining > 0L // 남은 시간이 있을 때만
+        FeedCardType.DELETED -> !remainingTimeMillis.isNullOrEmpty() // 만료된 타이머 표시
         else -> false // DEFAULT, ADMIN은 타이머 표시 안 함
     }
 
-    SooumLog.d(TAG, "remainingTimeMillis : $remainingTimeMillis, " +
-            "likeCount : $likeCount, commentCount : $commentCount, isExpired : $isExpired, showTimer: $showTimer")
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -248,7 +246,6 @@ internal fun BottomContent(
             }
         }
         if (!showTimer) {
-            SooumLog.d(TAG, "LikeAndComment")
             LikeAndComment(
                 likeValue = likeCount,
                 commentValue = commentCount

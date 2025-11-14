@@ -95,11 +95,7 @@ fun SooumBottomBar(
 
                                 HomeTabType.WRITE -> {
                                     navController.navigate(tab.graph) {
-                                        popUpTo(HomeTabType.FEED.route) {
-                                            saveState = true
-                                        }
                                         launchSingleTop = true
-                                        restoreState = true
                                     }
                                 }
 

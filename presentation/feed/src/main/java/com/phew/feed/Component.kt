@@ -309,7 +309,7 @@ object FeedUi {
     ) {
         SooumLog.d(TAG, "PungTypeCard Type")
         var remainingTimeMillis by remember {
-            mutableLongStateOf(TimeUtils.parseTimerToMillis(feedCard.storyExpirationTime ?: ""))
+            mutableLongStateOf(TimeUtils.remainingMillisUntil(feedCard.storyExpirationTime))
         }
         var isExpired by remember { mutableStateOf(false) }
 
@@ -352,7 +352,6 @@ object FeedUi {
         feedCard: FeedCardType.AdminType,
         onClick: (String) -> Unit,
     ) {
-        SooumLog.d(TAG, "AdminTypeCard Type")
         FeedAdminCard(
             id = feedCard.cardId,
             imgUrl = feedCard.imageUrl,
@@ -372,7 +371,6 @@ object FeedUi {
         feedCard: FeedCardType.NormalType,
         onClick: (String) -> Unit,
     ) {
-        SooumLog.d(TAG, "NormalTypeCard Type")
         FeedDefaultCard(
             id = feedCard.cardId,
             imgUrl = feedCard.imageUrl,
