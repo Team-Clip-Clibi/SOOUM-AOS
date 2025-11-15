@@ -190,7 +190,7 @@ internal fun WriteRoute(
         },
         onContentClick = {
             viewModel.hideRelatedTags()
-            if (uiState.content == "숨에서 편하게 이야기 나눠요") {
+            if (uiState.content == WriteR.string.write_card_content_default_placeholder) {
                 viewModel.updateContent("")
             }
         },
@@ -262,7 +262,7 @@ private fun WriteScreen(
     onFilterChange: (filter: BackgroundFilterType) -> Unit,
     onImageSelected: (String) -> Unit,
     onCustomImageSelected: (Uri) -> Unit,
-    onContentClick: () -> Unit, // Add this line
+    onContentClick: () -> Unit,
     onFontSelected: (FontFamily) -> Unit,
     onOptionSelected: (String) -> Unit,
     onDistanceOptionWithoutPermission: () -> Unit,
@@ -439,7 +439,7 @@ private fun WriteScreen(
                             backgroundResId = activeBackgroundImageResId,
                             backgroundUri = activeBackgroundUri,
                             fontFamily = selectedFontFamily,
-                            placeholder = stringResource(com.phew.core_design.R.string.write_card_content_placeholder),
+                            placeholder = stringResource(WriteR.string.write_card_content_default_placeholder),
                             onContentChange = onContentChange,
                             onContentClick = {
                                 onContentClick()
@@ -498,7 +498,7 @@ private fun WriteScreen(
                     selectedOptionIds = selectedOptionIds,
                     hasLocationPermission = hasLocationPermission,
                     onOptionSelected = { option -> onOptionSelected(option.id) },
-                    onDistancePermissionRequest = onDistancePermissionWithoutPermission
+                    onDistancePermissionRequest = onDistanceOptionWithoutPermission
                 )
             }
         }
