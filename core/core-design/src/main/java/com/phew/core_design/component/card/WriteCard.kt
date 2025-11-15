@@ -214,9 +214,8 @@ private fun EditableWriteContentBox(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .padding(vertical = 20.dp)
                     .heightIn(min = 61.dp, max = maxHeight)
+                    .padding(horizontal = 24.dp, vertical = 20.dp)
                     .verticalScroll(scrollState),
                 contentAlignment = Alignment.Center
             ) {
@@ -238,8 +237,7 @@ private fun EditableWriteContentBox(
                     decorationBox = { innerTextField ->
                         Box(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 24.dp, vertical = 20.dp),
+                                .fillMaxWidth(),
                             contentAlignment = Alignment.Center
                         ) {
                             if (content.isBlank() && !isFocused && isEditable) {

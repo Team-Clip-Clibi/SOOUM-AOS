@@ -11,6 +11,8 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -227,7 +230,8 @@ internal fun WriteRoute(
         onCameraCaptureLaunched = viewModel::onBackgroundCameraCaptureLaunched,
         onCameraCaptureResult = viewModel::onBackgroundCameraCaptureResult,
         onGallerySettingsResult = viewModel::onGallerySettingsResult,
-        onCameraSettingsResult = viewModel::onCameraSettingsResult
+        onCameraSettingsResult = viewModel::onCameraSettingsResult,
+        hideRelatedTags = viewModel::hideRelatedTags
     )
 }
 
@@ -290,6 +294,7 @@ private fun WriteScreen(
     onRequestGalleryPermissionFromSettings: () -> Unit,
     onGallerySettingsResult: (Boolean) -> Unit,
     onCameraSettingsResult: (Boolean) -> Unit,
+    hideRelatedTags: () -> Unit
 ) {
 
     val snackBarHostState = remember { SnackbarHostState() }
@@ -323,6 +328,19 @@ private fun WriteScreen(
             null -> Unit
         }
         settingsTarget = null
+    }
+
+    var isCardFocused by remember { mutableStateOf(false) }
+    val isImeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
+    val isScrolling = rememberScrollState().isScrollInProgress
+
+    LaunchedEffect(isImeVisible, isScrolling, isCardFocused) {
+        if (!isImeVisible || isScrolling || isCardFocused) {
+            hideRelatedTags()
+            if (isCardFocused) {
+                isCardFocused = false
+            }
+        }
     }
 
     val cropLauncher = rememberLauncherForActivityResult(
@@ -359,11 +377,19 @@ private fun WriteScreen(
     )
 
     Scaffold(
-        modifier = modifier,
+        modifier = modifier.clickable(
+            indication = null,
+            interactionSource = remember { MutableInteractionSource() }
+        ) {
+            keyboard?.hide()
+            focusManager.clearFocus()
+            hideRelatedTags()
+        },
         topBar = {
             val titleRes = if (args?.parentCardId != null) {
                 WriteR.string.write_screen_comment_title
-            } else {
+            }
+            else {
                 WriteR.string.write_screen_title
             }
             AppBar.TextButtonAppBarText(
@@ -372,21 +398,6 @@ private fun WriteScreen(
                 onButtonClick = onWriteComplete,
                 onClick = onBackPressed,
                 buttonTextColor = if (isWriteCompleted) NeutralColor.BLACK else NeutralColor.GRAY_300
-            )
-        },
-        bottomBar = {
-            val filteredOptions = if (args?.parentCardId != null) {
-                // CardDetailScreen에서 왔을 때는 twenty_four_hours 옵션 숨김
-                WriteOptions.availableOptions.filter { it.id != "twenty_four_hours" }
-            } else {
-                WriteOptions.availableOptions
-            }
-            OptionButtons(
-                options = filteredOptions,
-                selectedOptionIds = selectedOptionIds,
-                hasLocationPermission = hasLocationPermission,
-                onOptionSelected = { option -> onOptionSelected(option.id) },
-                onDistancePermissionRequest = onDistanceOptionWithoutPermission
             )
         },
         snackbarHost = {
@@ -430,7 +441,10 @@ private fun WriteScreen(
                             fontFamily = selectedFontFamily,
                             placeholder = stringResource(com.phew.core_design.R.string.write_card_content_placeholder),
                             onContentChange = onContentChange,
-                            onContentClick = onContentClick, // Add this line
+                            onContentClick = {
+                                onContentClick()
+                                isCardFocused = true
+                            },
                             onAddTag = onAddTag,
                             onRemoveTag = onRemoveTag,
                             shouldFocusTagInput = focusTagInput,
@@ -456,17 +470,35 @@ private fun WriteScreen(
                     selectedFont = selectedFont,
                     onFontSelected = onFontSelected
                 )
-                
-                // 하단 여유 공간 (bottomBar와 관련 태그 영역을 위한 패딩)
-                Spacer(modifier = Modifier.height(72.dp))
             }
 
-            // 관련 태그를 키보드 위에 플로팅 표시
-            if (relatedTags.isNotEmpty()) {
+            val showRelatedTags = relatedTags.isNotEmpty() && isImeVisible
+            val showOptionButtons = relatedTags.isEmpty() && !isImeVisible
+
+            if (showRelatedTags) {
                 NumberTagFlowLayout(
                     modifier = Modifier.fillMaxWidth(),
                     tags = relatedTags,
-                    onTagClick = onRelatedTagClick
+                    onTagClick = {
+                        onRelatedTagClick(it)
+                        hideRelatedTags() // Hide immediately on click
+                    }
+                )
+            }
+
+            val filteredOptions = if (args?.parentCardId != null) {
+                WriteOptions.availableOptions.filter { it.id != "twenty_four_hours" }
+            } else {
+                WriteOptions.availableOptions
+            }
+
+            if (showOptionButtons) {
+                OptionButtons(
+                    options = filteredOptions,
+                    selectedOptionIds = selectedOptionIds,
+                    hasLocationPermission = hasLocationPermission,
+                    onOptionSelected = { option -> onOptionSelected(option.id) },
+                    onDistancePermissionRequest = onDistancePermissionWithoutPermission
                 )
             }
         }

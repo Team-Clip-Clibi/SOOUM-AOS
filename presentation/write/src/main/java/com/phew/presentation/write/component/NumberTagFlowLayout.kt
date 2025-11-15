@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.phew.core_design.NeutralColor
@@ -39,7 +40,6 @@ fun NumberTagFlowLayout(
     FlowRow(
         modifier = modifier
             .fillMaxWidth()
-            .windowInsetsPadding(WindowInsets.ime.only(WindowInsetsSides.Bottom))
             .background(NeutralColor.GRAY_100)
             .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
