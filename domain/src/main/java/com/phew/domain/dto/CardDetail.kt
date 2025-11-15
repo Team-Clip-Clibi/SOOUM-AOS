@@ -1,11 +1,6 @@
 package com.phew.domain.dto
 
-import java.time.LocalDateTime
-import java.time.OffsetDateTime
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
-
+import com.phew.core_common.TimeUtils
 
 data class CardDetail(
     val cardId: Long,
@@ -31,34 +26,7 @@ data class CardDetail(
     val isFeedCard: Boolean = false,
     val storyExpirationTime: String?,
 ) {
-    val endTime = storyExpirationTime?.endTimeMillisecondTime()
-    private fun String?.endTimeMillisecondTime(): Long {
-        if (this.isNullOrBlank()) return 0L
-        val expireAt = parseIsoToEpochMillis(this) ?: return 0L
-        val currentTime = System.currentTimeMillis()
-        return (expireAt - currentTime).coerceAtLeast(0L)
-    }
-
-    private fun parseIsoToEpochMillis(value: String): Long? {
-        val defaultZone = ZoneId.of("Asia/Seoul")
-        return runCatching {
-            OffsetDateTime.parse(value).toInstant().toEpochMilli()
-        }.getOrNull()
-            ?: runCatching {
-                val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
-                LocalDateTime.parse(value, formatter)
-                    .atZone(defaultZone)
-                    .toInstant()
-                    .toEpochMilli()
-            }.getOrNull()
-            ?: runCatching {
-                val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")
-                LocalDateTime.parse(value, formatter)
-                    .atZone(defaultZone)
-                    .toInstant()
-                    .toEpochMilli()
-            }.getOrNull()
-    }
+    val endTime = TimeUtils.remainingMillisUntil(storyExpirationTime)
 }
 
 data class CardDetailTag(

@@ -152,6 +152,7 @@ internal fun WriteRoute(
     }
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val compareContent = stringResource(WriteR.string.write_card_content_default_placeholder)
 
     WriteScreen(
         modifier = modifier,
@@ -190,7 +191,8 @@ internal fun WriteRoute(
         },
         onContentClick = {
             viewModel.hideRelatedTags()
-            if (uiState.content == WriteR.string.write_card_content_default_placeholder) {
+
+            if (uiState.content == compareContent) {
                 viewModel.updateContent("")
             }
         },

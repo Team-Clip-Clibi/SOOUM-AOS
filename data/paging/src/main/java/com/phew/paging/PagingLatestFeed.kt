@@ -24,7 +24,7 @@ class PagingLatestFeed @Inject constructor(
 
     override suspend fun load(params: LoadParams<Long>): LoadResult<Long, Latest> {
         val lastId = params.key
-        SooumLog.d("PagingLatestFeed", "load(lastId=$lastId, loadSize=${params.loadSize})")
+        SooumLog.d(TAG, "load(lastId=$lastId, loadSize=${params.loadSize})")
 
         return try {
             when (val result = cardFeedRepository.requestFeedLatest(
@@ -39,7 +39,6 @@ class PagingLatestFeed @Inject constructor(
                         ?.cardId
                         ?.toLongOrNull()
                         ?.takeIf { it != lastId }
-
                     LoadResult.Page(
                         data = feeds,
                         prevKey = null,
@@ -61,3 +60,5 @@ class PagingLatestFeed @Inject constructor(
         }
     }
 }
+
+private const val TAG = "PagingLatestFeed"

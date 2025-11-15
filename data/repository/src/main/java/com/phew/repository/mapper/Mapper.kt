@@ -176,7 +176,7 @@ internal fun DistanceDTO.toDomain(): DistanceCard {
         cardContent = this.cardContent,
         font = this.font,
         distance = this.distance,
-        createAt = this.createAt,
+        createAt = TimeUtils.getRelativeTimeString(this.createAt),
         storyExpirationTime = this.storyExpirationTime,
         isAdminCard = this.isAdminCard
     )
