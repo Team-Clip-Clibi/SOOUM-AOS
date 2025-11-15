@@ -1,15 +1,23 @@
 package com.phew.network.retrofit
 
 import com.phew.network.BuildConfig
+import com.phew.network.NoAuth
+import com.phew.network.dto.UploadImageUrlDTO
+import com.phew.network.dto.request.profile.UpdateProfileDTO
 import com.phew.network.dto.response.card.ProfileCardDTO
 import com.phew.network.dto.response.profile.FollowDataDTO
 import com.phew.network.dto.response.profile.ProfileDTO
+import okhttp3.RequestBody
 import retrofit2.Response
+import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.PATCH
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
+import retrofit2.http.Url
 
 interface ProfileHttp {
     /**
@@ -115,5 +123,30 @@ interface ProfileHttp {
     @DELETE(BuildConfig.API_URL_UNBLOCK_MEMBER)
     suspend fun requestUnBlockMember(
         @Path("toMemberId") toMemberId: Long,
+    ): Response<Unit>
+
+    /**
+     * 내 이미지 업로드 URL Get 함수
+     */
+    @NoAuth
+    @GET(BuildConfig.API_URL_UPLOAD_IMAGE)
+    suspend fun requestUploadImageUrl(): Response<UploadImageUrlDTO>
+
+    /**
+     * 내 이미지 업로드
+     */
+    @NoAuth
+    @PUT
+    suspend fun requestUploadImage(
+        @Url url: String,
+        @Body body: RequestBody,
+    ): Response<Unit>
+
+    /**
+     * 프로필 업데이트
+     */
+    @PATCH(BuildConfig.API_URL_UPDATE_PROFILE)
+    suspend fun requestProfileUpdate(
+        @Body data: UpdateProfileDTO,
     ): Response<Unit>
 }

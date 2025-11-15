@@ -106,7 +106,7 @@ object TextFiledComponent {
         rightImageClick: () -> Unit,
         value: String,
         onValueChange: (String) -> Unit,
-        placeHolder: String,
+        placeHolder: String = "",
         helperUse: Boolean,
         helperText: String = "",
         helperTextColor: Color = NeutralColor.GRAY_500,

@@ -36,7 +36,7 @@ object LoadingAnimation {
             LottieAnimation(
                 composition = composition,
                 progress = { refreshProgress },
-                modifier = Modifier.size(44.dp)
+                modifier = Modifier.size(44.dp).align(Alignment.Center)
             )
         }
     }

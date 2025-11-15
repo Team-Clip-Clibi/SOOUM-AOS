@@ -18,6 +18,7 @@ import com.phew.core.ui.navigation.createNavType
 import com.phew.core.ui.navigation.getNavArg
 import com.phew.presentation.settings.navigation.navigateToSettingGraph
 import com.phew.presentation.settings.navigation.settingGraph
+import com.phew.profile.screen.EditProfileScreen
 import com.phew.profile.screen.FollowerScreen
 import com.phew.profile.screen.OtherProfile
 
@@ -34,10 +35,16 @@ private val FOLLOW_PROFILE_ROUTE_WITH_AGS = FOLLOW_ROUTE_BASE.asNavParam()
 private val FOLLOW_ROUTE_DESTINATION_ROUTE =
     "$FOLLOW_ROUTE_BASE?$PROFILE_ARGS_KEY=$FOLLOW_PROFILE_ROUTE_WITH_AGS"
 
+private const val CHANGE_PROFILE_BASE = "CHANGE_PROFILE"
+
 fun NavHostController.navigateToProfileGraphWithArgs(
     profileArgs: ProfileArgs,
 ) {
     this.navigate(OTHER_PROFILE_DESTINATION_ROUTE.asNavArg(profileArgs))
+}
+fun NavHostController.navigateToEditProfile(
+) {
+    this.navigate(CHANGE_PROFILE_BASE)
 }
 
 fun NavGraphBuilder.profileGraph(
@@ -85,7 +92,7 @@ fun NavGraphBuilder.profileGraph(
                     )))
                 },
                 onEditProfileClick = {
-                    //TODO 프로필 수정 화면으로 이동
+                    navController.navigateToEditProfile()
                 },
             )
         }
@@ -154,7 +161,18 @@ fun NavGraphBuilder.profileGraph(
                 selectTab = selectTab
             )
         }
-
+        slideComposable(
+            route = CHANGE_PROFILE_BASE
+        ){ navBackStackEntry ->
+            val parentEntry = remember(navBackStackEntry) {
+                navController.getBackStackEntry(HomeTabType.MY.graph)
+            }
+            val viewModel: ProfileViewModel = hiltViewModel(parentEntry)
+            EditProfileScreen(
+                viewModel = viewModel,
+                onBackPress = onBackPressed
+            )
+        }
         settingGraph(
             navController = navController,
             onBackPressed = onBackPressed

@@ -316,6 +316,7 @@ internal fun CardContentDto.toDomain(): ProfileCard {
 
 internal fun FollowDataDTO.toDomain(): FollowData {
     return FollowData(
+        followId = this.followId,
         memberId = this.memberId,
         nickname = this.nickname,
         profileImageUrl = this.profileImageUrl,

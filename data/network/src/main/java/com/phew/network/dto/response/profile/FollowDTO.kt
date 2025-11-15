@@ -1,16 +1,11 @@
 package com.phew.network.dto.response.profile
 
-import com.google.gson.annotations.SerializedName
 import kotlinx.serialization.Serializable
 
-@Serializable
-data class FollowDTO(
-    @SerializedName("followerContent")
-    val followerData: List<FollowDataDTO>,
-)
 
 @Serializable
 data class FollowDataDTO(
+    val followId: Long,
     val memberId: Long,
     val nickname: String,
     val profileImageUrl: String?,
