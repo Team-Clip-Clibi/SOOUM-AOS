@@ -78,10 +78,7 @@ class CardDetailViewModel @Inject constructor(
         .cachedIn(viewModelScope)
 
     fun requestComment(cardId: Long) {
-        _pagingRequest.update { state ->
-            if (state is PagingRequest.Ready && state.param.cardId == cardId) {
-                return@update state
-            }
+        _pagingRequest.update {
             PagingRequest.Ready(
                 GetCardCommentsPaging.Param(
                     cardId = cardId
@@ -171,7 +168,6 @@ class CardDetailViewModel @Inject constructor(
                 }
                 return@launch
             }
-
             val result = if (currentDetail.isLike) {
                 unLikeCard(cardId)
             } else {
@@ -301,15 +297,11 @@ class CardDetailViewModel @Inject constructor(
             it.copy(blockSuccess = false)
         }
     }
-
-    fun deleteEventHandle() {
-        _uiState.update { state -> state.copy(deleteSuccess = false) }
-    }
 }
 
 sealed class PagingRequest {
     data object None : PagingRequest()
-    data class Ready(val param: GetCardCommentsPaging.Param) : PagingRequest()
+    class Ready(val param: GetCardCommentsPaging.Param) : PagingRequest()
 }
 
 private const val TAG = "CardDetailViewModel"

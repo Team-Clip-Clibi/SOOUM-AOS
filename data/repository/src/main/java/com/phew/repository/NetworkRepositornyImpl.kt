@@ -4,6 +4,7 @@ import com.phew.core_common.APP_ERROR_CODE
 import com.phew.core_common.DataResult
 import com.phew.core_common.HTTP_NO_MORE_CONTENT
 import com.phew.domain.dto.Notice
+import com.phew.domain.dto.NoticeSource
 import com.phew.domain.dto.Notification
 import com.phew.domain.repository.network.NotifyRepository
 import com.phew.network.retrofit.NotifyHttp
@@ -13,10 +14,11 @@ import javax.inject.Inject
 class NotifyRepositoryImpl @Inject constructor(private val notifyHttp: NotifyHttp) :
     NotifyRepository {
 
-    override suspend fun requestNotice(pageSize: Int): DataResult<Pair<Int, List<Notice>>> {
+    override suspend fun requestNotice(pageSize: Int, source: NoticeSource): DataResult<Pair<Int, List<Notice>>> {
         try {
             val request = notifyHttp.requestNotice(
-                pageSize = pageSize
+                pageSize = pageSize,
+                source = source.value
             )
             if (!request.isSuccessful) return DataResult.Fail(
                 code = request.code(),
@@ -53,11 +55,13 @@ class NotifyRepositoryImpl @Inject constructor(private val notifyHttp: NotifyHtt
     override suspend fun requestNoticePatch(
         lastId: Int,
         pageSize: Int,
+        source: NoticeSource,
     ): DataResult<Pair<Int, List<Notice>>> {
         try {
             val request = notifyHttp.requestNoticePatch(
                 lastId = lastId,
-                pageSize = pageSize
+                pageSize = pageSize,
+                source = source.value
             )
             if (!request.isSuccessful) return DataResult.Fail(
                 code = request.code(),

@@ -9,5 +9,5 @@ import kotlinx.serialization.Serializable
 data class CardFeedDto(
     val latitude: Double?,
     val longitude: Double?,
-    val lastId: Int?
+    val lastId: Long?
 )

@@ -39,7 +39,7 @@ interface FeedHttp {
     suspend fun requestLatestFeed(
         @Query("latitude") latitude: Double? = null,
         @Query("longitude") longitude: Double? = null,
-        @Query("lastId") lastId: Int? = null,
+        @Query("lastId") lastId: Long? = null,
     ): Response<List<LatestDto>>
 
     /**
@@ -50,7 +50,7 @@ interface FeedHttp {
         @Query("latitude") latitude: Double? = null,
         @Query("longitude") longitude: Double? = null,
         @Query("distance") distance: Double? = null,
-        @Query("lastId") lastId: Int? = null,
+        @Query("lastId") lastId: Long? = null,
     ): Response<List<DistanceDTO>>
 
     /**

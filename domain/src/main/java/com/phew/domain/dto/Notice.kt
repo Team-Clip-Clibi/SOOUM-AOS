@@ -1,6 +1,5 @@
 package com.phew.domain.dto
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
+import com.phew.core_common.TimeUtils
 
 data class Notice(
     val content: String,
@@ -13,8 +12,7 @@ data class Notice(
     val type = noticeType.viewNoticeType()
 
     private fun String.viewTime(): String {
-        val parsed = LocalDate.parse(this, DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-        return parsed.format(DateTimeFormatter.ofPattern("M월 d일"))
+        return TimeUtils.formatToSimpleDate(this)
     }
 
     private fun String.viewNoticeType(): NoticeType {

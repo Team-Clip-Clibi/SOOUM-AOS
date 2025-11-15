@@ -13,4 +13,5 @@ interface DataStore {
     suspend fun getNotifyAgree(key: String): Boolean
     suspend fun saveUserInfo(key: String, data: UserInfoDTO): Boolean
     suspend fun getUserInfo(key: String): UserInfoDTO?
+    suspend fun clearAllData(): Boolean
 }

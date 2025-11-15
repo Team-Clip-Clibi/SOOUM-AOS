@@ -145,4 +145,16 @@ class DataStoreImpl @Inject constructor(
             return null
         }
     }
+
+    override suspend fun clearAllData(): Boolean {
+        try {
+            sharedPreferences.edit(commit = true) { clear() }
+            cachedToken = null
+            userInfo = null
+            return true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return false
+        }
+    }
 }

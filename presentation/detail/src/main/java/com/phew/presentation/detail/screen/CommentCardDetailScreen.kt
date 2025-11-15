@@ -1,11 +1,13 @@
 package com.phew.presentation.detail.screen
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -29,11 +31,13 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,6 +50,9 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
@@ -72,6 +79,7 @@ import com.phew.presentation.detail.component.CardDetailHeader
 import com.phew.presentation.detail.model.MoreAction
 import com.phew.presentation.detail.viewmodel.CardDetailError
 import com.phew.presentation.detail.viewmodel.CardDetailViewModel
+import com.phew.core_design.CustomFont
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -82,6 +90,7 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
+import kotlinx.coroutines.launch
 import com.airbnb.lottie.compose.LottieConstants
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -104,6 +113,37 @@ internal fun CommentCardDetailScreen(
         SooumLog.d(TAG, "CardId : ${args.cardId}")
         viewModel.loadCardDetail(args.cardId)
         viewModel.requestComment(args.cardId)
+    }
+
+    // WriteScreen에서 복귀 시에만 새로고침 처리
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var hasResumed by remember { mutableStateOf(false) }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_PAUSE -> {
+                    // 화면을 벗어날 때 flag 설정
+                    hasResumed = false
+                }
+                Lifecycle.Event.ON_RESUME -> {
+                    // 두 번째 Resume부터만 새로고침 (WriteScreen에서 복귀 시)
+                    if (hasResumed) {
+                        SooumLog.d(TAG, "CommentCardDetailScreen resumed from WriteScreen - refreshing data")
+                        viewModel.loadCardDetail(args.cardId)
+                        viewModel.requestComment(args.cardId)
+                    } else {
+                        hasResumed = true
+                    }
+                }
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
     val isRefreshing by remember(uiState.isLoading) {
         derivedStateOf { uiState.isLoading }
@@ -165,10 +205,20 @@ internal fun CommentCardDetailScreen(
     val unBlockMemberLambda = remember { { viewModel.unblockMember() } }
     val clearErrorLambda =
         remember { { viewModel.clearError() } }
+    var isManualRefreshing by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+
     val onRefresh = remember(args.cardId) {
         {
+            isManualRefreshing = true
             viewModel.loadCardDetail(args.cardId)
             viewModel.requestComment(args.cardId)
+            // 새로고침 완료를 기다린 후 상태 초기화
+            coroutineScope.launch {
+                kotlinx.coroutines.delay(500) // 최소 500ms 표시
+                isManualRefreshing = false
+            }
+            Unit // 명시적으로 Unit 반환
         }
     }
     HandleBlockUser(
@@ -191,7 +241,7 @@ internal fun CommentCardDetailScreen(
     Scaffold(
         topBar = {
             TopLayout(
-                storyExpirationTime = if (cardDetail.storyExpirationTime == null) "0" else cardDetail.endTime.toString(),
+                storyRemainingMillis = cardDetail.endTime ?: 0L,
                 onFeedPressed = onFeedPressed,
                 onBackPressed = onBackPressedLambda,
                 showBottomSheet = showBottomSheetLambda,
@@ -206,7 +256,7 @@ internal fun CommentCardDetailScreen(
         }
     ) { paddingValues ->
         PullToRefreshBox(
-            isRefreshing = uiState.isRefresh,
+            isRefreshing = isManualRefreshing,
             onRefresh = onRefresh,
             modifier = Modifier.fillMaxWidth(),
             state = refreshState,
@@ -219,8 +269,8 @@ internal fun CommentCardDetailScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     val progress =
-                        if (isRefreshing) refreshProgress else refreshState.distanceFraction
-                    if (isRefreshing || refreshState.distanceFraction > 0f) {
+                        if (isManualRefreshing) refreshProgress else refreshState.distanceFraction
+                    if (isManualRefreshing || refreshState.distanceFraction > 0f) {
                         LottieAnimation(
                             composition = composition,
                             progress = { progress },
@@ -284,16 +334,14 @@ internal fun CommentCardDetailScreen(
 
 @Composable
 private fun TopLayout(
-    storyExpirationTime: String,
+    storyRemainingMillis: Long,
     memberId: Long,
     onFeedPressed: () -> Unit,
     onBackPressed: () -> Unit,
     showBottomSheet: () -> Unit,
     onExpire: () -> Unit,
 ) {
-    var remainingTimeMillis by remember {
-        mutableLongStateOf(storyExpirationTime.toLong())
-    }
+    var remainingTimeMillis by remember { mutableLongStateOf(storyRemainingMillis) }
     var isExpired by remember { mutableStateOf(false) }
     LaunchedEffect(memberId) {
         if (remainingTimeMillis > 0) {
@@ -329,6 +377,7 @@ private fun TopLayout(
     }
 }
 
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 private fun CardView(
     modifier: Modifier,
@@ -342,112 +391,121 @@ private fun CardView(
     playProgression: @Composable () -> Unit,
     onProfileClick : (Long) -> Unit
 ) {
-    Column(
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
             .background(color = NeutralColor.WHITE)
     ) {
+
         Column(
-            modifier = Modifier
-                .weight(1.4f)
-                .verticalScroll(rememberScrollState())
+            modifier = Modifier.fillMaxSize()
         ) {
-            CardDetailComponent(
-                modifier = Modifier.fillMaxWidth(),
-                previousCommentThumbnailUri = cardDetail.previousCardImgUrl,
-                cardContent = cardDetail.cardContent,
-                cardThumbnailUri = cardDetail.cardImgUrl,
-                cardTags = cardDetail.tags.map { data -> data.name },
-                isDeleted = isExpire,
-                backgroundImageUrl = cardDetail.cardImgUrl.toUri(),
-                header = {
-                    CardDetailHeader(
-                        profileUri = cardDetail.profileImgUrl ?: "",
-                        nickName = cardDetail.nickname,
-                        distance = cardDetail.distance ?: "",
-                        createAt = cardDetail.createdAt,
-                        memberId = cardDetail.memberId,
-                        onClick = onProfileClick
-                    )
-                },
-                bottom = {
-                    CardDetailBottom(
-                        likeCnt = cardDetail.likeCount,
-                        commentCnt = cardDetail.commentCardCount,
-                        searchCnt = cardDetail.visitedCnt,
-                        isLikeCard = cardDetail.isLike,
-                        onClickLike = onClickLike,
-                        onClickComment = onClickCommentIcon
-                    )
-                },
-                onPreviousCardClick = onPreviousCardClick
-            )
-        }
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .background(color = NeutralColor.GRAY_100),
-            contentAlignment = Alignment.Center,
-        ) {
-            val loadState = comments.loadState
-            when (loadState.refresh) {
-                is LoadState.Loading -> {
-                    playProgression()
-                }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                CardDetailComponent(
+                    modifier = Modifier.fillMaxWidth(),
+                    previousCommentThumbnailUri = cardDetail.previousCardImgUrl,
+                    cardContent = cardDetail.cardContent,
+                    cardThumbnailUri = cardDetail.cardImgUrl,
+                    cardTags = cardDetail.tags.map { data -> data.name },
+                    isDeleted = isExpire,
+                    backgroundImageUrl = cardDetail.cardImgUrl.toUri(),
+                    fontFamily = CustomFont.findFontValueByServerName(cardDetail.font).data.previewTypeface,
+                    header = {
+                        CardDetailHeader(
+                            profileUri = cardDetail.profileImgUrl ?: "",
+                            nickName = cardDetail.nickname,
+                            distance = cardDetail.distance ?: "",
+                            createAt = cardDetail.createdAt,
+                            memberId = cardDetail.memberId,
+                            onClick = onProfileClick
+                        )
+                    },
+                    bottom = {
+                        CardDetailBottom(
+                            likeCnt = cardDetail.likeCount,
+                            commentCnt = cardDetail.commentCardCount,
+                            searchCnt = cardDetail.visitedCnt,
+                            isLikeCard = cardDetail.isLike,
+                            onClickLike = onClickLike,
+                            onClickComment = onClickCommentIcon
+                        )
+                    },
+                    onPreviousCardClick = onPreviousCardClick
+                )
+            }
 
-                is LoadState.NotLoading -> {
-                    when (comments.itemCount) {
-                        0 -> {
-                            Text(
-                                text = stringResource(R.string.card_no_comment),
-                                style = TextComponent.BODY_1_M_14,
-                                color = NeutralColor.GRAY_400,
-                                textAlign = TextAlign.Center
-                            )
-                        }
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .background(color = NeutralColor.GRAY_100),
+                contentAlignment = Alignment.Center,
+            ) {
+                val loadState = comments.loadState
+                when (loadState.refresh) {
+                    is LoadState.Loading -> {
+                        playProgression()
+                    }
 
-                        else -> {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(color = NeutralColor.GRAY_100)
-                                    .padding(top = 10.dp, bottom = 10.dp),
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                LazyRow(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
+                    is LoadState.NotLoading -> {
+                        when (comments.itemCount) {
+                            0 -> {
+                                Text(
+                                    text = stringResource(R.string.card_no_comment),
+                                    style = TextComponent.BODY_1_M_14,
+                                    color = NeutralColor.GRAY_400,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+
+                            else -> {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(color = NeutralColor.GRAY_100)
+                                        .padding(top = 10.dp, bottom = 10.dp),
+                                    verticalArrangement = Arrangement.Center
                                 ) {
-                                    items(
-                                        count = comments.itemCount,
-                                        key = comments.itemKey { it.cardId }
-                                    ) { index ->
-                                        val comment = comments[index] ?: return@items
-                                        Box(
-                                            modifier = Modifier
-                                                .fillParentMaxHeight()
-                                                .aspectRatio(1f)
-                                        ) {
-                                            CardViewComment(
-                                                contentText = comment.cardContent,
-                                                thumbnailUri = comment.cardImgUrl,
-                                                distance = comment.distance ?: "",
-                                                createAt = TimeUtils.getRelativeTimeString(comment.createdAt),
-                                                likeCnt = comment.likeCount.toString(),
-                                                commentCnt = comment.commentCardCount.toString(),
-                                                font = comment.font,
-                                                onClick = {
-                                                    onCommentClick(comment.cardId)
-                                                }
-                                            )
+                                    LazyRow(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
+                                    ) {
+                                        items(
+                                            count = comments.itemCount,
+                                            key = comments.itemKey { it.cardId }
+                                        ) { index ->
+                                            val comment = comments[index] ?: return@items
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillParentMaxHeight()
+                                                    .aspectRatio(1f)
+                                            ) {
+                                                CardViewComment(
+                                                    contentText = comment.cardContent,
+                                                    thumbnailUri = comment.cardImgUrl,
+                                                    distance = comment.distance ?: "",
+                                                    createAt = TimeUtils.getRelativeTimeString(
+                                                        comment.createdAt
+                                                    ),
+                                                    likeCnt = comment.likeCount.toString(),
+                                                    commentCnt = comment.commentCardCount.toString(),
+                                                    font = comment.font,
+                                                    onClick = {
+                                                        onCommentClick(comment.cardId)
+                                                    }
+                                                )
+                                            }
                                         }
-                                    }
-                                    if (loadState.append is LoadState.Loading) {
-                                        item {
-                                            Box(modifier = Modifier.padding(horizontal = 8.dp)) {
-                                                playProgression()
+                                        if (loadState.append is LoadState.Loading) {
+                                            item {
+                                                Box(modifier = Modifier.padding(horizontal = 8.dp)) {
+                                                    playProgression()
+                                                }
                                             }
                                         }
                                     }
@@ -455,21 +513,20 @@ private fun CardView(
                             }
                         }
                     }
-                }
 
-                is LoadState.Error -> {
-                    Text(
-                        text = stringResource(R.string.card_error_comment),
-                        style = TextComponent.BODY_1_M_14,
-                        color = NeutralColor.GRAY_400,
-                        textAlign = TextAlign.Center
-                    )
+                    is LoadState.Error -> {
+                        Text(
+                            text = stringResource(R.string.card_error_comment),
+                            style = TextComponent.BODY_1_M_14,
+                            color = NeutralColor.GRAY_400,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             }
         }
     }
 }
-
 
 @Composable
 private fun BottomSheetView(

@@ -2,9 +2,11 @@ package com.phew.repository.mapper
 
 import com.phew.core_common.APP_ERROR_CODE
 import com.phew.core_common.DataResult
+import com.phew.core_common.ERROR_ACCOUNT_SUSPENDED
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.HTTP_NO_MORE_CONTENT
 import com.phew.core_common.TimeUtils
+import com.phew.core_common.WITHDRAWAL_USER
 import com.phew.domain.dto.CardComment
 import com.phew.domain.dto.CardDetail
 import com.phew.domain.dto.CardDetailTag
@@ -30,6 +32,8 @@ import com.phew.domain.dto.UserCommentWrite
 import com.phew.domain.dto.UserDeleteNotification
 import com.phew.domain.model.AppVersionStatus
 import com.phew.domain.model.AppVersionStatusType
+import com.phew.domain.model.BlockMember
+import com.phew.domain.model.RejoinableDate
 import com.phew.domain.model.TransferCode
 import com.phew.network.dto.AppVersionStatusDTO
 import com.phew.network.dto.CheckSignUpDTO
@@ -38,6 +42,8 @@ import com.phew.network.dto.NoticeData
 import com.phew.network.dto.NotificationDTO
 import com.phew.network.dto.TokenDTO
 import com.phew.network.dto.UploadImageUrlDTO
+import com.phew.network.dto.response.BlockMemberResponseDTO
+import com.phew.network.dto.response.RejoinableDateResponseDTO
 import com.phew.network.dto.request.feed.CheckBanedDTO
 import com.phew.network.dto.request.feed.ImageInfoDTO
 import com.phew.network.dto.request.feed.TagInfoDTO
@@ -239,6 +245,22 @@ internal fun TransferCodeDTO.toDomain(): TransferCode {
     )
 }
 
+internal fun RejoinableDateResponseDTO.toDomain(): RejoinableDate {
+    return RejoinableDate(
+        rejoinableDate = this.rejoinableDate,
+        isActivityRestricted = this.isActivityRestricted
+    )
+}
+
+internal fun BlockMemberResponseDTO.toDomain(): BlockMember {
+    return BlockMember(
+        blockId = this.blockId,
+        blockMemberId = this.blockMemberId,
+        blockMemberNickname = this.blockMemberNickname,
+        blockMemberProfileImageUrl = this.blockMemberProfileImageUrl
+    )
+}
+
 internal fun CardDetailResponseDTO.toDomain(): CardDetail {
     return CardDetail(
         cardId = cardId,
@@ -331,10 +353,19 @@ suspend fun <T, R> apiCall(
 ): DataResult<R> {
     try {
         val response = apiCall()
-        if (!response.isSuccessful) return DataResult.Fail(
-            code = response.code(),
-            message = response.message()
-        )
+        if (!response.isSuccessful) {
+            return when (response.code()) {
+                WITHDRAWAL_USER -> DataResult.Fail(
+                    code = response.code(),
+                    message = ERROR_ACCOUNT_SUSPENDED,
+                    throwable = Exception("Account suspended - Error code 418")
+                )
+                else -> DataResult.Fail(
+                    code = response.code(),
+                    message = response.message()
+                )
+            }
+        }
 
         val body = response.body()
             ?: return DataResult.Fail(

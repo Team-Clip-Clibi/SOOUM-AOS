@@ -12,12 +12,11 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
 import androidx.navigation.navigation
 import com.phew.core.ui.component.home.HomeTabType
-import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.state.SooumAppState
 import com.phew.core_design.slideComposable
 import com.phew.feed.feed.FeedView
 import com.phew.feed.notification.NotifyView
-import com.phew.feed.viewModel.HomeViewModel
+import com.phew.feed.viewModel.FeedViewModel
 import com.phew.presentation.detail.navigation.navigateToDetailGraph
 
 val FEED_GRAPH = HomeTabType.FEED.graph
@@ -57,33 +56,34 @@ fun NavGraphBuilder.feedGraph(
         startDestination = FEED_HOME_ROUTE
     ) {
         slideComposable(FEED_HOME_ROUTE) { nav ->
-            val homeViewModel: HomeViewModel = hiltViewModel()
+            val feedViewModel: FeedViewModel = hiltViewModel()
             remember { SnackbarHostState() }
             val locationPermission = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.RequestMultiplePermissions(),
                 onResult = { permissionResult ->
                     val isGranted =
                         permissionResult[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
-                    homeViewModel.onPermissionResult(isGranted = isGranted)
+                    feedViewModel.onPermissionResult(isGranted = isGranted)
                 }
             )
-            LaunchedEffect(homeViewModel) {
-                homeViewModel.requestPermissionEvent.collect { permissions ->
+            LaunchedEffect(feedViewModel) {
+                feedViewModel.requestPermissionEvent.collect { permissions ->
                     locationPermission.launch(permissions)
                 }
             }
             FeedView(
-                viewModel = homeViewModel,
+                viewModel = feedViewModel,
+                navController = navController,
                 finish = onBackPressed,
                 requestPermission = {
-                    homeViewModel.onPermissionRequest(
+                    feedViewModel.onPermissionRequest(
                         arrayOf(
                             Manifest.permission.ACCESS_FINE_LOCATION,
                             Manifest.permission.ACCESS_COARSE_LOCATION
                         )
                     )
                 },
-                closeDialog = homeViewModel::rationalDialogDismissed,
+                closeDialog = feedViewModel::rationalDialogDismissed,
                 noticeClick = navController::navigateToNotify,
                 navigateToDetail = { cardDetailArgs ->
                     navController.navigateToDetailGraph(cardDetailArgs)
@@ -95,11 +95,11 @@ fun NavGraphBuilder.feedGraph(
         slideComposable(NOTIFY_ROUTE) { nav ->
             val navBackStackEntry =
                 remember(nav) { navController.getBackStackEntry(FEED_GRAPH) }
-            val homeViewModel: HomeViewModel = hiltViewModel(navBackStackEntry)
+            val feedViewModel: FeedViewModel = hiltViewModel(navBackStackEntry)
             val snackBarHostState = remember { SnackbarHostState() }
 
             NotifyView(
-                viewModel = homeViewModel,
+                viewModel = feedViewModel,
                 snackBarHostState = snackBarHostState,
                 backClick = { navController.popBackStack() },
                 logout = {}

@@ -7,11 +7,14 @@ import com.phew.core_common.TimeUtils
 import com.phew.domain.model.AppVersionStatusType
 import com.phew.domain.usecase.CheckAppVersionNew
 import com.phew.domain.usecase.GetActivityRestrictionDate
+import com.phew.domain.usecase.GetRefreshToken
+import com.phew.domain.usecase.GetRejoinableDate
 import com.phew.presentation.settings.model.setting.SettingNavigationEvent
 import com.phew.presentation.settings.model.setting.SettingItem
 import com.phew.presentation.settings.model.setting.SettingItemId
 import com.phew.presentation.settings.model.setting.SettingItemType
 import com.phew.presentation.settings.model.setting.SettingUiState
+import com.phew.presentation.settings.model.setting.ToastEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,12 +25,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import androidx.core.net.toUri
 
 @HiltViewModel
 class SettingViewModel @Inject constructor(
     private val getActivityRestrictionDate: GetActivityRestrictionDate,
-    private val checkAppVersionNew: CheckAppVersionNew
+    private val checkAppVersionNew: CheckAppVersionNew,
+    private val getRejoinableDate: GetRejoinableDate,
+    private val getRefreshToken: GetRefreshToken
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -39,10 +43,14 @@ class SettingViewModel @Inject constructor(
 
     private val _navigationEvent = MutableSharedFlow<SettingNavigationEvent>()
     val navigationEvent: SharedFlow<SettingNavigationEvent> = _navigationEvent.asSharedFlow()
+
+    private val _toastEvent = MutableSharedFlow<ToastEvent>()
+    val toastEvent: SharedFlow<ToastEvent> = _toastEvent.asSharedFlow()
     
     init {
         loadActivityRestrictionDate()
         checkAppVersion()
+        loadRejoinableDate()
     }
 
     private fun createSettingItems(): List<SettingItem> {
@@ -147,7 +155,10 @@ class SettingViewModel @Inject constructor(
 
     fun onInquiryClick() {
         viewModelScope.launch {
-            _navigationEvent.emit(SettingNavigationEvent.NavigateToInquiry)
+            val refreshToken = getRefreshToken()
+            _navigationEvent.emit(
+                SettingNavigationEvent.SendInquiryMail(refreshToken = refreshToken)
+            )
         }
     }
 
@@ -158,6 +169,15 @@ class SettingViewModel @Inject constructor(
     }
 
     fun onAccountDeletionClick() {
+        _uiState.update { it.copy(showWithdrawalDialog = true) }
+    }
+    
+    fun onDismissWithdrawalDialog() {
+        _uiState.update { it.copy(showWithdrawalDialog = false) }
+    }
+    
+    fun onConfirmWithdrawal() {
+        _uiState.update { it.copy(showWithdrawalDialog = false) }
         viewModelScope.launch {
             _navigationEvent.emit(SettingNavigationEvent.NavigateToAccountDeletion)
         }
@@ -166,8 +186,16 @@ class SettingViewModel @Inject constructor(
     fun onAppUpdateClick() {
         viewModelScope.launch {
             val currentState = _uiState.value
-            if (currentState.appVersionStatusType == AppVersionStatusType.UPDATE) {
-                _navigationEvent.emit(SettingNavigationEvent.NavigateToAppStore)
+            when (currentState.appVersionStatusType) {
+                AppVersionStatusType.UPDATE -> {
+                    _navigationEvent.emit(SettingNavigationEvent.NavigateToAppStore)
+                }
+                AppVersionStatusType.OK, AppVersionStatusType.PENDING -> {
+                    _toastEvent.emit(ToastEvent.ShowCurrentVersionToast)
+                }
+                null -> {
+                    // 상태가 없는 경우 아무 동작 하지 않음
+                }
             }
         }
     }
@@ -204,6 +232,17 @@ class SettingViewModel @Inject constructor(
                 is DomainResult.Failure -> {
                     // 실패시에는 null로 유지 (기본값)
                 }
+            }
+        }
+    }
+    
+    private fun loadRejoinableDate() {
+        viewModelScope.launch {
+            val result = getRejoinableDate()
+            result.onSuccess { rejoinableDate ->
+                _uiState.update { it.copy(rejoinableDate = rejoinableDate) }
+            }.onFailure {
+                // 실패시 처리 (필요시)
             }
         }
     }

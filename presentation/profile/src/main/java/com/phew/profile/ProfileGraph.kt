@@ -51,6 +51,7 @@ fun NavGraphBuilder.profileGraph(
     navController: NavHostController,
     onBackPressed: () -> Unit,
     onLogOut: () -> Unit,
+    onWithdrawalComplete: () -> Unit,
     cardClick: (Long) -> Unit,
 ) {
     navigation(
@@ -175,7 +176,8 @@ fun NavGraphBuilder.profileGraph(
         }
         settingGraph(
             navController = navController,
-            onBackPressed = onBackPressed
+            onBackPressed = onBackPressed,
+            onWithdrawalComplete = onWithdrawalComplete
         )
     }
 }

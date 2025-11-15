@@ -31,6 +31,9 @@ import com.phew.core_design.OpacityColor
 import com.phew.core_design.Primary
 import com.phew.core_design.TextComponent
 import com.phew.core_design.UnKnowColor
+import com.phew.core_design.R
+import com.phew.core_design.typography.FontType
+import androidx.compose.ui.text.font.Font
 import com.phew.core_design.component.card.component.BottomContent
 import com.phew.core_design.component.card.component.FeedCardType
 
@@ -223,7 +226,7 @@ private fun FeedCardImpl(
                 contentText = contentText,
                 imgUrl = imgUrl,
                 fontFamily = resolveFontFamily(font = font),
-                textMaxLines = 3
+                textMaxLines = 4
             )
 
             BottomContent(
@@ -272,7 +275,7 @@ private fun FeedAdminCardImpl(
                 contentText = contentText,
                 imgUrl = imgUrl,
                 fontFamily = resolveFontFamily(font = font),
-                textMaxLines = 3
+                textMaxLines = 4
             )
 
             BottomContent(
@@ -390,6 +393,12 @@ private fun Preview_FeedCard() {
 }
 
 internal fun resolveFontFamily(font: String): FontFamily {
-    // TODO: 폰트 문자열 매핑 규칙 확정 시 교체
-    return FontFamily.Default
+    val fontType = FontType.fromServerName(font)
+    return when (fontType) {
+        FontType.RIDIBATANG -> FontFamily(Font(R.font.ridibatang))
+        FontType.YOON -> FontFamily(Font(R.font.yoon))
+        FontType.KKOKKO -> FontFamily(Font(R.font.kkokko))
+        FontType.PRETENDARD -> FontFamily(Font(R.font.regular))
+        null -> FontFamily.Default
+    }
 }

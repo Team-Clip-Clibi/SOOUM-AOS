@@ -1,8 +1,11 @@
 package com.phew.presentation.settings.screen
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -10,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
@@ -20,6 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -28,7 +33,14 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieComposition
+import com.phew.core_common.TimeUtils
 import com.phew.core_design.AppBar.IconLeftAppBar
+import com.phew.core_design.DialogComponent
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.R
 import com.phew.core_design.TextComponent
@@ -38,6 +50,7 @@ import com.phew.presentation.settings.model.setting.SettingItem
 import com.phew.presentation.settings.model.setting.SettingItemId
 import com.phew.presentation.settings.model.setting.SettingItemType
 import com.phew.presentation.settings.model.setting.SettingNavigationEvent
+import com.phew.presentation.settings.model.setting.ToastEvent
 import com.phew.presentation.settings.viewmodel.SettingViewModel
 import kotlinx.coroutines.flow.collectLatest
 import com.phew.presentation.settings.R as SettingsR
@@ -51,7 +64,6 @@ fun SettingRoute(
     onNavigateToLoadPreviousAccount: () -> Unit = {},
     onNavigateToBlockedUsers: () -> Unit = {},
     onNavigateToNotice: () -> Unit = {},
-    onNavigateToInquiry: () -> Unit = {},
     onNavigateToPrivacyPolicy: () -> Unit = {},
     onNavigateToAccountDeletion: () -> Unit = {},
 ) {
@@ -66,13 +78,56 @@ fun SettingRoute(
                 SettingNavigationEvent.NavigateToLoadPreviousAccount -> onNavigateToLoadPreviousAccount()
                 SettingNavigationEvent.NavigateToBlockedUsers -> onNavigateToBlockedUsers()
                 SettingNavigationEvent.NavigateToNotice -> onNavigateToNotice()
-                SettingNavigationEvent.NavigateToInquiry -> onNavigateToInquiry()
                 SettingNavigationEvent.NavigateToPrivacyPolicy -> onNavigateToPrivacyPolicy()
                 SettingNavigationEvent.NavigateToAccountDeletion -> onNavigateToAccountDeletion()
                 SettingNavigationEvent.NavigateToAppStore -> {
                     openAppStore(context)
                 }
+                is SettingNavigationEvent.SendInquiryMail -> {
+                    openInquiryMail(
+                        context = context,
+                        refreshToken = event.refreshToken
+                    )
+                }
             }
+        }
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.toastEvent.collectLatest { event ->
+            when (event) {
+                ToastEvent.ShowCurrentVersionToast -> {
+                    Toast.makeText(
+                        context,
+                        context.getString(SettingsR.string.setting_current_new_version),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
+    }
+
+    val composition by rememberLottieComposition(
+        LottieCompositionSpec.RawRes(R.raw.ic_refresh)
+    )
+
+    val progress by animateLottieCompositionAsState(
+        composition = composition,
+        iterations = LottieConstants.IterateForever,
+        isPlaying = uiState.isLoading
+    )
+
+    if (uiState.isLoading) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            LottieAnimation(
+                composition = composition,
+                progress = { progress },
+                modifier = Modifier.size(44.dp)
+            )
         }
     }
 
@@ -81,7 +136,6 @@ fun SettingRoute(
         notificationEnabled = uiState.notificationEnabled,
         appVersion = uiState.appVersion,
         isUpdateAvailable = uiState.isUpdateAvailable,
-        isLoading = uiState.isLoading,
         settingItems = uiState.settingItems,
         activityRestrictionDate = uiState.activityRestrictionDate,
         latestVersion = uiState.latestVersion,
@@ -96,6 +150,26 @@ fun SettingRoute(
         onAccountDeletionClick = viewModel::onAccountDeletionClick,
         onAppUpdateClick = viewModel::onAppUpdateClick
     )
+    
+    // 탈퇴 확인 다이얼로그
+    if (uiState.showWithdrawalDialog) {
+        val rejoinableDate = uiState.rejoinableDate
+        val dialogMessage = if (rejoinableDate?.isActivityRestricted == true) {
+            stringResource(SettingsR.string.setting_withdrawal_dialog_rejoin_date, 
+                TimeUtils.formatToWithdrawalDate(rejoinableDate.rejoinableDate))
+        } else {
+            stringResource(SettingsR.string.setting_withdrawal_dialog_rejoin_seven_date)
+        }
+        
+        DialogComponent.DefaultButtonTwo(
+            title = stringResource(SettingsR.string.setting_withdrawal_dialog_title),
+            description = dialogMessage,
+            buttonTextStart = stringResource(SettingsR.string.setting_withdrawal_dialog_cancel),
+            buttonTextEnd = stringResource(SettingsR.string.setting_withdrawal_dialog_ok),
+            onClick = viewModel::onConfirmWithdrawal,
+            onDismiss = viewModel::onDismissWithdrawalDialog
+        )
+    }
 }
 
 @Composable
@@ -104,7 +178,6 @@ private fun SettingScreen(
     notificationEnabled: Boolean,
     appVersion: String,
     isUpdateAvailable: Boolean,
-    isLoading: Boolean,
     settingItems: List<SettingItem>,
     activityRestrictionDate: String?,
     latestVersion: String?,
@@ -453,7 +526,6 @@ private fun SettingScreenPreview() {
         notificationEnabled = true,
         appVersion = "1.10.1",
         isUpdateAvailable = true,
-        isLoading = false,
         settingItems = previewItems,
         activityRestrictionDate = "2024년 12월 25일 14시 30분",
         onBackPressed = {},
@@ -487,6 +559,48 @@ private fun openAppStore(context: Context) {
             context.startActivity(intent)
         } catch (e: Exception) {
             e.printStackTrace()
+        }
+    }
+}
+
+private fun openInquiryMail(
+    context: Context,
+    refreshToken: String
+) {
+    val emailAddress = context.getString(SettingsR.string.setting_inquiry_email_address)
+    val emailSubject = context.getString(SettingsR.string.setting_inquiry_email_subject)
+    val emailBody = context.getString(
+        SettingsR.string.setting_inquiry_email_body,
+        refreshToken
+    )
+    val chooserTitle = context.getString(SettingsR.string.setting_inquiry_email_chooser_title)
+    val noClientMessage =
+        context.getString(SettingsR.string.setting_inquiry_email_client_not_found)
+
+    val gmailIntent = Intent(Intent.ACTION_SENDTO).apply {
+        data = "mailto:".toUri()
+        putExtra(Intent.EXTRA_EMAIL, arrayOf(emailAddress))
+        putExtra(Intent.EXTRA_SUBJECT, emailSubject)
+        putExtra(Intent.EXTRA_TEXT, emailBody)
+        `package` = "com.google.android.gm"
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+
+    try {
+        context.startActivity(gmailIntent)
+    } catch (gmailNotFound: ActivityNotFoundException) {
+        val fallbackIntent = Intent(Intent.ACTION_SENDTO).apply {
+            data = "mailto:".toUri()
+            putExtra(Intent.EXTRA_EMAIL, arrayOf(emailAddress))
+            putExtra(Intent.EXTRA_SUBJECT, emailSubject)
+            putExtra(Intent.EXTRA_TEXT, emailBody)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+
+        try {
+            context.startActivity(Intent.createChooser(fallbackIntent, chooserTitle))
+        } catch (noEmailClient: Exception) {
+            Toast.makeText(context, noClientMessage, Toast.LENGTH_SHORT).show()
         }
     }
 }

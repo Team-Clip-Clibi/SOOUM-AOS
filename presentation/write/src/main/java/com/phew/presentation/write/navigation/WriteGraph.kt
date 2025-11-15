@@ -55,6 +55,7 @@ fun NavGraphBuilder.writeGraph(
         // 탭에서 접근하는 경로 (파라미터 없음)
         slideComposable(route = WRITE_HOME_ROUTE) { nav ->
             WriteRoute(
+                navController = navController,
                 args = null,
                 onBackPressed = onBackPressed,
                 onWriteComplete = onWriteComplete
@@ -72,6 +73,7 @@ fun NavGraphBuilder.writeGraph(
         ) { nav ->
             val args = nav.arguments?.getNavArg<WriteArgs>()
             WriteRoute(
+                navController = navController,
                 args = args,
                 onBackPressed = onBackPressed,
                 onWriteComplete = {

@@ -50,6 +50,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -140,7 +141,8 @@ fun Tag(
     modifier: Modifier = Modifier,
     requestFocusKey: Int = 0,
     showRemoveIcon: Boolean = false,
-    onInputFocusChanged: (Boolean) -> Unit = {}
+    onInputFocusChanged: (Boolean) -> Unit = {},
+    fontFamily: FontFamily = FontFamily.Default
 ) {
     when (state) {
         TagState.AddNew -> TagAddNew(onClick = onClick, modifier = modifier)
@@ -154,7 +156,8 @@ fun Tag(
             onRemove = onRemove,
             modifier = modifier,
             requestFocusKey = requestFocusKey,
-            onFocusChanged = onInputFocusChanged
+            onFocusChanged = onInputFocusChanged,
+            fontFamily = fontFamily
         )
 
         TagState.Default -> TagDefault(
@@ -162,7 +165,8 @@ fun Tag(
             showRemoveIcon = showRemoveIcon,
             onRemove = onRemove,
             onClick = onClick,
-            modifier = modifier
+            modifier = modifier,
+            fontFamily = fontFamily
         )
 
         TagState.Number -> TagNumber(
@@ -186,6 +190,7 @@ internal fun TagRow(
     onFocusHandled: () -> Unit = {},
     currentInput: String = "",
     onInputChange: (String) -> Unit = {},
+    fontFamily: FontFamily = FontFamily.Default,
     modifier: Modifier = Modifier
 ) {
     var input by remember { mutableStateOf(currentInput) }
@@ -245,7 +250,8 @@ internal fun TagRow(
                 text = tag,
                 showRemoveIcon = enableAdd,
                 onRemove = { onRemove(tag) },
-                onClick = { onRemove(tag) }
+                onClick = { onRemove(tag) },
+                fontFamily = fontFamily
             )
         }
 
@@ -292,7 +298,8 @@ internal fun TagRow(
                     } else {
                         awaitingFocus = false
                     }
-                }
+                },
+                fontFamily = fontFamily
             )
         }
     }
@@ -341,7 +348,8 @@ private fun TagInputField(
     onRemove: () -> Unit = {},
     modifier: Modifier = Modifier,
     requestFocusKey: Int = 0,
-    onFocusChanged: (Boolean) -> Unit = {}
+    onFocusChanged: (Boolean) -> Unit = {},
+    fontFamily: FontFamily = FontFamily.Default
 ) {
     var isFocused by remember { mutableStateOf(false) }
     var isCompleted by remember { mutableStateOf(false) }
@@ -404,7 +412,8 @@ private fun TagInputField(
                         if (isFocused) append(" ")
                     },
                     style = TextComponent.CAPTION_2_M_12.copy(
-                        color = TagDesignTokens.TextTintColor
+                        color = TagDesignTokens.TextTintColor,
+                        fontFamily = fontFamily
                     )
                 )
 
@@ -464,7 +473,10 @@ private fun TagInputField(
             }
             .alpha(0f)
             .size(1.dp),
-        textStyle = TextComponent.CAPTION_2_M_12.copy(color = TagDesignTokens.TextTintColor),
+        textStyle = TextComponent.CAPTION_2_M_12.copy(
+            color = TagDesignTokens.TextTintColor,
+            fontFamily = fontFamily
+        ),
         singleLine = true,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(
@@ -487,7 +499,8 @@ private fun TagDefault(
     showRemoveIcon: Boolean = false,
     onRemove: () -> Unit = {},
     onClick: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    fontFamily: FontFamily = FontFamily.Default
 ) {
     Surface(
         onClick = onClick,
@@ -512,7 +525,10 @@ private fun TagDefault(
             Text(
                 text = text,
                 color = TagDesignTokens.TextTintColor,
-                style = TextComponent.CAPTION_2_M_12.copy(color = TagDesignTokens.TextTintColor)
+                style = TextComponent.CAPTION_2_M_12.copy(
+                    color = TagDesignTokens.TextTintColor,
+                    fontFamily = fontFamily
+                )
             )
 
             if (showRemoveIcon) {

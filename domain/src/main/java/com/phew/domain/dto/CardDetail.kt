@@ -1,6 +1,9 @@
 package com.phew.domain.dto
 
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
 
@@ -30,15 +33,31 @@ data class CardDetail(
 ) {
     val endTime = storyExpirationTime?.endTimeMillisecondTime()
     private fun String?.endTimeMillisecondTime(): Long {
-        if (this.isNullOrEmpty()) return 0L
-        val endTime = try {
-            OffsetDateTime.parse(this).toInstant().toEpochMilli()
-        } catch (e: DateTimeParseException) {
-            0L
-        }
-        if (endTime == 0L) return 0L
+        if (this.isNullOrBlank()) return 0L
+        val expireAt = parseIsoToEpochMillis(this) ?: return 0L
         val currentTime = System.currentTimeMillis()
-        return (endTime - currentTime).coerceAtLeast(0L)
+        return (expireAt - currentTime).coerceAtLeast(0L)
+    }
+
+    private fun parseIsoToEpochMillis(value: String): Long? {
+        val defaultZone = ZoneId.of("Asia/Seoul")
+        return runCatching {
+            OffsetDateTime.parse(value).toInstant().toEpochMilli()
+        }.getOrNull()
+            ?: runCatching {
+                val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
+                LocalDateTime.parse(value, formatter)
+                    .atZone(defaultZone)
+                    .toInstant()
+                    .toEpochMilli()
+            }.getOrNull()
+            ?: runCatching {
+                val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")
+                LocalDateTime.parse(value, formatter)
+                    .atZone(defaultZone)
+                    .toInstant()
+                    .toEpochMilli()
+            }.getOrNull()
     }
 }
 

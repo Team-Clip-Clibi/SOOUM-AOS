@@ -7,15 +7,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.R
 import android.net.Uri
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.ui.Alignment
-import com.phew.core_design.theme.GRAY_400
+import androidx.core.net.toUri
 
 @Composable
 fun CardDetail(
@@ -26,6 +25,7 @@ fun CardDetail(
     cardContent: String,
     cardThumbnailUri: String,
     cardTags: List<String>,
+    fontFamily: FontFamily = FontFamily.Default,
     header: @Composable () -> Unit,
     bottom: @Composable () -> Unit?,
     onPreviousCardClick: () -> Unit = { }
@@ -59,9 +59,10 @@ fun CardDetail(
                         previousCommentThumbnailUri = previousCommentThumbnailUri,
                         content = cardContent,
                         tags = cardTags,
-                        hasPreviousCommentThumbnail = previousCommentThumbnailUri?.isNotBlank() == true,
+                        hasPreviousCommentThumbnail = !previousCommentThumbnailUri.isNullOrEmpty(),
                         thumbnailUri = cardThumbnailUri,
-                        backgroundImage = backgroundImageUrl
+                        backgroundImage = backgroundImageUrl,
+                        fontFamily = fontFamily
                     ),
                     onPreviousCardClick = onPreviousCardClick
                 )
@@ -69,6 +70,5 @@ fun CardDetail(
         }
 
         bottom()
-        Spacer(modifier.height(1.dp).background(GRAY_400))
     }
 }
