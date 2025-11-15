@@ -214,6 +214,8 @@ private fun EditableWriteContentBox(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(vertical = 20.dp)
                     .heightIn(min = 61.dp, max = maxHeight)
                     .verticalScroll(scrollState),
                 contentAlignment = Alignment.Center
@@ -287,24 +289,19 @@ private fun ReadOnlyContentBox(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 20.dp)
                 .heightIn(min = 61.dp, max = maxHeight)
+                .padding(horizontal = 24.dp, vertical = 20.dp)
                 .verticalScroll(scrollState),
             contentAlignment = Alignment.Center
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = content.ifBlank { " " },
-                    style = textStyle,
-                    maxLines = Int.MAX_VALUE,
-                    overflow = TextOverflow.Clip,
-                    textAlign = TextAlign.Center
-                )
-            }
+            Text(
+                modifier = Modifier.fillMaxWidth(),
+                text = content.ifBlank { " " },
+                style = textStyle,
+                maxLines = Int.MAX_VALUE,
+                overflow = TextOverflow.Clip,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }

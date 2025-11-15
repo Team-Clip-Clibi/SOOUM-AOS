@@ -6,6 +6,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
+import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -14,6 +15,7 @@ import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 
 object TimeUtils {
+    private val DEFAULT_ZONE: ZoneId = ZoneId.of("Asia/Seoul")
     
     /**
      * ISO 8601 형식의 날짜 문자열을 파싱하는 DateFormat (UTC 기준)
@@ -120,10 +122,19 @@ object TimeUtils {
         if (offsetResult != null) return offsetResult
 
         // LocalDateTime with microseconds
-        val microFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
         val microResult = runCatching {
-            LocalDateTime.parse(value, microFormatter)
-                .toInstant(ZoneOffset.UTC)
+            val normalized = if ('.' in value) {
+                val (head, tail) = value.split('.', limit = 2)
+                val fractional = tail.takeWhile { it.isDigit() }
+                val padded = fractional.padEnd(6, '0')
+                "$head.$padded"
+            } else {
+                "$value.000000"
+            }
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
+            LocalDateTime.parse(normalized, formatter)
+                .atZone(DEFAULT_ZONE)
+                .toInstant()
                 .toEpochMilli()
         }.getOrNull()
         if (microResult != null) return microResult
@@ -131,9 +142,10 @@ object TimeUtils {
         // LocalDateTime with milliseconds
         val milliFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")
         val milliResult = runCatching {
-            LocalDateTime.parse(value, milliFormatter)
-                .toInstant(ZoneOffset.UTC)
-                .toEpochMilli()
+                LocalDateTime.parse(value, milliFormatter)
+                    .atZone(DEFAULT_ZONE)
+                    .toInstant()
+                    .toEpochMilli()
         }.getOrNull()
         if (milliResult != null) return milliResult
 
@@ -232,18 +244,7 @@ object TimeUtils {
             }
             
             // 여러 포맷으로 파싱 시도
-            val createdTime = try {
-                val time = iso8601Format.parse(createAt)?.time
-                time
-            } catch (e: Exception) {
-                try {
-                    val time = iso8601FormatFallback.parse(createAt)?.time
-                    time
-                } catch (e: Exception) {
-                    SooumLog.e(TAG, "Failed to parse date: $createAt ${e.message}")
-                    null
-                }
-            } ?: return createAt
+            val createdTime = parseExpirationMillis(createAt) ?: return createAt
             // 현재 시간도 UTC 기준으로 계산
             val currentTime = System.currentTimeMillis()
             val diffMillis = currentTime - createdTime

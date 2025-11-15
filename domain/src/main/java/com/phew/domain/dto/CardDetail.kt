@@ -2,7 +2,7 @@ package com.phew.domain.dto
 
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
-import java.time.ZoneOffset
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
@@ -40,19 +40,22 @@ data class CardDetail(
     }
 
     private fun parseIsoToEpochMillis(value: String): Long? {
+        val defaultZone = ZoneId.of("Asia/Seoul")
         return runCatching {
             OffsetDateTime.parse(value).toInstant().toEpochMilli()
         }.getOrNull()
             ?: runCatching {
                 val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
                 LocalDateTime.parse(value, formatter)
-                    .toInstant(ZoneOffset.UTC)
+                    .atZone(defaultZone)
+                    .toInstant()
                     .toEpochMilli()
             }.getOrNull()
             ?: runCatching {
                 val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")
                 LocalDateTime.parse(value, formatter)
-                    .toInstant(ZoneOffset.UTC)
+                    .atZone(defaultZone)
+                    .toInstant()
                     .toEpochMilli()
             }.getOrNull()
     }

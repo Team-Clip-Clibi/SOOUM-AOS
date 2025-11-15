@@ -427,27 +427,24 @@ private fun CardDetailScreen(
                     startClick = onBackPressed,
                     endClick = { onShowBottomSheetChange(true) }
                 )
-                Box(
-                    modifier = Modifier
-                        .width(53.dp)
-                        .height(23.dp)
-                        .background(NeutralColor.WHITE)
-                        .border(1.dp, NeutralColor.GRAY_200, RoundedCornerShape(100.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = if (remainingTimeMillis.toString().trim() == "0") {
-                            ""
-                        } else {
-                            TimeUtils.formatMillisToTimer(remainingTimeMillis)
-                        },
-                        color = Primary.DARK,
-                        style = TextComponent.CAPTION_3_M_10,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center
-                    )
+                if (remainingTimeMillis.toString().trim() != "0") {
+                    Box(
+                        modifier = Modifier
+                            .width(53.dp)
+                            .height(23.dp)
+                            .background(NeutralColor.WHITE)
+                            .border(1.dp, NeutralColor.GRAY_200, RoundedCornerShape(100.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = TimeUtils.formatMillisToTimer(remainingTimeMillis),
+                            color = Primary.DARK,
+                            style = TextComponent.CAPTION_3_M_10,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
-
             }
         },
         snackbarHost = {
