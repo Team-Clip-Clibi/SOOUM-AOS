@@ -26,6 +26,9 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,7 +45,9 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import com.phew.core.ui.component.ErrorDialog
 import com.phew.core_design.AppBar.IconLeftAppBar
+import com.phew.domain.usecase.GetRefreshToken
 import com.phew.core_design.Danger
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.NeutralColor
@@ -66,6 +71,7 @@ internal fun BlockUserManagementRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val blockUsers = viewModel.blockUsers.collectAsLazyPagingItems()
     val context = LocalContext.current
+    var errorWithRefreshToken by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(blockUsers) {
         viewModel.uiEffect.collectLatest { effect ->
@@ -79,7 +85,7 @@ internal fun BlockUserManagementRoute(
                 }
 
                 is BlockUserManagementUiEffect.ShowError -> {
-                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                    errorWithRefreshToken = effect.refreshToken
                 }
 
                 BlockUserManagementUiEffect.RefreshBlockList -> {
@@ -87,6 +93,13 @@ internal fun BlockUserManagementRoute(
                 }
             }
         }
+    }
+
+    errorWithRefreshToken?.let { refreshToken ->
+        ErrorDialog(
+            onDismiss = { errorWithRefreshToken = null },
+            refreshToken = refreshToken
+        )
     }
 
     BlockUserManagementScreen(

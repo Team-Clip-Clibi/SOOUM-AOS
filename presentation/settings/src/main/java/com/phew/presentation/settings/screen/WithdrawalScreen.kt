@@ -28,6 +28,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.phew.core.ui.component.ErrorDialog
+import com.phew.domain.usecase.GetRefreshToken
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -56,8 +59,7 @@ internal fun WithdrawalRoute(
     onWithdrawalComplete: () -> Unit = { }
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var showSuccessDialog by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var errorWithRefreshToken by remember { mutableStateOf<String?>(null) }
     
     LaunchedEffect(Unit) {
         viewModel.uiEffect.collect { effect ->
@@ -66,7 +68,7 @@ internal fun WithdrawalRoute(
                     onWithdrawalComplete()
                 }
                 is WithdrawalUiEffect.ShowError -> {
-                    errorMessage = effect.message
+                    errorWithRefreshToken = effect.refreshToken
                 }
             }
         }
@@ -81,9 +83,11 @@ internal fun WithdrawalRoute(
         onUpdateCustomReason = viewModel::updateCustomReason
     )
     
-    
-    errorMessage?.let { message ->
-        // TODO: 에러 처리 구현
+    errorWithRefreshToken?.let { refreshToken ->
+        ErrorDialog(
+            onDismiss = { errorWithRefreshToken = null },
+            refreshToken = refreshToken
+        )
     }
 }
 
