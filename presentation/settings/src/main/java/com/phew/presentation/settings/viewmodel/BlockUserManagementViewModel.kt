@@ -7,6 +7,7 @@ import androidx.paging.cachedIn
 import com.phew.core_common.DomainResult
 import com.phew.domain.model.BlockMember
 import com.phew.domain.usecase.GetBlockUserPaging
+import com.phew.domain.usecase.GetRefreshToken
 import com.phew.domain.usecase.UnblockMember
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
@@ -21,7 +22,8 @@ import javax.inject.Inject
 @HiltViewModel
 class BlockUserManagementViewModel @Inject constructor(
     getBlockUserPaging: GetBlockUserPaging,
-    private val unblockMember: UnblockMember
+    private val unblockMember: UnblockMember,
+    private val getRefreshToken: GetRefreshToken
 ) : ViewModel() {
 
     val blockUsers: Flow<PagingData<BlockMember>> =
@@ -32,6 +34,7 @@ class BlockUserManagementViewModel @Inject constructor(
 
     private val _uiEffect = MutableSharedFlow<BlockUserManagementUiEffect>()
     val uiEffect = _uiEffect.asSharedFlow()
+
 
     fun showUnblockDialog(blockMember: BlockMember) {
         _uiState.update {
@@ -64,8 +67,7 @@ class BlockUserManagementViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             showUnblockDialog = false,
-                            selectedBlockMember = null,
-                            error = null
+                            selectedBlockMember = null
                         )
                     }
                     _uiEffect.emit(BlockUserManagementUiEffect.ShowUnblockSuccess)
@@ -76,13 +78,14 @@ class BlockUserManagementViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             showUnblockDialog = false,
-                            selectedBlockMember = null,
-                            error = result.error
+                            selectedBlockMember = null
                         )
                     }
+                    val refreshToken = getRefreshToken()
                     _uiEffect.emit(
                         BlockUserManagementUiEffect.ShowError(
-                            result.error ?: "차단 해제에 실패했습니다."
+                            message = result.error ?: "차단 해제에 실패했습니다.",
+                            refreshToken = refreshToken
                         )
                     )
                 }
@@ -93,12 +96,11 @@ class BlockUserManagementViewModel @Inject constructor(
 
 data class BlockUserManagementUiState(
     val showUnblockDialog: Boolean = false,
-    val selectedBlockMember: BlockMember? = null,
-    val error: String? = null
+    val selectedBlockMember: BlockMember? = null
 )
 
 sealed class BlockUserManagementUiEffect {
     object ShowUnblockSuccess : BlockUserManagementUiEffect()
-    data class ShowError(val message: String) : BlockUserManagementUiEffect()
+    data class ShowError(val message: String, val refreshToken: String) : BlockUserManagementUiEffect()
     object RefreshBlockList : BlockUserManagementUiEffect()
 }

@@ -307,7 +307,6 @@ object FeedUi {
         onClick: (String) -> Unit,
         onRemoveCard: (String) -> Unit,
     ) {
-        SooumLog.d(TAG, "PungTypeCard Type")
         var remainingTimeMillis by remember {
             mutableLongStateOf(TimeUtils.remainingMillisUntil(feedCard.storyExpirationTime))
         }
@@ -321,7 +320,6 @@ object FeedUi {
             }
             isExpired = true
         }
-        SooumLog.d(TAG, "isExpired=$isExpired")
         if (isExpired) {
             FeedDeletedCard(
                 id = feedCard.cardId,

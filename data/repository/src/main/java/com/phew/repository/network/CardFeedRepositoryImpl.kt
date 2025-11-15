@@ -5,6 +5,7 @@ import com.phew.core_common.DataResult
 import com.phew.core_common.HTTP_NOT_FOUND
 import com.phew.core_common.HTTP_SUCCESS
 import com.phew.core_common.HTTP_NO_MORE_CONTENT
+import com.phew.core_common.log.SooumLog
 import com.phew.domain.dto.CardDefaultImagesResponse
 import com.phew.domain.dto.CardImageDefault
 import com.phew.domain.dto.CheckedBaned
@@ -75,9 +76,9 @@ class CardFeedRepositoryImpl @Inject constructor(
             val response = if (feedDto.lastId != null) {
                 // 페이징이 있는 경우 - 다음 페이지 요청
                 feedHttp.requestLatestFeed(
+                    lastId = feedDto.lastId,
                     latitude = feedDto.latitude,
-                    longitude = feedDto.longitude,
-                    lastId = feedDto.lastId
+                    longitude = feedDto.longitude
                 )
             } else {
                 // 페이징이 없는 경우 - 첫 페이지 요청

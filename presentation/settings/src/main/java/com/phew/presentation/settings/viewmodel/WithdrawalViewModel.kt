@@ -2,6 +2,7 @@ package com.phew.presentation.settings.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.phew.domain.usecase.GetRefreshToken
 import com.phew.domain.usecase.WithdrawalAccount
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -14,7 +15,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class WithdrawalViewModel @Inject constructor(
-    private val withdrawalAccount: WithdrawalAccount
+    private val withdrawalAccount: WithdrawalAccount,
+    private val getRefreshToken: GetRefreshToken
 ): ViewModel() {
     
     private val _uiState = MutableStateFlow(WithdrawalUiState())
@@ -22,6 +24,8 @@ class WithdrawalViewModel @Inject constructor(
     
     private val _uiEffect = MutableSharedFlow<WithdrawalUiEffect>()
     val uiEffect = _uiEffect.asSharedFlow()
+    
+    
     
     fun selectReason(reason: WithdrawalReason) {
         _uiState.update { currentState ->
@@ -70,8 +74,13 @@ class WithdrawalViewModel @Inject constructor(
                 }
                 .onFailure { exception ->
                     _uiState.update { it.copy(isLoading = false) }
-                    // TODO: 실패 처리 로직
-                    _uiEffect.emit(WithdrawalUiEffect.ShowError(exception.message ?: "Unknown error"))
+                    val refreshToken = getRefreshToken()
+                    _uiEffect.emit(
+                        WithdrawalUiEffect.ShowError(
+                            message = exception.message ?: "Unknown error",
+                            refreshToken = refreshToken
+                        )
+                    )
                 }
         }
     }
@@ -101,5 +110,5 @@ enum class WithdrawalReason(val key: String) {
 
 sealed class WithdrawalUiEffect {
     object ShowSuccessDialog : WithdrawalUiEffect()
-    data class ShowError(val message: String) : WithdrawalUiEffect()
+    data class ShowError(val message: String, val refreshToken: String) : WithdrawalUiEffect()
 }
