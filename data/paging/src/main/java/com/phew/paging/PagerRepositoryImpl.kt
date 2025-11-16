@@ -12,11 +12,13 @@ import com.phew.domain.dto.NoticeSource
 import com.phew.domain.dto.Notification
 import com.phew.domain.dto.Popular
 import com.phew.domain.dto.ProfileCard
+import com.phew.domain.dto.TagCardContent
 import com.phew.domain.model.BlockMember
 import com.phew.domain.repository.PagerRepository
 import com.phew.domain.repository.network.CardDetailRepository
 import com.phew.domain.repository.network.CardFeedRepository
 import com.phew.domain.repository.network.ProfileRepository
+import com.phew.domain.repository.network.TagRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Provider
@@ -29,6 +31,7 @@ class PagerRepositoryImpl @Inject constructor(
     private val cardDetailRepository: CardDetailRepository,
     private val profileRepository: ProfileRepository,
     private val cardFeedRepository: CardFeedRepository,
+    private val tagRepository: TagRepository,
 ) : PagerRepository {
     override fun noticePageStream(source: NoticeSource): Flow<PagingData<Notice>> =
         Pager(PagingConfig(pageSize = 30)) { pagingNotifyFactory.create(source) }.flow
@@ -91,6 +94,14 @@ class PagerRepositoryImpl @Inject constructor(
             enablePlaceholders = false),
         pagingSourceFactory = {
             PagingLatestFeed(cardFeedRepository, latitude, longitude)
+        }
+    ).flow
+
+    override fun tagCards(tagId: Long): Flow<PagingData<TagCardContent>> = Pager(
+        config = PagingConfig(pageSize = 30,
+            enablePlaceholders = false),
+        pagingSourceFactory = {
+            PagingTagCards(tagRepository, tagId)
         }
     ).flow
 }

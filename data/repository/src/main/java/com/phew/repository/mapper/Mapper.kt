@@ -30,11 +30,16 @@ import com.phew.domain.dto.UserBlockNotification
 import com.phew.domain.dto.UserCommentLike
 import com.phew.domain.dto.UserCommentWrite
 import com.phew.domain.dto.UserDeleteNotification
+import com.phew.domain.dto.TagCardContent
 import com.phew.domain.model.AppVersionStatus
 import com.phew.domain.model.AppVersionStatusType
 import com.phew.domain.model.BlockMember
 import com.phew.domain.model.RejoinableDate
 import com.phew.domain.model.TransferCode
+import com.phew.domain.model.TagInfo as DomainTagInfo
+import com.phew.domain.model.TagInfoList
+import com.phew.domain.model.TagCards
+import com.phew.domain.model.CardContent
 import com.phew.network.dto.AppVersionStatusDTO
 import com.phew.network.dto.CheckSignUpDTO
 import com.phew.network.dto.TransferCodeDTO
@@ -47,6 +52,9 @@ import com.phew.network.dto.response.RejoinableDateResponseDTO
 import com.phew.network.dto.request.feed.CheckBanedDTO
 import com.phew.network.dto.request.feed.ImageInfoDTO
 import com.phew.network.dto.request.feed.TagInfoDTO
+import com.phew.network.dto.request.feed.TagInfoListDTO
+import com.phew.network.dto.response.TagCardsResponseDTO
+import com.phew.network.dto.response.CardContentDTO
 import com.phew.network.dto.response.DistanceDTO
 import com.phew.network.dto.response.LatestDto
 import com.phew.network.dto.response.PopularDto
@@ -414,6 +422,47 @@ suspend fun <T, R> pagingCall(
             throwable = e
         )
     }
+}
+
+internal fun TagInfoListDTO.toDomainModel(): TagInfoList {
+    return TagInfoList(
+        tagInfos = this.tagInfo.map { it.toDomainModel() }
+    )
+}
+
+internal fun TagInfoDTO.toDomainModel(): DomainTagInfo {
+    return DomainTagInfo(
+        id = this.id,
+        name = this.name,
+        usageCnt = this.usageCnt
+    )
+}
+
+internal fun TagCardsResponseDTO.toDomainModel(): TagCards {
+    return TagCards(
+        cardContents = this.cardContents.map { it.toDomainModel() },
+        isFavorite = this.isFavorite
+    )
+}
+
+internal fun CardContentDTO.toDomainModel(): CardContent {
+    return CardContent(
+        cardId = this.cardId,
+        cardImgName = this.cardImgName,
+        cardImgUrl = this.cardImgUrl,
+        cardContent = this.cardContent,
+        font = this.font
+    )
+}
+
+internal fun CardContentDTO.toDomain(): TagCardContent {
+    return TagCardContent(
+        cardId = this.cardId.toString(),
+        cardImgName = this.cardImgName,
+        cardImgUrl = this.cardImgUrl,
+        cardContent = this.cardContent,
+        font = this.font
+    )
 }
 
 
