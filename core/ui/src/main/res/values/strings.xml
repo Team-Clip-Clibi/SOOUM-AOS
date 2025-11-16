@@ -13,7 +13,7 @@
     
     <!-- 에러 다이얼로그 -->
     <string name="error_dialog_title">일시적인 오류가 발생했어요</string>
-    <string name="error_dialog_content">같은 문제가 반복된다면 '문의하기'를 눌러 숨 팀에 알려주세요.</string>
+    <string name="error_dialog_content">같은 문제가 반복된다면 \'문의하기\'를 눌러 숨 팀에 알려주세요.</string>
     <string name="error_dialog_cancel">닫기</string>
     <string name="error_dialog_inquiry">문의하기</string>
     
