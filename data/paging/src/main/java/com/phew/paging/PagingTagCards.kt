@@ -64,7 +64,7 @@ class PagingTagCards @Inject constructor(
                 }
             }
         } catch (exception: Exception) {
-            SooumLog.e(TAG, "Exception loading tag cards", exception)
+            SooumLog.e(TAG, "Exception loading tag cards: ${exception.message}")
             LoadResult.Error(exception)
         }
     }
