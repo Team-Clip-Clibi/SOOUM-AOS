@@ -9,13 +9,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.phew.core_design.AppBar.LeftAppBar
 import com.phew.core_design.NeutralColor
 import com.phew.presentation.tag.R
+import com.phew.presentation.tag.viewmodel.TagViewModel
 
 @Composable
 internal fun TagRoute(
     modifier: Modifier = Modifier,
+    viewModel: TagViewModel = hiltViewModel(),
     onBackPressed: () -> Unit
 ) {
     TagScreen(
