@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="tag_top_title">태그</string>
+
+    <string name="tag_search_tag_placeholder">태그를 검색하세요.</string>
 </resources>

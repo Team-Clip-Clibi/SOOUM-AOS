@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.phew.core_design.AppBar.LeftAppBar
 import com.phew.core_design.NeutralColor
+import com.phew.core_design.TextFiledComponent.SearchField
 import com.phew.presentation.tag.R
 import com.phew.presentation.tag.viewmodel.TagViewModel
 
@@ -37,10 +38,7 @@ private fun TagScreen(
             .fillMaxSize(),
         topBar = {
             LeftAppBar(
-                appBarText = stringResource(R.string.tag_top_title),
-                onClick = {
-
-                }
+                appBarText = stringResource(R.string.tag_top_title)
             )
         }
     ) { innerPadding ->
@@ -52,7 +50,12 @@ private fun TagScreen(
                 .padding(horizontal = 16.dp)
 
         ) {
-
+            SearchField(
+                value = "",
+                isReadOnly = true,
+                placeHolder = stringResource(R.string.tag_search_tag_placeholder),
+                onFieldClick = {}
+            )
         }
     }
 }

@@ -49,6 +49,7 @@ import androidx.compose.ui.zIndex
 import com.phew.core_common.BANNER_NEWS
 import com.phew.core_common.BANNER_SERVICE
 import com.phew.core_design.AppBar.IconBothAppBar
+import com.phew.core_design.TextFiledComponent.SearchField
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -315,8 +316,55 @@ object AppBar {
     }
 
     @Composable
+    fun IconLeftSearchAppBar(
+        @DrawableRes image: Int = R.drawable.ic_left,
+        onBackClick: () -> Unit,
+        onValueChange: (String) -> Unit,
+        onDeleteClick: () -> Unit,
+        value: String,
+        placeholder: String
+    ) {
+        val interactionSource = remember { MutableInteractionSource() }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .height(48.dp)
+                .statusBarsPadding()
+                .zIndex(1f)
+                .background(NeutralColor.WHITE)
+                .padding(start = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                        onClick = onBackClick
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(image),
+                    contentDescription = "left icon",
+                    modifier = Modifier
+                        .size(24.dp)
+                        .padding(6.dp)
+                )
+            }
+            SearchField(
+                value = value,
+                placeHolder = placeholder,
+                onValueChange = onValueChange,
+                onDeleteClick = onDeleteClick
+            )
+        }
+    }
+
+    @Composable
     fun LeftAppBar(
-        onClick: () -> Unit,
         appBarText: String = "Title",
     ) {
         Row(

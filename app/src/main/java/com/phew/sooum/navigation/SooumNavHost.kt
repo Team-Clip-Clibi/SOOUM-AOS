@@ -186,14 +186,6 @@ fun SooumNavHost(
                     navController.popBackStack()
                 }
             )
-
-            tagGraph(
-                appState = appState,
-                navController = navController,
-                onBackPressed = {
-                    SooumOnBackPressed(appState = appState)
-                }
-            )
         }
     }
 
