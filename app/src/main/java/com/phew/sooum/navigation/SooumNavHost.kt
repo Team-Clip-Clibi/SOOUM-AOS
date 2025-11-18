@@ -18,6 +18,7 @@ import com.phew.home.navigation.navigateToReport
 import com.phew.presentation.detail.navigation.detailGraph
 import com.phew.core.ui.model.navigation.WriteArgs
 import com.phew.presentation.detail.navigation.navigateToDetailGraph
+import com.phew.presentation.tag.navigation.tagGraph
 import com.phew.presentation.write.navigation.navigateToWriteGraphWithArgs
 import com.phew.presentation.write.navigation.writeGraph
 import com.phew.profile.navigateToProfileGraphWithArgs
@@ -183,6 +184,14 @@ fun SooumNavHost(
                 },
                 onDetailWriteComplete = {
                     navController.popBackStack()
+                }
+            )
+
+            tagGraph(
+                appState = appState,
+                navController = navController,
+                onBackPressed = {
+                    SooumOnBackPressed(appState = appState)
                 }
             )
         }
