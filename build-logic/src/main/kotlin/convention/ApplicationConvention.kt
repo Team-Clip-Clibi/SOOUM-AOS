@@ -28,7 +28,7 @@ class ApplicationConvention : Plugin<Project> {
                 minSdk = 31
                 targetSdk = 36
                 versionCode = 1
-                versionName = "1.0.8"
+                versionName = "1.0.0"
                 testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
             }
             buildTypes.getByName("release").apply {
@@ -104,6 +104,7 @@ class ApplicationConvention : Plugin<Project> {
             add("implementation", project(":presentation:write"))
             add("implementation", project(":presentation:detail"))
             add("implementation", project(":presentation:profile"))
+            add("implementation", project(":presentation:tag"))
         }
     }
 }
