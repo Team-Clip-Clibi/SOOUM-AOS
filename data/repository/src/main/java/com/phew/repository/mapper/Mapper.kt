@@ -14,6 +14,8 @@ import com.phew.domain.dto.CardImageDefault
 import com.phew.domain.dto.CheckSignUp
 import com.phew.domain.dto.CheckedBaned
 import com.phew.domain.dto.DistanceCard
+import com.phew.domain.dto.FavoriteTag
+import com.phew.domain.dto.FavoriteTagList
 import com.phew.domain.dto.FeedLikeNotification
 import com.phew.domain.dto.FollowData
 import com.phew.domain.dto.FollowNotification
@@ -48,6 +50,8 @@ import com.phew.network.dto.NotificationDTO
 import com.phew.network.dto.TokenDTO
 import com.phew.network.dto.UploadImageUrlDTO
 import com.phew.network.dto.response.BlockMemberResponseDTO
+import com.phew.network.dto.response.FavoriteTagItemDTO
+import com.phew.network.dto.response.FavoriteTagsResponseDTO
 import com.phew.network.dto.response.RejoinableDateResponseDTO
 import com.phew.network.dto.request.feed.CheckBanedDTO
 import com.phew.network.dto.request.feed.ImageInfoDTO
@@ -462,6 +466,19 @@ internal fun CardContentDTO.toDomain(): TagCardContent {
         cardImgUrl = this.cardImgUrl,
         cardContent = this.cardContent,
         font = this.font
+    )
+}
+
+internal fun FavoriteTagsResponseDTO.toDomain(): FavoriteTagList {
+    return FavoriteTagList(
+        favoriteTags = this.favoriteTags.map { it.toDomain() }
+    )
+}
+
+internal fun FavoriteTagItemDTO.toDomain(): FavoriteTag {
+    return FavoriteTag(
+        id = this.id,
+        name = this.name
     )
 }
 

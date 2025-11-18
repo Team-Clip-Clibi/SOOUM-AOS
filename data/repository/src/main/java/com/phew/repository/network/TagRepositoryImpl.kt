@@ -3,12 +3,14 @@ package com.phew.repository.network
 import com.phew.core_common.DataResult
 import com.phew.core_common.HTTP_NO_MORE_CONTENT
 import com.phew.core_common.log.SooumLog
+import com.phew.domain.dto.FavoriteTagList
 import com.phew.domain.model.TagInfoList
 import com.phew.domain.model.TagCards
 import com.phew.domain.repository.network.TagRepository
 import com.phew.network.dto.TagRequestDTO
 import com.phew.network.retrofit.TagHttp
 import com.phew.repository.mapper.apiCall
+import com.phew.repository.mapper.toDomain
 import com.phew.repository.mapper.toDomainModel
 import javax.inject.Inject
 
@@ -74,6 +76,14 @@ class TagRepositoryImpl @Inject constructor(
         return apiCall(
             apiCall = { tagHttp.getTagRank() },
             mapper = { it.toDomainModel() }
+        )
+    }
+
+    override suspend fun getFavoriteTags(): DataResult<FavoriteTagList> {
+        SooumLog.d(TAG, "getFavoriteTags")
+        return apiCall(
+            apiCall = { tagHttp.getFavoriteTags() },
+            mapper = { it.toDomain() }
         )
     }
 }
