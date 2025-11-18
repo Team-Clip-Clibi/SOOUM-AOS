@@ -321,6 +321,7 @@ object AppBar {
         onBackClick: () -> Unit,
         onValueChange: (String) -> Unit,
         onDeleteClick: () -> Unit,
+        onSearch: () -> Unit,
         value: String,
         placeholder: String
     ) {
@@ -356,9 +357,11 @@ object AppBar {
             }
             SearchField(
                 value = value,
+                isReadOnly = false,
                 placeHolder = placeholder,
                 onValueChange = onValueChange,
-                onDeleteClick = onDeleteClick
+                onDeleteClick = onDeleteClick,
+                onSearch = onSearch
             )
         }
     }

@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -31,6 +33,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -198,6 +201,7 @@ object TextFiledComponent {
         onValueChange: (String) -> Unit = {},
         onDeleteClick: () -> Unit = {},
         onFieldClick: () -> Unit = {},
+        onSearch: () -> Unit = {},
         modifier: Modifier = Modifier
     ) {
         BasicTextField(
@@ -205,14 +209,11 @@ object TextFiledComponent {
             onValueChange = onValueChange,
             modifier = modifier
                 .fillMaxWidth()
-                .height(44.dp)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = onFieldClick
-                ),
+                .height(44.dp),
             singleLine = true,
             readOnly = isReadOnly,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions(onSearch = { onSearch() }),
             textStyle = TextComponent.SUBTITLE_1_M_16.copy(color = NeutralColor.GRAY_500),
             decorationBox = { innerTextField ->
                 Row(
@@ -225,6 +226,17 @@ object TextFiledComponent {
                             color = NeutralColor.GRAY_100,
                             shape = RoundedCornerShape(10.dp)
                         )
+                        .let { modifier ->
+                            if (isReadOnly) {
+                                modifier.clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                    onClick = onFieldClick
+                                )
+                            } else {
+                                modifier
+                            }
+                        }
                         .padding(horizontal = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween

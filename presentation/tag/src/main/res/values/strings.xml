@@ -3,4 +3,5 @@
     <string name="tag_top_title">태그</string>
 
     <string name="tag_search_tag_placeholder">태그를 검색하세요.</string>
+    <string name="tag_search_no_card">검색 결과가 없어요</string>
 </resources>

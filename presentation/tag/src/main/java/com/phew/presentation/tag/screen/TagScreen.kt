@@ -6,32 +6,60 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.flowWithLifecycle
 import com.phew.core_design.AppBar.LeftAppBar
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextFiledComponent.SearchField
 import com.phew.presentation.tag.R
+import com.phew.presentation.tag.viewmodel.TagUiEffect
 import com.phew.presentation.tag.viewmodel.TagViewModel
 
 @Composable
 internal fun TagRoute(
     modifier: Modifier = Modifier,
     viewModel: TagViewModel = hiltViewModel(),
+    navigateToSearchScreen: () -> Unit,
     onBackPressed: () -> Unit
 ) {
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    LaunchedEffect(Unit) {
+        viewModel.uiEffect
+            .flowWithLifecycle(lifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+            .collect { effect ->
+                effect?.let {
+                    when (it) {
+                        is TagUiEffect -> {
+                            when (it) {
+                                TagUiEffect.NavigationSearchScreen -> {
+                                    navigateToSearchScreen()
+                                    viewModel.clearUiEffect()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+    }
+
     TagScreen(
         modifier = modifier,
-        onBackPressed = onBackPressed
+        onSearchView = viewModel::navToSearchScreen
     )
 }
 
 @Composable
 private fun TagScreen(
     modifier: Modifier,
-    onBackPressed: () -> Unit
+    onSearchView: () -> Unit,
 ) {
     Scaffold(
         modifier = modifier
@@ -54,7 +82,9 @@ private fun TagScreen(
                 value = "",
                 isReadOnly = true,
                 placeHolder = stringResource(R.string.tag_search_tag_placeholder),
-                onFieldClick = {}
+                onFieldClick = {
+                    onSearchView()
+                }
             )
         }
     }

@@ -1,7 +1,7 @@
 package com.phew.domain.model
 
 data class TagInfo(
-    val id: String,
+    val id: Long,
     val name: String,
     val usageCnt: Int
 )
