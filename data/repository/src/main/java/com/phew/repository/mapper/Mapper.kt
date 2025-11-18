@@ -457,7 +457,7 @@ internal fun CardContentDTO.toDomainModel(): CardContent {
 
 internal fun CardContentDTO.toDomain(): TagCardContent {
     return TagCardContent(
-        cardId = this.cardId.toString(),
+        cardId = this.cardId,
         cardImgName = this.cardImgName,
         cardImgUrl = this.cardImgUrl,
         cardContent = this.cardContent,

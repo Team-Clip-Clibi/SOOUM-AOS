@@ -44,7 +44,7 @@ fun NavGraphBuilder.homeGraph(
             navController = navController,
             finish = finish,
             onBackPressed = onBackPressed,
-            webView = webView,
+            webView = webView
         )
 
         writeGraph(

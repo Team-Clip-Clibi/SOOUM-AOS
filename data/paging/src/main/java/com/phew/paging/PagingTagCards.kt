@@ -17,7 +17,7 @@ class PagingTagCards @Inject constructor(
 
     override fun getRefreshKey(state: PagingState<Long, TagCardContent>): Long? {
         val anchorPosition = state.anchorPosition ?: return null
-        return state.closestItemToPosition(anchorPosition)?.cardId?.toLongOrNull()
+        return state.closestItemToPosition(anchorPosition)?.cardId
     }
 
     override suspend fun load(params: LoadParams<Long>): LoadResult<Long, TagCardContent> {
@@ -30,7 +30,7 @@ class PagingTagCards @Inject constructor(
                     val tagCards = result.data
                     val cardContents = tagCards.cardContents.map { cardContent ->
                         TagCardContent(
-                            cardId = cardContent.cardId.toString(),
+                            cardId = cardContent.cardId,
                             cardImgName = cardContent.cardImgName,
                             cardImgUrl = cardContent.cardImgUrl,
                             cardContent = cardContent.cardContent,
@@ -41,7 +41,7 @@ class PagingTagCards @Inject constructor(
                     val nextKey = if (cardContents.isEmpty()) {
                         null
                     } else {
-                        cardContents.last().cardId.toLongOrNull()
+                        cardContents.last().cardId
                     }
 
                     LoadResult.Page(

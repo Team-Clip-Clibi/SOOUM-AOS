@@ -106,6 +106,7 @@ import com.phew.presentation.detail.model.MoreAction
 import com.phew.presentation.detail.viewmodel.CardDetailError
 import com.phew.presentation.detail.viewmodel.CardDetailViewModel
 import com.phew.core_design.CustomFont
+import com.phew.core_design.NeutralColor.GRAY_200
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -573,7 +574,7 @@ private fun CardDetailScreen(
                             Spacer(modifier
                                 .fillMaxWidth()
                                 .height(1.dp)
-                                .background(GRAY_400)
+                                .background(GRAY_200)
                                 .padding(horizontal = 0.dp)
                             )
                             Box(
