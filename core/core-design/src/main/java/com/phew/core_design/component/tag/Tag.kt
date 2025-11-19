@@ -20,8 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -305,6 +304,35 @@ internal fun TagRow(
     }
 }
 
+@Composable
+fun TagRankView(text: String, userCount: String, index: String) {
+    Row(
+        modifier = Modifier
+            .wrapContentWidth()
+            .height(56.dp)
+            .padding(top = 4.dp, bottom = 4.dp, end = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.Start),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = index,
+            style = TextComponent.TITLE_2_SB_16,
+            color = Primary.DARK
+        )
+        Column {
+            Text(
+                text = text,
+                style = TextComponent.SUBTITLE_1_M_16,
+                color = NeutralColor.GRAY_600
+            )
+            Text(
+                text = userCount,
+                style = TextComponent.CAPTION_2_M_12,
+                color = NeutralColor.GRAY_500
+            )
+        }
+    }
+}
 
 @Composable
 private fun TagAddNew(

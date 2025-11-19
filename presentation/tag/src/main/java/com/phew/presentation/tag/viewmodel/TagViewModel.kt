@@ -25,6 +25,10 @@ class TagViewModel @Inject constructor(
         tagRank()
     }
 
+    fun refresh() {
+        tagRank()
+    }
+
     private fun tagRank() {
         viewModelScope.launch(Dispatchers.IO) {
             when (val result = getTagRank()) {
@@ -47,6 +51,7 @@ class TagViewModel @Inject constructor(
 
 data class TagState(
     val tagRank: UiState<List<TagInfo>> = UiState.Loading,
+    val isRefreshing: Boolean = false
 )
 
 sealed interface UiState<out T> {
