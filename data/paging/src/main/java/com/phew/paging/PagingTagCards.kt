@@ -25,7 +25,15 @@ class PagingTagCards @Inject constructor(
         SooumLog.d(TAG, "load(tagId=$tagId, lastId=$lastId, loadSize=${params.loadSize})")
 
         return try {
-            when (val result = tagRepository.getTagCards(tagId, lastId)) {
+            val result = if (lastId == 0L) {
+                // 첫 번째 로드 시 단순 API 호출 (페이징 없음)
+                tagRepository.getTagCardsWithFavorite(tagId)
+            } else {
+                // 이후 페이징 로드 시 페이징 API 호출
+                tagRepository.getTagCards(tagId, lastId)
+            }
+            
+            when (result) {
                 is DataResult.Success -> {
                     val tagCards = result.data
                     val cardContents = tagCards.cardContents.map { cardContent ->

@@ -25,7 +25,7 @@ interface TagHttp {
         @Body request: TagRequestDTO
     ): Response<TagInfoListDTO>
 
-    @GET("${BuildConfig.API_URL_TAG_CARDS}/{lastId}")
+    @GET("${BuildConfig.API_URL_TAGS}/{tagId}/cards/{lastId}")
     suspend fun getTagCards(
         @Path("tagId") tagId: Long,
         @Path("lastId") lastId: Long
@@ -36,9 +36,9 @@ interface TagHttp {
         @Path("tagId") tagId: Long
     ): Response<TagCardsResponseDTO>
 
-    @GET("${BuildConfig.API_URL_TAGS}/rank")
+    @GET(BuildConfig.API_URL_TAG_RANK)
     suspend fun getTagRank(): Response<TagInfoListDTO>
 
-    @GET("${BuildConfig.API_URL_TAGS}/favorite")
+    @GET(BuildConfig.API_URL_TAG_FAVORITE)
     suspend fun getFavoriteTags(): Response<FavoriteTagsResponseDTO>
 }

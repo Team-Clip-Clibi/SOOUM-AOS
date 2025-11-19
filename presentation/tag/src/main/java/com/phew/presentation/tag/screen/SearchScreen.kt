@@ -151,7 +151,9 @@ private fun SearchScreen(
                     columns = GridCells.Fixed(3),
                     state = gridState,
                     modifier = modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = innerPadding.calculateBottomPadding() + 63.dp)
+                    contentPadding = PaddingValues(bottom = innerPadding.calculateBottomPadding() + 63.dp),
+                    verticalArrangement = Arrangement.spacedBy(1.dp),
+                    horizontalArrangement = Arrangement.spacedBy(1.dp)
                 ) {
                     items(
                         count = cardDataItems.itemCount,
@@ -159,7 +161,6 @@ private fun SearchScreen(
                     ) { index ->
                         val item = cardDataItems[index]
                         if (item != null) {
-                            Spacer(Modifier.padding(top = 8.dp))
                             CommentBodyContent(
                                 contentText = item.cardContent,
                                 imgUrl = item.cardImgUrl,

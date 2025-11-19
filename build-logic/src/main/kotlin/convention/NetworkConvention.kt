@@ -55,6 +55,8 @@ class NetworkConvention : Plugin<Project> {
                 val relatedTag: String = properties.getProperty("api_url_tag_related", "")
                 val tags: String = properties.getProperty("api_url_tags", "")
                 val tagCards: String = properties.getProperty("api_url_tag_cards", "")
+                val tagRank: String = properties.getProperty("api_url_tag_rank", "")
+                val tagFavorite: String = properties.getProperty("api_url_tag_favorite", "")
                 val cardBackgroundImageDefault =
                     properties.getProperty("api_url_card_background_image_default", "")
                 val cardBackgroundUpload: String =
@@ -110,6 +112,8 @@ class NetworkConvention : Plugin<Project> {
                 buildConfigField("String", "API_URL_TAG_RELATED", relatedTag)
                 buildConfigField("String", "API_URL_TAGS", tags)
                 buildConfigField("String", "API_URL_TAG_CARDS", tagCards)
+                buildConfigField("String", "API_URL_TAG_RANK", tagRank)
+                buildConfigField("String", "API_URL_TAG_FAVORITE", tagFavorite)
                 buildConfigField("String", "API_URL_CARD_IMAGE_DEFAULT", cardBackgroundImageDefault)
                 buildConfigField("String", "API_URL_UPLOAD_CARD_IMAGE", cardBackgroundUpload)
                 buildConfigField("String", "API_URL_UPLOAD_CARD", uploadCard)
