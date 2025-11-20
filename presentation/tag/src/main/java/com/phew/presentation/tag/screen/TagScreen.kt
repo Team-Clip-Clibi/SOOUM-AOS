@@ -32,6 +32,7 @@ import com.phew.core_design.component.refresh.pullToRefreshOffset
 import com.phew.core_design.component.tag.TagRankView
 import com.phew.domain.model.TagInfo
 import com.phew.presentation.tag.R
+import com.phew.presentation.tag.viewmodel.TagState
 import com.phew.presentation.tag.viewmodel.TagViewModel
 import com.phew.presentation.tag.viewmodel.UiState
 
@@ -41,10 +42,12 @@ internal fun TagRoute(
     viewModel: TagViewModel = hiltViewModel(),
     onBackPressed: () -> Unit,
 ) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     TagScreen(
         modifier = modifier,
         onBackPressed = onBackPressed,
-        viewModel = viewModel
+        onRefresh = viewModel::refresh,
+        uiState = uiState
     )
 }
 
@@ -53,9 +56,9 @@ internal fun TagRoute(
 private fun TagScreen(
     modifier: Modifier,
     onBackPressed: () -> Unit,
-    viewModel: TagViewModel,
+    onRefresh: () -> Unit,
+    uiState: TagState,
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val refreshState = rememberPullToRefreshState()
     Scaffold(
         modifier = modifier
@@ -71,7 +74,7 @@ private fun TagScreen(
     ) { innerPadding ->
         RefreshBox(
             isRefresh = uiState.isRefreshing,
-            onRefresh = viewModel::refresh,
+            onRefresh = onRefresh,
             state = refreshState,
             paddingValues = innerPadding
         ) {
