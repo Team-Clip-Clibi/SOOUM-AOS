@@ -26,6 +26,9 @@ class TagViewModel @Inject constructor(
     }
 
     fun refresh() {
+        _uiState.update { state ->
+            state.copy(isRefreshing = true)
+        }
         tagRank()
     }
 
@@ -34,13 +37,19 @@ class TagViewModel @Inject constructor(
             when (val result = getTagRank()) {
                 is DomainResult.Failure -> {
                     _uiState.update { state ->
-                        state.copy(tagRank = UiState.Fail(errorMessage = result.error))
+                        state.copy(
+                            tagRank = UiState.Fail(errorMessage = result.error),
+                            isRefreshing = false
+                        )
                     }
                 }
 
                 is DomainResult.Success -> {
                     _uiState.update { state ->
-                        state.copy(tagRank = UiState.Success(data = result.data))
+                        state.copy(
+                            tagRank = UiState.Success(data = result.data),
+                            isRefreshing = false
+                        )
                     }
                 }
             }
@@ -51,7 +60,7 @@ class TagViewModel @Inject constructor(
 
 data class TagState(
     val tagRank: UiState<List<TagInfo>> = UiState.Loading,
-    val isRefreshing: Boolean = false
+    val isRefreshing: Boolean = false,
 )
 
 sealed interface UiState<out T> {

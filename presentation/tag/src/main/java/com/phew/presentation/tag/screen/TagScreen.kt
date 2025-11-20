@@ -40,7 +40,6 @@ import com.phew.core_design.LoadingAnimation
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.component.tag.TagRankView
 import com.phew.domain.model.TagInfo
-
 import com.phew.presentation.tag.R
 import com.phew.presentation.tag.viewmodel.TagViewModel
 import com.phew.presentation.tag.viewmodel.UiState
@@ -66,15 +65,6 @@ private fun TagScreen(
     viewModel: TagViewModel,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val isRefreshing = uiState.isRefreshing
-    val composition by rememberLottieComposition(
-        LottieCompositionSpec.RawRes(com.phew.core_design.R.raw.ic_refresh)
-    )
-    val refreshProgress by animateLottieCompositionAsState(
-        composition = composition,
-        iterations = LottieConstants.IterateForever,
-        restartOnPlay = isRefreshing
-    )
     val refreshState = rememberPullToRefreshState()
     Scaffold(
         modifier = modifier
@@ -90,9 +80,8 @@ private fun TagScreen(
     ) { innerPadding ->
         RefreshBox(
             isRefresh = uiState.isRefreshing,
-            onRefresh = remember(viewModel){ {viewModel.refresh()} },
+            onRefresh = remember(viewModel::refresh) { { viewModel.refresh() } },
             state = refreshState,
-            refreshProgress = refreshProgress,
             paddingValues = innerPadding
         ) {
             TagView(
@@ -110,12 +99,16 @@ private fun RefreshBox(
     isRefresh: Boolean,
     onRefresh: () -> Unit,
     state: PullToRefreshState,
-    refreshProgress: Float,
     paddingValues: PaddingValues,
-    content: @Composable (() -> Unit)
+    content: @Composable (() -> Unit),
 ) {
     val composition by rememberLottieComposition(
         LottieCompositionSpec.RawRes(com.phew.core_design.R.raw.ic_refresh)
+    )
+    val refreshProgress by animateLottieCompositionAsState(
+        composition = composition,
+        iterations = LottieConstants.IterateForever,
+        restartOnPlay = isRefresh
     )
     PullToRefreshBox(
         isRefreshing = isRefresh,
@@ -150,7 +143,7 @@ private fun RefreshBox(
 private fun TagView(
     paddingValues: PaddingValues,
     rankTag: UiState<List<TagInfo>>,
-    refreshState: PullToRefreshState
+    refreshState: PullToRefreshState,
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
@@ -160,7 +153,10 @@ private fun TagView(
         modifier = Modifier
             .fillMaxSize()
             .background(NeutralColor.WHITE)
-            .graphicsLayer { this.translationY = refreshState.distanceFraction + 72.dp.toPx() }
+            .graphicsLayer {
+                val pullDistance = refreshState.distanceFraction * 100.dp.toPx()
+                translationY = pullDistance + 72.dp.toPx()
+            }
     ) {
         item(span = { GridItemSpan(currentLineSpan = maxLineSpan) }) {
             //TODO 검색어
@@ -168,9 +164,9 @@ private fun TagView(
         item(span = { GridItemSpan(currentLineSpan = maxLineSpan) }) {
             //TODO 닉네임 + 관심 테그
         }
-        when(rankTag){
+        when (rankTag) {
             is UiState.Fail -> {
-                item(span = { GridItemSpan(currentLineSpan = maxLineSpan)}){
+                item(span = { GridItemSpan(currentLineSpan = maxLineSpan) }) {
                     Column(modifier = Modifier.fillMaxWidth()) {
                         Image(
                             painter = painterResource(com.phew.core_design.R.drawable.ic_deleted_card),
@@ -180,17 +176,23 @@ private fun TagView(
                     }
                 }
             }
+
             UiState.Loading -> {
-                item(span = { GridItemSpan(currentLineSpan = maxLineSpan)}){
+                item(span = { GridItemSpan(currentLineSpan = maxLineSpan) }) {
                     LoadingAnimation.LoadingView()
                 }
             }
+
             is UiState.Success -> {
                 itemsIndexed(rankTag.data) { index, tagInfo ->
                     TagRankView(
                         text = tagInfo.name,
-                        userCount = tagInfo.useCount,
-                        index = (index + 1).toString()
+                        userCount = tagInfo.usageCnt,
+                        index = (index + 1).toString(),
+                        id = tagInfo.id,
+                        onClick = { tagId ->
+                            //TODO 카드 이동
+                        }
                     )
                 }
             }
