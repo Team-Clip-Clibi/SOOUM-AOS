@@ -66,8 +66,13 @@ internal fun TagRoute(
                             viewModel.clearUiEffect()
                         }
 
-                        is TagUiEffect.ShowToast -> {
-                            Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
+                        is TagUiEffect.ShowRemoveFavoriteTagToast -> {
+                            Toast.makeText(context, context.getString(R.string.tag_favorite_delete, it.tagName), Toast.LENGTH_SHORT).show()
+                            viewModel.clearUiEffect()
+                        }
+
+                        is TagUiEffect.ShowAddFavoriteTagToast -> {
+                            Toast.makeText(context, context.getString(R.string.tag_favorite_add, it.tagName),Toast.LENGTH_SHORT).show()
                             viewModel.clearUiEffect()
                         }
                     }
@@ -163,7 +168,9 @@ private fun FavoriteTagsList(
             state = pagerState,
             modifier = Modifier.fillMaxWidth()
         ) { pageIndex ->
-            Column {
+            Column(
+                modifier = Modifier.height(144.dp)
+            ) {
                 chunkedTags[pageIndex].forEach { tag ->
                     TagListItem(
                         tag = tag.name,

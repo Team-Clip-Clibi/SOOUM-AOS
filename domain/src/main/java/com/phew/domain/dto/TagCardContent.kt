@@ -5,5 +5,6 @@ data class TagCardContent(
     val cardImgName: String,
     val cardImgUrl: String,
     val cardContent: String,
-    val font: String
+    val font: String,
+    val isFavorite: Boolean = false
 )

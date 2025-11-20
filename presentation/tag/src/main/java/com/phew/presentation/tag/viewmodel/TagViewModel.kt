@@ -1,5 +1,6 @@
 package com.phew.presentation.tag.viewmodel
 
+import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
@@ -12,13 +13,16 @@ import com.phew.domain.dto.FavoriteTag
 import com.phew.domain.dto.TagCardContent
 import com.phew.domain.model.TagInfo
 import com.phew.domain.model.TagInfoList
+import com.phew.domain.repository.network.TagRepository
 import com.phew.domain.usecase.AddFavoriteTag
 import com.phew.domain.usecase.GetFavoriteTags
 import com.phew.domain.usecase.GetRelatedTags
 import com.phew.domain.usecase.GetTagCardsPaging
 import com.phew.domain.usecase.GetUserInfo
 import com.phew.domain.usecase.RemoveFavoriteTag
+import com.phew.presentation.tag.R
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,7 +47,9 @@ data class TagUiState(
     val cardDataItems: Flow<PagingData<TagCardContent>> = flowOf(PagingData.empty()),
     val nickName: String = "",
     val favoriteTags: List<FavoriteTag> = emptyList(),
-    val localFavoriteStates: Map<Long, Boolean> = emptyMap() // 로컬 즐겨찾기 상태
+    val localFavoriteStates: Map<Long, Boolean> = emptyMap(), // 로컬 즐겨찾기 상태
+    val currentSearchedTag: TagInfo? = null, // 현재 검색한 태그 정보
+    val currentTagFavoriteState: Boolean = false // 현재 검색한 태그의 즐겨찾기 상태
 )
 
 @HiltViewModel
@@ -53,7 +59,7 @@ class TagViewModel @Inject constructor(
     private val getUserInfo: GetUserInfo,
     private val getFavoriteTags: GetFavoriteTags,
     private val addFavoriteTag: AddFavoriteTag,
-    private val removeFavoriteTag: RemoveFavoriteTag
+    private val removeFavoriteTag: RemoveFavoriteTag,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TagUiState())
@@ -69,7 +75,7 @@ class TagViewModel @Inject constructor(
     }
     
     private fun loadUserInfo() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 val userInfo = getUserInfo(GetUserInfo.Param(key =  BuildConfig.USER_INFO_KEY))
                 _uiState.update { 
@@ -83,7 +89,7 @@ class TagViewModel @Inject constructor(
     }
     
     private fun loadFavoriteTags() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 val result = getFavoriteTags()
                 when (result) {
@@ -149,13 +155,25 @@ class TagViewModel @Inject constructor(
         val tagId = selectedTag?.id ?: return
 
         SooumLog.d(TAG, "performSearch tag=$tag, tagId=$tagId")
-        _uiState.update {
-            it.copy(
-                searchPerformed = true,
-                searchValue = tag,
-                recommendedTags = emptyList(),
-                cardDataItems = getTagCardsPaging(GetTagCardsPaging.Param(tagId)).cachedIn(viewModelScope)
-            )
+        
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                // 태그의 즐겨찾기 상태 확인을 위해 첫 번째 데이터 로드
+                val cardsPagingFlow = getTagCardsPaging(GetTagCardsPaging.Param(tagId)).cachedIn(viewModelScope)
+                
+                _uiState.update {
+                    it.copy(
+                        searchPerformed = true,
+                        searchValue = tag,
+                        recommendedTags = emptyList(),
+                        cardDataItems = cardsPagingFlow,
+                        currentSearchedTag = selectedTag,
+                        currentTagFavoriteState = false // 초기값, 실제 값은 paging data에서 업데이트됨
+                    )
+                }
+            } catch (e: Exception) {
+                SooumLog.e(TAG, "Failed to perform search: ${e.message}")
+            }
         }
     }
 
@@ -172,15 +190,14 @@ class TagViewModel @Inject constructor(
     }
     
     fun toggleFavoriteTag(tagId: Long, tagName: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val currentState = _uiState.value
-            val currentFavoriteState = currentState.localFavoriteStates[tagId] ?: true // 기본적으로 true
+            // FavoriteTagsList에서 사용하므로 기본값을 true로 설정 (이미 즐겨찾기된 태그들)
+            val currentFavoriteState = currentState.localFavoriteStates[tagId] ?: true
             
             if (currentFavoriteState) {
-                // 현재 즐겨찾기인 경우 -> 제거
                 removeFavoriteTagAction(tagId, tagName)
             } else {
-                // 현재 즐겨찾기가 아닌 경우 -> 추가
                 addFavoriteTagAction(tagId, tagName)
             }
         }
@@ -197,7 +214,7 @@ class TagViewModel @Inject constructor(
                             localFavoriteStates = currentState.localFavoriteStates + (tagId to false)
                         )
                     }
-                    _uiEffect.emit(TagUiEffect.ShowToast("'$tagName'을 관심 태그에서 삭제했어요."))
+                    _uiEffect.emit(TagUiEffect.ShowRemoveFavoriteTagToast(tagName))
                     SooumLog.d(TAG, "Successfully removed favorite tag: $tagName")
                 }
                 is DataResult.Fail -> {
@@ -220,7 +237,7 @@ class TagViewModel @Inject constructor(
                             localFavoriteStates = currentState.localFavoriteStates + (tagId to true)
                         )
                     }
-                    _uiEffect.emit(TagUiEffect.ShowToast("'$tagName'을 관심 태그에 추가했어요."))
+                    _uiEffect.emit(TagUiEffect.ShowAddFavoriteTagToast(tagName))
                     SooumLog.d(TAG, "Successfully added favorite tag: $tagName")
                 }
                 is DataResult.Fail -> {
@@ -237,11 +254,50 @@ class TagViewModel @Inject constructor(
         val localState = _uiState.value.localFavoriteStates[tagId]
         return localState ?: true // 로컬 상태가 없으면 기본적으로 즐겨찾기로 간주 (FavoriteTagsList에서 사용)
     }
+    
+    // 현재 검색된 태그의 즐겨찾기 토글
+    fun toggleCurrentSearchedTagFavorite() {
+        val currentTag = _uiState.value.currentSearchedTag ?: return
+        val currentFavoriteState = _uiState.value.currentTagFavoriteState
+        
+        SooumLog.d(TAG, "toggleCurrentSearchedTagFavorite: currentFavoriteState=$currentFavoriteState, tag=${currentTag.name}")
+        
+        // 로컬 상태 즉시 업데이트 (UI 반응성)
+        _uiState.update { it.copy(currentTagFavoriteState = !currentFavoriteState) }
+        
+        // 실제 서버 요청
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                if (currentFavoriteState) {
+                    removeFavoriteTagAction(currentTag.id, currentTag.name)
+                } else {
+                    addFavoriteTagAction(currentTag.id, currentTag.name)
+                }
+            } catch (e: Exception) {
+                // 서버 요청 실패 시 상태 롤백
+                SooumLog.e(TAG, "Failed to toggle favorite: ${e.message}")
+                _uiState.update { it.copy(currentTagFavoriteState = currentFavoriteState) }
+            }
+        }
+    }
+    
+    // SearchRoute에서 호출할 함수 - cardDataItems에서 첫 번째 아이템의 isFavorite 상태 업데이트
+    fun updateCurrentTagFavoriteState(isFavorite: Boolean) {
+        SooumLog.d(TAG, "updateCurrentTagFavoriteState: isFavorite=$isFavorite")
+        _uiState.update { it.copy(currentTagFavoriteState = isFavorite) }
+    }
+    
+    // TagScreen 데이터 새로고침
+    fun refreshTagScreenData() {
+        SooumLog.d(TAG, "refreshTagScreenData")
+        loadFavoriteTags()
+    }
 }
 
 sealed interface TagUiEffect {
     data object NavigationSearchScreen : TagUiEffect
-    data class ShowToast(val message: String) : TagUiEffect
+    data class ShowAddFavoriteTagToast(val tagName: String) : TagUiEffect
+    data class  ShowRemoveFavoriteTagToast(val tagName: String) : TagUiEffect
 }
 
 private const val TAG = "TagViewModel"

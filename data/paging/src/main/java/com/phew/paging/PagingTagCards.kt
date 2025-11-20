@@ -36,13 +36,16 @@ class PagingTagCards @Inject constructor(
             when (result) {
                 is DataResult.Success -> {
                     val tagCards = result.data
+                    val isTagFavorite = tagCards.isFavorite // Extract isFavorite from TagCards
+                    
                     val cardContents = tagCards.cardContents.map { cardContent ->
                         TagCardContent(
                             cardId = cardContent.cardId,
                             cardImgName = cardContent.cardImgName,
                             cardImgUrl = cardContent.cardImgUrl,
                             cardContent = cardContent.cardContent,
-                            font = cardContent.font
+                            font = cardContent.font,
+                            isFavorite = isTagFavorite // Pass the extracted isFavorite
                         )
                     }
                     

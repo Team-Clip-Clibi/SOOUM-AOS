@@ -1,5 +1,6 @@
 package com.phew.presentation.tag.navigation
 
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
@@ -11,6 +12,7 @@ import com.phew.core_design.slideComposable
 import com.phew.presentation.detail.navigation.navigateToDetailGraph
 import com.phew.presentation.tag.screen.SearchRoute
 import com.phew.presentation.tag.screen.TagRoute
+import com.phew.presentation.tag.viewmodel.TagViewModel
 
 val TAG_GRAPH = HomeTabType.TAG.graph
 
@@ -34,17 +36,22 @@ fun NavGraphBuilder.tagGraph(
         startDestination = TAG_HOME_ROUTE
     ) {
         slideComposable(route = TAG_HOME_ROUTE) { nav ->
+            val tagViewModel: TagViewModel = hiltViewModel(nav)
             TagRoute(
+                viewModel = tagViewModel,
                 navigateToSearchScreen = navController::navigationSearchRoute
             )
         }
 
-        slideComposable(route = SEARCH_ROUTE) {
+        slideComposable(route = SEARCH_ROUTE) { nav ->
+            val tagHomeEntry = navController.getBackStackEntry(TAG_HOME_ROUTE)
+            val tagViewModel: TagViewModel = hiltViewModel(tagHomeEntry)
             SearchRoute(
                 onClickCard = { cardId ->
                     navController.navigateToDetailGraph(CardDetailArgs(cardId))
                 },
                 onBackPressed = {
+                    tagViewModel.refreshTagScreenData()
                     navController.popBackStack()
                 }
             )

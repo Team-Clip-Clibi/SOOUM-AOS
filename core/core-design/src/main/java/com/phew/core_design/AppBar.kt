@@ -316,14 +316,16 @@ object AppBar {
     }
 
     @Composable
-    fun IconLeftSearchAppBar(
+    fun SearchAppBar(
+        value: String,
+        placeholder: String,
+        isIcon: Boolean,
         @DrawableRes image: Int = R.drawable.ic_left,
+        icon: @Composable () -> Unit,
         onBackClick: () -> Unit,
         onValueChange: (String) -> Unit,
         onDeleteClick: () -> Unit,
         onSearch: () -> Unit,
-        value: String,
-        placeholder: String
     ) {
         val interactionSource = remember { MutableInteractionSource() }
         Row(
@@ -334,7 +336,7 @@ object AppBar {
                 .statusBarsPadding()
                 .zIndex(1f)
                 .background(NeutralColor.WHITE)
-                .padding(start = 4.dp),
+                .padding(start = 4.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
@@ -356,6 +358,7 @@ object AppBar {
                 )
             }
             SearchField(
+                modifier = Modifier.weight(1f),
                 value = value,
                 isReadOnly = false,
                 placeHolder = placeholder,
@@ -363,6 +366,14 @@ object AppBar {
                 onDeleteClick = onDeleteClick,
                 onSearch = onSearch
             )
+            if (isIcon) {
+                Box(
+                    modifier = Modifier.size(48.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    icon()
+                }
+            }
         }
     }
 
