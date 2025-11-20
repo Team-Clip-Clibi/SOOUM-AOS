@@ -1,5 +1,9 @@
 package com.phew.core_design
 
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -25,6 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.foundation.clickable
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.ui.graphics.Color
 
 object DialogComponent {
@@ -225,9 +230,24 @@ object DialogComponent {
     }
 
     @Composable
+    fun AnimationSnackBarHost(
+        hostState: SnackbarHostState,
+    ) {
+        val currentData = hostState.currentSnackbarData
+        androidx.compose.animation.AnimatedVisibility(
+            visible = currentData != null,
+            enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+            exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+        ) {
+            if (currentData == null) return@AnimatedVisibility
+            SnackBar(data = currentData)
+        }
+    }
+
+    @Composable
     fun SnackBar(
         data: SnackbarData,
-    ){
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
