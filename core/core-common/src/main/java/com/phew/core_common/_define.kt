@@ -28,12 +28,13 @@ const val ERROR_FAIL_PACKAGE_IMAGE = "errorPackageImage"
 //server api error code
 const val HTTP_NO_MORE_CONTENT = 204
 const val HTTP_BAD_REQUEST = 400
-const val HTTP_INVALID_TOKEN = 403
+const val HTTP_INVALID_TOKEN = 401
 const val HTTP_NOT_FOUND = 404
 const val HTTP_CONFLICT = 409
 const val APP_ERROR_CODE = 505
 const val HTTP_UN_GOOD_IMAGE = 422
 const val WITHDRAWAL_USER = 418
+const val HTTP_TOKEN_ERROR = 403
 
 //error messages
 const val ERROR_ACCOUNT_SUSPENDED = "계정이 정지되었습니다."

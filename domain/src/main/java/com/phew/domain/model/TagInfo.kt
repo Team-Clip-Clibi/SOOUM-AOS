@@ -1,11 +1,12 @@
 package com.phew.domain.model
 
+
 data class TagInfo(
     val id: String,
     val name: String,
-    val usageCnt: Int
+    val usageCnt: Int,
 )
 
 data class TagInfoList(
-    val tagInfos: List<TagInfo>
+    val tagInfos: List<TagInfo>,
 )
