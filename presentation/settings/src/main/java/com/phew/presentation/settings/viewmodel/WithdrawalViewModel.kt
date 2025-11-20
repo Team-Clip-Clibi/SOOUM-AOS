@@ -61,7 +61,7 @@ class WithdrawalViewModel @Inject constructor(
         val reason = if (currentState.selectedReason == WithdrawalReason.OTHER) {
             currentState.customReasonText
         } else {
-            currentState.selectedReason.key
+            currentState.selectedReason.serverValue
         }
         
         viewModelScope.launch {
@@ -93,19 +93,13 @@ data class WithdrawalUiState(
     val isLoading: Boolean = false
 )
 
-enum class WithdrawalReason(val key: String) {
-    RARELY_USE("withdrawal_reason_1"),
-    NO_DESIRED_FEATURE("withdrawal_reason_2"),
-    FREQUENT_ERRORS("withdrawal_reason_3"),
-    DIFFICULT_TO_USE("withdrawal_reason_4"),
-    CREATE_NEW_ACCOUNT("withdrawal_reason_5"),
-    OTHER("withdrawal_reason_6");
-    
-    companion object {
-        fun fromKey(key: String): WithdrawalReason? {
-            return values().find { it.key == key }
-        }
-    }
+enum class WithdrawalReason(val resourceKey: String, val serverValue: String) {
+    RARELY_USE("withdrawal_reason_1", "사용 빈도가 낮음"),
+    NO_DESIRED_FEATURE("withdrawal_reason_2", "원하는 기능이 없음"),
+    FREQUENT_ERRORS("withdrawal_reason_3", "잦은 오류 발생"),
+    DIFFICULT_TO_USE("withdrawal_reason_4", "사용이 어려움"),
+    CREATE_NEW_ACCOUNT("withdrawal_reason_5", "새 계정 생성"),
+    OTHER("withdrawal_reason_6", "기타");
 }
 
 sealed class WithdrawalUiEffect {

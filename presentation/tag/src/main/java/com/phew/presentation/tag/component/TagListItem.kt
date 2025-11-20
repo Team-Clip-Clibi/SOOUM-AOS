@@ -22,7 +22,9 @@ import com.phew.core_design.R as DesignR
 @Composable
 internal fun TagListItem (
     tag: String,
+    tagId: Long,
     isFavorite: Boolean,
+    onClick: (Long) -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -53,7 +55,9 @@ internal fun TagListItem (
                     )
                 }
             },
-            onClick = {}
+            onClick = {
+                onClick(tagId)
+            }
         )
     }
 }

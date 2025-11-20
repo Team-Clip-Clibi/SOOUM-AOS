@@ -89,6 +89,12 @@ class NetworkConvention : Plugin<Project> {
                 val follow : String = properties.getProperty("api_url_follow" , "")
                 val unFollow : String = properties.getProperty("api_url_un_follow","")
                 val updateProfile : String = properties.getProperty("api_url_update_profile" ,"")
+                val activityRestriction: String = properties.getProperty("api_url_activity_restriction", "")
+                val transferCode: String = properties.getProperty("api_url_transfer_code", "")
+                val refreshTransferCode: String = properties.getProperty("api_url_refresh_transfer_code", "")
+                val transferAccount: String = properties.getProperty("api_url_transfer_account", "")
+                val withdrawalAccount: String = properties.getProperty("api_url_withdrawal_account", "")
+                val rejoinableDate: String = properties.getProperty("api_url_rejoinable_date", "")
 
                 buildConfigField("String", "BASE_URL", baseUrl)
                 buildConfigField("String", "API_URL", apiUrl)
@@ -145,6 +151,12 @@ class NetworkConvention : Plugin<Project> {
                 buildConfigField("String", "API_URL_FOLLOW_USER", follow)
                 buildConfigField("String", "API_URL_UN_FOLLOW_USER", unFollow)
                 buildConfigField("String", "API_URL_UPDATE_PROFILE", updateProfile)
+                buildConfigField("String", "API_URL_ACTIVITY_RESTRICTION", activityRestriction)
+                buildConfigField("String", "API_URL_TRANSFER_CODE", transferCode)
+                buildConfigField("String", "API_URL_REFRESH_TRANSFER_CODE", refreshTransferCode)
+                buildConfigField("String", "API_URL_TRANSFER_ACCOUNT", transferAccount)
+                buildConfigField("String", "API_URL_WITHDRAWAL_ACCOUNT", withdrawalAccount)
+                buildConfigField("String", "API_URL_REJOINABLE_DATE", rejoinableDate)
             }
             buildFeatures.buildConfig = true
             compileOptions {

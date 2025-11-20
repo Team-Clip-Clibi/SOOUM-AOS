@@ -35,8 +35,7 @@ fun NavGraphBuilder.tagGraph(
     ) {
         slideComposable(route = TAG_HOME_ROUTE) { nav ->
             TagRoute(
-                navigateToSearchScreen = navController::navigationSearchRoute,
-                onBackPressed = onBackPressed
+                navigateToSearchScreen = navController::navigationSearchRoute
             )
         }
 
