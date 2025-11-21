@@ -361,6 +361,10 @@ private fun ProfileContentView(
                     else -> {
                         items(
                             count = cardData.itemCount,
+                            key = { index ->
+                                val id = cardData.peek(index)?.cardId ?: "loading"
+                                "${id}_$index"
+                            }
                         ) { index ->
                             val item = cardData[index]
                             if (item != null) {
