@@ -23,4 +23,7 @@
     <string name="permission_settings_positive">설정 이동</string>
     <string name="permission_settings_negative">취소</string>
     <string name="btn_save">저장</string>
+    <string name="amount_txt_thousand">%.1f천</string>
+    <string name="amount_txt_ten_thousand">%.1f만</string>
+    <string name="amount_txt_thousand_plus">1000+</string>
 </resources>

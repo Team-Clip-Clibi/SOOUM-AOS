@@ -1,9 +1,12 @@
 package com.phew.presentation.tag.screen
 
+import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,38 +15,51 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshState
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import android.widget.Toast
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.flowWithLifecycle
 import com.phew.core_design.AppBar.LeftAppBar
+import com.phew.core_design.LoadingAnimation
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.Primary
 import com.phew.core_design.TextComponent
 import com.phew.core_design.TextFiledComponent.SearchField
+import com.phew.core_design.component.refresh.RefreshBox
+import com.phew.core_design.component.refresh.TOP_CONTENT_OFFSET
+import com.phew.core_design.component.refresh.pullToRefreshOffset
+import com.phew.core_design.component.tag.TagRankView
 import com.phew.domain.dto.FavoriteTag
-import com.phew.presentation.tag.component.TagListItem
+import com.phew.domain.model.TagInfo
 import com.phew.presentation.tag.R
-import com.phew.core_design.R as DesignR
+import com.phew.presentation.tag.component.TagListItem
 import com.phew.presentation.tag.viewmodel.TagUiEffect
 import com.phew.presentation.tag.viewmodel.TagViewModel
+import com.phew.presentation.tag.viewmodel.UiState
+import com.phew.core_design.R as DesignR
 
 @Composable
 internal fun TagRoute(
@@ -67,12 +83,20 @@ internal fun TagRoute(
                         }
 
                         is TagUiEffect.ShowRemoveFavoriteTagToast -> {
-                            Toast.makeText(context, context.getString(R.string.tag_favorite_delete, it.tagName), Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.tag_favorite_delete, it.tagName),
+                                Toast.LENGTH_SHORT
+                            ).show()
                             viewModel.clearUiEffect()
                         }
 
                         is TagUiEffect.ShowAddFavoriteTagToast -> {
-                            Toast.makeText(context, context.getString(R.string.tag_favorite_add, it.tagName),Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.tag_favorite_add, it.tagName),
+                                Toast.LENGTH_SHORT
+                            ).show()
                             viewModel.clearUiEffect()
                         }
                     }
@@ -84,24 +108,30 @@ internal fun TagRoute(
         modifier = modifier,
         nickName = uiState.nickName,
         favoriteTags = uiState.favoriteTags,
+        isRefreshing = uiState.isRefreshing,
         onSearchView = viewModel::navToSearchScreen,
         onFavoriteClick = { tagId ->
             val tag = uiState.favoriteTags.find { it.id == tagId }
             tag?.let { viewModel.toggleFavoriteTag(it.id, it.name) }
         },
+        onRefresh = viewModel::refresh,
         getTagFavoriteState = viewModel::getTagFavoriteState
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TagScreen(
     modifier: Modifier,
     nickName: String,
+    isRefreshing: Boolean,
     favoriteTags: List<FavoriteTag>,
     onSearchView: () -> Unit,
     onFavoriteClick: (Long) -> Unit,
+    onRefresh: () -> Unit,
     getTagFavoriteState: (Long) -> Boolean
 ) {
+    val refreshState = rememberPullToRefreshState()
     Scaffold(
         modifier = modifier
             .fillMaxSize(),
@@ -111,43 +141,112 @@ private fun TagScreen(
             )
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(NeutralColor.WHITE)
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp)
-
+        RefreshBox(
+            isRefresh = isRefreshing,
+            onRefresh = onRefresh,
+            state = refreshState,
+            paddingValues = innerPadding
         ) {
-            SearchField(
-                value = "",
-                isReadOnly = true,
-                placeHolder = stringResource(R.string.tag_search_tag_placeholder),
-                onFieldClick = {
-                    onSearchView()
-                }
-            )
-
-            Text(
-                text = stringResource(R.string.tag_user_favorite, nickName),
-                style = TextComponent.TITLE_1_SB_18,
-                color = NeutralColor.BLACK,
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 24.dp, bottom = 8.dp)
-            )
-            
-            if (favoriteTags.isNotEmpty()) {
-                FavoriteTagsList(
-                    favoriteTags = favoriteTags,
-                    modifier = Modifier.fillMaxWidth(),
-                    onFavoriteClick = onFavoriteClick,
-                    getTagFavoriteState = getTagFavoriteState
+                    .fillMaxSize()
+                    .background(NeutralColor.WHITE)
+                    .padding(innerPadding)
+                    .padding(horizontal = 16.dp)
+
+            ) {
+                SearchField(
+                    value = "",
+                    isReadOnly = true,
+                    placeHolder = stringResource(R.string.tag_search_tag_placeholder),
+                    onFieldClick = {
+                        onSearchView()
+                    }
                 )
-            } else {
-                EmptyFavoriteTag()
+
+                Text(
+                    text = stringResource(R.string.tag_user_favorite, nickName),
+                    style = TextComponent.TITLE_1_SB_18,
+                    color = NeutralColor.BLACK,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 24.dp, bottom = 8.dp)
+                )
+
+                if (favoriteTags.isNotEmpty()) {
+                    FavoriteTagsList(
+                        favoriteTags = favoriteTags,
+                        modifier = Modifier.fillMaxWidth(),
+                        onFavoriteClick = onFavoriteClick,
+                        getTagFavoriteState = getTagFavoriteState
+                    )
+                } else {
+                    EmptyFavoriteTag()
+                }
+
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TagView(
+    paddingValues: PaddingValues,
+    rankTag: UiState<List<TagInfo>>,
+    refreshState: PullToRefreshState,
+) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        contentPadding = PaddingValues(
+            start = 16.dp, bottom = paddingValues.calculateBottomPadding(), end = 16.dp
+        ),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(NeutralColor.WHITE)
+            .pullToRefreshOffset(
+                state = refreshState,
+                baseOffset = TOP_CONTENT_OFFSET
+            )
+    ) {
+        item(span = { GridItemSpan(currentLineSpan = maxLineSpan) }) {
+            //TODO 검색어
+        }
+        item(span = { GridItemSpan(currentLineSpan = maxLineSpan) }) {
+            //TODO 닉네임 + 관심 테그
+        }
+        when (rankTag) {
+            is UiState.Fail -> {
+                item(span = { GridItemSpan(currentLineSpan = maxLineSpan) }) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Image(
+                            painter = painterResource(DesignR.drawable.ic_deleted_card),
+                            modifier = Modifier.size(24.dp),
+                            contentDescription = "error fail rank Tag"
+                        )
+                    }
+                }
             }
 
+            UiState.Loading -> {
+                item(span = { GridItemSpan(currentLineSpan = maxLineSpan) }) {
+                    LoadingAnimation.LoadingView()
+                }
+            }
+
+            is UiState.Success -> {
+                itemsIndexed(rankTag.data) { index, tagInfo ->
+                    TagRankView(
+                        text = tagInfo.name,
+                        userCount = tagInfo.usageCnt,
+                        index = (index + 1).toString(),
+                        id = tagInfo.id,
+                        onClick = { tagId ->
+                            //TODO 카드 이동
+                        }
+                    )
+                }
+            }
         }
     }
 }
@@ -161,7 +260,7 @@ private fun FavoriteTagsList(
 ) {
     val chunkedTags = favoriteTags.chunked(3)
     val pagerState = rememberPagerState(pageCount = { chunkedTags.size })
-    
+
     Column(modifier = modifier) {
         // 페이지 리스트
         HorizontalPager(
@@ -181,7 +280,7 @@ private fun FavoriteTagsList(
                 }
             }
         }
-        
+
         if (chunkedTags.size > 1) {
             Spacer(modifier = Modifier.height(8.dp))
             Row(
@@ -210,13 +309,13 @@ private fun FavoriteTagsList(
 private fun EmptyFavoriteTag() {
     Box(
         modifier = Modifier
-            .heightIn(min= 203.dp)
+            .heightIn(min = 203.dp)
             .fillMaxWidth(),
         contentAlignment = Alignment.Center
     ) {
-        Column (
+        Column(
             horizontalAlignment = Alignment.CenterHorizontally
-        ){
+        ) {
             Icon(
                 modifier = Modifier.padding(top = 35.dp),
                 painter = painterResource(DesignR.drawable.ic_star_filled),
