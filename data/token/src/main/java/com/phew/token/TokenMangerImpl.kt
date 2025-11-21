@@ -84,36 +84,33 @@ class TokenMangerImpl @Inject constructor(
             val response = tokenRefreshApi.requestRefreshToken(
                 body = TokenDTO(refreshToken, oldAccessToken)
             )
-            when {
-                response.isSuccessful && response.body() != null -> {
-                    val newToken = response.body()!!
-                    saveTokens(newToken.refreshToken, newToken.accessToken)
-                    return newToken.accessToken
-                }
-
-                else -> {
-                    val securityKeyResponse = tokenRefreshApi.getSecurityKey()
-                    if (!securityKeyResponse.isSuccessful || securityKeyResponse.body() == null) return ""
-                    val key = makeSecurityKey(securityKeyResponse.body()!!.publicKey)
-                    val deviceId = deviceRepository.requestDeviceId()
-                    val deviceOs = deviceRepository.requestDeviceOS()
-                    val deviceModel = deviceRepository.requestDeviceModel()
-                    val encryptData = encrypt(data = deviceId, key = key)
-                    val requestLogin = tokenRefreshApi.requestLogin(
-                        InfoDTO(
-                            encryptedDeviceId = encryptData,
-                            deviceType = "ANDROID",
-                            deviceOsVersion = deviceOs,
-                            deviceModel = deviceModel
-                        )
-                    )
-                    if (!requestLogin.isSuccessful) return ""
-                    val data = requestLogin.body() ?: return ""
-                    saveTokens(refreshToken = data.refreshToken, accessToken = data.accessToken)
-                    return data.accessToken
-                }
-            }
+            if (!response.isSuccessful || response.body() == null) return@withLock ""
+            val newToken = response.body()!!
+            saveTokens(refreshToken = newToken.refreshToken, accessToken = newToken.accessToken)
+            return newToken.accessToken
         }
+    }
+
+    override suspend fun autoLogin(): String {
+        val securityKeyResponse = tokenRefreshApi.getSecurityKey()
+        if (!securityKeyResponse.isSuccessful || securityKeyResponse.body() == null) return ""
+        val key = makeSecurityKey(securityKeyResponse.body()!!.publicKey)
+        val deviceId = deviceRepository.requestDeviceId()
+        val deviceOs = deviceRepository.requestDeviceOS()
+        val deviceModel = deviceRepository.requestDeviceModel()
+        val encryptData = encrypt(data = deviceId, key = key)
+        val requestLogin = tokenRefreshApi.requestLogin(
+            InfoDTO(
+                encryptedDeviceId = encryptData,
+                deviceType = "ANDROID",
+                deviceOsVersion = deviceOs,
+                deviceModel = deviceModel
+            )
+        )
+        if (!requestLogin.isSuccessful) return ""
+        val data = requestLogin.body() ?: return ""
+        saveTokens(refreshToken = data.refreshToken, accessToken = data.accessToken)
+        return data.accessToken
     }
 
     private fun makeSecurityKey(key: String): PublicKey {
