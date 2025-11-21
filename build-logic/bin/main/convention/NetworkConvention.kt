@@ -53,6 +53,8 @@ class NetworkConvention : Plugin<Project> {
                 val popularUrl: String = properties.getProperty("api_url_card_feed_popular", "")
                 val latestUrl: String = properties.getProperty("api_url_card_feed_latest", "")
                 val relatedTag: String = properties.getProperty("api_url_tag_related", "")
+                val tags: String = properties.getProperty("api_url_tags", "")
+                val tagCards: String = properties.getProperty("api_url_tag_cards", "")
                 val cardBackgroundImageDefault =
                     properties.getProperty("api_url_card_background_image_default", "")
                 val cardBackgroundUpload: String =
@@ -77,6 +79,14 @@ class NetworkConvention : Plugin<Project> {
                 val myProfileCommentCard: String =
                     properties.getProperty("api_url_profile_comment_card", "")
                 val myProfileCard: String = properties.getProperty("api_url_profile_card", "")
+                val following: String = properties.getProperty("api_url_following", "")
+                val followingNext : String = properties.getProperty("api_url_following_next", "")
+                val follower: String = properties.getProperty("api_url_follower", "")
+                val followerNext : String = properties.getProperty("api_url_follower_next" ,"")
+                val otherProfile: String = properties.getProperty("api_url_other_profile", "")
+                val follow : String = properties.getProperty("api_url_follow" , "")
+                val unFollow : String = properties.getProperty("api_url_un_follow","")
+                val updateProfile : String = properties.getProperty("api_url_update_profile" ,"")
 
                 buildConfigField("String", "BASE_URL", baseUrl)
                 buildConfigField("String", "API_URL", apiUrl)
@@ -98,6 +108,8 @@ class NetworkConvention : Plugin<Project> {
                 buildConfigField("String", "API_URL_CARD_FEED_LATEST", latestUrl)
                 buildConfigField("String", "API_URL_CARD_FEED_DISTANCE", cardDistance)
                 buildConfigField("String", "API_URL_TAG_RELATED", relatedTag)
+                buildConfigField("String", "API_URL_TAGS", tags)
+                buildConfigField("String", "API_URL_TAG_CARDS", tagCards)
                 buildConfigField("String", "API_URL_CARD_IMAGE_DEFAULT", cardBackgroundImageDefault)
                 buildConfigField("String", "API_URL_UPLOAD_CARD_IMAGE", cardBackgroundUpload)
                 buildConfigField("String", "API_URL_UPLOAD_CARD", uploadCard)
@@ -121,6 +133,14 @@ class NetworkConvention : Plugin<Project> {
                 buildConfigField("String", "API_URL_MY_PROFILE", myProfile)
                 buildConfigField("String", "API_URL_MY_PROFILE_COMMENT_CARD", myProfileCommentCard)
                 buildConfigField("String", "API_URL_MY_PROFILE_CARD", myProfileCard)
+                buildConfigField("String", "API_URL_FOLLOWING", following)
+                buildConfigField("String", "API_URL_FOLLOWING_NEXT", followingNext)
+                buildConfigField("String", "API_URL_FOLLOWER", follower)
+                buildConfigField("String", "API_URL_FOLLOWER_NEXT", followerNext)
+                buildConfigField("String", "API_URL_OTHER_PROFILE", otherProfile)
+                buildConfigField("String", "API_URL_FOLLOW_USER", follow)
+                buildConfigField("String", "API_URL_UN_FOLLOW_USER", unFollow)
+                buildConfigField("String", "API_URL_UPDATE_PROFILE", updateProfile)
             }
             buildFeatures.buildConfig = true
             compileOptions {

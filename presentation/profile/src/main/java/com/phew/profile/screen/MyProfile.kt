@@ -23,7 +23,6 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,11 +45,6 @@ import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import coil3.compose.AsyncImage
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.LottieConstants
-import com.airbnb.lottie.compose.animateLottieCompositionAsState
-import com.airbnb.lottie.compose.rememberLottieComposition
 import com.phew.core_common.ERROR_LOGOUT
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_design.AppBar
@@ -71,6 +65,7 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.paging.compose.LazyPagingItems
 import com.phew.core_design.CustomFont
 import com.phew.core_design.LoadingAnimation
+import com.phew.core_design.component.refresh.RefreshBox
 import com.phew.domain.dto.ProfileCard
 import com.phew.profile.component.ProfileComponent
 
@@ -90,17 +85,8 @@ internal fun MyProfile(
     }
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
-    val isRefreshing = uiState.isRefreshing
     var selectIndex by remember { mutableIntStateOf(TAB_MY_FEED_CARD) }
     val snackBarHostState = remember { SnackbarHostState() }
-    val composition by rememberLottieComposition(
-        LottieCompositionSpec.RawRes(com.phew.core_design.R.raw.ic_refresh)
-    )
-    val refreshProgress by animateLottieCompositionAsState(
-        composition = composition,
-        iterations = LottieConstants.IterateForever,
-        restartOnPlay = isRefreshing
-    )
     val refreshState = rememberPullToRefreshState()
     when (val profileState = uiState.profileInfo) {
         is UiState.Fail -> {
@@ -159,30 +145,11 @@ internal fun MyProfile(
             val commentCardData = uiState.profileCommentCard.collectAsLazyPagingItems()
             val cardData = if (selectIndex == TAB_MY_FEED_CARD) feedCardData else commentCardData
             MyProfileScaffold(onClickSetting = onClickSetting) { paddingValues ->
-                PullToRefreshBox(
-                    isRefreshing = isRefreshing,
-                    onRefresh = remember(viewModel::refreshMyProfile) { { viewModel.refreshMyProfile() } },
-                    modifier = Modifier.fillMaxWidth(),
+                RefreshBox(
+                    isRefresh = uiState.isRefreshing,
+                    onRefresh = viewModel::refreshMyProfile,
                     state = refreshState,
-                    indicator = {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(100.dp)
-                                .padding(top = paddingValues.calculateTopPadding()),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            val progress =
-                                if (isRefreshing) refreshProgress else refreshState.distanceFraction
-                            if (isRefreshing || refreshState.distanceFraction > 0f) {
-                                LottieAnimation(
-                                    composition = composition,
-                                    progress = { progress },
-                                    modifier = Modifier.size(80.dp)
-                                )
-                            }
-                        }
-                    }
+                    paddingValues = paddingValues
                 ) {
                     ProfileCardView(
                         profile = profileState.data,

@@ -314,6 +314,32 @@ object AppBar {
         }
     }
 
+    @Composable
+    fun LeftAppBar(
+        onClick: () -> Unit,
+        appBarText: String = "Title",
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .height(48.dp)
+                .statusBarsPadding()
+                .zIndex(1f)
+                .background(NeutralColor.WHITE)
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = appBarText,
+                style = TextComponent.HEAD_3_B_20,
+                color = NeutralColor.BLACK,
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.Left
+            )
+        }
+    }
+
     /**
      *  TODO 추후 TopAppBar 에 통합 예정
      */

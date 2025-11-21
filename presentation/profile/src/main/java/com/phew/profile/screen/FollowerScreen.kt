@@ -4,14 +4,11 @@ import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -20,7 +17,6 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -44,11 +40,6 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.LottieConstants
-import com.airbnb.lottie.compose.animateLottieCompositionAsState
-import com.airbnb.lottie.compose.rememberLottieComposition
 import com.phew.core_common.ERROR_LOGOUT
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_design.AppBar
@@ -59,6 +50,7 @@ import com.phew.core_design.LoadingAnimation
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.TabBar
 import com.phew.core_design.TextComponent
+import com.phew.core_design.component.refresh.RefreshBox
 import com.phew.domain.dto.FollowData
 import com.phew.domain.dto.ProfileInfo
 import com.phew.profile.ProfileViewModel
@@ -82,20 +74,11 @@ internal fun FollowerScreen(
     val following = uiState.following.collectAsLazyPagingItems()
     val context = LocalContext.current
     val snackBarHostState = remember { SnackbarHostState() }
-    val isRefreshing = uiState.isRefreshing
     val refreshState = rememberPullToRefreshState()
-    val composition by rememberLottieComposition(
-        LottieCompositionSpec.RawRes(com.phew.core_design.R.raw.ic_refresh)
-    )
-    val refreshProgress by animateLottieCompositionAsState(
-        composition = composition,
-        iterations = LottieConstants.IterateForever,
-        restartOnPlay = isRefreshing
-    )
     var selectIndex by remember { mutableIntStateOf(selectTab) }
     var unFollowDialogShow by remember { mutableStateOf(false) }
     LaunchedEffect(uiState.event) {
-        if(uiState.event is UiState.Success){
+        if (uiState.event is UiState.Success) {
             follower.refresh()
             following.refresh()
         }
@@ -164,8 +147,8 @@ internal fun FollowerScreen(
                 onBackPressed = onBackPressed,
                 snackBarHostState = snackBarHostState
             ) { paddingValues ->
-                PullToRefreshBox(
-                    isRefreshing = isRefreshing,
+                RefreshBox(
+                    isRefresh = uiState.isRefreshing,
                     onRefresh = remember(viewModel, isMyProfileView, result.data.userId) {
                         {
                             if (isMyProfileView) viewModel.refreshMyProfile() else viewModel.refreshOtherProfile(
@@ -173,27 +156,8 @@ internal fun FollowerScreen(
                             )
                         }
                     },
-                    modifier = Modifier.fillMaxWidth(),
                     state = refreshState,
-                    indicator = {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(100.dp)
-                                .padding(top = paddingValues.calculateTopPadding()),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            val progress =
-                                if (isRefreshing) refreshProgress else refreshState.distanceFraction
-                            if (isRefreshing || refreshState.distanceFraction > 0f) {
-                                LottieAnimation(
-                                    composition = composition,
-                                    progress = { progress },
-                                    modifier = Modifier.size(80.dp)
-                                )
-                            }
-                        }
-                    }
+                    paddingValues = paddingValues
                 ) {
                     ContentView(
                         followerCnt = follower.itemCount,
@@ -243,7 +207,11 @@ internal fun FollowerScreen(
                             buttonTextEnd = stringResource(com.phew.core_design.R.string.common_cancel_polite),
                             baseColor = Danger.M_RED,
                             blinkColor = Danger.D_RED,
-                            onClick = remember(viewModel::unFollowUser , uiState.userId , isMyProfileView) {
+                            onClick = remember(
+                                viewModel::unFollowUser,
+                                uiState.userId,
+                                isMyProfileView
+                            ) {
                                 {
                                     viewModel.unFollowUser(
                                         userId = uiState.userId,
@@ -302,8 +270,8 @@ private fun ContentView(
     follow: LazyPagingItems<FollowData>,
     density: Density,
     onChangeFollowClick: (FollowData) -> Unit,
-    followerCnt : Int,
-    followIngCnt : Int,
+    followerCnt: Int,
+    followIngCnt: Int,
 ) {
     Column(
         modifier = Modifier

@@ -80,7 +80,7 @@ fun NavGraphBuilder.signUpGraph(
     finish: () -> Unit
 ) {
     navigation(
-        startDestination = ON_BOARDING_ROUTE,
+        startDestination = ON_BOARDING_ROUTE_WITH_ARGS.asNavArg(OnBoardingArgs()),
         route = SIGN_UP_GRAPH
     ) {
         slideComposable(
@@ -114,7 +114,6 @@ fun NavGraphBuilder.signUpGraph(
             val navBackStackEntry =
                 remember(nav) { navController.getBackStackEntry(SIGN_UP_GRAPH) }
             val signUpViewModel: SignUpViewModel = hiltViewModel(navBackStackEntry)
-            println("!! $TAG, $SIGN_UP_AUTH_CODE_ROUTE")
             AuthCodeView(
                 viewModel = signUpViewModel,
                 home = {
@@ -130,7 +129,6 @@ fun NavGraphBuilder.signUpGraph(
             val navBackStackEntry =
                 remember(nav) { navController.getBackStackEntry(SIGN_UP_GRAPH) }
             val signUpViewModel: SignUpViewModel = hiltViewModel(navBackStackEntry)
-            println("!! $TAG, $SIGN_UP_AGREEMENT_ROUTE")
             SignUpAgreementView(
                 viewModel = signUpViewModel,
                 back = {
@@ -145,7 +143,6 @@ fun NavGraphBuilder.signUpGraph(
             val navBackStackEntry =
                 remember(nav) { navController.getBackStackEntry(SIGN_UP_GRAPH) }
             val signUpViewModel: SignUpViewModel = hiltViewModel(navBackStackEntry)
-            println("!! $TAG, $SIGN_UP_NICKNAME_ROUTE")
             NickNameView(
                 viewModel = signUpViewModel,
                 onBack = {
@@ -160,7 +157,6 @@ fun NavGraphBuilder.signUpGraph(
             val navBackStackEntry =
                 remember(nav) { navController.getBackStackEntry(SIGN_UP_GRAPH) }
             val signUpViewModel: SignUpViewModel = hiltViewModel(navBackStackEntry)
-            println("!! $TAG, $SIGN_UP_PROFILE_ROUTE")
             ProfileImageView(
                 viewModel = signUpViewModel,
                 onBack = {

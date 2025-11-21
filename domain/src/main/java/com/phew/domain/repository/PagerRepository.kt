@@ -10,6 +10,7 @@ import com.phew.domain.dto.NoticeSource
 import com.phew.domain.dto.Notification
 import com.phew.domain.dto.Popular
 import com.phew.domain.dto.ProfileCard
+import com.phew.domain.dto.TagCardContent
 import com.phew.domain.model.BlockMember
 import kotlinx.coroutines.flow.Flow
 
@@ -30,4 +31,5 @@ interface PagerRepository {
     fun getBlockUserPaging(): Flow<PagingData<BlockMember>>
     
     fun latestFeed(latitude: Double?, longitude: Double?): Flow<PagingData<Latest>>
+    fun tagCards(tagId: Long): Flow<PagingData<TagCardContent>>
 }

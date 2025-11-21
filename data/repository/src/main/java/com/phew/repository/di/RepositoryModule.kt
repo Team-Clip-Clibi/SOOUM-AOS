@@ -12,6 +12,7 @@ import com.phew.domain.repository.network.ProfileRepository
 import com.phew.domain.repository.network.ReportsRepository
 import com.phew.domain.repository.network.SignUpRepository
 import com.phew.domain.repository.network.SplashRepository
+import com.phew.domain.repository.network.TagRepository
 import com.phew.repository.DeviceRepositoryImpl
 import com.phew.repository.NotifyRepositoryImpl
 import com.phew.repository.network.AppVersionRepositoryImpl
@@ -23,6 +24,7 @@ import com.phew.repository.network.ProfileRepositoryImpl
 import com.phew.repository.network.ReportRepositoryImpl
 import com.phew.repository.network.SignUpRepositoryImpl
 import com.phew.repository.network.SplashRepositoryImpl
+import com.phew.repository.network.TagRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -76,16 +78,13 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
-    abstract fun bindBlockRepository(impl: com.phew.repository.network.BlockRepositoryImpl): com.phew.domain.repository.network.BlockRepository
+    abstract fun bindBlockRepository(impl: BlockRepositoryImpl): BlockRepository
 
-    companion object {
-        @Provides
-        @Singleton
-        fun provideCardFeedRepository(
-            @IsDebug isDebug: Boolean,
-            realImpl: CardFeedRepositoryImpl
-        ): CardFeedRepository {
-            return realImpl
-        }
-    }
+    @Binds
+    @Singleton
+    abstract fun bindTagRepository(impl: TagRepositoryImpl): TagRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindCardFeedRepository(impl: CardFeedRepositoryImpl): CardFeedRepository
 }

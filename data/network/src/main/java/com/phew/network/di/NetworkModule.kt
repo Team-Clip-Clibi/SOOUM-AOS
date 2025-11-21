@@ -14,6 +14,7 @@ import com.phew.network.retrofit.ProfileHttp
 import com.phew.network.retrofit.ReportHttp
 import com.phew.network.retrofit.SignUpHttp
 import com.phew.network.retrofit.SplashHttp
+import com.phew.network.retrofit.TagHttp
 import com.phew.network.retrofit.TokenRefreshHttp
 import dagger.Module
 import dagger.Provides
@@ -156,4 +157,9 @@ object NetworkModule {
     @Provides
     fun provideBlockHttp(retrofit: Retrofit): BlockHttp =
         retrofit.create(BlockHttp::class.java)
+
+    @Singleton
+    @Provides
+    fun provideTagHttp(retrofit: Retrofit): TagHttp =
+        retrofit.create(TagHttp::class.java)
 }

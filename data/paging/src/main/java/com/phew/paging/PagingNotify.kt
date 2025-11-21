@@ -43,22 +43,20 @@ class PagingNotify @AssistedInject constructor(
 
             when (result) {
                 is DataResult.Success -> {
-                    val originalNotifyList = result.data.second.sortedBy { data -> data.id }
-                    
-                    if (originalNotifyList.isEmpty() || result.data.first == HTTP_NO_MORE_CONTENT) {
+                    if (result.data.second.isEmpty() || result.data.first == HTTP_NO_MORE_CONTENT) {
                         return LoadResult.Page(
-                            data = originalNotifyList,
+                            data = emptyList(),
                             prevKey = null,
                             nextKey = null
                         )
                     }
-
                     LoadResult.Page(
-                        data = originalNotifyList,
+                        data = result.data.second,
                         prevKey = null,
-                        nextKey = originalNotifyList.last().id
+                        nextKey = if (key != -1 && result.data.second.last().id == key) null else result.data.second.last().id
                     )
                 }
+
                 is DataResult.Fail -> {
                     val exception = if (result.code == HTTP_INVALID_TOKEN) {
                         SecurityException("Invalid Token")
