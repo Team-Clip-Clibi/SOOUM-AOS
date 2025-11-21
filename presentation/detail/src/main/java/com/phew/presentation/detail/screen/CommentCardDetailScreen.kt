@@ -24,7 +24,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -215,7 +214,7 @@ internal fun CommentCardDetailScreen(
             viewModel.requestComment(args.cardId)
             // 새로고침 완료를 기다린 후 상태 초기화
             coroutineScope.launch {
-                kotlinx.coroutines.delay(500) // 최소 500ms 표시
+                delay(500) // 최소 500ms 표시
                 isManualRefreshing = false
             }
             Unit // 명시적으로 Unit 반환
@@ -241,7 +240,7 @@ internal fun CommentCardDetailScreen(
     Scaffold(
         topBar = {
             TopLayout(
-                storyRemainingMillis = cardDetail.endTime ?: 0L,
+                storyRemainingMillis = cardDetail.endTime,
                 onFeedPressed = onFeedPressed,
                 onBackPressed = onBackPressedLambda,
                 showBottomSheet = showBottomSheetLambda,
@@ -250,9 +249,7 @@ internal fun CommentCardDetailScreen(
             )
         },
         snackbarHost = {
-            SnackbarHost(hostState = snackBarHostState) { data ->
-                DialogComponent.SnackBar(data)
-            }
+            DialogComponent.CustomAnimationSnackBarHos(hostState = snackBarHostState)
         }
     ) { paddingValues ->
         PullToRefreshBox(

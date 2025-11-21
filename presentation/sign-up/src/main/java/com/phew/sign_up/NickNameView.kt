@@ -85,9 +85,7 @@ fun NickNameView(viewModel: SignUpViewModel, onBack: () -> Unit, nextPage: () ->
             }
         },
         snackbarHost = {
-            SnackbarHost(hostState = snackBarHostState) { data ->
-                DialogComponent.SnackBar(data)
-            }
+            DialogComponent.CustomAnimationSnackBarHos(hostState = snackBarHostState)
         }
     ) { paddingValues ->
         Column(

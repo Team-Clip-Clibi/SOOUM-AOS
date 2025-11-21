@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,6 +29,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -128,7 +128,6 @@ internal fun WriteRoute(
 
         viewModel.onInitialLocationPermissionCheck(fineGranted || coarseGranted)
     }
-
     //  Effect Event로 수정
     LaunchedEffect(Unit) {
         viewModel.requestPermissionEvent.collect { permissions ->
@@ -403,9 +402,7 @@ private fun WriteScreen(
             )
         },
         snackbarHost = {
-            SnackbarHost(hostState = snackBarHostState) { data ->
-                DialogComponent.SnackBar(data)
-            }
+            DialogComponent.CustomAnimationSnackBarHos(snackBarHostState)
         }
     ) { innerPadding ->
         val scrollState = rememberScrollState()
@@ -414,6 +411,12 @@ private fun WriteScreen(
                 keyboard?.hide()
                 focusManager.clearFocus()
             }
+        }
+        LaunchedEffect(Unit) {
+            snackBarHostState.showSnackbar(
+                message = "test",
+                duration = SnackbarDuration.Short
+            )
         }
         Column(
             modifier = Modifier

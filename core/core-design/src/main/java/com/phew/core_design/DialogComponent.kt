@@ -1,9 +1,13 @@
 package com.phew.core_design
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -29,6 +33,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.foundation.clickable
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.ui.graphics.Color
 
@@ -230,22 +235,44 @@ object DialogComponent {
     }
 
     @Composable
-    fun AnimationSnackBarHost(
+    fun CustomAnimationSnackBarHos(
         hostState: SnackbarHostState,
+        modifier: Modifier = Modifier,
     ) {
-        val currentData = hostState.currentSnackbarData
-        androidx.compose.animation.AnimatedVisibility(
-            visible = currentData != null,
-            enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-            exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
-        ) {
-            if (currentData == null) return@AnimatedVisibility
-            SnackBar(data = currentData)
+        AnimatedContent(
+            targetState = hostState.currentSnackbarData,
+            contentAlignment = Alignment.BottomCenter,
+            contentKey = { key -> key },
+            transitionSpec = {
+                (slideInVertically(
+                    initialOffsetY = { height -> height },
+                    animationSpec = tween(durationMillis = 300)
+                ) + fadeIn(animationSpec = tween(300))).togetherWith(
+                    slideOutVertically(
+                        targetOffsetY = { height -> height },
+                        animationSpec = tween(durationMillis = 300)
+                    ) + fadeOut(animationSpec = tween(300))
+                )
+                    .using(SizeTransform(clip = false))
+            },
+            label = "snackBarAnimation",
+            modifier = modifier
+        ) { snackBarData ->
+            if (snackBarData == null) return@AnimatedContent
+            SnackbarHost(hostState) { data ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 20.dp, start = 16.dp, end = 16.dp)
+                ) {
+                    SnackBar(data = data)
+                }
+            }
         }
     }
 
     @Composable
-    fun SnackBar(
+    private fun SnackBar(
         data: SnackbarData,
     ) {
         Row(

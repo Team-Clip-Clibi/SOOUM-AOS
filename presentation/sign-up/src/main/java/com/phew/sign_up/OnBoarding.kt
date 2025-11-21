@@ -100,9 +100,7 @@ fun OnBoarding(
             )
         },
         snackbarHost = {
-            SnackbarHost(hostState = snackBarHostState) { data ->
-                DialogComponent.SnackBar(data)
-            }
+            DialogComponent.CustomAnimationSnackBarHos(hostState = snackBarHostState)
         }
     ) { paddingValues ->
         Column(

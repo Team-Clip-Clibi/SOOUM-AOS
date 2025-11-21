@@ -18,7 +18,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -38,7 +37,6 @@ import com.phew.core_design.AppBar
 import com.phew.core_design.AvatarComponent
 import com.phew.core_design.BottomSheetComponent
 import com.phew.core_design.BottomSheetItem
-import com.phew.core_design.DialogComponent.SnackBar
 import com.phew.core_design.LargeButton
 import com.phew.core_design.LoadingAnimation
 import com.phew.core_design.NeutralColor
@@ -53,6 +51,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import com.phew.core_common.ERROR_LOGOUT
 import com.phew.core_common.ERROR_NETWORK
+import com.phew.core_design.DialogComponent
 import com.phew.core_design.TextComponent
 
 @Composable
@@ -102,12 +101,7 @@ internal fun EditProfileScreen(viewModel: ProfileViewModel, onBackPress: () -> U
             )
         },
         snackbarHost = {
-            SnackbarHost(
-                hostState = snackBarHostState,
-                snackbar = { snackBarData ->
-                    SnackBar(data = snackBarData)
-                }
-            )
+            DialogComponent.CustomAnimationSnackBarHos(hostState = snackBarHostState)
         },
         bottomBar = {
             Column(

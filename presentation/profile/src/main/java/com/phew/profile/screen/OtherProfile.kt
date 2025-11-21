@@ -23,7 +23,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -61,7 +60,6 @@ import com.phew.core_design.AppBar
 import com.phew.core_design.CustomFont
 import com.phew.core_design.Danger
 import com.phew.core_design.DialogComponent
-import com.phew.core_design.DialogComponent.SnackBar
 import com.phew.core_design.LoadingAnimation
 import com.phew.core_design.MediumButton
 import com.phew.core_design.NeutralColor
@@ -276,12 +274,7 @@ private fun OtherProfileScaffold(
 ) {
     Scaffold(
         snackbarHost = {
-            SnackbarHost(
-                hostState = snackBarHostState,
-                snackbar = { snackBarData ->
-                    SnackBar(data = snackBarData)
-                }
-            )
+            DialogComponent.CustomAnimationSnackBarHos(hostState = snackBarHostState)
         },
         topBar = {
             if (isBlock) {

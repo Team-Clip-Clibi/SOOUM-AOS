@@ -20,7 +20,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -54,7 +53,6 @@ import com.airbnb.lottie.compose.rememberLottieComposition
 import com.phew.core_common.ERROR_LOGOUT
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_design.AppBar
-import com.phew.core_design.DialogComponent.SnackBar
 import com.phew.core_design.MediumButton
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
@@ -70,6 +68,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.paging.compose.LazyPagingItems
 import com.phew.core_design.CustomFont
+import com.phew.core_design.DialogComponent
 import com.phew.core_design.LoadingAnimation
 import com.phew.domain.dto.ProfileCard
 import com.phew.profile.component.ProfileComponent
@@ -219,12 +218,7 @@ private fun MyProfileScaffold(
 ) {
     Scaffold(
         snackbarHost = {
-            SnackbarHost(
-                hostState = snackBarHostState,
-                snackbar = { snackBarData ->
-                    SnackBar(data = snackBarData)
-                }
-            )
+            DialogComponent.CustomAnimationSnackBarHos(hostState = snackBarHostState)
         },
         topBar = {
             AppBar.IconRightAppBar(
