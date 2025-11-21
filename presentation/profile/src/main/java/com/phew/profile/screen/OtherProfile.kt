@@ -48,7 +48,6 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemKey
 import coil3.compose.AsyncImage
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
@@ -362,7 +361,6 @@ private fun ProfileContentView(
                     else -> {
                         items(
                             count = cardData.itemCount,
-                            key = cardData.itemKey { data -> data.cardId }
                         ) { index ->
                             val item = cardData[index]
                             if (item != null) {
