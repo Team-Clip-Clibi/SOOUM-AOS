@@ -93,8 +93,9 @@ class TokenMangerImpl @Inject constructor(
 
     override suspend fun autoLogin(): String {
         val securityKeyResponse = tokenRefreshApi.getSecurityKey()
-        if (!securityKeyResponse.isSuccessful || securityKeyResponse.body() == null) return ""
-        val key = makeSecurityKey(securityKeyResponse.body()!!.publicKey)
+        val securityKeyBody = securityKeyResponse.body()
+        if (!securityKeyResponse.isSuccessful || securityKeyBody == null) return ""
+        val key = makeSecurityKey(securityKeyBody.publicKey)
         val deviceId = deviceRepository.requestDeviceId()
         val deviceOs = deviceRepository.requestDeviceOS()
         val deviceModel = deviceRepository.requestDeviceModel()
@@ -107,9 +108,10 @@ class TokenMangerImpl @Inject constructor(
                 deviceModel = deviceModel
             )
         )
-        if (!requestLogin.isSuccessful) return ""
+        val loginBody = requestLogin.body()
+        if (!requestLogin.isSuccessful || loginBody == null) return ""
         val data = requestLogin.body() ?: return ""
-        saveTokens(refreshToken = data.refreshToken, accessToken = data.accessToken)
+        saveTokens(refreshToken = loginBody.refreshToken, accessToken = loginBody.accessToken)
         return data.accessToken
     }
 
