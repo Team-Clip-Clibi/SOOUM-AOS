@@ -26,12 +26,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -68,16 +70,27 @@ class TagViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TagUiState())
-    val uiState = _uiState.asStateFlow()
-
+    
     private val _uiEffect = MutableStateFlow<TagUiEffect?>(null)
     val uiEffect = _uiEffect.asSharedFlow()
+
+    private val refreshTrigger = MutableStateFlow(0)
+
+    val uiState = combine(
+        _uiState,
+        refreshTrigger
+    ) { state, _ ->
+        state
+    }.stateIn(
+        scope = viewModelScope,
+        started = kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000),
+        initialValue = TagUiState()
+    )
 
     init {
         observeSearchValue()
         loadUserInfo()
-        loadFavoriteTags()
-        tagRank()
+        observeRefreshTrigger()
     }
 
     private fun loadUserInfo() {
@@ -232,10 +245,11 @@ class TagViewModel @Inject constructor(
             val result = removeFavoriteTag(RemoveFavoriteTag.Param(tagId))
             when (result) {
                 is DataResult.Success -> {
-                    // 로컬 상태 업데이트 (즐겨찾기 해제)
+                    // 로컬 상태 업데이트 (즐겨찾기 해제) 및 favoriteTags 리스트에서 제거
                     _uiState.update { currentState ->
                         currentState.copy(
-                            localFavoriteStates = currentState.localFavoriteStates + (tagId to false)
+                            localFavoriteStates = currentState.localFavoriteStates + (tagId to false),
+                            favoriteTags = currentState.favoriteTags.filter { it.id != tagId }
                         )
                     }
                     _uiEffect.emit(TagUiEffect.ShowRemoveFavoriteTagToast(tagName))
@@ -256,12 +270,14 @@ class TagViewModel @Inject constructor(
             val result = addFavoriteTag(AddFavoriteTag.Param(tagId))
             when (result) {
                 is DataResult.Success -> {
-                    // 로컬 상태 업데이트 (즐겨찾기 추가)
+                    // 로컬 상태 업데이트 (즐겨찾기 추가) 및 즐겨찾기 목록 새로고침
                     _uiState.update { currentState ->
                         currentState.copy(
                             localFavoriteStates = currentState.localFavoriteStates + (tagId to true)
                         )
                     }
+                    // 즐겨찾기 리스트 새로고침
+                    loadFavoriteTags()
                     _uiEffect.emit(TagUiEffect.ShowAddFavoriteTagToast(tagName))
                     SooumLog.d(TAG, "Successfully added favorite tag: $tagName")
                 }
@@ -310,13 +326,11 @@ class TagViewModel @Inject constructor(
         }
     }
 
-    // SearchRoute에서 호출할 함수 - cardDataItems에서 첫 번째 아이템의 isFavorite 상태 업데이트
     fun updateCurrentTagFavoriteState(isFavorite: Boolean) {
         SooumLog.d(TAG, "updateCurrentTagFavoriteState: isFavorite=$isFavorite")
         _uiState.update { it.copy(currentTagFavoriteState = isFavorite) }
     }
 
-    // TagScreen 데이터 새로고침
     fun refreshTagScreenData() {
         SooumLog.d(TAG, "refreshTagScreenData")
         loadFavoriteTags()
@@ -326,7 +340,74 @@ class TagViewModel @Inject constructor(
         _uiState.update { state ->
             state.copy(isRefreshing = true)
         }
-        tagRank()
+        refreshTrigger.value++
+    }
+    
+    private fun observeRefreshTrigger() {
+        viewModelScope.launch {
+            refreshTrigger.collect {
+                loadFavoriteTags()
+                tagRank()
+            }
+        }
+    }
+    
+    fun onTagRankClick(tagId: Long) {
+        viewModelScope.launch {
+            val tagRank = _uiState.value.tagRank
+            if (tagRank is UiState.Success) {
+                val selectedTag = tagRank.data.find { it.id == tagId }
+                selectedTag?.let { tag ->
+                    _uiEffect.emit(TagUiEffect.NavigateToViewTags(tag.name, tag.id))
+                }
+            }
+        }
+    }
+    
+    fun loadTagCards(tagName: String, tagId: Long) {
+        SooumLog.d(TAG, "loadTagCards tagName=$tagName, tagId=$tagId")
+        
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val cardsPagingFlow = getTagCardsPaging(GetTagCardsPaging.Param(tagId)).cachedIn(viewModelScope)
+                
+                _uiState.update {
+                    it.copy(
+                        searchPerformed = true,
+                        searchValue = tagName,
+                        recommendedTags = emptyList(),
+                        cardDataItems = cardsPagingFlow,
+                        currentSearchedTag = TagInfo(id = tagId, name = tagName, usageCnt = 0),
+                        currentTagFavoriteState = false
+                    )
+                }
+            } catch (e: Exception) {
+                SooumLog.e(TAG, "Failed to load tag cards: ${e.message}")
+            }
+        }
+    }
+    
+    fun refreshViewTags(tagName: String, tagId: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _uiState.update { it.copy(isRefreshing = true) }
+            try {
+                // 새로운 Paging flow 생성
+                val cardsPagingFlow = getTagCardsPaging(GetTagCardsPaging.Param(tagId)).cachedIn(viewModelScope)
+                
+                _uiState.update {
+                    it.copy(cardDataItems = cardsPagingFlow)
+                }
+                
+                // 약간의 지연 후 새로고침 상태 해제 (Paging 데이터 로드 시간 고려)
+                kotlinx.coroutines.delay(500)
+                _uiState.update { it.copy(isRefreshing = false) }
+                
+                SooumLog.d(TAG, "Successfully refreshed tag cards for $tagName")
+            } catch (e: Exception) {
+                SooumLog.e(TAG, "Failed to refresh tag cards: ${e.message}")
+                _uiState.update { it.copy(isRefreshing = false) }
+            }
+        }
     }
 
     private fun tagRank() {
@@ -358,6 +439,7 @@ sealed interface TagUiEffect {
     data object NavigationSearchScreen : TagUiEffect
     data class ShowAddFavoriteTagToast(val tagName: String) : TagUiEffect
     data class ShowRemoveFavoriteTagToast(val tagName: String) : TagUiEffect
+    data class NavigateToViewTags(val tagName: String, val tagId: Long) : TagUiEffect
 }
 
 private const val TAG = "TagViewModel"

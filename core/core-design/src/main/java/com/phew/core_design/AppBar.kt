@@ -316,6 +316,59 @@ object AppBar {
     }
 
     @Composable
+    fun IconLeftAndRightAppBar(
+        title: String,
+        @DrawableRes image: Int = R.drawable.ic_left,
+        rightIcon: @Composable () -> Unit,
+        onBackClick: () -> Unit
+    ) {
+        val interactionSource = remember { MutableInteractionSource() }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .height(48.dp)
+                .statusBarsPadding()
+                .zIndex(1f)
+                .background(NeutralColor.WHITE)
+                .padding(start = 4.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                        onClick = onBackClick
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(image),
+                    contentDescription = "left icon",
+                    modifier = Modifier
+                        .size(24.dp)
+                        .padding(6.dp)
+                )
+            }
+            Text(
+                text = title,
+                style = TextComponent.TITLE_1_SB_18,
+                color = NeutralColor.BLACK,
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.Center
+            )
+            Box(
+                modifier = Modifier.size(48.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                rightIcon()
+            }
+        }
+    }
+
+    @Composable
     fun SearchAppBar(
         value: String,
         placeholder: String,

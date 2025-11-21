@@ -49,7 +49,6 @@ import com.phew.core_design.Primary
 import com.phew.core_design.TextComponent
 import com.phew.core_design.TextFiledComponent.SearchField
 import com.phew.core_design.component.refresh.RefreshBox
-import com.phew.core_design.component.refresh.TOP_CONTENT_OFFSET
 import com.phew.core_design.component.refresh.pullToRefreshOffset
 import com.phew.core_design.component.tag.TagRankView
 import com.phew.domain.dto.FavoriteTag
@@ -65,7 +64,8 @@ import com.phew.core_design.R as DesignR
 internal fun TagRoute(
     modifier: Modifier = Modifier,
     viewModel: TagViewModel = hiltViewModel(),
-    navigateToSearchScreen: () -> Unit
+    navigateToSearchScreen: () -> Unit,
+    navigateToViewTags: (String, Long) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -99,6 +99,11 @@ internal fun TagRoute(
                             ).show()
                             viewModel.clearUiEffect()
                         }
+
+                        is TagUiEffect.NavigateToViewTags -> {
+                            navigateToViewTags(it.tagName, it.tagId)
+                            viewModel.clearUiEffect()
+                        }
                     }
                 }
             }
@@ -108,6 +113,7 @@ internal fun TagRoute(
         modifier = modifier,
         nickName = uiState.nickName,
         favoriteTags = uiState.favoriteTags,
+        tagRank = uiState.tagRank,
         isRefreshing = uiState.isRefreshing,
         onSearchView = viewModel::navToSearchScreen,
         onFavoriteClick = { tagId ->
@@ -115,7 +121,8 @@ internal fun TagRoute(
             tag?.let { viewModel.toggleFavoriteTag(it.id, it.name) }
         },
         onRefresh = viewModel::refresh,
-        getTagFavoriteState = viewModel::getTagFavoriteState
+        getTagFavoriteState = viewModel::getTagFavoriteState,
+        onTagRankClick = viewModel::onTagRankClick
     )
 }
 
@@ -126,10 +133,12 @@ private fun TagScreen(
     nickName: String,
     isRefreshing: Boolean,
     favoriteTags: List<FavoriteTag>,
+    tagRank: UiState<List<TagInfo>>,
     onSearchView: () -> Unit,
     onFavoriteClick: (Long) -> Unit,
     onRefresh: () -> Unit,
-    getTagFavoriteState: (Long) -> Boolean
+    getTagFavoriteState: (Long) -> Boolean,
+    onTagRankClick: (Long) -> Unit
 ) {
     val refreshState = rememberPullToRefreshState()
     Scaffold(
@@ -147,30 +156,69 @@ private fun TagScreen(
             state = refreshState,
             paddingValues = innerPadding
         ) {
+            TagView(
+                paddingValues = innerPadding,
+                nickName = nickName,
+                favoriteTags = favoriteTags,
+                tagRank = tagRank,
+                refreshState = refreshState,
+                onSearchView = onSearchView,
+                onFavoriteClick = onFavoriteClick,
+                getTagFavoriteState = getTagFavoriteState,
+                onTagRankClick = onTagRankClick
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TagView(
+    paddingValues: PaddingValues,
+    nickName: String,
+    favoriteTags: List<FavoriteTag>,
+    tagRank: UiState<List<TagInfo>>,
+    refreshState: PullToRefreshState,
+    onSearchView: () -> Unit,
+    onFavoriteClick: (Long) -> Unit,
+    getTagFavoriteState: (Long) -> Boolean,
+    onTagRankClick: (Long) -> Unit
+) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        contentPadding = PaddingValues(
+            top = paddingValues.calculateTopPadding(),
+            start = 16.dp,
+            bottom = paddingValues.calculateBottomPadding(),
+            end = 16.dp
+        ),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(NeutralColor.WHITE)
+            .pullToRefreshOffset(state = refreshState, baseOffset = 0.dp)
+    ) {
+        // 검색 필드
+        item(span = { GridItemSpan(currentLineSpan = maxLineSpan) }) {
+            SearchField(
+                value = "",
+                isReadOnly = true,
+                placeHolder = stringResource(R.string.tag_search_tag_placeholder),
+                onFieldClick = onSearchView
+            )
+        }
+
+        // 즐겨찾기 태그 섹션
+        item(span = { GridItemSpan(currentLineSpan = maxLineSpan) }) {
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(NeutralColor.WHITE)
-                    .padding(innerPadding)
-                    .padding(horizontal = 16.dp)
-
+                modifier = Modifier.padding(top = 24.dp)
             ) {
-                SearchField(
-                    value = "",
-                    isReadOnly = true,
-                    placeHolder = stringResource(R.string.tag_search_tag_placeholder),
-                    onFieldClick = {
-                        onSearchView()
-                    }
-                )
-
                 Text(
                     text = stringResource(R.string.tag_user_favorite, nickName),
                     style = TextComponent.TITLE_1_SB_18,
                     color = NeutralColor.BLACK,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 24.dp, bottom = 8.dp)
+                        .padding(bottom = 8.dp)
                 )
 
                 if (favoriteTags.isNotEmpty()) {
@@ -183,46 +231,40 @@ private fun TagScreen(
                 } else {
                     EmptyFavoriteTag()
                 }
-
             }
         }
-    }
-}
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun TagView(
-    paddingValues: PaddingValues,
-    rankTag: UiState<List<TagInfo>>,
-    refreshState: PullToRefreshState,
-) {
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
-        contentPadding = PaddingValues(
-            start = 16.dp, bottom = paddingValues.calculateBottomPadding(), end = 16.dp
-        ),
-        modifier = Modifier
-            .fillMaxSize()
-            .background(NeutralColor.WHITE)
-            .pullToRefreshOffset(
-                state = refreshState,
-                baseOffset = TOP_CONTENT_OFFSET
+        // 태그 랭킹 섹션
+        item(span = { GridItemSpan(currentLineSpan = maxLineSpan) }) {
+            Text(
+                text = stringResource(R.string.tag_rank_title),
+                style = TextComponent.TITLE_1_SB_18,
+                color = NeutralColor.BLACK,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 40.dp, bottom = 8.dp)
             )
-    ) {
-        item(span = { GridItemSpan(currentLineSpan = maxLineSpan) }) {
-            //TODO 검색어
         }
-        item(span = { GridItemSpan(currentLineSpan = maxLineSpan) }) {
-            //TODO 닉네임 + 관심 테그
-        }
-        when (rankTag) {
+
+        when (tagRank) {
             is UiState.Fail -> {
                 item(span = { GridItemSpan(currentLineSpan = maxLineSpan) }) {
-                    Column(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 40.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                         Image(
                             painter = painterResource(DesignR.drawable.ic_deleted_card),
-                            modifier = Modifier.size(24.dp),
-                            contentDescription = "error fail rank Tag"
+                            modifier = Modifier.size(48.dp),
+                            contentDescription = "error fail rank tag"
+                        )
+                        Text(
+                            text = tagRank.errorMessage,
+                            style = TextComponent.BODY_1_M_14,
+                            color = NeutralColor.GRAY_400,
+                            modifier = Modifier.padding(top = 16.dp)
                         )
                     }
                 }
@@ -235,15 +277,13 @@ private fun TagView(
             }
 
             is UiState.Success -> {
-                itemsIndexed(rankTag.data) { index, tagInfo ->
+                itemsIndexed(tagRank.data) { index, tagInfo ->
                     TagRankView(
                         text = tagInfo.name,
                         userCount = tagInfo.usageCnt,
                         index = (index + 1).toString(),
                         id = tagInfo.id,
-                        onClick = { tagId ->
-                            //TODO 카드 이동
-                        }
+                        onClick = onTagRankClick
                     )
                 }
             }
