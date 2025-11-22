@@ -24,6 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
@@ -83,7 +84,7 @@ class TagViewModel @Inject constructor(
         state
     }.stateIn(
         scope = viewModelScope,
-        started = kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000),
+        started = SharingStarted.WhileSubscribed(5000),
         initialValue = TagUiState()
     )
 
@@ -107,7 +108,7 @@ class TagViewModel @Inject constructor(
         }
     }
 
-    private fun loadFavoriteTags() {
+    fun loadFavoriteTags() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val result = getFavoriteTags()
@@ -307,10 +308,8 @@ class TagViewModel @Inject constructor(
             "toggleCurrentSearchedTagFavorite: currentFavoriteState=$currentFavoriteState, tag=${currentTag.name}"
         )
 
-        // 로컬 상태 즉시 업데이트 (UI 반응성)
         _uiState.update { it.copy(currentTagFavoriteState = !currentFavoriteState) }
 
-        // 실제 서버 요청
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 if (currentFavoriteState) {
@@ -319,7 +318,6 @@ class TagViewModel @Inject constructor(
                     addFavoriteTagAction(currentTag.id, currentTag.name)
                 }
             } catch (e: Exception) {
-                // 서버 요청 실패 시 상태 롤백
                 SooumLog.e(TAG, "Failed to toggle favorite: ${e.message}")
                 _uiState.update { it.copy(currentTagFavoriteState = currentFavoriteState) }
             }

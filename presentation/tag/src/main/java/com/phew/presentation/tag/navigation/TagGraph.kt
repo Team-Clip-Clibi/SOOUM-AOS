@@ -46,6 +46,13 @@ private fun NavHostController.navigateToViewTags(
     this.navigate(VIEW_TAGS_ROUTE_WITH_ARGS.asNavArg(args), navOptions)
 }
 
+fun NavHostController.navigateToViewTagsWithArgs(
+    tagViewArgs: TagViewArgs,
+    navOptions: NavOptions? = null
+) {
+    this.navigate(VIEW_TAGS_ROUTE_WITH_ARGS.asNavArg(tagViewArgs), navOptions)
+}
+
 @SuppressLint("UnrememberedGetBackStackEntry")
 fun NavGraphBuilder.tagGraph(
     appState: SooumAppState,
@@ -60,6 +67,7 @@ fun NavGraphBuilder.tagGraph(
             val tagViewModel: TagViewModel = hiltViewModel(nav)
             TagRoute(
                 viewModel = tagViewModel,
+                navController = navController,
                 navigateToSearchScreen = navController::navigationSearchRoute,
                 navigateToViewTags = navController::navigateToViewTags
             )
@@ -90,10 +98,6 @@ fun NavGraphBuilder.tagGraph(
             val args = backStackEntry.arguments?.getNavArg<TagViewArgs>()
                 ?: TagViewArgs(tagName = "", tagId = 0L)
 
-            // TAG_HOME_ROUTE의 ViewModel을 가져와서 refresh 호출
-            val tagHomeEntry = navController.getBackStackEntry(TAG_HOME_ROUTE)
-            val tagViewModel: TagViewModel = hiltViewModel(tagHomeEntry)
-            
             ViewTagsRoute(
                 tagName = args.tagName,
                 tagId = args.tagId,
@@ -101,7 +105,7 @@ fun NavGraphBuilder.tagGraph(
                     navController.navigateToDetailGraph(CardDetailArgs(cardId))
                 },
                 onBackPressed = {
-                    tagViewModel.refresh()
+                    navController.previousBackStackEntry?.savedStateHandle?.set("favorite_changed", true)
                     navController.popBackStack()
                 }
             )

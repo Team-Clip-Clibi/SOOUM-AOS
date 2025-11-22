@@ -191,7 +191,8 @@ internal fun TagRow(
     currentInput: String = "",
     onInputChange: (String) -> Unit = {},
     fontFamily: FontFamily = FontFamily.Default,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onTagClick: (String) -> Unit = { }
 ) {
     var input by remember { mutableStateOf(currentInput) }
     var state by remember { mutableStateOf(TagState.AddNew) }
@@ -250,7 +251,7 @@ internal fun TagRow(
                 text = tag,
                 showRemoveIcon = enableAdd,
                 onRemove = { onRemove(tag) },
-                onClick = { onRemove(tag) },
+                onClick = if (enableAdd) { { onRemove(tag) } } else { { onTagClick(tag) } },
                 fontFamily = fontFamily
             )
         }

@@ -42,6 +42,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.flowWithLifecycle
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.phew.core_design.AppBar.LeftAppBar
 import com.phew.core_design.LoadingAnimation
 import com.phew.core_design.NeutralColor
@@ -64,12 +66,23 @@ import com.phew.core_design.R as DesignR
 internal fun TagRoute(
     modifier: Modifier = Modifier,
     viewModel: TagViewModel = hiltViewModel(),
+    navController: NavHostController,
     navigateToSearchScreen: () -> Unit,
     navigateToViewTags: (String, Long) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
+
+    val currentBackStackEntry by navController.currentBackStackEntryAsState()
+    LaunchedEffect(currentBackStackEntry) {
+        val isFavoriteChanged =
+            currentBackStackEntry?.savedStateHandle?.get<Boolean>("favorite_changed")
+        if (isFavoriteChanged == true) {
+            viewModel.loadFavoriteTags()
+            currentBackStackEntry?.savedStateHandle?.remove<Boolean>("favorite_changed")
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.uiEffect
@@ -122,7 +135,7 @@ internal fun TagRoute(
         },
         onRefresh = viewModel::refresh,
         getTagFavoriteState = viewModel::getTagFavoriteState,
-        onTagRankClick = viewModel::onTagRankClick
+        onTagRankClick =  viewModel::onTagRankClick
     )
 }
 

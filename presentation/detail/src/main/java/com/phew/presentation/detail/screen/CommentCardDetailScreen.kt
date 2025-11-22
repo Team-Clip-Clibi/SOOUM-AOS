@@ -101,6 +101,7 @@ internal fun CommentCardDetailScreen(
     onNavigateToComment: (CardDetailCommentArgs) -> Unit,
     onNavigateToWrite: (Long) -> Unit,
     onNavigateToReport: (Long) -> Unit,
+    onNavigateToViewTags: (com.phew.core.ui.model.navigation.TagViewArgs) -> Unit,
     onBackPressed: (Long) -> Unit,
     onFeedPressed: () -> Unit,
     onProfileClick: (Long) -> Unit
@@ -303,6 +304,7 @@ internal fun CommentCardDetailScreen(
                     comments = comments,
                     onCommentClick = onCommentClickLambda,
                     onPreviousCardClick = onClickPreviousCard,
+                    onNavigateToViewTags = onNavigateToViewTags,
                     playProgression = {
                         LottieAnimation(
                             composition = composition,
@@ -389,7 +391,8 @@ private fun CardView(
     onCommentClick: (Long) -> Unit,
     onPreviousCardClick: () -> Unit,
     playProgression: @Composable () -> Unit,
-    onProfileClick : (Long) -> Unit
+    onProfileClick : (Long) -> Unit,
+    onNavigateToViewTags: (com.phew.core.ui.model.navigation.TagViewArgs) -> Unit
 ) {
     BoxWithConstraints(
         modifier = modifier
@@ -414,6 +417,12 @@ private fun CardView(
                     isDeleted = isExpire,
                     backgroundImageUrl = cardDetail.cardImgUrl.toUri(),
                     fontFamily = CustomFont.findFontValueByServerName(cardDetail.font).data.previewTypeface,
+                    onTagClick = { tagName ->
+                        val tag = cardDetail.tags.find { it.name == tagName }
+                        if (tag != null) {
+                            onNavigateToViewTags(com.phew.core.ui.model.navigation.TagViewArgs(tagName = tag.name, tagId = tag.tagId))
+                        }
+                    },
                     header = {
                         CardDetailHeader(
                             profileUri = cardDetail.profileImgUrl ?: "",
