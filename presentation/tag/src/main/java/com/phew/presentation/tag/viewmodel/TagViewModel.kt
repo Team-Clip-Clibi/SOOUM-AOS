@@ -330,6 +330,11 @@ class TagViewModel @Inject constructor(
         SooumLog.d(TAG, "updateCurrentTagFavoriteState: isFavorite=$isFavorite")
         _uiState.update { it.copy(currentTagFavoriteState = isFavorite) }
     }
+    
+    fun resetSearchPerformed() {
+        SooumLog.d(TAG, "resetSearchPerformed: No search results found")
+        _uiState.update { it.copy(searchPerformed = false) }
+    }
 
     fun refreshTagScreenData() {
         SooumLog.d(TAG, "refreshTagScreenData")

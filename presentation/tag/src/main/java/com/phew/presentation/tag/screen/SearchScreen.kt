@@ -100,15 +100,20 @@ internal fun SearchRoute(
 
     // cardDataItems에서 첫 번째 아이템의 isFavorite 상태를 ViewModel에 업데이트
     LaunchedEffect(cardDataItems.itemCount, uiState.searchPerformed) {
-        if (uiState.searchPerformed && cardDataItems.itemCount > 0) {
-            try {
-                val firstItem = cardDataItems[0]
-                if (firstItem != null) {
-                    SooumLog.d("SearchRoute", "Updating favorite state: ${firstItem.isFavorite}")
-                    viewModel.updateCurrentTagFavoriteState(firstItem.isFavorite)
+        if (uiState.searchPerformed) {
+            if (cardDataItems.itemCount > 0) {
+                try {
+                    val firstItem = cardDataItems[0]
+                    if (firstItem != null) {
+                        SooumLog.d("SearchRoute", "Updating favorite state: ${firstItem.isFavorite}")
+                        viewModel.updateCurrentTagFavoriteState(firstItem.isFavorite)
+                    }
+                } catch (e: Exception) {
+                    SooumLog.e("SearchRoute", "Error accessing first item: ${e.message}")
                 }
-            } catch (e: Exception) {
-                SooumLog.e("SearchRoute", "Error accessing first item: ${e.message}")
+            } else {
+                // 검색했지만 결과가 없으면 searchPerformed를 false로 설정
+                viewModel.resetSearchPerformed()
             }
         }
     }
@@ -214,8 +219,8 @@ private fun SearchScreen(
             Spacer(Modifier.padding(top = 8.dp))
 
             if (searchPerformed && cardDataItems.itemCount == 0) {
-                EmptyCardView()
-            } else if (cardDataItems.itemCount > 0) {
+                EmptySearchCard()
+            } else if (searchPerformed && cardDataItems.itemCount > 0) {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(3),
                     state = gridState,
@@ -265,14 +270,14 @@ private fun SearchScreen(
                 }
             } else if (searchValue.isNotBlank() && recommendedTags.isEmpty()) {
                 // 검색어가 있지만 추천 태그 결과가 없을 때
-                EmptyCardView()
+                EmptyCardList()
             }
         }
     }
 }
 
 @Composable
-private fun EmptyCardView() {
+private fun EmptySearchCard() {
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -284,6 +289,27 @@ private fun EmptyCardView() {
         )
         Text(
             text = stringResource(R.string.tag_search_no_card),
+            style = TextComponent.BODY_1_M_14,
+            color = NeutralColor.GRAY_400,
+            modifier = Modifier.padding(top = 20.dp)
+        )
+    }
+}
+
+
+@Composable
+private fun EmptyCardList() {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Image(
+            painter = painterResource(com.phew.core_design.R.drawable.ic_deleted_card),
+            contentDescription = "no notify"
+        )
+        Text(
+            text = stringResource(R.string.tag_not_search_card),
             style = TextComponent.BODY_1_M_14,
             color = NeutralColor.GRAY_400,
             modifier = Modifier.padding(top = 20.dp)
