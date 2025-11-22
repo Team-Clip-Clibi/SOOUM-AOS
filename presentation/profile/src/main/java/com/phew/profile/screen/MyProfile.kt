@@ -44,7 +44,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemKey
 import coil3.compose.AsyncImage
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
@@ -69,6 +68,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.itemKey
 import com.phew.core_design.CustomFont
 import com.phew.core_design.LoadingAnimation
 import com.phew.domain.dto.ProfileCard
@@ -465,7 +465,10 @@ private fun ProfileCardView(
                     else -> {
                         items(
                             count = cardData.itemCount,
-                            key = cardData.itemKey { data -> data.cardId }
+                            key = { index ->
+                                val id = cardData.peek(index)?.cardId ?: "loading"
+                                "${id}_$index"
+                            }
                         ) { index ->
                             val item = cardData[index]
                             if (item != null) {
