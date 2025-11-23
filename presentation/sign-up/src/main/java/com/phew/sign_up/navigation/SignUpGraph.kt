@@ -88,6 +88,7 @@ fun NavGraphBuilder.signUpGraph(
             arguments = listOf(
                 navArgument(NavArgKey) {
                     type = createNavType<OnBoardingArgs>()
+                    defaultValue = OnBoardingArgs()
                 }
             )
         ) { nav ->
