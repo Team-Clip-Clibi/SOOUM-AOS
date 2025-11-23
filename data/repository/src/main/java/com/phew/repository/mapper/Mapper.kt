@@ -2,9 +2,11 @@ package com.phew.repository.mapper
 
 import com.phew.core_common.APP_ERROR_CODE
 import com.phew.core_common.DataResult
+import com.phew.core_common.ERROR_ACCOUNT_SUSPENDED
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.HTTP_NO_MORE_CONTENT
 import com.phew.core_common.TimeUtils
+import com.phew.core_common.WITHDRAWAL_USER
 import com.phew.domain.dto.CardComment
 import com.phew.domain.dto.CardDetail
 import com.phew.domain.dto.CardDetailTag
@@ -12,10 +14,13 @@ import com.phew.domain.dto.CardImageDefault
 import com.phew.domain.dto.CheckSignUp
 import com.phew.domain.dto.CheckedBaned
 import com.phew.domain.dto.DistanceCard
+import com.phew.domain.dto.FavoriteTag
+import com.phew.domain.dto.FavoriteTagList
 import com.phew.domain.dto.FeedLikeNotification
+import com.phew.domain.dto.FollowData
 import com.phew.domain.dto.FollowNotification
 import com.phew.domain.dto.Latest
-import com.phew.domain.dto.MyProfileInfo
+import com.phew.domain.dto.ProfileInfo
 import com.phew.domain.dto.Notice
 import com.phew.domain.dto.Notification
 import com.phew.domain.dto.Popular
@@ -27,9 +32,16 @@ import com.phew.domain.dto.UserBlockNotification
 import com.phew.domain.dto.UserCommentLike
 import com.phew.domain.dto.UserCommentWrite
 import com.phew.domain.dto.UserDeleteNotification
+import com.phew.domain.dto.TagCardContent
 import com.phew.domain.model.AppVersionStatus
 import com.phew.domain.model.AppVersionStatusType
+import com.phew.domain.model.BlockMember
+import com.phew.domain.model.RejoinableDate
 import com.phew.domain.model.TransferCode
+import com.phew.domain.model.TagInfo as DomainTagInfo
+import com.phew.domain.model.TagInfoList
+import com.phew.domain.model.TagCards
+import com.phew.domain.model.CardContent
 import com.phew.network.dto.AppVersionStatusDTO
 import com.phew.network.dto.CheckSignUpDTO
 import com.phew.network.dto.TransferCodeDTO
@@ -37,9 +49,16 @@ import com.phew.network.dto.NoticeData
 import com.phew.network.dto.NotificationDTO
 import com.phew.network.dto.TokenDTO
 import com.phew.network.dto.UploadImageUrlDTO
+import com.phew.network.dto.response.BlockMemberResponseDTO
+import com.phew.network.dto.response.FavoriteTagItemDTO
+import com.phew.network.dto.response.FavoriteTagsResponseDTO
+import com.phew.network.dto.response.RejoinableDateResponseDTO
 import com.phew.network.dto.request.feed.CheckBanedDTO
 import com.phew.network.dto.request.feed.ImageInfoDTO
 import com.phew.network.dto.request.feed.TagInfoDTO
+import com.phew.network.dto.request.feed.TagInfoListDTO
+import com.phew.network.dto.response.TagCardsResponseDTO
+import com.phew.network.dto.response.CardContentDTO
 import com.phew.network.dto.response.DistanceDTO
 import com.phew.network.dto.response.LatestDto
 import com.phew.network.dto.response.PopularDto
@@ -47,7 +66,8 @@ import com.phew.network.dto.response.card.CardCommentResponseDTO
 import com.phew.network.dto.response.card.CardContentDto
 import com.phew.network.dto.response.card.CardDetailResponseDTO
 import com.phew.network.dto.response.card.CardDetailTagDTO
-import com.phew.network.dto.response.profile.MyProfileDTO
+import com.phew.network.dto.response.profile.FollowDataDTO
+import com.phew.network.dto.response.profile.ProfileDTO
 import com.phew.repository.TYPE_BLOCK
 import com.phew.repository.TYPE_COMMENT_LIKE
 import com.phew.repository.TYPE_COMMENT_WRITE
@@ -168,7 +188,7 @@ internal fun DistanceDTO.toDomain(): DistanceCard {
         cardContent = this.cardContent,
         font = this.font,
         distance = this.distance,
-        createAt = this.createAt,
+        createAt = TimeUtils.getRelativeTimeString(this.createAt),
         storyExpirationTime = this.storyExpirationTime,
         isAdminCard = this.isAdminCard
     )
@@ -237,6 +257,22 @@ internal fun TransferCodeDTO.toDomain(): TransferCode {
     )
 }
 
+internal fun RejoinableDateResponseDTO.toDomain(): RejoinableDate {
+    return RejoinableDate(
+        rejoinableDate = this.rejoinableDate,
+        isActivityRestricted = this.isActivityRestricted
+    )
+}
+
+internal fun BlockMemberResponseDTO.toDomain(): BlockMember {
+    return BlockMember(
+        blockId = this.blockId,
+        blockMemberId = this.blockMemberId,
+        blockMemberNickname = this.blockMemberNickname,
+        blockMemberProfileImageUrl = this.blockMemberProfileImageUrl
+    )
+}
+
 internal fun CardDetailResponseDTO.toDomain(): CardDetail {
     return CardDetail(
         cardId = cardId,
@@ -286,8 +322,8 @@ internal fun CardCommentResponseDTO.toDomain(): CardComment {
     )
 }
 
-internal fun MyProfileDTO.toDomain() : MyProfileInfo{
-    return MyProfileInfo(
+internal fun ProfileDTO.toDomain() : ProfileInfo{
+    return ProfileInfo(
         cardCnt = this.cardCnt,
         followingCnt = this.followingCnt,
         followerCnt = this.followerCnt,
@@ -296,7 +332,9 @@ internal fun MyProfileDTO.toDomain() : MyProfileInfo{
         profileImgName = this.profileImgName ?: "",
         todayVisitCnt = this.todayVisitCnt,
         totalVisitCnt = this.totalVisitCnt,
-        userId = this.userId
+        userId = this.userId,
+        isBlocked = this.isBlocked,
+        isAlreadyFollowing = this.isAlreadyFollowing
     )
 }
 
@@ -310,16 +348,36 @@ internal fun CardContentDto.toDomain(): ProfileCard {
     )
 }
 
+internal fun FollowDataDTO.toDomain(): FollowData {
+    return FollowData(
+        followId = this.followId,
+        memberId = this.memberId,
+        nickname = this.nickname,
+        profileImageUrl = this.profileImageUrl,
+        isFollowing = this.isFollowing,
+        isRequester = this.isRequester
+    )
+}
+
 suspend fun <T, R> apiCall(
     apiCall: suspend () -> Response<T>,
     mapper: (T) -> R,
 ): DataResult<R> {
     try {
         val response = apiCall()
-        if (!response.isSuccessful) return DataResult.Fail(
-            code = response.code(),
-            message = response.message()
-        )
+        if (!response.isSuccessful) {
+            return when (response.code()) {
+                WITHDRAWAL_USER -> DataResult.Fail(
+                    code = response.code(),
+                    message = ERROR_ACCOUNT_SUSPENDED,
+                    throwable = Exception("Account suspended - Error code 418")
+                )
+                else -> DataResult.Fail(
+                    code = response.code(),
+                    message = response.message()
+                )
+            }
+        }
 
         val body = response.body()
             ?: return DataResult.Fail(
@@ -368,6 +426,60 @@ suspend fun <T, R> pagingCall(
             throwable = e
         )
     }
+}
+
+internal fun TagInfoListDTO.toDomainModel(): TagInfoList {
+    return TagInfoList(
+        tagInfos = this.tagInfo.map { it.toDomainModel() }
+    )
+}
+
+internal fun TagInfoDTO.toDomainModel(): DomainTagInfo {
+    return DomainTagInfo(
+        id = this.id,
+        name = this.name,
+        usageCnt = this.usageCnt
+    )
+}
+
+internal fun TagCardsResponseDTO.toDomainModel(): TagCards {
+    return TagCards(
+        cardContents = this.cardContents.map { it.toDomainModel() },
+        isFavorite = this.isFavorite
+    )
+}
+
+internal fun CardContentDTO.toDomainModel(): CardContent {
+    return CardContent(
+        cardId = this.cardId,
+        cardImgName = this.cardImgName,
+        cardImgUrl = this.cardImgUrl,
+        cardContent = this.cardContent,
+        font = this.font
+    )
+}
+
+internal fun CardContentDTO.toDomain(): TagCardContent {
+    return TagCardContent(
+        cardId = this.cardId,
+        cardImgName = this.cardImgName,
+        cardImgUrl = this.cardImgUrl,
+        cardContent = this.cardContent,
+        font = this.font
+    )
+}
+
+internal fun FavoriteTagsResponseDTO.toDomain(): FavoriteTagList {
+    return FavoriteTagList(
+        favoriteTags = this.favoriteTags.map { it.toDomain() }
+    )
+}
+
+internal fun FavoriteTagItemDTO.toDomain(): FavoriteTag {
+    return FavoriteTag(
+        id = this.id,
+        name = this.name
+    )
 }
 
 

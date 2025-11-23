@@ -2,6 +2,9 @@
 <resources>
     <string name="common_okay">확인</string>
     <string name="common_next">다음</string>
+    <string name="common_cancel">취소</string>
+    <string name="common_cancel_polite">취소하기</string>
+    <string name="common_close">닫기</string>
     <string name="common_finish">완료</string>
     <string name="common_skip">건너뛰기</string>
     <string name="common_permission">권한 승인이 필요합니다.</string>
@@ -19,4 +22,8 @@
     <string name="write_card_content_placeholder">숨에서 편하게 이야기 나눠요</string>
     <string name="permission_settings_positive">설정 이동</string>
     <string name="permission_settings_negative">취소</string>
+    <string name="btn_save">저장</string>
+    <string name="amount_txt_thousand">%.1f천</string>
+    <string name="amount_txt_ten_thousand">%.1f만</string>
+    <string name="amount_txt_thousand_plus">1000+</string>
 </resources>

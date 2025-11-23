@@ -22,7 +22,7 @@ import com.phew.core_design.TextComponent
 import com.phew.presentation.settings.model.setting.SettingItem
 
 @Composable
-fun SettingItemRow(
+internal fun SettingItemRow(
     item: SettingItem,
     onClick: () -> Unit,
     modifier: Modifier = Modifier

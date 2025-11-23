@@ -104,6 +104,7 @@ class ApplicationConvention : Plugin<Project> {
             add("implementation", project(":presentation:write"))
             add("implementation", project(":presentation:detail"))
             add("implementation", project(":presentation:profile"))
+            add("implementation", project(":presentation:tag"))
         }
     }
 }

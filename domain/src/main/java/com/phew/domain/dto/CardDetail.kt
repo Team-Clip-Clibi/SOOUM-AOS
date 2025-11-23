@@ -1,8 +1,6 @@
 package com.phew.domain.dto
 
-import java.time.OffsetDateTime
-import java.time.format.DateTimeParseException
-
+import com.phew.core_common.TimeUtils
 
 data class CardDetail(
     val cardId: Long,
@@ -28,18 +26,7 @@ data class CardDetail(
     val isFeedCard: Boolean = false,
     val storyExpirationTime: String?,
 ) {
-    val endTime = storyExpirationTime?.endTimeMillisecondTime()
-    private fun String?.endTimeMillisecondTime(): Long {
-        if (this.isNullOrEmpty()) return 0L
-        val endTime = try {
-            OffsetDateTime.parse(this).toInstant().toEpochMilli()
-        } catch (e: DateTimeParseException) {
-            0L
-        }
-        if (endTime == 0L) return 0L
-        val currentTime = System.currentTimeMillis()
-        return (endTime - currentTime).coerceAtLeast(0L)
-    }
+    val endTime = TimeUtils.remainingMillisUntil(storyExpirationTime)
 }
 
 data class CardDetailTag(

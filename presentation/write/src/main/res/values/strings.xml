@@ -5,4 +5,5 @@
     <string name="write_screen_complete">완료</string>
     <string name="write_screen_background_section">배경</string>
     <string name="write_screen_font_section">글씨체</string>
+    <string name="write_card_content_default_placeholder">숨에서 편하게 이야기 나눠요</string>
 </resources>

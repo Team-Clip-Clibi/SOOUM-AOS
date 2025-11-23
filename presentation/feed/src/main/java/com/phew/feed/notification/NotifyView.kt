@@ -59,14 +59,14 @@ import com.phew.domain.dto.Notification
 import com.phew.feed.NAV_NOTICE_ACTIVATE
 import com.phew.feed.NAV_NOTICE_NOTIFY_INDEX
 import com.phew.feed.NotificationUi
-import com.phew.feed.viewModel.HomeViewModel
+import com.phew.feed.viewModel.FeedViewModel
 import com.phew.presentation.feed.R
 import kotlinx.coroutines.launch
 
 
 @Composable
 fun NotifyView(
-    viewModel: HomeViewModel,
+    viewModel: FeedViewModel,
     backClick: () -> Unit,
     logout: () -> Unit,
     snackBarHostState: SnackbarHostState,

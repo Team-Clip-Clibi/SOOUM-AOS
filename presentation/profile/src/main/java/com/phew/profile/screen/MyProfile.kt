@@ -3,22 +3,17 @@ package com.phew.profile.screen
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,7 +23,6 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -47,16 +41,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemKey
 import coil3.compose.AsyncImage
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.LottieConstants
-import com.airbnb.lottie.compose.animateLottieCompositionAsState
-import com.airbnb.lottie.compose.rememberLottieComposition
 import com.phew.core_common.ERROR_LOGOUT
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_design.AppBar
@@ -64,25 +51,28 @@ import com.phew.core_design.DialogComponent.SnackBar
 import com.phew.core_design.MediumButton
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
-import com.phew.domain.dto.MyProfileInfo
+import com.phew.domain.dto.ProfileInfo
 import com.phew.profile.ProfileViewModel
 import com.phew.profile.R
 import com.phew.profile.TAB_MY_COMMENT_CARD
 import com.phew.profile.TAB_MY_FEED_CARD
 import com.phew.profile.UiState
-import com.phew.profile.component.ProfileTab
 import com.phew.core_design.component.card.CommentBodyContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.itemKey
 import com.phew.core_design.CustomFont
+import com.phew.core_design.LoadingAnimation
+import com.phew.core_design.component.refresh.RefreshBox
 import com.phew.domain.dto.ProfileCard
+import com.phew.profile.component.ProfileComponent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun MyProfile(
-    viewModel: ProfileViewModel = hiltViewModel(),
+    viewModel: ProfileViewModel,
     onClickFollower: () -> Unit,
     onClickFollowing: () -> Unit,
     onClickSetting: () -> Unit,
@@ -90,21 +80,15 @@ internal fun MyProfile(
     onLogout: () -> Unit,
     onEditProfileClick: () -> Unit,
 ) {
+    LaunchedEffect(Unit) {
+        viewModel.myProfile()
+    }
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
-    val isRefreshing = uiState.isRefreshing
     var selectIndex by remember { mutableIntStateOf(TAB_MY_FEED_CARD) }
     val snackBarHostState = remember { SnackbarHostState() }
-    val composition by rememberLottieComposition(
-        LottieCompositionSpec.RawRes(com.phew.core_design.R.raw.ic_refresh)
-    )
-    val refreshProgress by animateLottieCompositionAsState(
-        composition = composition,
-        iterations = LottieConstants.IterateForever,
-        restartOnPlay = isRefreshing
-    )
     val refreshState = rememberPullToRefreshState()
-    when (val profileState = uiState.myProfileInfo) {
+    when (val profileState = uiState.profileInfo) {
         is UiState.Fail -> {
             MyProfileScaffold(
                 onClickSetting = onClickSetting,
@@ -153,7 +137,7 @@ internal fun MyProfile(
         }
 
         UiState.Loading -> {
-            LoadingView()
+            LoadingAnimation.LoadingView()
         }
 
         is UiState.Success -> {
@@ -161,30 +145,11 @@ internal fun MyProfile(
             val commentCardData = uiState.profileCommentCard.collectAsLazyPagingItems()
             val cardData = if (selectIndex == TAB_MY_FEED_CARD) feedCardData else commentCardData
             MyProfileScaffold(onClickSetting = onClickSetting) { paddingValues ->
-                PullToRefreshBox(
-                    isRefreshing = isRefreshing,
-                    onRefresh = remember(viewModel::refresh) { { viewModel.refresh() } },
-                    modifier = Modifier.fillMaxWidth(),
+                RefreshBox(
+                    isRefresh = uiState.isRefreshing,
+                    onRefresh = viewModel::refreshMyProfile,
                     state = refreshState,
-                    indicator = {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(100.dp)
-                                .padding(top = paddingValues.calculateTopPadding()),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            val progress =
-                                if (isRefreshing) refreshProgress else refreshState.distanceFraction
-                            if (isRefreshing || refreshState.distanceFraction > 0f) {
-                                LottieAnimation(
-                                    composition = composition,
-                                    progress = { progress },
-                                    modifier = Modifier.size(80.dp)
-                                )
-                            }
-                        }
-                    }
+                    paddingValues = paddingValues
                 ) {
                     ProfileCardView(
                         profile = profileState.data,
@@ -239,31 +204,8 @@ private fun MyProfileScaffold(
 }
 
 @Composable
-private fun LoadingView(modifier: Modifier = Modifier) {
-    val composition by rememberLottieComposition(
-        LottieCompositionSpec.RawRes(com.phew.core_design.R.raw.ic_refresh)
-    )
-    val refreshProgress by animateLottieCompositionAsState(
-        composition = composition,
-        iterations = LottieConstants.IterateForever,
-    )
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.statusBars),
-        contentAlignment = Alignment.Center
-    ) {
-        LottieAnimation(
-            composition = composition,
-            progress = { refreshProgress },
-            modifier = Modifier.size(44.dp)
-        )
-    }
-}
-
-@Composable
 private fun MyProfileView(
-    profile: MyProfileInfo,
+    profile: ProfileInfo,
     onFollowerClick: () -> Unit,
     onFollowingClick: () -> Unit,
     onEditProfileClick: () -> Unit,
@@ -328,7 +270,7 @@ private fun MyProfileView(
                 )
             }
             AsyncImage(
-                model = profile.profileImageUrl.ifEmpty { com.phew.core_design.R.drawable.ic_profile },
+                model = if (profile.profileImgName.isEmpty() || profile.profileImageUrl.isEmpty()) com.phew.core_design.R.drawable.ic_profile else profile.profileImageUrl,
                 contentDescription = "profile image",
                 modifier = Modifier
                     .size(60.dp)
@@ -349,17 +291,17 @@ private fun MyProfileView(
                 .padding(bottom = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            CardFollowerView(
+            ProfileComponent.CardFollowerView(
                 title = stringResource(R.string.profile_txt_card),
                 data = profile.cardCnt.toString(),
                 onClick = { }
             )
-            CardFollowerView(
+            ProfileComponent.CardFollowerView(
                 title = stringResource(R.string.profile_txt_follower),
                 data = profile.followerCnt.toString(),
                 onClick = remember(onFollowerClick) { onFollowerClick }
             )
-            CardFollowerView(
+            ProfileComponent.CardFollowerView(
                 title = stringResource(R.string.profile_txt_following),
                 data = profile.followingCnt.toString(),
                 onClick = remember(onFollowingClick) { onFollowingClick }
@@ -368,26 +310,6 @@ private fun MyProfileView(
         MediumButton.NoIconSecondary(
             buttonText = stringResource(R.string.profile_btn_edit_profile),
             onClick = remember(onEditProfileClick) { onEditProfileClick },
-        )
-    }
-}
-
-@Composable
-private fun CardTabView(
-    selectIndex: Int,
-    onFeedCardClick: () -> Unit,
-    onCommentCardClick: () -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(color = NeutralColor.WHITE)
-            .padding(top = 16.dp, start = 16.dp, end = 16.dp)
-    ) {
-        ProfileTab(
-            selectTabData = selectIndex,
-            onFeedCardClick = onFeedCardClick,
-            onCommentCardClick = onCommentCardClick
         )
     }
 }
@@ -422,7 +344,7 @@ private fun EmptyCardView(
 
 @Composable
 private fun ProfileCardView(
-    profile: MyProfileInfo,
+    profile: ProfileInfo,
     cardData: LazyPagingItems<ProfileCard>,
     selectIndex: Int,
     onFollowerClick: () -> Unit,
@@ -450,7 +372,7 @@ private fun ProfileCardView(
             )
         }
         stickyHeader {
-            CardTabView(
+            ProfileComponent.CardTabView(
                 onCommentCardClick = onCommentCardClick,
                 onFeedCardClick = onFeedCardClick,
                 selectIndex = selectIndex
@@ -459,7 +381,7 @@ private fun ProfileCardView(
         when (cardData.loadState.refresh) {
             LoadState.Loading -> {
                 item(span = { GridItemSpan(maxLineSpan) }) {
-                    LoadingView(modifier = Modifier.padding(top = 80.dp))
+                    LoadingAnimation.LoadingView(modifier = Modifier.padding(top = 80.dp))
                 }
             }
 
@@ -510,7 +432,10 @@ private fun ProfileCardView(
                     else -> {
                         items(
                             count = cardData.itemCount,
-                            key = cardData.itemKey { data -> data.cardId }
+                            key = { index ->
+                                val id = cardData.peek(index)?.cardId ?: "loading"
+                                "${id}_$index"
+                            }
                         ) { index ->
                             val item = cardData[index]
                             if (item != null) {
@@ -531,34 +456,3 @@ private fun ProfileCardView(
     }
 }
 
-@Composable
-private fun CardFollowerView(
-    title: String,
-    data: String,
-    onClick: () -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .width(72.dp)
-            .height(64.dp)
-            .padding(top = 8.dp, bottom = 8.dp)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onClick
-            ),
-        verticalArrangement = Arrangement.spacedBy(0.dp, Alignment.Top),
-        horizontalAlignment = Alignment.Start,
-    ) {
-        Text(
-            text = title,
-            style = TextComponent.BODY_1_M_14,
-            color = NeutralColor.GRAY_500
-        )
-        Text(
-            text = data,
-            style = TextComponent.TITLE_1_SB_18,
-            color = NeutralColor.BLACK
-        )
-    }
-}

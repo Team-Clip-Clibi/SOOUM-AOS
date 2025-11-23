@@ -23,8 +23,17 @@ class DataStoreImpl @Inject constructor(
         val masterKey = MasterKey.Builder(context)
             .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
             .build()
+        try {
+            createEncryptedSharedPreferences(masterKey)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            context.deleteSharedPreferences(fileName)
+            createEncryptedSharedPreferences(masterKey)
+        }
+    }
 
-        EncryptedSharedPreferences.create(
+    private fun createEncryptedSharedPreferences(masterKey: MasterKey): SharedPreferences {
+        return EncryptedSharedPreferences.create(
             context,
             fileName,
             masterKey,
@@ -143,6 +152,18 @@ class DataStoreImpl @Inject constructor(
         } catch (e: Exception) {
             e.printStackTrace()
             return null
+        }
+    }
+
+    override suspend fun clearAllData(): Boolean {
+        try {
+            sharedPreferences.edit(commit = true) { clear() }
+            cachedToken = null
+            userInfo = null
+            return true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return false
         }
     }
 }

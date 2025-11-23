@@ -11,7 +11,7 @@ data class TagInfoListDTO(
 
 @Serializable
 data class TagInfoDTO(
-    val id: String,
+    val id: Long,
     val name: String,
     val usageCnt: Int
 )

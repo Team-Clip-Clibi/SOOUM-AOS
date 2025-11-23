@@ -4,9 +4,11 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
 import androidx.navigation.navigation
+import com.phew.core.ui.component.back.SooumOnBackPressed
 import com.phew.core.ui.state.SooumAppState
 import com.phew.feed.navigation.FEED_GRAPH
 import com.phew.feed.navigation.feedGraph
+import com.phew.presentation.tag.navigation.tagGraph
 import com.phew.presentation.write.navigation.writeGraph
 import com.phew.reports.REPORT_GRAPH_ROUTE_PREFIX
 import com.phew.profile.profileGraph
@@ -35,6 +37,7 @@ fun NavGraphBuilder.homeGraph(
     onWriteComplete: () -> Unit = {},
     cardClick: (Long) -> Unit,
     onLogOut: () -> Unit,
+    onWithdrawalComplete: () -> Unit,
 ) {
     navigation(route = HOME_GRAPH, startDestination = FEED_GRAPH) {
         // Feed Card Graph
@@ -43,7 +46,7 @@ fun NavGraphBuilder.homeGraph(
             navController = navController,
             finish = finish,
             onBackPressed = onBackPressed,
-            webView = webView,
+            webView = webView
         )
 
         writeGraph(
@@ -60,13 +63,22 @@ fun NavGraphBuilder.homeGraph(
                 navController.popBackStack()
             }
         )
+        tagGraph(
+            appState = appState,
+            navController = navController,
+            onBackPressed = {
+                SooumOnBackPressed(appState = appState)
+            }
+        )
+
         profileGraph(
             navController = navController,
             onBackPressed = onBackPressed,
             onLogOut = onLogOut,
+            onWithdrawalComplete = onWithdrawalComplete,
             cardClick = cardClick
         )
-        // TODO Tag 그래프 추가
+
     }
 
 }

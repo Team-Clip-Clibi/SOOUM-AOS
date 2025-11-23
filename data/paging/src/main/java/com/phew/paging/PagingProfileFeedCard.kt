@@ -7,7 +7,7 @@ import com.phew.core_common.HTTP_NO_MORE_CONTENT
 import com.phew.domain.dto.ProfileCard
 import com.phew.domain.repository.network.ProfileRepository
 
-class PagingProfileFeedCard (
+class PagingProfileFeedCard(
     private val repository: ProfileRepository,
     private val userId: Long,
 ) : PagingSource<Long, ProfileCard>() {
@@ -31,7 +31,7 @@ class PagingProfileFeedCard (
                 }
 
                 is DataResult.Success -> {
-                    if (request.data.second.isEmpty() && request.data.first == HTTP_NO_MORE_CONTENT) {
+                    if (request.data.second.isEmpty() || request.data.first == HTTP_NO_MORE_CONTENT) {
                         return LoadResult.Page(
                             data = emptyList(),
                             prevKey = null,
@@ -39,9 +39,9 @@ class PagingProfileFeedCard (
                         )
                     }
                     return LoadResult.Page(
-                        data = request.data.second.sortedBy { data -> data.cardId },
+                        data = request.data.second,
                         prevKey = null,
-                        nextKey = request.data.second.last().cardId
+                        nextKey = if (request.data.second.last().cardId == params.key) null else request.data.second.last().cardId
                     )
                 }
             }

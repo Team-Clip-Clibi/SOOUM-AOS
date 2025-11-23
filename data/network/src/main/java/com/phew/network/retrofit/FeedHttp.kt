@@ -33,13 +33,22 @@ interface FeedHttp {
     ): Response<List<PopularDto>>
 
     /**
-     * Latest Feed url
+     * Latest Feed url (first page)
      */
     @GET(BuildConfig.API_URL_CARD_FEED_LATEST)
     suspend fun requestLatestFeed(
         @Query("latitude") latitude: Double? = null,
         @Query("longitude") longitude: Double? = null,
-        @Query("lastId") lastId: Int? = null,
+    ): Response<List<LatestDto>>
+
+    /**
+     * Latest Feed url (with pagination)
+     */
+    @GET("${BuildConfig.API_URL_CARD_FEED_LATEST}/{lastId}")
+    suspend fun requestLatestFeed(
+        @Path("lastId") lastId: Long? = null,
+        @Query("latitude") latitude: Double? = null,
+        @Query("longitude") longitude: Double? = null,
     ): Response<List<LatestDto>>
 
     /**
@@ -50,7 +59,7 @@ interface FeedHttp {
         @Query("latitude") latitude: Double? = null,
         @Query("longitude") longitude: Double? = null,
         @Query("distance") distance: Double? = null,
-        @Query("lastId") lastId: Int? = null,
+        @Query("lastId") lastId: Long? = null,
     ): Response<List<DistanceDTO>>
 
     /**

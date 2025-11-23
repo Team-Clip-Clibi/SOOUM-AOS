@@ -8,20 +8,21 @@ import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.domain.dto.FeedData
 import com.phew.core_common.DataResult
 import com.phew.core_common.DomainResult
+import com.phew.core_common.log.SooumLog
 import com.phew.domain.dto.DistanceCard
 import com.phew.domain.dto.FeedCardType
 import com.phew.domain.dto.Latest
 import com.phew.domain.dto.Location
 import com.phew.domain.dto.Notice
+import com.phew.domain.dto.NoticeSource
 import com.phew.domain.dto.Notification
 import com.phew.domain.dto.Notify
 import com.phew.domain.dto.Popular
 import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.network.CardFeedRepository
 import com.phew.domain.usecase.CheckLocationPermission
-import com.phew.domain.usecase.CreateImageFile
-import com.phew.domain.usecase.FinishTakePicture
 import com.phew.domain.usecase.GetFeedNotification
+import com.phew.domain.usecase.GetLatestFeed
 import com.phew.domain.usecase.GetNotification
 import com.phew.domain.usecase.GetReadNotification
 import com.phew.domain.usecase.GetUnReadNotification
@@ -35,6 +36,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -42,15 +44,14 @@ import javax.inject.Inject
 
 
 @HiltViewModel
-class HomeViewModel @Inject constructor(
+class FeedViewModel @Inject constructor(
     private val locationAsk: CheckLocationPermission,
     getNotificationPage: GetNotification,
     getUnReadNotification: GetUnReadNotification,
     getReadNotification: GetReadNotification,
+    private val getLatestFeed: GetLatestFeed,
     private val cardFeedRepository: CardFeedRepository,
     private val deviceRepository: DeviceRepository,
-    private val createFile: CreateImageFile, // 카메라를 통한 이미지 선택 시 호출
-    private val finishPhoto: FinishTakePicture, // 이미지 선택을 통한 이미지 선택 시 호출
     private val notification: GetFeedNotification,
 ) :
     ViewModel() {
@@ -71,7 +72,6 @@ class HomeViewModel @Inject constructor(
         loadInitialFeeds()
         getFeedNotice()
         // 탭 변경 감지하여 필요시 데이터 로딩
-        // TODO 개선 포인트 !! 수정해라 JG
         viewModelScope.launch {
             uiState.map { it.currentTab }
                 .distinctUntilChanged()
@@ -112,16 +112,25 @@ class HomeViewModel @Inject constructor(
 
     private fun loadInitialFeeds() {
         viewModelScope.launch {
-            _uiState.update { it.copy(latestPagingState = FeedPagingState.Loading) }
-            loadLatestFeeds(isInitial = true)
+            // Location 초기 설정
+            val location = getLocationSafely()
+            _latestFeedLocation.value = location.latitude.takeIf { it != 0.0 } to location.longitude.takeIf { it != 0.0 }
         }
     }
 
-    val notice: Flow<PagingData<Notice>> = getNotificationPage().cachedIn(viewModelScope)
+    val notice: Flow<PagingData<Notice>> = getNotificationPage(NoticeSource.NOTIFICATION).cachedIn(viewModelScope)
     val unReadNotification: Flow<PagingData<Notification>> =
         getUnReadNotification().cachedIn(viewModelScope)
     val readNotification: Flow<PagingData<Notification>> =
         getReadNotification().cachedIn(viewModelScope)
+
+    // Latest Feed Paging
+    private val _latestFeedLocation = MutableStateFlow<Pair<Double?, Double?>>(null to null)
+    val latestFeedPaging: Flow<PagingData<Latest>> = _latestFeedLocation
+        .flatMapLatest { (latitude, longitude) ->
+            getLatestFeed(latitude, longitude)
+        }
+        .cachedIn(viewModelScope)
 
     /**
      * 권한 요청
@@ -156,12 +165,14 @@ class HomeViewModel @Inject constructor(
             _uiState.update { state ->
                 state.copy(location = location, currentTab = FeedType.Distance)
             }
+            // Latest feed location도 업데이트
+            _latestFeedLocation.value = location.latitude.takeIf { it != 0.0 } to location.longitude.takeIf { it != 0.0 }
         }
     }
 
     private fun getFeedNotice() {
         viewModelScope.launch(Dispatchers.IO) {
-            when (val request = notification()) {
+            when (val request = notification(NoticeSource.NOTIFICATION)) {
                 is DomainResult.Failure -> {
                     _uiState.update { state -> state.copy(feedNotification = UiState.Fail(request.error)) }
                 }
@@ -196,24 +207,29 @@ class HomeViewModel @Inject constructor(
     // TODO 개선 작업 필요 포인트
     private fun loadLatestFeeds(isInitial: Boolean) {
         viewModelScope.launch {
-            try {
-                val currentState = _uiState.value.latestPagingState
+            val currentState = _uiState.value.latestPagingState
 
-                if (!isInitial) {
-                    val existingCards =
-                        (currentState as? FeedPagingState.Success)?.feedCards ?: emptyList()
-                    _uiState.update {
-                        it.copy(latestPagingState = FeedPagingState.LoadingMore(existingCards))
-                    }
+            if (!isInitial) {
+                if (currentState !is FeedPagingState.Success || !currentState.hasNextPage) {
+                    return@launch
                 }
+            }
 
+            val existingCards = if (isInitial || currentState !is FeedPagingState.Success) {
+                emptyList()
+            } else {
+                currentState.feedCards
+            }
+            _uiState.update {
+                it.copy(latestPagingState = if (isInitial) FeedPagingState.Loading else FeedPagingState.LoadingMore(existingCards))
+            }
+
+            val lastId = if (isInitial) null else (currentState as? FeedPagingState.Success)?.lastId
+
+            try {
                 val location = getLocationSafely()
                 val latitude = location.latitude.takeIf { it != 0.0 }
                 val longitude = location.longitude.takeIf { it != 0.0 }
-
-                val lastId = if (isInitial) null else {
-                    (currentState as? FeedPagingState.Success)?.lastId
-                }
 
                 when (val result = cardFeedRepository.requestFeedLatest(
                     latitude = latitude,
@@ -221,19 +237,16 @@ class HomeViewModel @Inject constructor(
                     lastId = lastId
                 )) {
                     is DataResult.Success -> {
-                        // TODO 여기 수정 필요해보임 (신규 카드 요청하는데 기존 카드와 동일한 데이터를 요청해서 받아오는 원인 같아보임)
                         val newFeedCards = mapLatestToFeedCards(result.data)
-                        val existingCards = if (isInitial) emptyList() else {
-                            (currentState as? FeedPagingState.Success)?.feedCards ?: emptyList()
-                        }
-
+                        val isDuplicate = newFeedCards.isNotEmpty() && newFeedCards == existingCards.takeLast(newFeedCards.size)
+                        SooumLog.d(TAG, "Latest feed duplicate check: $isDuplicate (new=${newFeedCards.size}, existing=${existingCards.size})")
                         _uiState.update { state ->
                             state.copy(
                                 location = location,
                                 latestPagingState = FeedPagingState.Success(
                                     feedCards = existingCards + newFeedCards,
                                     hasNextPage = result.data.isNotEmpty(),
-                                    lastId = result.data.lastOrNull()?.cardId?.toIntOrNull()
+                                    lastId = result.data.lastOrNull()?.cardId?.toLongOrNull()
                                 )
                             )
                         }
@@ -261,7 +274,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    // TODO 개선 작업 필요 포인트
     private fun loadPopularFeeds(isInitial: Boolean) {
         viewModelScope.launch {
             try {
@@ -294,7 +306,7 @@ class HomeViewModel @Inject constructor(
                                 location = location,
                                 popularPagingState = FeedPagingState.Success(
                                     feedCards = existingCards + newFeedCards,
-                                    hasNextPage = result.data.isNotEmpty(),
+                                    hasNextPage = false, // Popular는 페이징이 없음
                                     lastId = null // Popular는 페이징이 없으므로 null
                                 )
                             )
@@ -376,7 +388,7 @@ class HomeViewModel @Inject constructor(
                             newStates[currentDistanceTab] = FeedPagingState.Success(
                                 feedCards = existingCards + newFeedCard,
                                 hasNextPage = result.data.isNotEmpty(),
-                                lastId = result.data.lastOrNull()?.cardId?.toIntOrNull()
+                                lastId = result.data.lastOrNull()?.cardId?.toLongOrNull()
                             )
                             state.copy(
                                 location = location,
@@ -525,7 +537,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    // TODO 개선 작업 필요 포인트
     private fun classifyPopularFeedType(item: Popular): FeedCardType {
         return when {
             !item.storyExpirationTime.isNullOrEmpty() -> FeedCardType.BoombType(
@@ -676,7 +687,6 @@ sealed interface UiState<out T> {
     data class Fail(val errorMessage: String) : UiState<Nothing>
 }
 
-// TODO 개선 작업 필요 포인트  State Interface가 많음. 정리 필요해 보임.
 sealed interface FeedPagingState {
     data object None : FeedPagingState
     data object Loading : FeedPagingState
@@ -684,8 +694,10 @@ sealed interface FeedPagingState {
     data class Success(
         val feedCards: List<FeedCardType>,
         val hasNextPage: Boolean,
-        val lastId: Int?,
+        val lastId: Long?,
     ) : FeedPagingState
 
     data class Error(val message: String) : FeedPagingState
 }
+
+private const val TAG = "FeedViewModel"

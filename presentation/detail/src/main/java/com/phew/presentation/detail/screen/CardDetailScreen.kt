@@ -1,10 +1,14 @@
 package com.phew.presentation.detail.screen
 
+import android.annotation.SuppressLint
+import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -19,12 +23,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerDefaults
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -37,6 +40,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -46,7 +50,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -55,6 +58,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -63,11 +67,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemContentType
-import androidx.paging.compose.itemKey
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import com.airbnb.lottie.LottieComposition
@@ -78,6 +83,8 @@ import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.model.navigation.CardDetailCommentArgs
+import com.phew.core.ui.model.navigation.TagViewArgs
+import com.phew.domain.dto.CardDetailTag
 import com.phew.core_common.TimeUtils
 import com.phew.core_common.log.SooumLog
 import com.phew.core_design.AppBar.TextButtonAppBar
@@ -93,12 +100,15 @@ import com.phew.core_design.UnKnowColor
 import com.phew.presentation.detail.R as DetailR
 import com.phew.core_design.component.card.CardDetail
 import com.phew.core_design.component.card.CardViewComment
+import com.phew.core_design.theme.GRAY_400
 import com.phew.domain.dto.CardComment
 import com.phew.presentation.detail.component.CardDetailBottom
 import com.phew.presentation.detail.component.CardDetailHeader
 import com.phew.presentation.detail.model.MoreAction
 import com.phew.presentation.detail.viewmodel.CardDetailError
 import com.phew.presentation.detail.viewmodel.CardDetailViewModel
+import com.phew.core_design.CustomFont
+import com.phew.core_design.NeutralColor.GRAY_200
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -111,7 +121,10 @@ internal fun CardDetailRoute(
     onNavigateToComment: (CardDetailCommentArgs) -> Unit,
     onNavigateToWrite: (Long) -> Unit,
     onNavigateToReport: (Long) -> Unit,
-    onBackPressed: () -> Unit
+    onNavigateToViewTags: (TagViewArgs) -> Unit,
+    onBackPressed: () -> Unit,
+    onPreviousCardClick: () -> Unit = { },
+    profileClick: (Long) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackBarHostState = remember { SnackbarHostState() }
@@ -128,8 +141,6 @@ internal fun CardDetailRoute(
 
     val commentsPagingItems = viewModel.commentsPagingData.collectAsLazyPagingItems()
 
-
-
     var showBottomSheet by remember { mutableStateOf(false) }
     var showBlockDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -142,7 +153,39 @@ internal fun CardDetailRoute(
         SooumLog.d(TAG, "cardId=${args.cardId}")
         viewModel.loadCardDetail(args.cardId)
     }
+
+    // WriteScreen에서 복귀 시에만 새로고침 처리
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var hasResumed by remember { mutableStateOf(false) }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_PAUSE -> {
+                    // 화면을 벗어날 때 flag 설정
+                    hasResumed = false
+                }
+                Lifecycle.Event.ON_RESUME -> {
+                    // 두 번째 Resume부터만 새로고침 (WriteScreen에서 복귀 시)
+                    if (hasResumed) {
+                        SooumLog.d(TAG, "CardDetailScreen resumed from WriteScreen - refreshing data")
+                        viewModel.loadCardDetail(args.cardId)
+                    } else {
+                        hasResumed = true
+                    }
+                }
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
     var isDelete by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
     // 에러 처리
     uiState.error?.let { errorType ->
         val errorMessage = when (errorType) {
@@ -152,8 +195,7 @@ internal fun CardDetailRoute(
         }
         
         LaunchedEffect(errorType) {
-            // TODO: 에러 메시지 표시 (Toast, SnackBar 등)
-            // errorMessage를 사용하여 에러 표시
+            Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
             viewModel.clearError()
         }
     }
@@ -192,13 +234,53 @@ internal fun CardDetailRoute(
     // 로딩 중일 때는 로딩 화면 표시
     val isInitialLoading = uiState.isLoading && uiState.cardDetail == null
     if (isInitialLoading) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            LottieAnimation(
+                composition = composition,
+                progress = { progress },
+                modifier = Modifier.size(44.dp)
+            )
+        }
         return
     }
 
     // cardDetail이 없으면 빈 화면 또는 에러 표시
     val cardDetail = uiState.cardDetail
     if (cardDetail == null) {
-        // TODO: 데이터 없음 화면 표시
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.statusBars),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = stringResource(DetailR.string.card_detail_not_found),
+                    style = TextComponent.BODY_1_M_14,
+                    color = NeutralColor.GRAY_500,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = onBackPressed,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = NeutralColor.GRAY_600
+                    )
+                ) {
+                    Text(
+                        text = stringResource(DetailR.string.card_detail_go_back),
+                        style = TextComponent.BODY_1_M_14,
+                        color = NeutralColor.WHITE
+                    )
+                }
+            }
+        }
         return
     }
     val storyExpirationTime = if(cardDetail.storyExpirationTime == null) "0" else cardDetail.endTime.toString()
@@ -211,12 +293,12 @@ internal fun CardDetailRoute(
         }
     }
 
-    SooumLog.d(TAG, "cardDetail.cardImgUrl = ${cardDetail.cardImgUrl}")
     CardDetailScreen(
         modifier = modifier,
         cardContent = cardDetail.cardContent,
         cardThumbnailUri = cardDetail.cardImgUrl,
-        cardTags = cardDetail.tags.map { it.name },
+        cardTags = cardDetail.tags,
+        cardFont = cardDetail.font,
         previousCommentThumbnailUri = cardDetail.previousCardImgUrl ?: "",
         profileUri = cardDetail.profileImgUrl ?: "",
         nickName = cardDetail.nickname,
@@ -239,7 +321,12 @@ internal fun CardDetailRoute(
             onNavigateToWrite(args.cardId)
         },
         onClickCommentView = { commentCardId ->
-            onNavigateToComment(CardDetailCommentArgs(cardId = commentCardId , parentId = args.cardId))
+            onNavigateToComment(
+                CardDetailCommentArgs(
+                    cardId = commentCardId,
+                    parentId = args.cardId
+                )
+            )
         },
         onBlockMember = { toMemberId, nickname ->
             viewModel.blockMember(toMemberId, nickname)
@@ -248,14 +335,13 @@ internal fun CardDetailRoute(
         onRefresh = {
             viewModel.loadCardDetail(args.cardId)
         },
+        onNavigateToViewTags = onNavigateToViewTags,
         lazyListState = lazyListState,
         nestedScrollConnection = nestedScrollConnection,
         cardId = args.cardId,
         snackBarHostState = snackBarHostState,
         remainingTimeMillis = remainingTimeMillis,
-        isExpire = cardDetail.storyExpirationTime != null && TimeUtils.parseTimerToMillis(
-            cardDetail.storyExpirationTime ?: ""
-        ) <= 0L || isDelete,
+        isExpire = (cardDetail.storyExpirationTime != null && (cardDetail.endTime ?: 0L) <= 0L) || isDelete,
         isOwnCard = cardDetail.isOwnCard,
         deleteCard = { cardId ->
             viewModel.requestDeleteCard(cardId)
@@ -269,17 +355,25 @@ internal fun CardDetailRoute(
         refreshingOffset = refreshingOffset,
         refreshState = refreshState,
         density = density,
+        onPreviousCardClick = onPreviousCardClick,
+        profileClick = { id ->
+            if(!cardDetail.isOwnCard){
+                profileClick(id)
+            }
+        }
     )
 }
 
 
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CardDetailScreen(
     modifier: Modifier,
     cardContent: String,
     cardThumbnailUri: String,
-    cardTags: List<String>,
+    cardTags: List<CardDetailTag>,
+    cardFont: String,
     previousCommentThumbnailUri: String,
     profileUri: String,
     nickName: String,
@@ -301,6 +395,7 @@ private fun CardDetailScreen(
     onBlockMember: (Long, String) -> Unit,
     deleteCard: (Long) -> Unit,
     onNavigateToReport: (Long) -> Unit,
+    onNavigateToViewTags: (TagViewArgs) -> Unit,
     onRefresh: () -> Unit,
     lazyListState: LazyListState,
     nestedScrollConnection: NestedScrollConnection,
@@ -318,6 +413,8 @@ private fun CardDetailScreen(
     refreshingOffset: androidx.compose.ui.unit.Dp,
     refreshState: androidx.compose.material3.pulltorefresh.PullToRefreshState,
     density: androidx.compose.ui.unit.Density,
+    onPreviousCardClick: () -> Unit = { },
+    profileClick : (Long) -> Unit
 ) {
 
     Scaffold(
@@ -326,8 +423,8 @@ private fun CardDetailScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(NeutralColor.WHITE)
-                    .windowInsetsPadding(WindowInsets.statusBars)
+                    .background(NeutralColor.WHITE),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 TextButtonAppBar(
                     startImage = R.drawable.ic_left,
@@ -336,17 +433,24 @@ private fun CardDetailScreen(
                     startClick = onBackPressed,
                     endClick = { onShowBottomSheetChange(true) }
                 )
-                Text(
-                    text = if (remainingTimeMillis.toString().trim() == "0") {
-                        ""
-                    } else {
-                        TimeUtils.formatMillisToTimer(remainingTimeMillis)
-                    },
-                    color = Primary.DARK,
-                    style = TextComponent.CAPTION_3_M_10,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center
-                )
+                if (remainingTimeMillis.toString().trim() != "0") {
+                    Box(
+                        modifier = Modifier
+                            .width(53.dp)
+                            .height(23.dp)
+                            .background(NeutralColor.WHITE)
+                            .border(1.dp, NeutralColor.GRAY_200, RoundedCornerShape(100.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = TimeUtils.formatMillisToTimer(remainingTimeMillis),
+                            color = Primary.DARK,
+                            style = TextComponent.CAPTION_3_M_10,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
             }
         },
         snackbarHost = {
@@ -433,28 +537,36 @@ private fun CardDetailScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 item {
-                    Column(
+                    BoxWithConstraints(
                         modifier = Modifier
                             .fillParentMaxHeight()
                             .fillMaxWidth()
                     ) {
+
                         Column(
-                            modifier = Modifier
-                                .weight(1.4f)
-                                .fillMaxWidth()
+                            modifier = Modifier.fillMaxSize()
                         ) {
                             CardDetail(
                                 previousCommentThumbnailUri = previousCommentThumbnailUri,
                                 cardContent = cardContent,
                                 cardThumbnailUri = cardThumbnailUri,
-                                cardTags = cardTags,
+                                cardTags = cardTags.map { it.name },
+                                fontFamily = CustomFont.findFontValueByServerName(cardFont).data.previewTypeface,
                                 isDeleted = isExpire,
+                                onTagClick = { tagName ->
+                                    val tag = cardTags.find { it.name == tagName }
+                                    if (tag != null) {
+                                        onNavigateToViewTags(TagViewArgs(tagName = tag.name, tagId = tag.tagId))
+                                    }
+                                },
                                 header = {
                                     CardDetailHeader(
                                         profileUri = profileUri,
                                         nickName = nickName,
                                         distance = distance,
-                                        createAt = createAt
+                                        createAt = createAt,
+                                        memberId = memberId,
+                                        onClick = profileClick
                                     )
                                 },
                                 bottom = {
@@ -466,72 +578,79 @@ private fun CardDetailScreen(
                                         onClickLike = onClickLike,
                                         onClickComment = onClickCommentIcon
                                     )
-                                }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                onPreviousCardClick = onPreviousCardClick
                             )
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
+                            Spacer(modifier
                                 .fillMaxWidth()
-                                .background(NeutralColor.GRAY_100),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (commentsPagingItems.loadState.refresh is LoadState.Loading) {
-                                CircularProgressIndicator()
-                            } else if (commentsPagingItems.itemCount == 0) {
-                                Text(
-                                    text = stringResource(DetailR.string.card_no_comment),
-                                    style = TextComponent.BODY_1_M_14,
-                                    color = NeutralColor.GRAY_400
-                                )
-                            } else {
-                                LazyRow(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentPadding = PaddingValues(
-                                        horizontal = 16.dp, 
-                                        vertical = 10.dp
-                                    ),
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    items(
-                                        count = commentsPagingItems.itemCount,
-                                        key = commentsPagingItems.itemKey { it.cardId },
-                                        contentType = commentsPagingItems.itemContentType { "CardComment" }
-                                    ) { index ->
-                                        val comment = commentsPagingItems[index]
-                                        if (comment != null) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .fillParentMaxHeight()
-                                                    .aspectRatio(1f)
-                                            ) {
-                                                CardViewComment(
-                                                    contentText = comment.cardContent,
-                                                    thumbnailUri = comment.cardImgUrl,
-                                                    distance = comment.distance ?: "",
-                                                    createAt = TimeUtils.getRelativeTimeString(comment.createdAt),
-                                                    likeCnt = comment.likeCount.toString(),
-                                                    commentCnt = comment.commentCardCount.toString(),
-                                                    font = comment.font,
-                                                    onClick = {
-                                                        onClickCommentView(comment.cardId)
-                                                    }
-                                                )
+                                .height(1.dp)
+                                .background(GRAY_200)
+                                .padding(horizontal = 0.dp)
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth()
+                                    .background(NeutralColor.GRAY_100),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (commentsPagingItems.loadState.refresh is LoadState.Loading) {
+                                    CircularProgressIndicator()
+                                } else if (commentsPagingItems.itemCount == 0) {
+                                    Text(
+                                        text = stringResource(DetailR.string.card_no_comment),
+                                        style = TextComponent.BODY_1_M_14,
+                                        color = NeutralColor.GRAY_400
+                                    )
+                                } else {
+                                    LazyRow(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentPadding = PaddingValues(
+                                            horizontal = 16.dp,
+                                            vertical = 10.dp
+                                        ),
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        items(
+                                            count = commentsPagingItems.itemCount,
+                                            key = commentsPagingItems.itemKey { it.cardId },
+                                            contentType = commentsPagingItems.itemContentType { "CardComment" }
+                                        ) { index ->
+                                            val comment = commentsPagingItems[index]
+                                            if (comment != null) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillParentMaxHeight()
+                                                        .aspectRatio(1f)
+                                                ) {
+                                                    CardViewComment(
+                                                        contentText = comment.cardContent,
+                                                        thumbnailUri = comment.cardImgUrl,
+                                                        distance = comment.distance ?: "",
+                                                        createAt = TimeUtils.getRelativeTimeString(comment.createdAt),
+                                                        likeCnt = comment.likeCount.toString(),
+                                                        commentCnt = comment.commentCardCount.toString(),
+                                                        font = comment.font,
+                                                        onClick = {
+                                                            onClickCommentView(comment.cardId)
+                                                        }
+                                                    )
+                                                }
                                             }
                                         }
-                                    }
-                                    if (commentsPagingItems.loadState.append is LoadState.Loading) {
-                                        item {
-                                            Box(
-                                                modifier = Modifier
-                                                    .fillParentMaxHeight()
-                                                    .padding(horizontal = 16.dp)
-                                            ) {
-                                                CircularProgressIndicator(
-                                                    modifier = Modifier.align(Alignment.Center)
-                                                )
+                                        if (commentsPagingItems.loadState.append is LoadState.Loading) {
+                                            item {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillParentMaxHeight()
+                                                        .padding(horizontal = 16.dp)
+                                                ) {
+                                                    CircularProgressIndicator(
+                                                        modifier = Modifier.align(Alignment.Center)
+                                                    )
+                                                }
                                             }
                                         }
                                     }
@@ -651,12 +770,15 @@ private fun CardDetailPreview() {
             cardContent = "이건 ReplyCard 예시",
             cardThumbnailUri = "",
             cardTags = listOf("내머리와충돌", "중상", "위동"),
+            onTagClick = {},
             header = {
                 CardDetailHeader(
                     profileUri = "",
                     nickName = "닉네임",
                     distance = "10km",
-                    createAt = "2025-10-09T03:54:10.026919"
+                    createAt = "2025-10-09T03:54:10.026919",
+                    memberId = 12321453,
+                    onClick = {}
                 )
             },
             bottom = {
@@ -679,12 +801,15 @@ private fun CardDetailPreview() {
             cardContent = "",
             cardThumbnailUri = "",
             cardTags = listOf("내머리와충돌", "중상", "위동"),
+            onTagClick = {},
             header = {
                 CardDetailHeader(
                     profileUri = "",
                     nickName = "닉네임",
                     distance = "10km",
-                    createAt = "2025-10-09T03:54:10.026919"
+                    createAt = "2025-10-09T03:54:10.026919",
+                    memberId = 12321453,
+                    onClick = {}
                 )
             },
             bottom = {
@@ -698,12 +823,15 @@ private fun CardDetailPreview() {
             cardContent = "이건 ReplyCard 예시",
             cardThumbnailUri = "",
             cardTags = listOf("내머리와충돌", "중상", "위동"),
+            onTagClick = {},
             header = {
                 CardDetailHeader(
                     profileUri = "",
                     nickName = "닉네임",
                     distance = "10km",
-                    createAt = "2025-10-09T03:54:10.026919"
+                    createAt = "2025-10-09T03:54:10.026919",
+                    memberId = 12321453,
+                    onClick = {}
                 )
             },
             bottom = {

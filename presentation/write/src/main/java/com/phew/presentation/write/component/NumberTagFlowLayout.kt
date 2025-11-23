@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.phew.core_design.NeutralColor
@@ -39,7 +40,6 @@ fun NumberTagFlowLayout(
     FlowRow(
         modifier = modifier
             .fillMaxWidth()
-            .windowInsetsPadding(WindowInsets.ime.only(WindowInsetsSides.Bottom))
             .background(NeutralColor.GRAY_100)
             .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -60,7 +60,7 @@ fun NumberTagFlowLayout(
 
 @Immutable
 data class NumberTagItem(
-    val id: String,
+    val id: Long,
     val name: String,
     val countLabel: String,
     val countValue: String = countLabel,
@@ -73,11 +73,11 @@ private fun NumberTagFlowLayoutPreview() {
     SooumTheme {
         NumberTagFlowLayout(
             tags = listOf(
-                NumberTagItem(id = "1", name = "숨", countLabel = "120"),
-                NumberTagItem(id = "2", name = "산책", countLabel = "80"),
-                NumberTagItem(id = "3", name = "호수", countLabel = "45"),
-                NumberTagItem(id = "4", name = "챌린지", countLabel = "999+"),
-                NumberTagItem(id = "5", name = "러닝", countLabel = "1.2")
+                NumberTagItem(id = 1L, name = "숨", countLabel = "120"),
+                NumberTagItem(id = 2L, name = "산책", countLabel = "80"),
+                NumberTagItem(id = 3L, name = "호수", countLabel = "45"),
+                NumberTagItem(id = 4L, name = "챌린지", countLabel = "999+"),
+                NumberTagItem(id = 5L, name = "러닝", countLabel = "1.2")
             )
         )
     }
@@ -106,11 +106,11 @@ private fun NumberTagFlowLayoutWithCardPreview() {
             )
             NumberTagFlowLayout(
                 tags = listOf(
-                    NumberTagItem(id = "1", name = "숨", countLabel = "120"),
-                    NumberTagItem(id = "2", name = "힐링", countLabel = "80"),
-                    NumberTagItem(id = "3", name = "감성", countLabel = "45"),
-                    NumberTagItem(id = "4", name = "주말", countLabel = "999+"),
-                    NumberTagItem(id = "5", name = "산책길", countLabel = "1.2")
+                    NumberTagItem(id = 1L, name = "숨", countLabel = "120"),
+                    NumberTagItem(id = 2L, name = "힐링", countLabel = "80"),
+                    NumberTagItem(id = 3L, name = "감성", countLabel = "45"),
+                    NumberTagItem(id = 4L, name = "주말", countLabel = "999+"),
+                    NumberTagItem(id = 5L, name = "산책길", countLabel = "1.2")
                 )
             )
         }
