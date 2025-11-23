@@ -117,6 +117,11 @@ internal fun TagRoute(
                             navigateToViewTags(it.tagName, it.tagId)
                             viewModel.clearUiEffect()
                         }
+                        
+                        is TagUiEffect.ShowNetworkErrorSnackbar -> {
+                            // TagScreen에서는 네트워크 오류가 발생하지 않으므로 빈 처리
+                            viewModel.clearUiEffect()
+                        }
                     }
                 }
             }
@@ -135,7 +140,8 @@ internal fun TagRoute(
         },
         onRefresh = viewModel::refresh,
         getTagFavoriteState = viewModel::getTagFavoriteState,
-        onTagRankClick =  viewModel::onTagRankClick
+        onTagRankClick =  viewModel::onTagRankClick,
+        onTagClick = viewModel::onTagClick
     )
 }
 
@@ -151,7 +157,8 @@ private fun TagScreen(
     onFavoriteClick: (Long) -> Unit,
     onRefresh: () -> Unit,
     getTagFavoriteState: (Long) -> Boolean,
-    onTagRankClick: (Long) -> Unit
+    onTagRankClick: (Long) -> Unit,
+    onTagClick: (Long, String) -> Unit
 ) {
     val refreshState = rememberPullToRefreshState()
     Scaffold(
@@ -178,7 +185,8 @@ private fun TagScreen(
                 onSearchView = onSearchView,
                 onFavoriteClick = onFavoriteClick,
                 getTagFavoriteState = getTagFavoriteState,
-                onTagRankClick = onTagRankClick
+                onTagRankClick = onTagRankClick,
+                onTagClick = onTagClick
             )
         }
     }
@@ -195,7 +203,8 @@ private fun TagView(
     onSearchView: () -> Unit,
     onFavoriteClick: (Long) -> Unit,
     getTagFavoriteState: (Long) -> Boolean,
-    onTagRankClick: (Long) -> Unit
+    onTagRankClick: (Long) -> Unit,
+    onTagClick: (Long, String) -> Unit
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
@@ -238,6 +247,7 @@ private fun TagView(
                     FavoriteTagsList(
                         favoriteTags = favoriteTags,
                         modifier = Modifier.fillMaxWidth(),
+                        onTagClick = onTagClick,
                         onFavoriteClick = onFavoriteClick,
                         getTagFavoriteState = getTagFavoriteState
                     )
@@ -309,6 +319,7 @@ private fun FavoriteTagsList(
     favoriteTags: List<FavoriteTag>,
     modifier: Modifier = Modifier,
     onFavoriteClick: (Long) -> Unit = {},
+    onTagClick: (Long, String) -> Unit,
     getTagFavoriteState: (Long) -> Boolean = { true }
 ) {
     val chunkedTags = favoriteTags.chunked(3)
@@ -328,7 +339,8 @@ private fun FavoriteTagsList(
                         tag = tag.name,
                         tagId = tag.id,
                         isFavorite = getTagFavoriteState(tag.id),
-                        onClick = onFavoriteClick
+                        onTagClick = onTagClick,
+                        onFavoriteClick = onFavoriteClick
                     )
                 }
             }

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.LazyGridState
@@ -21,6 +22,10 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -72,8 +77,9 @@ internal fun SearchRoute(
     val gridState = rememberLazyGridState()
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    // Toast 처리
+    // Toast 처리 및 Snackbar 처리
     LaunchedEffect(Unit) {
         viewModel.uiEffect
             .flowWithLifecycle(lifecycleOwner.lifecycle, Lifecycle.State.STARTED)
@@ -88,6 +94,17 @@ internal fun SearchRoute(
                         is TagUiEffect.ShowRemoveFavoriteTagToast -> {
                             val message = context.getString(R.string.tag_favorite_delete, it.tagName)
                             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                            viewModel.clearUiEffect()
+                        }
+                        is TagUiEffect.ShowNetworkErrorSnackbar -> {
+                            val result = snackbarHostState.showSnackbar(
+                                message = context.getString(R.string.tag_network_error_message),
+                                actionLabel = context.getString(R.string.tag_network_error_retry),
+                                duration = SnackbarDuration.Indefinite
+                            )
+                            if (result == SnackbarResult.ActionPerformed) {
+                                it.retryAction()
+                            }
                             viewModel.clearUiEffect()
                         }
                         else -> {
@@ -133,7 +150,8 @@ internal fun SearchRoute(
         onClickCard = onClickCard,
         onBackPressed = onBackPressed,
         isFavorite = uiState.currentTagFavoriteState,
-        onFavoriteToggle = viewModel::toggleCurrentSearchedTagFavorite
+        onFavoriteToggle = viewModel::toggleCurrentSearchedTagFavorite,
+        snackbarHostState = snackbarHostState
     )
 }
 
@@ -153,7 +171,8 @@ private fun SearchScreen(
     onClickCard: (Long) -> Unit,
     onBackPressed: () -> Unit,
     isFavorite: Boolean,
-    onFavoriteToggle: () -> Unit
+    onFavoriteToggle: () -> Unit,
+    snackbarHostState: SnackbarHostState
 ) {
     SooumLog.d("SearchScreen", "recommendedTags=$recommendedTags")
     val focusManager = LocalFocusManager.current
@@ -181,6 +200,7 @@ private fun SearchScreen(
     Scaffold(
         modifier = modifier
             .fillMaxSize(),
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             SearchAppBar(
                 value = searchValue,
@@ -306,7 +326,10 @@ private fun EmptyCardList() {
     ) {
         Image(
             painter = painterResource(com.phew.core_design.R.drawable.ic_deleted_card),
-            contentDescription = "no notify"
+            contentDescription = "no notify",
+            modifier = Modifier
+                .height(130.dp)
+                .width(220.dp)
         )
         Text(
             text = stringResource(R.string.tag_not_search_card),

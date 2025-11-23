@@ -211,6 +211,7 @@ class TagViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 SooumLog.e(TAG, "Failed to perform search: ${e.message}")
+                _uiEffect.emit(TagUiEffect.ShowNetworkErrorSnackbar { performSearch(tag) })
             }
         }
     }
@@ -366,6 +367,12 @@ class TagViewModel @Inject constructor(
             }
         }
     }
+
+    fun onTagClick(tagId: Long, tagName: String) {
+        viewModelScope.launch {
+            _uiEffect.emit(TagUiEffect.NavigateToViewTags(tagName, tagId))
+        }
+    }
     
     fun loadTagCards(tagName: String, tagId: Long) {
         SooumLog.d(TAG, "loadTagCards tagName=$tagName, tagId=$tagId")
@@ -386,6 +393,7 @@ class TagViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 SooumLog.e(TAG, "Failed to load tag cards: ${e.message}")
+                _uiEffect.emit(TagUiEffect.ShowNetworkErrorSnackbar { loadTagCards(tagName, tagId) })
             }
         }
     }
@@ -409,6 +417,7 @@ class TagViewModel @Inject constructor(
             } catch (e: Exception) {
                 SooumLog.e(TAG, "Failed to refresh tag cards: ${e.message}")
                 _uiState.update { it.copy(isRefreshing = false) }
+                _uiEffect.emit(TagUiEffect.ShowNetworkErrorSnackbar { refreshViewTags(tagName, tagId) })
             }
         }
     }
@@ -443,6 +452,7 @@ sealed interface TagUiEffect {
     data class ShowAddFavoriteTagToast(val tagName: String) : TagUiEffect
     data class ShowRemoveFavoriteTagToast(val tagName: String) : TagUiEffect
     data class NavigateToViewTags(val tagName: String, val tagId: Long) : TagUiEffect
+    data class ShowNetworkErrorSnackbar(val retryAction: () -> Unit) : TagUiEffect
 }
 
 private const val TAG = "TagViewModel"

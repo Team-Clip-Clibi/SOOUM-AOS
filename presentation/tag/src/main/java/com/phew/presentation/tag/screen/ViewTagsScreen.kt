@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -16,8 +18,13 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -64,13 +71,14 @@ internal fun ViewTagsRoute(
     val gridState = rememberLazyGridState()
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
     // tagName, tagId를 받아서 API 호출
     LaunchedEffect(tagName, tagId) {
         viewModel.loadTagCards(tagName, tagId)
     }
 
-    // Toast 처리
+    // Toast 처리 및 Snackbar 처리
     LaunchedEffect(Unit) {
         viewModel.uiEffect
             .flowWithLifecycle(lifecycleOwner.lifecycle, Lifecycle.State.STARTED)
@@ -85,6 +93,17 @@ internal fun ViewTagsRoute(
                         is TagUiEffect.ShowRemoveFavoriteTagToast -> {
                             val message = context.getString(R.string.tag_favorite_delete, it.tagName)
                             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                            viewModel.clearUiEffect()
+                        }
+                        is TagUiEffect.ShowNetworkErrorSnackbar -> {
+                            val result = snackbarHostState.showSnackbar(
+                                message = context.getString(R.string.tag_network_error_message),
+                                actionLabel = context.getString(R.string.tag_network_error_retry),
+                                duration = SnackbarDuration.Indefinite
+                            )
+                            if (result == SnackbarResult.ActionPerformed) {
+                                it.retryAction()
+                            }
                             viewModel.clearUiEffect()
                         }
                         else -> {
@@ -119,7 +138,8 @@ internal fun ViewTagsRoute(
         onBackPressed = onBackPressed,
         isFavorite = uiState.currentTagFavoriteState,
         onFavoriteToggle = viewModel::toggleCurrentSearchedTagFavorite,
-        onRefresh = { viewModel.refreshViewTags(tagName, tagId) }
+        onRefresh = { viewModel.refreshViewTags(tagName, tagId) },
+        snackbarHostState = snackbarHostState
     )
 }
 
@@ -135,13 +155,13 @@ private fun ViewTagsScreen(
     onRefresh: () -> Unit,
     onFavoriteToggle: () -> Unit,
     onBackPressed: () -> Unit,
-    onClickCard: (Long) -> Unit
+    onClickCard: (Long) -> Unit,
+    snackbarHostState: SnackbarHostState
 ) {
-    val refreshState = rememberPullToRefreshState()
-
     Scaffold(
         modifier = modifier
             .fillMaxSize(),
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             IconLeftAndRightAppBar(
                 title = tagName,
@@ -217,8 +237,11 @@ private fun EmptyViewTags() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
-            painter = painterResource(DesignR.drawable.ic_noti_no_data),
-            contentDescription = "no data"
+            painter = painterResource(DesignR.drawable.ic_deleted_card),
+            contentDescription = "no data",
+            modifier = Modifier
+                .height(130.dp)
+                .width(220.dp)
         )
         Text(
             text = stringResource(R.string.tag_not_search_card),

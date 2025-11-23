@@ -10,4 +10,6 @@
     <string name="tag_favorite_delete">\'%s\'을 관심 태그에서 삭제했어요</string>
     <string name="tag_rank_title">인기 태그</string>
     <string name="tag_not_search_card">조회할 수 있는 카드가 없어요</string>
+    <string name="tag_network_error_message">네트워크 확인 후 재시도해주세요.</string>
+    <string name="tag_network_error_retry">재시도</string>
 </resources>
