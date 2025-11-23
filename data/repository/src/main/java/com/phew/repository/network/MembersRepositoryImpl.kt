@@ -123,7 +123,7 @@ class MembersRepositoryImpl @Inject constructor(
         }
     }
     
-        override suspend fun getRejoinableDate(): Result<RejoinableDate> {
+    override suspend fun getRejoinableDate(): Result<RejoinableDate> {
         SooumLog.d(TAG, "getRejoinableDate")
         
         return when (val result = apiCall(
