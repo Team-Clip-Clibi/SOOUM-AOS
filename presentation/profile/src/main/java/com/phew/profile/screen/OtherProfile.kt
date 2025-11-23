@@ -26,7 +26,6 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -39,7 +38,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -49,11 +47,6 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.compose.AsyncImage
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.LottieConstants
-import com.airbnb.lottie.compose.animateLottieCompositionAsState
-import com.airbnb.lottie.compose.rememberLottieComposition
 import com.phew.core_common.ERROR_LOGOUT
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_design.AppBar
@@ -66,6 +59,9 @@ import com.phew.core_design.MediumButton
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
 import com.phew.core_design.component.card.CommentBodyContent
+import com.phew.core_design.component.refresh.RefreshBox
+import com.phew.core_design.component.refresh.TOP_CONTENT_OFFSET
+import com.phew.core_design.component.refresh.pullToRefreshOffset
 import com.phew.domain.dto.ProfileCard
 import com.phew.domain.dto.ProfileInfo
 import com.phew.profile.ProfileViewModel
@@ -94,15 +90,6 @@ internal fun OtherProfile(
     val uiState by viewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
-    val isRefreshing = uiState.isRefreshing
-    val composition by rememberLottieComposition(
-        LottieCompositionSpec.RawRes(com.phew.core_design.R.raw.ic_refresh)
-    )
-    val refreshProgress by animateLottieCompositionAsState(
-        composition = composition,
-        iterations = LottieConstants.IterateForever,
-        restartOnPlay = isRefreshing
-    )
     val refreshState = rememberPullToRefreshState()
     var showBlockDialog by remember { mutableStateOf(false) }
     HandelEventError(
@@ -158,8 +145,8 @@ internal fun OtherProfile(
                 isBlock = profileState.data.isBlocked,
                 showBlockDialog = remember(viewModel::block) { { viewModel.block(userId = userId) } }
             ) { paddingValues ->
-                PullToRefreshBox(
-                    isRefreshing = isRefreshing,
+                RefreshBox(
+                    isRefresh = uiState.isRefreshing,
                     onRefresh = remember(viewModel::refreshOtherProfile) {
                         {
                             viewModel.refreshOtherProfile(
@@ -167,28 +154,9 @@ internal fun OtherProfile(
                             )
                         }
                     },
-                    modifier = Modifier.fillMaxWidth(),
                     state = refreshState,
-                    indicator = {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(100.dp)
-                                .padding(top = paddingValues.calculateTopPadding()),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            val progress =
-                                if (isRefreshing) refreshProgress else refreshState.distanceFraction
-                            if (isRefreshing || refreshState.distanceFraction > 0f) {
-                                LottieAnimation(
-                                    composition = composition,
-                                    progress = { progress },
-                                    modifier = Modifier.size(80.dp)
-                                )
-                            }
-                        }
-                    }
-                ) {
+                    paddingValues = paddingValues
+                ){
                     val feedCardData = uiState.profileFeedCard.collectAsLazyPagingItems()
                     ProfileContentView(
                         profile = profileState.data,
@@ -229,9 +197,10 @@ internal fun OtherProfile(
                         modifier = Modifier
                             .fillMaxSize()
                             .background(NeutralColor.WHITE)
-                            .graphicsLayer {
-                                this.translationY = refreshState.distanceFraction * 72.dp.toPx()
-                            }
+                            .pullToRefreshOffset(
+                                state = refreshState,
+                                baseOffset = TOP_CONTENT_OFFSET
+                            )
                             .padding(
                                 top = paddingValues.calculateTopPadding(),
                                 bottom = paddingValues.calculateBottomPadding()
@@ -428,7 +397,7 @@ private fun ProfileView(
         modifier = Modifier
             .fillMaxSize()
             .background(color = NeutralColor.WHITE)
-            .padding(start = 16.dp, end = 16.dp, top = 12.dp , bottom = 16.dp)
+            .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 16.dp)
     ) {
         Row(
             modifier = Modifier

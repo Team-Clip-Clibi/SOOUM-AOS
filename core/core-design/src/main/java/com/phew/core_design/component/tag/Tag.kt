@@ -9,6 +9,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,8 +21,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -52,6 +51,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -191,7 +191,8 @@ internal fun TagRow(
     currentInput: String = "",
     onInputChange: (String) -> Unit = {},
     fontFamily: FontFamily = FontFamily.Default,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onTagClick: (String) -> Unit = { }
 ) {
     var input by remember { mutableStateOf(currentInput) }
     var state by remember { mutableStateOf(TagState.AddNew) }
@@ -250,7 +251,7 @@ internal fun TagRow(
                 text = tag,
                 showRemoveIcon = enableAdd,
                 onRemove = { onRemove(tag) },
-                onClick = { onRemove(tag) },
+                onClick = if (enableAdd) { { onRemove(tag) } } else { { onTagClick(tag) } },
                 fontFamily = fontFamily
             )
         }
@@ -305,6 +306,60 @@ internal fun TagRow(
     }
 }
 
+@Composable
+fun TagRankView(
+    text: String,
+    userCount: Int,
+    index: String,
+    id: Long,
+    onClick: (Long) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .padding(top = 4.dp, bottom = 4.dp, end = 12.dp)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = { onClick(id) }
+            ),
+        horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.Start),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = index,
+            style = TextComponent.TITLE_2_SB_16,
+            color = Primary.DARK,
+            textAlign = TextAlign.Start,
+            modifier = Modifier.width(32.dp)
+        )
+        Column {
+            Text(
+                text = text,
+                style = TextComponent.SUBTITLE_1_M_16,
+                color = NeutralColor.GRAY_600
+            )
+            Text(
+                text = when {
+                    userCount < 1000 -> userCount.toString()
+                    userCount <= 1099 -> stringResource(R.string.amount_txt_thousand_plus) // "1000+"
+                    userCount < 10000 -> {
+                        val thousands = userCount / 1000.0
+                        stringResource(R.string.amount_txt_thousand, thousands)
+                    }
+
+                    else -> {
+                        val tensOfThousands = userCount / 10000.0
+                        stringResource(R.string.amount_txt_ten_thousand, tensOfThousands)
+                    }
+                },
+                style = TextComponent.CAPTION_2_M_12,
+                color = NeutralColor.GRAY_500
+            )
+        }
+    }
+}
 
 @Composable
 private fun TagAddNew(
