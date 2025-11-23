@@ -105,8 +105,14 @@ class MembersRepositoryImpl @Inject constructor(
                 mapper = { Unit }
             )) {
                 is DataResult.Success -> {
-                    dataStore.clearAllData()
-                    Result.success(Unit)
+                    val clearResult = dataStore.clearAllData()
+                    if (clearResult) {
+                        SooumLog.d(TAG, "Successfully cleared all data after withdrawal")
+                        Result.success(Unit)
+                    } else {
+                        SooumLog.w(TAG, "Failed to clear data after withdrawal, but account was withdrawn")
+                        Result.success(Unit) // 탈퇴는 성공했으므로 여전히 성공으로 처리
+                    }
                 }
                 is DataResult.Fail -> Result.failure(
                     result.throwable ?: Exception("Failed to withdrawal account: ${result.message}")

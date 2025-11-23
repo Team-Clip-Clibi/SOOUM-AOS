@@ -98,7 +98,7 @@ class PagerRepositoryImpl @Inject constructor(
     ).flow
 
     override fun tagCards(tagId: Long): Flow<PagingData<TagCardContent>> = Pager(
-        config = PagingConfig(pageSize = 30,
+        config = PagingConfig(pageSize = 20,
             enablePlaceholders = false),
         pagingSourceFactory = {
             PagingTagCards(tagRepository, tagId)

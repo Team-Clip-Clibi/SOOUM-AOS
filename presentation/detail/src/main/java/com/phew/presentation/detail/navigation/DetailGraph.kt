@@ -9,6 +9,7 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.model.navigation.CardDetailCommentArgs
+import com.phew.core.ui.model.navigation.TagViewArgs
 import com.phew.core.ui.navigation.NavArgKey
 import com.phew.core.ui.navigation.asNavArg
 import com.phew.core.ui.navigation.asNavParam
@@ -53,17 +54,7 @@ fun NavGraphBuilder.detailGraph(
     onBackPressed: () -> Unit,
     onNavigateToWrite: (Long) -> Unit,
     onNavigateToReport: (Long) -> Unit,
-    onWriteComplete: () -> Unit = {},
-    detailScreen: @Composable (
-        CardDetailArgs,
-        (CardDetailCommentArgs) -> Unit,
-        () -> Unit,
-    ) -> Unit = { _, _, _ -> },
-    commentScreen: @Composable (
-        CardDetailCommentArgs,
-        (CardDetailCommentArgs) -> Unit,
-        () -> Unit,
-    ) -> Unit = { _, _, _ -> },
+    onNavigateToViewTags: (TagViewArgs) -> Unit,
     navToHome: () -> Unit,
     onProfileScreen: (Long) -> Unit,
 ) {
@@ -93,6 +84,7 @@ fun NavGraphBuilder.detailGraph(
                         onNavigateToWrite(cardId)
                     },
                     onNavigateToReport = onNavigateToReport,
+                    onNavigateToViewTags = onNavigateToViewTags,
                     onBackPressed = onBackPressed,
                     profileClick = onProfileScreen
                 )
@@ -125,6 +117,7 @@ fun NavGraphBuilder.detailGraph(
                         onNavigateToWrite(cardId)
                     },
                     onNavigateToReport = onNavigateToReport,
+                    onNavigateToViewTags = onNavigateToViewTags,
                     onProfileClick = onProfileScreen
                 )
             }

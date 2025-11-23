@@ -154,13 +154,14 @@ private fun WithdrawalScreen(
             
             // 탈퇴 사유 버튼들 (1~6)
             reasons.forEach { reason ->
-                val reasonTextRes = when (reason) {
-                    WithdrawalReason.RARELY_USE -> R.string.withdrawal_reason_1
-                    WithdrawalReason.NO_DESIRED_FEATURE -> R.string.withdrawal_reason_2
-                    WithdrawalReason.FREQUENT_ERRORS -> R.string.withdrawal_reason_3
-                    WithdrawalReason.DIFFICULT_TO_USE -> R.string.withdrawal_reason_4
-                    WithdrawalReason.CREATE_NEW_ACCOUNT -> R.string.withdrawal_reason_5
-                    WithdrawalReason.OTHER -> R.string.withdrawal_reason_6
+                val reasonTextRes = when (reason.resourceKey) {
+                    "withdrawal_reason_1" -> R.string.withdrawal_reason_1
+                    "withdrawal_reason_2" -> R.string.withdrawal_reason_2
+                    "withdrawal_reason_3" -> R.string.withdrawal_reason_3
+                    "withdrawal_reason_4" -> R.string.withdrawal_reason_4
+                    "withdrawal_reason_5" -> R.string.withdrawal_reason_5
+                    "withdrawal_reason_6" -> R.string.withdrawal_reason_6
+                    else -> R.string.withdrawal_reason_6 // fallback
                 }
                 
                 Box(modifier = Modifier.fillMaxWidth()) {

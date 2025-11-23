@@ -116,7 +116,8 @@ sealed class BaseCardData(open val id: String, open val type: CardType) {
         val thumbnailUri: String = "",
         override val id: String = "",
         val backgroundImage: Uri? = null,
-        val fontFamily: FontFamily? = null
+        val fontFamily: FontFamily? = null,
+        val onTagClick: (String) -> Unit = { }
     ) : BaseCardData(id, CardType.REPLY)
 
     data class Deleted(
@@ -511,7 +512,8 @@ private fun ReplyCard(
                             onFocusHandled = { },
                             currentInput = "",
                             onInputChange = { },
-                            fontFamily = data.fontFamily ?: FontFamily.Default
+                            fontFamily = data.fontFamily ?: FontFamily.Default,
+                            onTagClick = data.onTagClick
                         )
                     }
                 }

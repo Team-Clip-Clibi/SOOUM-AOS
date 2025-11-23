@@ -83,6 +83,8 @@ import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.model.navigation.CardDetailCommentArgs
+import com.phew.core.ui.model.navigation.TagViewArgs
+import com.phew.domain.dto.CardDetailTag
 import com.phew.core_common.TimeUtils
 import com.phew.core_common.log.SooumLog
 import com.phew.core_design.AppBar.TextButtonAppBar
@@ -106,6 +108,7 @@ import com.phew.presentation.detail.model.MoreAction
 import com.phew.presentation.detail.viewmodel.CardDetailError
 import com.phew.presentation.detail.viewmodel.CardDetailViewModel
 import com.phew.core_design.CustomFont
+import com.phew.core_design.NeutralColor.GRAY_200
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -118,6 +121,7 @@ internal fun CardDetailRoute(
     onNavigateToComment: (CardDetailCommentArgs) -> Unit,
     onNavigateToWrite: (Long) -> Unit,
     onNavigateToReport: (Long) -> Unit,
+    onNavigateToViewTags: (TagViewArgs) -> Unit,
     onBackPressed: () -> Unit,
     onPreviousCardClick: () -> Unit = { },
     profileClick: (Long) -> Unit
@@ -293,7 +297,7 @@ internal fun CardDetailRoute(
         modifier = modifier,
         cardContent = cardDetail.cardContent,
         cardThumbnailUri = cardDetail.cardImgUrl,
-        cardTags = cardDetail.tags.map { it.name },
+        cardTags = cardDetail.tags,
         cardFont = cardDetail.font,
         previousCommentThumbnailUri = cardDetail.previousCardImgUrl ?: "",
         profileUri = cardDetail.profileImgUrl ?: "",
@@ -331,6 +335,7 @@ internal fun CardDetailRoute(
         onRefresh = {
             viewModel.loadCardDetail(args.cardId)
         },
+        onNavigateToViewTags = onNavigateToViewTags,
         lazyListState = lazyListState,
         nestedScrollConnection = nestedScrollConnection,
         cardId = args.cardId,
@@ -367,7 +372,7 @@ private fun CardDetailScreen(
     modifier: Modifier,
     cardContent: String,
     cardThumbnailUri: String,
-    cardTags: List<String>,
+    cardTags: List<CardDetailTag>,
     cardFont: String,
     previousCommentThumbnailUri: String,
     profileUri: String,
@@ -390,6 +395,7 @@ private fun CardDetailScreen(
     onBlockMember: (Long, String) -> Unit,
     deleteCard: (Long) -> Unit,
     onNavigateToReport: (Long) -> Unit,
+    onNavigateToViewTags: (TagViewArgs) -> Unit,
     onRefresh: () -> Unit,
     lazyListState: LazyListState,
     nestedScrollConnection: NestedScrollConnection,
@@ -544,9 +550,15 @@ private fun CardDetailScreen(
                                 previousCommentThumbnailUri = previousCommentThumbnailUri,
                                 cardContent = cardContent,
                                 cardThumbnailUri = cardThumbnailUri,
-                                cardTags = cardTags,
+                                cardTags = cardTags.map { it.name },
                                 fontFamily = CustomFont.findFontValueByServerName(cardFont).data.previewTypeface,
                                 isDeleted = isExpire,
+                                onTagClick = { tagName ->
+                                    val tag = cardTags.find { it.name == tagName }
+                                    if (tag != null) {
+                                        onNavigateToViewTags(TagViewArgs(tagName = tag.name, tagId = tag.tagId))
+                                    }
+                                },
                                 header = {
                                     CardDetailHeader(
                                         profileUri = profileUri,
@@ -573,7 +585,7 @@ private fun CardDetailScreen(
                             Spacer(modifier
                                 .fillMaxWidth()
                                 .height(1.dp)
-                                .background(GRAY_400)
+                                .background(GRAY_200)
                                 .padding(horizontal = 0.dp)
                             )
                             Box(
@@ -758,6 +770,7 @@ private fun CardDetailPreview() {
             cardContent = "이건 ReplyCard 예시",
             cardThumbnailUri = "",
             cardTags = listOf("내머리와충돌", "중상", "위동"),
+            onTagClick = {},
             header = {
                 CardDetailHeader(
                     profileUri = "",
@@ -788,6 +801,7 @@ private fun CardDetailPreview() {
             cardContent = "",
             cardThumbnailUri = "",
             cardTags = listOf("내머리와충돌", "중상", "위동"),
+            onTagClick = {},
             header = {
                 CardDetailHeader(
                     profileUri = "",
@@ -809,6 +823,7 @@ private fun CardDetailPreview() {
             cardContent = "이건 ReplyCard 예시",
             cardThumbnailUri = "",
             cardTags = listOf("내머리와충돌", "중상", "위동"),
+            onTagClick = {},
             header = {
                 CardDetailHeader(
                     profileUri = "",

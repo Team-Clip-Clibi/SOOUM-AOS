@@ -9,6 +9,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -441,6 +442,36 @@ object MediumButton {
                 style = TextComponent.SUBTITLE_1_M_16,
                 color = if (isEnable) NeutralColor.WHITE else NeutralColor.GRAY_400
             )
+        }
+    }
+
+    @Composable
+    fun IconPrimary(
+        onClick: () -> Unit,
+        icon: @Composable () -> Unit
+    ) {
+        val interactionSource = remember { MutableInteractionSource() }
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(shape = RoundedCornerShape(10.dp))
+                .background(
+                    color = NeutralColor.WHITE,
+                    shape = RoundedCornerShape(10.dp)
+                )
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = onClick
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                modifier = Modifier.size(24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                icon()
+            }
         }
     }
 

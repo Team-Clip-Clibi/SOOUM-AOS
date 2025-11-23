@@ -2,6 +2,7 @@ package com.phew.core.ui.state
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.NavDestination
@@ -10,6 +11,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.phew.core.ui.component.home.HomeTabType
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
 /**
  *  App 전체 State를 처리해야 할 경우 사용 목적
@@ -48,6 +51,14 @@ class SooumAppState(
         @Composable get() = HomeTabType.entries
             .map { it.route }
             .contains(currentDestination?.route ?: "")
+
+    // Feed scroll to top event
+    private val _feedScrollToTopEvent = MutableSharedFlow<Unit>()
+    val feedScrollToTopEvent = _feedScrollToTopEvent.asSharedFlow()
+    
+    suspend fun scrollFeedToTop() {
+        _feedScrollToTopEvent.emit(Unit)
+    }
 
     companion object {
         private const val TAG = "SooumAppState"

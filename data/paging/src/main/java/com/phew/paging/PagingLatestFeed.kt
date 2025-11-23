@@ -18,8 +18,7 @@ class PagingLatestFeed @Inject constructor(
 ) : PagingSource<Long, Latest>() {
 
     override fun getRefreshKey(state: PagingState<Long, Latest>): Long? {
-        val anchorPosition = state.anchorPosition ?: return null
-        return state.closestItemToPosition(anchorPosition)?.cardId?.toLongOrNull()
+        return null // 항상 첫 페이지부터 시작하여 최신 데이터를 상단에 표시
     }
 
     override suspend fun load(params: LoadParams<Long>): LoadResult<Long, Latest> {

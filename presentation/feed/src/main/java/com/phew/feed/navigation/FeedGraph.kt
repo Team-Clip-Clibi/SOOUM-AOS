@@ -74,6 +74,7 @@ fun NavGraphBuilder.feedGraph(
             FeedView(
                 viewModel = feedViewModel,
                 navController = navController,
+                appState = appState,
                 finish = onBackPressed,
                 requestPermission = {
                     feedViewModel.onPermissionRequest(
@@ -88,7 +89,7 @@ fun NavGraphBuilder.feedGraph(
                 navigateToDetail = { cardDetailArgs ->
                     navController.navigateToDetailGraph(cardDetailArgs)
                 },
-                webViewClick = webView
+                webViewClick = webView,
             )
         }
 

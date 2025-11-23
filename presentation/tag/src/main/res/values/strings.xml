@@ -1,4 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="tag_top_title">태그</string>
+
+    <string name="tag_search_tag_placeholder">태그를 검색하세요.</string>
+    <string name="tag_search_no_card">검색 결과가 없어요</string>
+    <string name="tag_user_favorite">%s님의 관심태그</string>
+    <string name="tag_empty_favorite_tags">관심 태그가 포함된 카드가 작성되면\n알림을 받을 수 있어요</string>
+    <string name="tag_favorite_add">\'%s\'을 관심 태그에 추가했어요</string>
+    <string name="tag_favorite_delete">\'%s\'을 관심 태그에서 삭제했어요</string>
+    <string name="tag_rank_title">인기 태그</string>
+    <string name="tag_not_search_card">조회할 수 있는 카드가 없어요</string>
 </resources>

@@ -12,4 +12,5 @@ dependencies {
     implementation(project(":presentation:write"))
     implementation(project(":presentation:reports"))
     implementation(project(":presentation:profile"))
+    implementation(project(":presentation:tag"))
 }
