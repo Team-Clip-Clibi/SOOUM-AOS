@@ -10,6 +10,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import com.phew.core.ui.R
 import com.phew.core.ui.util.InquiryUtils
+import com.phew.core_design.DialogComponent
+import com.phew.core_design.NeutralColor
 import com.phew.core_design.theme.SooumTheme
 
 /**
@@ -26,33 +28,20 @@ fun ErrorDialog(
     refreshToken: String
 ) {
     val context = LocalContext.current
-    
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = stringResource(R.string.error_dialog_title),
-                fontWeight = FontWeight.Bold
-            )
+
+    DialogComponent.DefaultButtonTwo(
+        title = stringResource(R.string.error_dialog_title),
+        description = stringResource(R.string.error_dialog_content),
+        buttonTextStart = stringResource(R.string.error_dialog_cancel),
+        buttonTextEnd = stringResource(R.string.error_dialog_inquiry),
+        onClick = {
+            onDismiss()
+            InquiryUtils.openInquiryMail(context, refreshToken)
         },
-        text = {
-            Text(text = stringResource(R.string.error_dialog_content))
+        onDismiss = {
+            onDismiss()
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(text = stringResource(R.string.error_dialog_cancel))
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    onDismiss()
-                    InquiryUtils.openInquiryMail(context, refreshToken)
-                }
-            ) {
-                Text(text = stringResource(R.string.error_dialog_inquiry))
-            }
-        }
+        startButtonTextColor = NeutralColor.BLACK
     )
 }
 

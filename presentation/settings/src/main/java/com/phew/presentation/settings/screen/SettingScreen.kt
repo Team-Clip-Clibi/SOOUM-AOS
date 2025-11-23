@@ -168,7 +168,8 @@ fun SettingRoute(
             buttonTextStart = stringResource(SettingsR.string.setting_withdrawal_dialog_cancel),
             buttonTextEnd = stringResource(SettingsR.string.setting_withdrawal_dialog_ok),
             onClick = viewModel::onConfirmWithdrawal,
-            onDismiss = viewModel::onDismissWithdrawalDialog
+            onDismiss = viewModel::onDismissWithdrawalDialog,
+            startButtonTextColor = NeutralColor.BLACK
         )
     }
 }

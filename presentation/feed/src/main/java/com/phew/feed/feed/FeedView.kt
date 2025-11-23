@@ -60,6 +60,7 @@ import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.navigation.NavigationKeys
+import com.phew.core.ui.state.SooumAppState
 import com.phew.core_design.AppBar
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.NeutralColor
@@ -90,6 +91,7 @@ import com.phew.core.ui.R as CoreUiR
 fun FeedView(
     viewModel: FeedViewModel,
     navController: NavHostController,
+    appState: SooumAppState,
     finish: () -> Unit,
     requestPermission: () -> Unit,
     closeDialog: () -> Unit,
@@ -142,6 +144,14 @@ fun FeedView(
             }
         }
     }
+
+    // Scroll to top handling from AppState
+    LaunchedEffect(appState) {
+        appState.feedScrollToTopEvent.collect {
+            lazyListState.animateScrollToItem(0)
+        }
+    }
+
 
     // Refresh handling after writing a card
     LaunchedEffect(navBackStackEntry) {
@@ -465,7 +475,7 @@ private fun FeedListView(
                     LottieAnimation(
                         composition = composition,
                         progress = { lottieProgress },
-                        modifier = Modifier.size(60.dp)
+                        modifier = Modifier.size(44.dp)
                     )
                 }
             }
@@ -610,7 +620,7 @@ private fun LatestFeedPagingContent(
                     LottieAnimation(
                         composition = composition,
                         progress = { lottieProgress },
-                        modifier = Modifier.size(60.dp)
+                        modifier = Modifier.size(44.dp)
                     )
                 }
             }

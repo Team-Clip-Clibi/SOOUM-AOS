@@ -40,7 +40,7 @@ interface ProfileHttp {
     @GET(BuildConfig.API_URL_MY_PROFILE_CARD)
     suspend fun requestMyProfileFeedCardNext(
         @Path("userId") userId: Long,
-        @Path("lastId") lastId: Long,
+        @Query("lastId") lastId: Long,
     ): Response<ProfileCardDTO>
 
     /**

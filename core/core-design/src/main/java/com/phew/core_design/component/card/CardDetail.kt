@@ -28,7 +28,8 @@ fun CardDetail(
     fontFamily: FontFamily = FontFamily.Default,
     header: @Composable () -> Unit,
     bottom: @Composable () -> Unit?,
-    onPreviousCardClick: () -> Unit = { }
+    onPreviousCardClick: () -> Unit = { },
+    onTagClick: (String) -> Unit = { }
 ) {
     Column(
         modifier = modifier
@@ -62,7 +63,8 @@ fun CardDetail(
                         hasPreviousCommentThumbnail = !previousCommentThumbnailUri.isNullOrEmpty(),
                         thumbnailUri = cardThumbnailUri,
                         backgroundImage = backgroundImageUrl,
-                        fontFamily = fontFamily
+                        fontFamily = fontFamily,
+                        onTagClick = onTagClick
                     ),
                     onPreviousCardClick = onPreviousCardClick
                 )

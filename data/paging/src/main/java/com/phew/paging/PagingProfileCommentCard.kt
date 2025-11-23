@@ -6,7 +6,6 @@ import com.phew.core_common.DataResult
 import com.phew.core_common.HTTP_NO_MORE_CONTENT
 import com.phew.domain.dto.ProfileCard
 import com.phew.domain.repository.network.ProfileRepository
-import javax.inject.Inject
 
 class PagingProfileCommentCard(private val repository: ProfileRepository) :
     PagingSource<Long, ProfileCard>() {
@@ -30,7 +29,7 @@ class PagingProfileCommentCard(private val repository: ProfileRepository) :
                 }
 
                 is DataResult.Success -> {
-                    if (request.data.second.isEmpty() && request.data.first == HTTP_NO_MORE_CONTENT) {
+                    if (request.data.second.isEmpty() || request.data.first == HTTP_NO_MORE_CONTENT) {
                         return LoadResult.Page(
                             data = emptyList(),
                             prevKey = null,
@@ -38,9 +37,9 @@ class PagingProfileCommentCard(private val repository: ProfileRepository) :
                         )
                     }
                     return LoadResult.Page(
-                        data = request.data.second.sortedBy { data -> data.cardId },
+                        data = request.data.second,
                         prevKey = null,
-                        nextKey = request.data.second.last().cardId
+                        nextKey = if (params.key == request.data.second.last().cardId) null else request.data.second.last().cardId
                     )
                 }
             }

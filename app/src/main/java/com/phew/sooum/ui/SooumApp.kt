@@ -39,7 +39,8 @@ fun SooumApp(
         )
 
         SooumBottomBar(
-            navController = appState.navController
+            navController = appState.navController,
+            appState = appState
         )
 
         SooumBackHandler(appState = appState)

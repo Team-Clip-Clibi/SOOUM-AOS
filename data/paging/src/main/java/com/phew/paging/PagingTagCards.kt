@@ -17,7 +17,7 @@ class PagingTagCards @Inject constructor(
 
     override fun getRefreshKey(state: PagingState<Long, TagCardContent>): Long? {
         val anchorPosition = state.anchorPosition ?: return null
-        return state.closestItemToPosition(anchorPosition)?.cardId?.toLongOrNull()
+        return state.closestItemToPosition(anchorPosition)?.cardId
     }
 
     override suspend fun load(params: LoadParams<Long>): LoadResult<Long, TagCardContent> {
@@ -25,23 +25,34 @@ class PagingTagCards @Inject constructor(
         SooumLog.d(TAG, "load(tagId=$tagId, lastId=$lastId, loadSize=${params.loadSize})")
 
         return try {
-            when (val result = tagRepository.getTagCards(tagId, lastId)) {
+            val result = if (lastId == 0L) {
+                // 첫 번째 로드 시 단순 API 호출 (페이징 없음)
+                tagRepository.getTagCardsWithFavorite(tagId)
+            } else {
+                // 이후 페이징 로드 시 페이징 API 호출
+                tagRepository.getTagCards(tagId, lastId)
+            }
+            
+            when (result) {
                 is DataResult.Success -> {
                     val tagCards = result.data
+                    val isTagFavorite = tagCards.isFavorite // Extract isFavorite from TagCards
+                    
                     val cardContents = tagCards.cardContents.map { cardContent ->
                         TagCardContent(
-                            cardId = cardContent.cardId.toString(),
+                            cardId = cardContent.cardId,
                             cardImgName = cardContent.cardImgName,
                             cardImgUrl = cardContent.cardImgUrl,
                             cardContent = cardContent.cardContent,
-                            font = cardContent.font
+                            font = cardContent.font,
+                            isFavorite = isTagFavorite // Pass the extracted isFavorite
                         )
                     }
                     
                     val nextKey = if (cardContents.isEmpty()) {
                         null
                     } else {
-                        cardContents.last().cardId.toLongOrNull()
+                        cardContents.last().cardId
                     }
 
                     LoadResult.Page(
