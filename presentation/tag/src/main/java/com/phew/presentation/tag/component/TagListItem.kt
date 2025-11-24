@@ -31,7 +31,6 @@ internal fun TagListItem (
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
             .height(48.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

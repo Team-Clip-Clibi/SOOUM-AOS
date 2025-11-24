@@ -296,23 +296,28 @@ class TagViewModel @Inject constructor(
             val currentFavoriteState = currentState.localFavoriteStates[tagId] ?: true
 
             if (currentFavoriteState) {
-                removeFavoriteTagAction(tagId, tagName)
+                removeFavoriteTagAction(tagId, tagName, removeFromList = false) // TagScreen에서는 리스트에서 제거하지 않음
             } else {
                 addFavoriteTagAction(tagId, tagName)
             }
         }
     }
 
-    private suspend fun removeFavoriteTagAction(tagId: Long, tagName: String) {
+    private suspend fun removeFavoriteTagAction(tagId: Long, tagName: String, removeFromList: Boolean = true) {
         try {
             val result = removeFavoriteTag(RemoveFavoriteTag.Param(tagId))
             when (result) {
                 is DataResult.Success -> {
-                    // 로컬 상태 업데이트 (즐겨찾기 해제) 및 favoriteTags 리스트에서 제거
+                    // 로컬 상태 업데이트 (즐겨찾기 해제)
                     _uiState.update { currentState ->
                         currentState.copy(
                             localFavoriteStates = currentState.localFavoriteStates + (tagId to false),
-                            favoriteTags = currentState.favoriteTags.filter { it.id != tagId }
+                            // removeFromList가 true일 때만 favoriteTags에서 제거 (다른 화면에서 사용)
+                            favoriteTags = if (removeFromList) {
+                                currentState.favoriteTags.filter { it.id != tagId }
+                            } else {
+                                currentState.favoriteTags // TagScreen에서는 리스트 유지
+                            }
                         )
                     }
                     emitCommonEffect(TagUiEffect.ShowRemoveFavoriteTagToast(tagName))
@@ -357,7 +362,8 @@ class TagViewModel @Inject constructor(
     // 태그의 즐겨찾기 상태를 가져오는 함수
     fun getTagFavoriteState(tagId: Long): Boolean {
         val localState = _uiState.value.localFavoriteStates[tagId]
-        return localState ?: true // 로컬 상태가 없으면 기본적으로 즐겨찾기로 간주 (FavoriteTagsList에서 사용)
+        // 로컬 상태가 있으면 그 값을 사용, 없으면 favoriteTags 리스트에 있는지 확인
+        return localState ?: _uiState.value.favoriteTags.any { it.id == tagId }
     }
 
     // 현재 검색된 태그의 즐겨찾기 토글
