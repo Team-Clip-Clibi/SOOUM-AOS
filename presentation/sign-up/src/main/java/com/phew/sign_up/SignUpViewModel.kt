@@ -56,8 +56,7 @@ class SignUpViewModel @Inject constructor(
 
                 is DomainResult.Success -> {
                     _uiState.update { state ->
-                        state.copy(nickName = result.data)
-
+                        state.copy(nickName = result.data, checkNickName = UiState.Success(true))
                     }
                 }
             }

@@ -74,12 +74,11 @@ fun NickNameView(viewModel: SignUpViewModel, onBack: () -> Unit, nextPage: () ->
             ) {
                 LargeButton.NoIconPrimary(
                     buttonText = stringResource(com.phew.core_design.R.string.common_next),
-                    onClick = remember(nextPage) {
+                    onClick =  {
                         viewModel.initNickName()
-                        nextPage
+                        nextPage()
                     },
-                    isEnable = uiState.nickName.trim()
-                        .isNotEmpty() && uiState.nickName.trim().length > 2 && (uiState.checkNickName is UiState.Success) && (uiState.checkNickName as UiState.Success<Boolean>).data
+                    isEnable = (uiState.checkNickName is UiState.Success && (uiState.checkNickName as UiState.Success<Boolean>).data) && uiState.nickName.trim().length > 2
                 )
             }
         },
