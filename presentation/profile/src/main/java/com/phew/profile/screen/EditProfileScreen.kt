@@ -101,7 +101,7 @@ internal fun EditProfileScreen(viewModel: ProfileViewModel, onBackPress: () -> U
             )
         },
         snackbarHost = {
-            DialogComponent.CustomAnimationSnackBarHos(hostState = snackBarHostState)
+            DialogComponent.CustomAnimationSnackBarHost(hostState = snackBarHostState)
         },
         bottomBar = {
             Column(

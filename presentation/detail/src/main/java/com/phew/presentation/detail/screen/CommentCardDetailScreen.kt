@@ -249,7 +249,7 @@ internal fun CommentCardDetailScreen(
             )
         },
         snackbarHost = {
-            DialogComponent.CustomAnimationSnackBarHos(hostState = snackBarHostState)
+            DialogComponent.CustomAnimationSnackBarHost(hostState = snackBarHostState)
         }
     ) { paddingValues ->
         PullToRefreshBox(

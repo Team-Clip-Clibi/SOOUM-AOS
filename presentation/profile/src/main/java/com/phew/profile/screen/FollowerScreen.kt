@@ -280,7 +280,7 @@ private fun FollowerTopBar(
             )
         },
         snackbarHost = {
-            DialogComponent.CustomAnimationSnackBarHos(hostState = snackBarHostState)
+            DialogComponent.CustomAnimationSnackBarHost(hostState = snackBarHostState)
         },
         content = content,
     )

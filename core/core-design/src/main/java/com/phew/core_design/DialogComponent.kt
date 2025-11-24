@@ -235,37 +235,42 @@ object DialogComponent {
     }
 
     @Composable
-    fun CustomAnimationSnackBarHos(
+    fun CustomAnimationSnackBarHost(
         hostState: SnackbarHostState,
         modifier: Modifier = Modifier,
     ) {
         AnimatedContent(
             targetState = hostState.currentSnackbarData,
             contentAlignment = Alignment.BottomCenter,
-            contentKey = { key -> key },
+            contentKey = { it },
             transitionSpec = {
+                val duration = 300
                 (slideInVertically(
                     initialOffsetY = { height -> height },
-                    animationSpec = tween(durationMillis = 300)
-                ) + fadeIn(animationSpec = tween(300))).togetherWith(
+                    animationSpec = tween(duration)
+                ) + fadeIn(
+                    animationSpec = tween(duration)
+                )).togetherWith(
                     slideOutVertically(
                         targetOffsetY = { height -> height },
-                        animationSpec = tween(durationMillis = 300)
-                    ) + fadeOut(animationSpec = tween(300))
-                )
-                    .using(SizeTransform(clip = false))
+                        animationSpec = tween(duration)
+                    ) + fadeOut(
+                        animationSpec = tween(duration)
+                    )
+                ).using(SizeTransform(clip = false))
             },
             label = "snackBarAnimation",
             modifier = modifier
         ) { snackBarData ->
-            if (snackBarData == null) return@AnimatedContent
-            SnackbarHost(hostState) { data ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 20.dp, start = 16.dp, end = 16.dp)
-                ) {
-                    SnackBar(data = data)
+            if (snackBarData != null) {
+                SnackbarHost(hostState) { data ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 20.dp, start = 16.dp, end = 16.dp)
+                    ) {
+                        SnackBar(data = data)
+                    }
                 }
             }
         }

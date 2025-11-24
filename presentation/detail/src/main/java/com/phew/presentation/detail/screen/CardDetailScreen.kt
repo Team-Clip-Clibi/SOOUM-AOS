@@ -447,7 +447,7 @@ private fun CardDetailScreen(
             }
         },
         snackbarHost = {
-            DialogComponent.CustomAnimationSnackBarHos(hostState = snackBarHostState)
+            DialogComponent.CustomAnimationSnackBarHost(hostState = snackBarHostState)
         },
         floatingActionButton = {
             Box(

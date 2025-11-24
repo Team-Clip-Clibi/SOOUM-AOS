@@ -274,7 +274,7 @@ private fun OtherProfileScaffold(
 ) {
     Scaffold(
         snackbarHost = {
-            DialogComponent.CustomAnimationSnackBarHos(hostState = snackBarHostState)
+            DialogComponent.CustomAnimationSnackBarHost(hostState = snackBarHostState)
         },
         topBar = {
             if (isBlock) {

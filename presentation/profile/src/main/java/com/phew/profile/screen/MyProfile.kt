@@ -218,7 +218,7 @@ private fun MyProfileScaffold(
 ) {
     Scaffold(
         snackbarHost = {
-            DialogComponent.CustomAnimationSnackBarHos(hostState = snackBarHostState)
+            DialogComponent.CustomAnimationSnackBarHost(hostState = snackBarHostState)
         },
         topBar = {
             AppBar.IconRightAppBar(
