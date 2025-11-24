@@ -25,6 +25,7 @@ const val ERROR = "error"
 const val ERROR_LOGOUT = "errorLogout"
 const val ERROR_UN_GOOD_IMAGE = "unGoodImage"
 const val ERROR_FAIL_PACKAGE_IMAGE = "errorPackageImage"
+const val ERROR_TRANSFER_CODE_INVALID = "transfer_code_invalid"
 //server api error code
 const val HTTP_NO_MORE_CONTENT = 204
 const val HTTP_BAD_REQUEST = 400

@@ -117,12 +117,10 @@ fun NavGraphBuilder.signUpGraph(
             val signUpViewModel: SignUpViewModel = hiltViewModel(navBackStackEntry)
             AuthCodeView(
                 viewModel = signUpViewModel,
-                home = {
-                    navToHome()
-                },
                 onBack = {
                     navController.popBackStack()
-                }
+                },
+                onRestoreSuccess = navToHome
             )
         }
 
