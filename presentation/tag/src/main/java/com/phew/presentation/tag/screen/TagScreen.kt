@@ -85,14 +85,14 @@ internal fun TagRoute(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.uiEffect
+        viewModel.tagScreenUiEffect
             .flowWithLifecycle(lifecycleOwner.lifecycle, Lifecycle.State.STARTED)
             .collect { effect ->
                 effect?.let {
                     when (it) {
                         TagUiEffect.NavigationSearchScreen -> {
                             navigateToSearchScreen()
-                            viewModel.clearUiEffect()
+                            viewModel.clearTagScreenUiEffect()
                         }
 
                         is TagUiEffect.ShowRemoveFavoriteTagToast -> {
@@ -101,7 +101,7 @@ internal fun TagRoute(
                                 context.getString(R.string.tag_favorite_delete, it.tagName),
                                 Toast.LENGTH_SHORT
                             ).show()
-                            viewModel.clearUiEffect()
+                            viewModel.clearTagScreenUiEffect()
                         }
 
                         is TagUiEffect.ShowAddFavoriteTagToast -> {
@@ -110,17 +110,17 @@ internal fun TagRoute(
                                 context.getString(R.string.tag_favorite_add, it.tagName),
                                 Toast.LENGTH_SHORT
                             ).show()
-                            viewModel.clearUiEffect()
+                            viewModel.clearTagScreenUiEffect()
                         }
 
                         is TagUiEffect.NavigateToViewTags -> {
                             navigateToViewTags(it.tagName, it.tagId)
-                            viewModel.clearUiEffect()
+                            viewModel.clearTagScreenUiEffect()
                         }
                         
                         is TagUiEffect.ShowNetworkErrorSnackbar -> {
                             // TagScreen에서는 네트워크 오류가 발생하지 않으므로 빈 처리
-                            viewModel.clearUiEffect()
+                            viewModel.clearTagScreenUiEffect()
                         }
                     }
                 }

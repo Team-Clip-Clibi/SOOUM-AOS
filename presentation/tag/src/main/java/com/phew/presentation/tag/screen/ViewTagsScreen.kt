@@ -81,7 +81,7 @@ internal fun ViewTagsRoute(
 
     // Toast 처리 및 Snackbar 처리
     LaunchedEffect(Unit) {
-        viewModel.uiEffect
+        viewModel.viewTagsScreenUiEffect
             .flowWithLifecycle(lifecycleOwner.lifecycle, Lifecycle.State.STARTED)
             .collect { effect ->
                 effect?.let {
@@ -89,12 +89,12 @@ internal fun ViewTagsRoute(
                         is TagUiEffect.ShowAddFavoriteTagToast -> {
                             val message = context.getString(R.string.tag_favorite_add, it.tagName)
                             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-                            viewModel.clearUiEffect()
+                            viewModel.clearViewTagsScreenUiEffect()
                         }
                         is TagUiEffect.ShowRemoveFavoriteTagToast -> {
                             val message = context.getString(R.string.tag_favorite_delete, it.tagName)
                             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-                            viewModel.clearUiEffect()
+                            viewModel.clearViewTagsScreenUiEffect()
                         }
                         is TagUiEffect.ShowNetworkErrorSnackbar -> {
                             val result = snackbarHostState.showSnackbar(
@@ -105,10 +105,10 @@ internal fun ViewTagsRoute(
                             if (result == SnackbarResult.ActionPerformed) {
                                 it.retryAction()
                             }
-                            viewModel.clearUiEffect()
+                            viewModel.clearViewTagsScreenUiEffect()
                         }
                         else -> {
-                            viewModel.clearUiEffect()
+                            viewModel.clearViewTagsScreenUiEffect()
                         }
                     }
                 }

@@ -82,7 +82,7 @@ internal fun SearchRoute(
 
     // Toast 처리 및 Snackbar 처리
     LaunchedEffect(Unit) {
-        viewModel.uiEffect
+        viewModel.searchScreenUiEffect
             .flowWithLifecycle(lifecycleOwner.lifecycle, Lifecycle.State.STARTED)
             .collect { effect ->
                 effect?.let {
@@ -90,12 +90,12 @@ internal fun SearchRoute(
                         is TagUiEffect.ShowAddFavoriteTagToast -> {
                             val message = context.getString(R.string.tag_favorite_add, it.tagName)
                             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-                            viewModel.clearUiEffect()
+                            viewModel.clearSearchScreenUiEffect()
                         }
                         is TagUiEffect.ShowRemoveFavoriteTagToast -> {
                             val message = context.getString(R.string.tag_favorite_delete, it.tagName)
                             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-                            viewModel.clearUiEffect()
+                            viewModel.clearSearchScreenUiEffect()
                         }
                         is TagUiEffect.ShowNetworkErrorSnackbar -> {
                             val result = snackbarHostState.showSnackbar(
@@ -106,10 +106,10 @@ internal fun SearchRoute(
                             if (result == SnackbarResult.ActionPerformed) {
                                 it.retryAction()
                             }
-                            viewModel.clearUiEffect()
+                            viewModel.clearSearchScreenUiEffect()
                         }
                         else -> {
-                            viewModel.clearUiEffect()
+                            viewModel.clearSearchScreenUiEffect()
                         }
                     }
                 }
