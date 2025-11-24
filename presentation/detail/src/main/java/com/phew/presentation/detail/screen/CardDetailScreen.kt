@@ -33,7 +33,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -223,7 +222,7 @@ internal fun CardDetailRoute(
     }
 
     val composition by rememberLottieComposition(
-        LottieCompositionSpec.RawRes(com.phew.core_design.R.raw.ic_refresh)
+        LottieCompositionSpec.RawRes(R.raw.ic_refresh)
     )
     val progress by animateLottieCompositionAsState(
         composition = composition,
@@ -454,9 +453,7 @@ private fun CardDetailScreen(
             }
         },
         snackbarHost = {
-            SnackbarHost(hostState = snackBarHostState) { data ->
-                DialogComponent.SnackBar(data)
-            }
+            DialogComponent.CustomAnimationSnackBarHost(hostState = snackBarHostState)
         },
         floatingActionButton = {
             Box(
