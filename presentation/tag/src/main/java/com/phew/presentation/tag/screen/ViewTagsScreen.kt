@@ -44,6 +44,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.phew.core_design.AppBar.IconLeftAndRightAppBar
 import com.phew.core_design.CustomFont
+import com.phew.core_design.DialogComponent
 import com.phew.core_design.MediumButton.IconPrimary
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
@@ -161,7 +162,7 @@ private fun ViewTagsScreen(
     Scaffold(
         modifier = modifier
             .fillMaxSize(),
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        snackbarHost = { DialogComponent.CustomAnimationSnackBarHost(hostState = snackbarHostState) },
         topBar = {
             IconLeftAndRightAppBar(
                 title = tagName,

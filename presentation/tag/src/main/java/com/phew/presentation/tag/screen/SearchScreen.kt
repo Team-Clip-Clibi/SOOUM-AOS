@@ -51,6 +51,7 @@ import androidx.paging.compose.itemKey
 import com.phew.core_common.log.SooumLog
 import com.phew.core_design.AppBar.SearchAppBar
 import com.phew.core_design.CustomFont
+import com.phew.core_design.DialogComponent
 import com.phew.core_design.MediumButton.IconPrimary
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.R as DesignR
@@ -200,7 +201,7 @@ private fun SearchScreen(
     Scaffold(
         modifier = modifier
             .fillMaxSize(),
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        snackbarHost = { DialogComponent.CustomAnimationSnackBarHost(hostState = snackbarHostState) },
         topBar = {
             SearchAppBar(
                 value = searchValue,
