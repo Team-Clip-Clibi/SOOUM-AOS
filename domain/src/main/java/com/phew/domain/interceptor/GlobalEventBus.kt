@@ -17,4 +17,5 @@ class GlobalEventBus @Inject constructor() {
 
 sealed interface GlobalEvent {
     data object TeapotEvent : GlobalEvent
+    data class Error(val message: String) : GlobalEvent
 }

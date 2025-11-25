@@ -1,5 +1,7 @@
 package com.phew.network
 
+import android.util.Log
+import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.HTTP_TOKEN_ERROR
 import com.phew.core_common.WITHDRAWAL_USER
 import com.phew.core_common.di.ApplicationScope
@@ -20,6 +22,7 @@ class TeapotInterceptor @Inject constructor(
     private val interceptorManger: InterceptorManger,
     @ApplicationScope private val scope: CoroutineScope,
 ) : Interceptor {
+    private val tag = "TeapotInterceptor"
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
         val response = chain.proceed(request)
@@ -29,7 +32,10 @@ class TeapotInterceptor @Inject constructor(
                 scope.launch {
                     globalEventBus.emitEvent(GlobalEvent.TeapotEvent)
                     val deleteToken = interceptorManger.deleteAll()
-                    if (!deleteToken) throw RuntimeException("Fail to delete data")
+                    if (!deleteToken) {
+                        Log.e(tag , "Failed to delete tokens for withdrawn user.")
+                        globalEventBus.emitEvent(GlobalEvent.Error(ERROR_FAIL_JOB))
+                    }
                 }
                 throw IOException("Force Logout by 418")
             }
@@ -40,7 +46,10 @@ class TeapotInterceptor @Inject constructor(
                     if (newAccessToken.isEmpty()) {
                         globalEventBus.emitEvent(GlobalEvent.TeapotEvent)
                         val deleteToken = interceptorManger.deleteAll()
-                        if (!deleteToken) throw RuntimeException("Fail to delete data")
+                        if (!deleteToken) {
+                            Log.e(tag , "Failed to delete tokens for withdrawn user.")
+                            globalEventBus.emitEvent(GlobalEvent.Error(ERROR_FAIL_JOB))
+                        }
                         return@runBlocking null
                     }
                     response.close()
