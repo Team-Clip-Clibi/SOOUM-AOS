@@ -234,48 +234,37 @@ class TagViewModel @Inject constructor(
         }
     }
 
-    fun clearUiEffect() {
-        viewModelScope.launch {
-            _uiEffect.emit(null)
-        }
-    }
-    
     // 화면별 UiEffect 클리어 함수들
     fun clearTagScreenUiEffect() {
         viewModelScope.launch {
             _tagScreenUiEffect.emit(null)
         }
     }
-    
+
     fun clearSearchScreenUiEffect() {
         viewModelScope.launch {
             _searchScreenUiEffect.emit(null)
         }
     }
-    
+
     fun clearViewTagsScreenUiEffect() {
         viewModelScope.launch {
             _viewTagsScreenUiEffect.emit(null)
         }
     }
-    
-    fun clearCommonUiEffect() {
-        viewModelScope.launch {
-            _commonUiEffect.emit(null)
-        }
-    }
-    
+
+
     // 화면별 UiEffect 발생 함수들
     private suspend fun emitTagScreenEffect(effect: TagUiEffect) {
         _tagScreenUiEffect.emit(effect)
         _uiEffect.emit(effect) // 기존 호환성
     }
-    
+
     private suspend fun emitSearchScreenEffect(effect: TagUiEffect) {
         _searchScreenUiEffect.emit(effect)
         _uiEffect.emit(effect) // 기존 호환성
     }
-    
+
     private suspend fun emitViewTagsScreenEffect(effect: TagUiEffect) {
         _viewTagsScreenUiEffect.emit(effect)
         _uiEffect.emit(effect) // 기존 호환성
@@ -441,8 +430,8 @@ class TagViewModel @Inject constructor(
         }
     }
     
-    fun loadTagCards(tagName: String, tagId: Long) {
-        SooumLog.d(TAG, "loadTagCards tagName=$tagName, tagId=$tagId")
+    fun loadTagCards(tagName: String, tagId: Long, initialFavoriteState: Boolean = false) {
+        SooumLog.d(TAG, "loadTagCards tagName=$tagName, tagId=$tagId, initialFavoriteState=$initialFavoriteState")
         
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -455,7 +444,7 @@ class TagViewModel @Inject constructor(
                         recommendedTags = emptyList(),
                         cardDataItems = cardsPagingFlow,
                         currentSearchedTag = TagInfo(id = tagId, name = tagName, usageCnt = 0),
-                        currentTagFavoriteState = false
+                        currentTagFavoriteState = initialFavoriteState
                     )
                 }
             } catch (e: Exception) {

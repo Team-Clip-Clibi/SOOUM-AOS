@@ -74,9 +74,19 @@ internal fun ViewTagsRoute(
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // tagName, tagId를 받아서 API 호출
+    // favoriteTags 로드를 먼저 확인
     LaunchedEffect(tagName, tagId) {
-        viewModel.loadTagCards(tagName, tagId)
+        if (uiState.favoriteTags.isEmpty()) {
+            viewModel.loadFavoriteTags()
+        }
+    }
+
+    // favoriteTags가 로드된 후 tagCards 로드 (즐겨찾기 상태 포함)
+    LaunchedEffect(tagName, tagId, uiState.favoriteTags) {
+        if (uiState.favoriteTags.isNotEmpty() || uiState.nickName.isNotEmpty()) {
+            val currentFavoriteState = viewModel.getTagFavoriteState(tagId)
+            viewModel.loadTagCards(tagName, tagId, currentFavoriteState)
+        }
     }
 
     // Toast 처리 및 Snackbar 처리
