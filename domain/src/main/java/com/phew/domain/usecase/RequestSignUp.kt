@@ -62,11 +62,11 @@ class RequestSignUp @Inject constructor(
             if (requestImageUploadUrl is DataResult.Fail) return DomainResult.Failure(ERROR_NETWORK)
             fileName = (requestImageUploadUrl as DataResult.Success).data.imgName
             val uploadImageUrl = requestImageUploadUrl.data.imgUrl
-            val file = try{
+            val file = try {
                 context.contentResolver.readAsCompressedJpegRequestBody(uri = data.profileImage.toUri())
-            }catch (e: IOException){
+            } catch (e: IOException) {
                 return DomainResult.Failure(ERROR_FAIL_PACKAGE_IMAGE)
-            }catch (e : OutOfMemoryError){
+            } catch (e: OutOfMemoryError) {
                 return DomainResult.Failure(ERROR_FAIL_JOB)
             }
             val requestImageUpload = repository.requestUploadImage(
@@ -112,6 +112,13 @@ class RequestSignUp @Inject constructor(
                     )
                 )
                 if (!saveToken) return DomainResult.Failure(ERROR_FAIL_JOB)
+                val saveProfile = deviceRepository.saveProfileInfo(
+                    profileKey = BuildConfig.PROFILE_KEY,
+                    nickName = data.nickName,
+                    profileImageUrl = data.profileImage,
+                    profileImageName = fileName ?: ""
+                )
+                if (!saveProfile) return DomainResult.Failure(ERROR_FAIL_JOB)
                 return DomainResult.Success(Unit)
             }
         }

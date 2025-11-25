@@ -12,7 +12,6 @@ import com.phew.core.ui.component.back.SooumOnBackPressed
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.model.navigation.OnBoardingArgs
 import com.phew.core.ui.model.navigation.ProfileArgs
-import com.phew.core.ui.model.navigation.TagViewArgs
 import com.phew.core.ui.state.SooumAppState
 import com.phew.core.ui.state.rememberSooumAppState
 import com.phew.home.navigation.homeGraph
@@ -23,7 +22,6 @@ import com.phew.core.ui.model.navigation.WriteArgs
 import com.phew.domain.interceptor.GlobalEvent
 import com.phew.presentation.MainViewModel
 import com.phew.presentation.detail.navigation.navigateToDetailGraph
-import com.phew.presentation.tag.navigation.tagGraph
 import com.phew.presentation.tag.navigation.navigateToViewTagsWithArgs
 import com.phew.presentation.write.navigation.navigateToWriteGraphWithArgs
 import com.phew.presentation.write.navigation.writeGraph
