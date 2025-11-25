@@ -15,16 +15,24 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.phew.core_common.ERROR_NETWORK
+import com.phew.core_common.ERROR_TRANSFER_CODE_INVALID
 import com.phew.core_design.AppBar
+import com.phew.core_design.DialogComponent
 import com.phew.core_design.LargeButton
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.Primary
@@ -32,11 +40,17 @@ import com.phew.core_design.TextComponent
 import com.phew.core_design.TextFiledComponent
 
 @Composable
-fun AuthCodeView(viewModel: SignUpViewModel, onBack: () -> Unit, home: () -> Unit) {
+fun AuthCodeView(viewModel: SignUpViewModel, onBack: () -> Unit, onRestoreSuccess: () -> Unit) {
     val uiState by viewModel.uiState.collectAsState()
+    val snackBarHostState = remember { SnackbarHostState() }
     BackHandler {
         onBack()
     }
+    HandleAuthCode(
+        uiState = uiState,
+        restoreSuccess = onRestoreSuccess,
+        snackBarHostState = snackBarHostState
+    )
     Scaffold(
         topBar = {
             AppBar.IconLeftAppBar(
@@ -56,10 +70,13 @@ fun AuthCodeView(viewModel: SignUpViewModel, onBack: () -> Unit, home: () -> Uni
                     .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
                 ExplainContent(
-                    onClick = home,
+                    onClick = remember(viewModel::restoreAccount) { { viewModel.restoreAccount() } },
                     isEnable = uiState.authCode.trim().isNotEmpty()
                 )
             }
+        },
+        snackbarHost = {
+            DialogComponent.CustomAnimationSnackBarHost(hostState = snackBarHostState)
         }
     ) { paddingValues ->
         Column(
@@ -85,7 +102,9 @@ fun AuthCodeView(viewModel: SignUpViewModel, onBack: () -> Unit, home: () -> Uni
                 text = stringResource(R.string.authCode_txt_content),
                 style = TextComponent.TITLE_2_SB_16,
                 color = NeutralColor.GRAY_500,
-                modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 32.dp)
             )
             TextFiledComponent.NoIcon(
                 value = uiState.authCode,
@@ -141,4 +160,42 @@ private fun ExplainContent(onClick: () -> Unit, isEnable: Boolean) {
         buttonText = stringResource(com.phew.core_design.R.string.common_okay),
         isEnable = isEnable
     )
+}
+
+@Composable
+private fun HandleAuthCode(
+    uiState: SignUp,
+    restoreSuccess: () -> Unit,
+    snackBarHostState: SnackbarHostState,
+) {
+    val context = LocalContext.current
+    LaunchedEffect(uiState) {
+        when (val result = uiState.restoreAccountResult) {
+            is UiState.Fail -> {
+                when (result.errorMessage) {
+                    ERROR_NETWORK -> {
+                        snackBarHostState.showSnackbar(
+                            message = context.getString(com.phew.core_design.R.string.error_network),
+                            duration = SnackbarDuration.Short
+                        )
+                    }
+                    ERROR_TRANSFER_CODE_INVALID -> {
+                        snackBarHostState.showSnackbar(
+                            message = context.getString(com.phew.core_design.R.string.error_auth_code_invalid),
+                            duration = SnackbarDuration.Short
+                        )
+                    }
+                    else -> {
+                        snackBarHostState.showSnackbar(
+                            message = context.getString(com.phew.core_design.R.string.error_app),
+                            duration = SnackbarDuration.Short
+                        )
+                    }
+                }
+            }
+
+            is UiState.Success -> restoreSuccess()
+            else -> Unit
+        }
+    }
 }

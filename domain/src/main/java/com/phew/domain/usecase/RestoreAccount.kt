@@ -1,6 +1,13 @@
 package com.phew.domain.usecase
 
 import com.phew.core_common.DataResult
+import com.phew.core_common.DomainResult
+import com.phew.core_common.ERROR_FAIL_JOB
+import com.phew.core_common.ERROR_NETWORK
+import com.phew.core_common.ERROR_TRANSFER_CODE_INVALID
+import com.phew.core_common.HTTP_BAD_REQUEST
+import com.phew.domain.BuildConfig
+import com.phew.domain.dto.Token
 import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.network.MembersRepository
 import com.phew.domain.repository.network.SignUpRepository
@@ -10,54 +17,50 @@ import java.security.spec.X509EncodedKeySpec
 import javax.crypto.Cipher
 import javax.inject.Inject
 
-class TransferAccount @Inject constructor(
+class RestoreAccount @Inject constructor(
     private val membersRepository: MembersRepository,
-    private val deviceRepository: DeviceRepository,
     private val signUpRepository: SignUpRepository,
+    private val deviceRepository: DeviceRepository,
 ) {
     data class Param(
         val transferCode: String,
     )
 
-    suspend operator fun invoke(param: Param): Result<Unit> {
-        val requestTransferKey = signUpRepository.requestSecurityKey()
-        if (requestTransferKey is DataResult.Fail) return Result.failure(Exception("Failed to get transfer key"))
+    suspend operator fun invoke(param: Param): DomainResult<Unit, String> {
+        val transferRsaKey = signUpRepository.requestSecurityKey()
+        if (transferRsaKey is DataResult.Fail) return DomainResult.Failure(ERROR_NETWORK)
         val deviceId = deviceRepository.requestDeviceId()
-        val transferEncryptInfo = makeDeviceInfo(
-            key = (requestTransferKey as DataResult.Success).data,
-            deviceInfo = deviceId
+        val transferEncryptedInfo = makeDeviceInfo(key = (transferRsaKey as DataResult.Success).data, deviceInfo = deviceId)
+        val codeResult = membersRepository.transferAccount(transferCode = param.transferCode , deviceId = transferEncryptedInfo)
+        if (codeResult != Result.success(Unit)) return DomainResult.Failure(
+            ERROR_TRANSFER_CODE_INVALID
         )
-        val codeResult = membersRepository.transferAccount(
-            transferCode = param.transferCode,
-            deviceId = transferEncryptInfo
-        )
-        if (codeResult != Result.success(Unit)) return codeResult
-        val requestLoginKey = signUpRepository.requestSecurityKey()
-        val loginEncryptInfo = makeDeviceInfo(
-            key = (requestLoginKey as DataResult.Success).data,
-            deviceInfo = deviceId
-        )
+        val loginKey = signUpRepository.requestSecurityKey()
+        val loginEncryptedInfo = makeDeviceInfo(key = (loginKey as DataResult.Success).data, deviceInfo = deviceId)
         val modelName = deviceRepository.requestDeviceModel()
         val osVersion = deviceRepository.requestDeviceOS()
         when (val request = signUpRepository.requestLogin(
-            info = loginEncryptInfo,
+            info = loginEncryptedInfo,
             osVersion = osVersion,
             modelName = modelName
         )) {
             is DataResult.Fail -> {
-                return Result.failure(request.throwable ?: Exception("Login request failed"))
+                return when (request.code) {
+                    HTTP_BAD_REQUEST -> DomainResult.Failure(ERROR_FAIL_JOB)
+                    else -> DomainResult.Failure(ERROR_NETWORK)
+                }
             }
 
             is DataResult.Success -> {
                 val saveToken = deviceRepository.saveToken(
-                    key = "TOKEN_KEY",
-                    data = com.phew.domain.dto.Token(
+                    key = BuildConfig.TOKEN_KEY,
+                    data = Token(
                         refreshToken = request.data.refreshToken,
                         accessToken = request.data.accessToken
                     )
                 )
-                if (!saveToken) return Result.failure(Exception("Failed to save token"))
-                return Result.success(Unit)
+                if (!saveToken) return DomainResult.Failure(ERROR_FAIL_JOB)
+                return DomainResult.Success(Unit)
             }
         }
     }

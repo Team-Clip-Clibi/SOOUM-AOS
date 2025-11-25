@@ -9,6 +9,7 @@ import com.google.gson.Gson
 import com.phew.core_common.ERROR
 import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.ERROR_NO_DATA
+import com.phew.datastore_local.dto.ProfileInfoDTO
 import com.phew.datastore_local.dto.TokenDTO
 import com.phew.datastore_local.dto.UserInfoDTO
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -47,6 +48,9 @@ class DataStoreImpl @Inject constructor(
 
     @Volatile
     private var userInfo: UserInfoDTO? = null
+    @Volatile
+    private var profileInfoDTO: ProfileInfoDTO? = null
+
     override suspend fun insertToken(key: String, data: Pair<String, String>): Boolean {
         try {
             val token = TokenDTO(data.first, data.second)
@@ -140,6 +144,52 @@ class DataStoreImpl @Inject constructor(
         }
     }
 
+    override suspend fun saveProfileInfo(
+        profileKey: String,
+        data: ProfileInfoDTO,
+    ): Boolean {
+        try {
+            if (profileInfoDTO != null && profileInfoDTO?.equals(data) == true) {
+                return true
+            }
+            when (val beforeData = sharedPreferences.getString(profileKey, null)) {
+                null -> {
+                    val jsonString = gson.toJson(data)
+                    sharedPreferences.edit(commit = true) { putString(profileKey, jsonString) }
+                    profileInfoDTO = data
+                    return true
+                }
+
+                else -> {
+                    val beforeProfileInfoDTO = gson.fromJson(beforeData, ProfileInfoDTO::class.java)
+                    if (beforeProfileInfoDTO.equals(data)) return true
+                    val jsonString = gson.toJson(data)
+                    sharedPreferences.edit(commit = true) { putString(profileKey, jsonString) }
+                    profileInfoDTO = data
+                    return true
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return false
+        }
+    }
+
+    override suspend fun getProfileInfo(profileKey: String): ProfileInfoDTO? {
+        try {
+            profileInfoDTO?.let { data ->
+                return data
+            }
+            val jsonString = sharedPreferences.getString(profileKey, null) ?: return null
+            val profileInfoDTO = gson.fromJson(jsonString, ProfileInfoDTO::class.java)
+            this.profileInfoDTO = profileInfoDTO
+            return profileInfoDTO
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return null
+        }
+    }
+
     override suspend fun getUserInfo(key: String): UserInfoDTO? {
         try {
             userInfo?.let { data ->
@@ -160,6 +210,7 @@ class DataStoreImpl @Inject constructor(
             sharedPreferences.edit(commit = true) { clear() }
             cachedToken = null
             userInfo = null
+            profileInfoDTO = null
             return true
         } catch (e: Exception) {
             e.printStackTrace()

@@ -2,6 +2,7 @@ package com.phew.repository
 
 
 import com.phew.datastore_local.DataStore
+import com.phew.datastore_local.dto.ProfileInfoDTO
 import com.phew.datastore_local.dto.UserInfoDTO
 import com.phew.device_info.DeviceInfo
 import com.phew.domain.dto.Location
@@ -109,5 +110,34 @@ class DeviceRepositoryImpl @Inject constructor(
 
     override suspend fun getAppVersion(): String {
         return deviceInfo.appVersion()
+    }
+
+    override suspend fun deleteAll(): Boolean {
+        return dataStoreLocal.clearAllData()
+    }
+
+    override suspend fun saveProfileInfo(
+        profileKey: String,
+        nickName: String,
+        profileImageUrl: String,
+        profileImageName: String,
+    ): Boolean {
+        return dataStoreLocal.saveProfileInfo(
+            profileKey = profileKey, data = ProfileInfoDTO(
+                nickName = nickName,
+                profileImageUrl = profileImageUrl,
+                profileImageName = profileImageName
+            )
+        )
+    }
+
+    override suspend fun getProfileInfo(profileKey: String): Triple<String, String, String>? {
+        return dataStoreLocal.getProfileInfo(profileKey = profileKey)?.let { data ->
+            Triple(
+                data.nickName,
+                data.profileImageUrl,
+                data.profileImageName
+            )
+        }
     }
 }
