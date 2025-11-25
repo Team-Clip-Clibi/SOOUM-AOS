@@ -178,6 +178,8 @@ class NetworkConvention : Plugin<Project> {
             "implementation"(libs.findLibrary("squareup-okhttp3-logging-interceptor").get())
             "implementation"(libs.findLibrary("jetbrains-kotlinx-serialization-json").get())
             "implementation"(libs.findLibrary("google-gson").get())
+            "implementation"(project(":core:core-common"))
+            "implementation"(project(":domain"))
         }
     }
 }

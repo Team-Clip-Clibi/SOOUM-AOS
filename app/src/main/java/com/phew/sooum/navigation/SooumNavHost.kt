@@ -3,7 +3,9 @@ package com.phew.sooum.navigation
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.navOptions
 import com.phew.core.ui.component.back.SooumOnBackPressed
@@ -18,6 +20,8 @@ import com.phew.home.navigation.navigateToHomeGraph
 import com.phew.home.navigation.navigateToReport
 import com.phew.presentation.detail.navigation.detailGraph
 import com.phew.core.ui.model.navigation.WriteArgs
+import com.phew.domain.interceptor.GlobalEvent
+import com.phew.presentation.MainViewModel
 import com.phew.presentation.detail.navigation.navigateToDetailGraph
 import com.phew.presentation.tag.navigation.tagGraph
 import com.phew.presentation.tag.navigation.navigateToViewTagsWithArgs
@@ -40,10 +44,24 @@ fun SooumNavHost(
     appVersionUpdate: () -> Unit,
     finish: () -> Unit,
     webView: (String) -> Unit,
+    mainViewModel: MainViewModel = hiltViewModel(),
 ) {
     val navController = appState.navController
     val homeAppState = rememberSooumAppState()
-
+    LaunchedEffect(Unit) {
+        mainViewModel.globalEvent.collect { event ->
+            if (event == GlobalEvent.TeapotEvent) {
+                navController.navigateToSignUpGraph(
+                    navOptions = navOptions {
+                        popUpTo(SPLASH_GRAPH) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
+                )
+            }
+        }
+    }
     SharedTransitionLayout {
         NavHost(
             navController = navController,

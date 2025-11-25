@@ -110,4 +110,8 @@ class DeviceRepositoryImpl @Inject constructor(
     override suspend fun getAppVersion(): String {
         return deviceInfo.appVersion()
     }
+
+    override suspend fun deleteAll(): Boolean {
+        return dataStoreLocal.clearAllData()
+    }
 }

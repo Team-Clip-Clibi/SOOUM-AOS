@@ -1,8 +1,10 @@
 package com.phew.network.di
 
-import com.phew.domain.token.TokenManger
+import com.phew.domain.interceptor.GlobalEventBus
+import com.phew.domain.interceptor.InterceptorManger
 import com.phew.network.AuthInterceptor
 import com.phew.network.BuildConfig
+import com.phew.network.TeapotInterceptor
 import com.phew.network.TokenAuthenticator
 import com.phew.network.retrofit.AppVersionHttp
 import com.phew.network.retrofit.BlockHttp
@@ -48,19 +50,22 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideLoggingInterceptor(): HttpLoggingInterceptor = HttpLoggingInterceptor().apply {
-        level =
-            HttpLoggingInterceptor.Level.BODY
+        level = HttpLoggingInterceptor.Level.BODY
     }
 
     @Provides
     @Singleton
-    fun provideAuthInterceptor(tokenManger: TokenManger): AuthInterceptor =
-        AuthInterceptor(tokenManger)
+    fun provideAuthInterceptor(interceptorManger: InterceptorManger): AuthInterceptor =
+        AuthInterceptor(interceptorManger)
 
     @Provides
     @Singleton
-    fun provideTokenAuthenticator(tokenManger: TokenManger): TokenAuthenticator =
-        TokenAuthenticator(tokenManger)
+    fun provideTokenAuthenticator(interceptorManger: InterceptorManger): TokenAuthenticator =
+        TokenAuthenticator(interceptorManger)
+
+    @Provides
+    @Singleton
+    fun provideGlobalEventBus(): GlobalEventBus = GlobalEventBus()
 
     @Provides
     @Singleton
@@ -68,10 +73,12 @@ object NetworkModule {
     fun provideOkHttpClient(
         loggingInterceptor: HttpLoggingInterceptor,
         authInterceptor: AuthInterceptor,
-        tokenAuthenticator: TokenAuthenticator
+        tokenAuthenticator: TokenAuthenticator,
+        teapotInterceptor: TeapotInterceptor,
     ): OkHttpClient = OkHttpClient.Builder()
         .addInterceptor(loggingInterceptor)
         .addInterceptor(authInterceptor)
+        .addInterceptor(teapotInterceptor)
         .authenticator(tokenAuthenticator)
         .readTimeout(20L, TimeUnit.SECONDS)
         .writeTimeout(20L, TimeUnit.SECONDS)
@@ -82,7 +89,7 @@ object NetworkModule {
     @Singleton
     @Named("RefreshClient")
     fun provideRefreshOkHttpClient(
-        loggingInterceptor: HttpLoggingInterceptor
+        loggingInterceptor: HttpLoggingInterceptor,
     ): OkHttpClient = OkHttpClient.Builder()
         .addInterceptor(loggingInterceptor)
         .readTimeout(20L, TimeUnit.SECONDS)
@@ -94,7 +101,7 @@ object NetworkModule {
     @Provides
     fun provideRetrofit(
         @Named("AuthClient") okHttpClient: OkHttpClient,
-        json: Json
+        json: Json,
     ): Retrofit = Retrofit.Builder()
         .baseUrl(BuildConfig.BASE_URL)
         .client(okHttpClient)
@@ -105,7 +112,7 @@ object NetworkModule {
     @Provides
     fun provideTokenRefreshApi(
         @Named("RefreshClient") okHttpClient: OkHttpClient,
-        json: Json
+        json: Json,
     ): TokenRefreshHttp = Retrofit.Builder()
         .baseUrl(BuildConfig.BASE_URL)
         .client(okHttpClient)
