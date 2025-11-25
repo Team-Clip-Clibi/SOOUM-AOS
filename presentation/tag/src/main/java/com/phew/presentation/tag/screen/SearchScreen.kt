@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.LazyGridState
@@ -21,17 +22,26 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -46,6 +56,7 @@ import androidx.paging.compose.itemKey
 import com.phew.core_common.log.SooumLog
 import com.phew.core_design.AppBar.SearchAppBar
 import com.phew.core_design.CustomFont
+import com.phew.core_design.DialogComponent
 import com.phew.core_design.MediumButton.IconPrimary
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.R as DesignR
@@ -72,10 +83,11 @@ internal fun SearchRoute(
     val gridState = rememberLazyGridState()
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    // Toast 처리
+    // Toast 처리 및 Snackbar 처리
     LaunchedEffect(Unit) {
-        viewModel.uiEffect
+        viewModel.searchScreenUiEffect
             .flowWithLifecycle(lifecycleOwner.lifecycle, Lifecycle.State.STARTED)
             .collect { effect ->
                 effect?.let {
@@ -83,15 +95,26 @@ internal fun SearchRoute(
                         is TagUiEffect.ShowAddFavoriteTagToast -> {
                             val message = context.getString(R.string.tag_favorite_add, it.tagName)
                             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-                            viewModel.clearUiEffect()
+                            viewModel.clearSearchScreenUiEffect()
                         }
                         is TagUiEffect.ShowRemoveFavoriteTagToast -> {
                             val message = context.getString(R.string.tag_favorite_delete, it.tagName)
                             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-                            viewModel.clearUiEffect()
+                            viewModel.clearSearchScreenUiEffect()
+                        }
+                        is TagUiEffect.ShowNetworkErrorSnackbar -> {
+                            val result = snackbarHostState.showSnackbar(
+                                message = context.getString(R.string.tag_network_error_message),
+                                actionLabel = context.getString(R.string.tag_network_error_retry),
+                                duration = SnackbarDuration.Indefinite
+                            )
+                            if (result == SnackbarResult.ActionPerformed) {
+                                it.retryAction()
+                            }
+                            viewModel.clearSearchScreenUiEffect()
                         }
                         else -> {
-                            viewModel.clearUiEffect()
+                            viewModel.clearSearchScreenUiEffect()
                         }
                     }
                 }
@@ -133,7 +156,8 @@ internal fun SearchRoute(
         onClickCard = onClickCard,
         onBackPressed = onBackPressed,
         isFavorite = uiState.currentTagFavoriteState,
-        onFavoriteToggle = viewModel::toggleCurrentSearchedTagFavorite
+        onFavoriteToggle = viewModel::toggleCurrentSearchedTagFavorite,
+        snackbarHostState = snackbarHostState
     )
 }
 
@@ -153,10 +177,12 @@ private fun SearchScreen(
     onClickCard: (Long) -> Unit,
     onBackPressed: () -> Unit,
     isFavorite: Boolean,
-    onFavoriteToggle: () -> Unit
+    onFavoriteToggle: () -> Unit,
+    snackbarHostState: SnackbarHostState
 ) {
     SooumLog.d("SearchScreen", "recommendedTags=$recommendedTags")
     val focusManager = LocalFocusManager.current
+    var isSearchFieldFocused by remember { mutableStateOf(false) }
     
     // 스크롤 감지를 위한 상태 (list와 grid 모두)
     val isListScrolling by remember {
@@ -171,21 +197,26 @@ private fun SearchScreen(
         }
     }
     
-    // 스크롤 시 키보드 숨기기
+    // 스크롤 시 키보드 숨기기 및 포커스 상태 해제
     LaunchedEffect(isListScrolling, isGridScrolling) {
         if (isListScrolling || isGridScrolling) {
             focusManager.clearFocus()
+            isSearchFieldFocused = false
         }
     }
     
     Scaffold(
         modifier = modifier
             .fillMaxSize(),
+        snackbarHost = { DialogComponent.CustomAnimationSnackBarHost(hostState = snackbarHostState) },
         topBar = {
             SearchAppBar(
                 value = searchValue,
                 placeholder = stringResource(R.string.tag_search_tag_placeholder),
-                onValueChange = onValueChange,
+                onValueChange = { value ->
+                    onValueChange(value)
+                    isSearchFieldFocused = true
+                },
                 onDeleteClick = onDeleteClick,
                 onBackClick = onBackPressed,
                 onSearch = onSearch,
@@ -213,6 +244,7 @@ private fun SearchScreen(
                 .pointerInput(Unit) {
                     detectTapGestures(onTap = {
                         focusManager.clearFocus()
+                        isSearchFieldFocused = false
                     })
                 }
         ) {
@@ -243,6 +275,7 @@ private fun SearchScreen(
                                 cardId = item.cardId,
                                 onClick = { cardId ->
                                     focusManager.clearFocus()
+                                    isSearchFieldFocused = false
                                     onClickCard(cardId)
                                 }
                             )
@@ -263,13 +296,14 @@ private fun SearchScreen(
                             content = "${item.usageCnt}",
                             onClick = { 
                                 focusManager.clearFocus()
+                                isSearchFieldFocused = false
                                 onItemClick(item.name)
                             }
                         )
                     }
                 }
-            } else if (searchValue.isNotBlank() && recommendedTags.isEmpty()) {
-                // 검색어가 있지만 추천 태그 결과가 없을 때
+            } else if (searchValue.isNotBlank() && recommendedTags.isEmpty() && !isSearchFieldFocused) {
+                // 검색어가 있지만 추천 태그 결과가 없고 포커싱 중이 아닐 때
                 EmptyCardList()
             }
         }
@@ -306,7 +340,10 @@ private fun EmptyCardList() {
     ) {
         Image(
             painter = painterResource(com.phew.core_design.R.drawable.ic_deleted_card),
-            contentDescription = "no notify"
+            contentDescription = "no notify",
+            modifier = Modifier
+                .height(130.dp)
+                .width(220.dp)
         )
         Text(
             text = stringResource(R.string.tag_not_search_card),

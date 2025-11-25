@@ -9,6 +9,7 @@
     <string name="common_skip">건너뛰기</string>
     <string name="common_permission">권한 승인이 필요합니다.</string>
     <string name="error_network">네트워크 에러</string>
+    <string name="error_auth_code_invalid">코드 검증 실패 코드를 확인 해 주세요</string>
     <string name="error_app">앱 ERROR로 작업을 완료 못했습니다.</string>
     <string name="error_log_out">로그인 기간 만료로 로그아웃 합니다.</string>
     <string name="bottom_view_home">홈</string>

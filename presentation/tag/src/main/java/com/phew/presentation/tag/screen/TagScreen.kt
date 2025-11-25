@@ -30,12 +30,16 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -85,14 +89,14 @@ internal fun TagRoute(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.uiEffect
+        viewModel.tagScreenUiEffect
             .flowWithLifecycle(lifecycleOwner.lifecycle, Lifecycle.State.STARTED)
             .collect { effect ->
                 effect?.let {
                     when (it) {
                         TagUiEffect.NavigationSearchScreen -> {
                             navigateToSearchScreen()
-                            viewModel.clearUiEffect()
+                            viewModel.clearTagScreenUiEffect()
                         }
 
                         is TagUiEffect.ShowRemoveFavoriteTagToast -> {
@@ -101,7 +105,7 @@ internal fun TagRoute(
                                 context.getString(R.string.tag_favorite_delete, it.tagName),
                                 Toast.LENGTH_SHORT
                             ).show()
-                            viewModel.clearUiEffect()
+                            viewModel.clearTagScreenUiEffect()
                         }
 
                         is TagUiEffect.ShowAddFavoriteTagToast -> {
@@ -110,12 +114,17 @@ internal fun TagRoute(
                                 context.getString(R.string.tag_favorite_add, it.tagName),
                                 Toast.LENGTH_SHORT
                             ).show()
-                            viewModel.clearUiEffect()
+                            viewModel.clearTagScreenUiEffect()
                         }
 
                         is TagUiEffect.NavigateToViewTags -> {
                             navigateToViewTags(it.tagName, it.tagId)
-                            viewModel.clearUiEffect()
+                            viewModel.clearTagScreenUiEffect()
+                        }
+                        
+                        is TagUiEffect.ShowNetworkErrorSnackbar -> {
+                            // TagScreen에서는 네트워크 오류가 발생하지 않으므로 빈 처리
+                            viewModel.clearTagScreenUiEffect()
                         }
                     }
                 }
@@ -134,8 +143,11 @@ internal fun TagRoute(
             tag?.let { viewModel.toggleFavoriteTag(it.id, it.name) }
         },
         onRefresh = viewModel::refresh,
-        getTagFavoriteState = viewModel::getTagFavoriteState,
-        onTagRankClick =  viewModel::onTagRankClick
+        getTagFavoriteState = { tagId ->
+            uiState.localFavoriteStates[tagId] ?: uiState.favoriteTags.any { it.id == tagId }
+        },
+        onTagRankClick =  viewModel::onTagRankClick,
+        onTagClick = viewModel::onTagClick
     )
 }
 
@@ -151,7 +163,8 @@ private fun TagScreen(
     onFavoriteClick: (Long) -> Unit,
     onRefresh: () -> Unit,
     getTagFavoriteState: (Long) -> Boolean,
-    onTagRankClick: (Long) -> Unit
+    onTagRankClick: (Long) -> Unit,
+    onTagClick: (Long, String) -> Unit
 ) {
     val refreshState = rememberPullToRefreshState()
     Scaffold(
@@ -178,7 +191,8 @@ private fun TagScreen(
                 onSearchView = onSearchView,
                 onFavoriteClick = onFavoriteClick,
                 getTagFavoriteState = getTagFavoriteState,
-                onTagRankClick = onTagRankClick
+                onTagRankClick = onTagRankClick,
+                onTagClick = onTagClick
             )
         }
     }
@@ -195,7 +209,8 @@ private fun TagView(
     onSearchView: () -> Unit,
     onFavoriteClick: (Long) -> Unit,
     getTagFavoriteState: (Long) -> Boolean,
-    onTagRankClick: (Long) -> Unit
+    onTagRankClick: (Long) -> Unit,
+    onTagClick: (Long, String) -> Unit
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
@@ -238,6 +253,7 @@ private fun TagView(
                     FavoriteTagsList(
                         favoriteTags = favoriteTags,
                         modifier = Modifier.fillMaxWidth(),
+                        onTagClick = onTagClick,
                         onFavoriteClick = onFavoriteClick,
                         getTagFavoriteState = getTagFavoriteState
                     )
@@ -309,27 +325,83 @@ private fun FavoriteTagsList(
     favoriteTags: List<FavoriteTag>,
     modifier: Modifier = Modifier,
     onFavoriteClick: (Long) -> Unit = {},
+    onTagClick: (Long, String) -> Unit,
     getTagFavoriteState: (Long) -> Boolean = { true }
 ) {
     val chunkedTags = favoriteTags.chunked(3)
-    val pagerState = rememberPagerState(pageCount = { chunkedTags.size })
+    val hasMultiplePages = chunkedTags.size > 1
+    val displayChunks = if (hasMultiplePages) {
+        buildList {
+            add(chunkedTags.last())
+            addAll(chunkedTags)
+            add(chunkedTags.first())
+        }
+    } else {
+        chunkedTags
+    }
+
+    val pagerState = rememberPagerState(
+        initialPage = if (hasMultiplePages) 1 else 0,
+        pageCount = { displayChunks.size }
+    )
+
+    LaunchedEffect(hasMultiplePages, chunkedTags.size) {
+        if (displayChunks.isEmpty()) return@LaunchedEffect
+        val targetPage = if (hasMultiplePages) 1 else 0
+        pagerState.scrollToPage(targetPage)
+    }
+
+    LaunchedEffect(pagerState, hasMultiplePages, chunkedTags.size) {
+        if (!hasMultiplePages || displayChunks.isEmpty()) return@LaunchedEffect
+        snapshotFlow { pagerState.isScrollInProgress }
+            .collect { isScrolling ->
+                if (!isScrolling) {
+                    when (pagerState.currentPage) {
+                        0 -> pagerState.scrollToPage(chunkedTags.size)
+                        displayChunks.lastIndex -> pagerState.scrollToPage(1)
+                    }
+                }
+            }
+    }
+
+    val currentPage by remember {
+        derivedStateOf {
+            if (chunkedTags.isEmpty()) {
+                0
+            } else if (hasMultiplePages) {
+                val rawIndex = pagerState.currentPage - 1
+                ((rawIndex % chunkedTags.size) + chunkedTags.size) % chunkedTags.size
+            } else {
+                pagerState.currentPage.coerceIn(0, chunkedTags.lastIndex)
+            }
+        }
+    }
 
     Column(modifier = modifier) {
-        // 페이지 리스트
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxWidth()
-        ) { pageIndex ->
-            Column(
-                modifier = Modifier.height(144.dp)
-            ) {
-                chunkedTags[pageIndex].forEach { tag ->
-                    TagListItem(
-                        tag = tag.name,
-                        tagId = tag.id,
-                        isFavorite = getTagFavoriteState(tag.id),
-                        onClick = onFavoriteClick
-                    )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(144.dp)
+        ) {
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize(),
+                userScrollEnabled = chunkedTags.size > 1
+            ) { pageIndex ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(144.dp)
+                ) {
+                    displayChunks[pageIndex].forEach { tag ->
+                        TagListItem(
+                            tag = tag.name,
+                            tagId = tag.id,
+                            isFavorite = getTagFavoriteState(tag.id),
+                            onTagClick = onTagClick,
+                            onFavoriteClick = onFavoriteClick
+                        )
+                    }
                 }
             }
         }
@@ -345,7 +417,7 @@ private fun FavoriteTagsList(
                         modifier = Modifier
                             .size(6.dp)
                             .background(
-                                color = if (index == pagerState.currentPage) Primary.DARK else NeutralColor.GRAY_300,
+                                color = if (index == currentPage) Primary.DARK else NeutralColor.GRAY_300,
                                 shape = CircleShape
                             )
                     )
@@ -381,7 +453,8 @@ private fun EmptyFavoriteTag() {
             Text(
                 text = stringResource(R.string.tag_empty_favorite_tags),
                 style = TextComponent.BODY_1_M_14,
-                color = NeutralColor.GRAY_400
+                color = NeutralColor.GRAY_400,
+                textAlign = TextAlign.Center
             )
         }
 

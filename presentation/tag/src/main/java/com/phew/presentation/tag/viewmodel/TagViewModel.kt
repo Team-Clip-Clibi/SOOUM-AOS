@@ -72,6 +72,18 @@ class TagViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(TagUiState())
     
+    // 화면별 UiEffect 분리
+    private val _tagScreenUiEffect = MutableStateFlow<TagUiEffect?>(null)
+    private val _searchScreenUiEffect = MutableStateFlow<TagUiEffect?>(null)
+    private val _viewTagsScreenUiEffect = MutableStateFlow<TagUiEffect?>(null)
+    private val _commonUiEffect = MutableStateFlow<TagUiEffect?>(null)
+    
+    val tagScreenUiEffect = _tagScreenUiEffect.asSharedFlow()
+    val searchScreenUiEffect = _searchScreenUiEffect.asSharedFlow()
+    val viewTagsScreenUiEffect = _viewTagsScreenUiEffect.asSharedFlow()
+    val commonUiEffect = _commonUiEffect.asSharedFlow()
+    
+    // 기존 호환성을 위한 통합 UiEffect (deprecated 예정)
     private val _uiEffect = MutableStateFlow<TagUiEffect?>(null)
     val uiEffect = _uiEffect.asSharedFlow()
 
@@ -211,20 +223,59 @@ class TagViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 SooumLog.e(TAG, "Failed to perform search: ${e.message}")
+                emitSearchScreenEffect(TagUiEffect.ShowNetworkErrorSnackbar { performSearch(tag) })
             }
         }
     }
 
     fun navToSearchScreen() {
         viewModelScope.launch {
-            _uiEffect.emit(TagUiEffect.NavigationSearchScreen)
+            emitTagScreenEffect(TagUiEffect.NavigationSearchScreen)
         }
     }
 
-    fun clearUiEffect() {
+    // 화면별 UiEffect 클리어 함수들
+    fun clearTagScreenUiEffect() {
         viewModelScope.launch {
-            _uiEffect.emit(null)
+            _tagScreenUiEffect.emit(null)
         }
+    }
+
+    fun clearSearchScreenUiEffect() {
+        viewModelScope.launch {
+            _searchScreenUiEffect.emit(null)
+        }
+    }
+
+    fun clearViewTagsScreenUiEffect() {
+        viewModelScope.launch {
+            _viewTagsScreenUiEffect.emit(null)
+        }
+    }
+
+
+    // 화면별 UiEffect 발생 함수들
+    private suspend fun emitTagScreenEffect(effect: TagUiEffect) {
+        _tagScreenUiEffect.emit(effect)
+        _uiEffect.emit(effect) // 기존 호환성
+    }
+
+    private suspend fun emitSearchScreenEffect(effect: TagUiEffect) {
+        _searchScreenUiEffect.emit(effect)
+        _uiEffect.emit(effect) // 기존 호환성
+    }
+
+    private suspend fun emitViewTagsScreenEffect(effect: TagUiEffect) {
+        _viewTagsScreenUiEffect.emit(effect)
+        _uiEffect.emit(effect) // 기존 호환성
+    }
+    
+    private suspend fun emitCommonEffect(effect: TagUiEffect) {
+        _commonUiEffect.emit(effect)
+        _tagScreenUiEffect.emit(effect)
+        _searchScreenUiEffect.emit(effect)
+        _viewTagsScreenUiEffect.emit(effect)
+        _uiEffect.emit(effect) // 기존 호환성
     }
 
     fun toggleFavoriteTag(tagId: Long, tagName: String) {
@@ -234,26 +285,31 @@ class TagViewModel @Inject constructor(
             val currentFavoriteState = currentState.localFavoriteStates[tagId] ?: true
 
             if (currentFavoriteState) {
-                removeFavoriteTagAction(tagId, tagName)
+                removeFavoriteTagAction(tagId, tagName, removeFromList = false) // TagScreen에서는 리스트에서 제거하지 않음
             } else {
                 addFavoriteTagAction(tagId, tagName)
             }
         }
     }
 
-    private suspend fun removeFavoriteTagAction(tagId: Long, tagName: String) {
+    private suspend fun removeFavoriteTagAction(tagId: Long, tagName: String, removeFromList: Boolean = true) {
         try {
             val result = removeFavoriteTag(RemoveFavoriteTag.Param(tagId))
             when (result) {
                 is DataResult.Success -> {
-                    // 로컬 상태 업데이트 (즐겨찾기 해제) 및 favoriteTags 리스트에서 제거
+                    // 로컬 상태 업데이트 (즐겨찾기 해제)
                     _uiState.update { currentState ->
                         currentState.copy(
                             localFavoriteStates = currentState.localFavoriteStates + (tagId to false),
-                            favoriteTags = currentState.favoriteTags.filter { it.id != tagId }
+                            // removeFromList가 true일 때만 favoriteTags에서 제거 (다른 화면에서 사용)
+                            favoriteTags = if (removeFromList) {
+                                currentState.favoriteTags.filter { it.id != tagId }
+                            } else {
+                                currentState.favoriteTags // TagScreen에서는 리스트 유지
+                            }
                         )
                     }
-                    _uiEffect.emit(TagUiEffect.ShowRemoveFavoriteTagToast(tagName))
+                    emitCommonEffect(TagUiEffect.ShowRemoveFavoriteTagToast(tagName))
                     SooumLog.d(TAG, "Successfully removed favorite tag: $tagName")
                 }
 
@@ -279,7 +335,7 @@ class TagViewModel @Inject constructor(
                     }
                     // 즐겨찾기 리스트 새로고침
                     loadFavoriteTags()
-                    _uiEffect.emit(TagUiEffect.ShowAddFavoriteTagToast(tagName))
+                    emitCommonEffect(TagUiEffect.ShowAddFavoriteTagToast(tagName))
                     SooumLog.d(TAG, "Successfully added favorite tag: $tagName")
                 }
 
@@ -295,7 +351,8 @@ class TagViewModel @Inject constructor(
     // 태그의 즐겨찾기 상태를 가져오는 함수
     fun getTagFavoriteState(tagId: Long): Boolean {
         val localState = _uiState.value.localFavoriteStates[tagId]
-        return localState ?: true // 로컬 상태가 없으면 기본적으로 즐겨찾기로 간주 (FavoriteTagsList에서 사용)
+        // 로컬 상태가 있으면 그 값을 사용, 없으면 favoriteTags 리스트에 있는지 확인
+        return localState ?: _uiState.value.favoriteTags.any { it.id == tagId }
     }
 
     // 현재 검색된 태그의 즐겨찾기 토글
@@ -361,14 +418,20 @@ class TagViewModel @Inject constructor(
             if (tagRank is UiState.Success) {
                 val selectedTag = tagRank.data.find { it.id == tagId }
                 selectedTag?.let { tag ->
-                    _uiEffect.emit(TagUiEffect.NavigateToViewTags(tag.name, tag.id))
+                    emitTagScreenEffect(TagUiEffect.NavigateToViewTags(tag.name, tag.id))
                 }
             }
         }
     }
+
+    fun onTagClick(tagId: Long, tagName: String) {
+        viewModelScope.launch {
+            emitTagScreenEffect(TagUiEffect.NavigateToViewTags(tagName, tagId))
+        }
+    }
     
-    fun loadTagCards(tagName: String, tagId: Long) {
-        SooumLog.d(TAG, "loadTagCards tagName=$tagName, tagId=$tagId")
+    fun loadTagCards(tagName: String, tagId: Long, initialFavoriteState: Boolean = false) {
+        SooumLog.d(TAG, "loadTagCards tagName=$tagName, tagId=$tagId, initialFavoriteState=$initialFavoriteState")
         
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -381,11 +444,12 @@ class TagViewModel @Inject constructor(
                         recommendedTags = emptyList(),
                         cardDataItems = cardsPagingFlow,
                         currentSearchedTag = TagInfo(id = tagId, name = tagName, usageCnt = 0),
-                        currentTagFavoriteState = false
+                        currentTagFavoriteState = initialFavoriteState
                     )
                 }
             } catch (e: Exception) {
                 SooumLog.e(TAG, "Failed to load tag cards: ${e.message}")
+                emitViewTagsScreenEffect(TagUiEffect.ShowNetworkErrorSnackbar { loadTagCards(tagName, tagId) })
             }
         }
     }
@@ -409,6 +473,7 @@ class TagViewModel @Inject constructor(
             } catch (e: Exception) {
                 SooumLog.e(TAG, "Failed to refresh tag cards: ${e.message}")
                 _uiState.update { it.copy(isRefreshing = false) }
+                emitViewTagsScreenEffect(TagUiEffect.ShowNetworkErrorSnackbar { refreshViewTags(tagName, tagId) })
             }
         }
     }
@@ -443,6 +508,7 @@ sealed interface TagUiEffect {
     data class ShowAddFavoriteTagToast(val tagName: String) : TagUiEffect
     data class ShowRemoveFavoriteTagToast(val tagName: String) : TagUiEffect
     data class NavigateToViewTags(val tagName: String, val tagId: Long) : TagUiEffect
+    data class ShowNetworkErrorSnackbar(val retryAction: () -> Unit) : TagUiEffect
 }
 
 private const val TAG = "TagViewModel"

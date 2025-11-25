@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -149,7 +150,8 @@ fun CommentBodyContent(
                 onClick = {
                     onClick(cardId)
                 }
-            )
+            ),
+        contentAlignment = Alignment.Center
     ) {
         SubcomposeAsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
@@ -176,11 +178,11 @@ fun CommentBodyContent(
         )
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
+                .fillMaxWidth()
+                .padding(12.dp)
                 .background(
                     color = OpacityColor.blackSmallColor,
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(5.dp)
                 ),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -194,7 +196,7 @@ fun CommentBodyContent(
                 ),
                 maxLines = textMaxLines,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
             )
         }
     }

@@ -25,8 +25,19 @@ interface DeviceRepository {
     ): Boolean
 
     suspend fun getUserInfo(key: String): UserInfo?
-    suspend fun requestLocation() : Location
-    suspend fun deleteDataStoreInfo(key : String) : Boolean
-    suspend fun getLocationPermission() : Boolean
+    suspend fun requestLocation(): Location
+    suspend fun deleteDataStoreInfo(key: String): Boolean
+    suspend fun getLocationPermission(): Boolean
     suspend fun getAppVersion(): String
+    suspend fun deleteAll(): Boolean
+    suspend fun saveProfileInfo(
+        profileKey: String,
+        nickName: String,
+        profileImageUrl: String,
+        profileImageName: String,
+    ): Boolean
+
+    suspend fun getProfileInfo(
+        profileKey: String,
+    ): Triple<String, String, String>?
 }

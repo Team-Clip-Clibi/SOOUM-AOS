@@ -15,7 +15,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -76,18 +75,17 @@ fun NickNameView(viewModel: SignUpViewModel, onBack: () -> Unit, nextPage: () ->
                 LargeButton.NoIconPrimary(
                     buttonText = stringResource(com.phew.core_design.R.string.common_next),
                     onClick = remember(nextPage) {
-                        viewModel.initNickName()
-                        nextPage
+                        {
+                            viewModel.initNickName()
+                            nextPage()
+                        }
                     },
-                    isEnable = uiState.nickName.trim()
-                        .isNotEmpty() && uiState.nickName.trim().length > 2 && (uiState.checkNickName is UiState.Success) && (uiState.checkNickName as UiState.Success<Boolean>).data
+                    isEnable = (uiState.checkNickName is UiState.Success && (uiState.checkNickName as UiState.Success<Boolean>).data) && uiState.nickName.trim().length > 2
                 )
             }
         },
         snackbarHost = {
-            SnackbarHost(hostState = snackBarHostState) { data ->
-                DialogComponent.SnackBar(data)
-            }
+            DialogComponent.CustomAnimationSnackBarHost(hostState = snackBarHostState)
         }
     ) { paddingValues ->
         Column(

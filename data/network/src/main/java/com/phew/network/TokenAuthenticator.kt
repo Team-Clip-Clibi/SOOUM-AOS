@@ -1,7 +1,7 @@
 package com.phew.network
 
 
-import com.phew.domain.token.TokenManger
+import com.phew.domain.interceptor.InterceptorManger
 import kotlinx.coroutines.runBlocking
 import okhttp3.Authenticator
 import okhttp3.Request
@@ -10,18 +10,18 @@ import okhttp3.Route
 import javax.inject.Inject
 
 class TokenAuthenticator @Inject constructor(
-    private val tokenManger: TokenManger
+    private val interceptorManger: InterceptorManger
 ) : Authenticator {
     override fun authenticate(route: Route?, response: Response): Request? {
         val failedToken = response.request.header("Authorization")?.removePrefix("Bearer ")
         return runBlocking {
-            val currentToken = tokenManger.getAccessToken()
+            val currentToken = interceptorManger.getAccessToken()
             if (failedToken != null && failedToken != currentToken) {
                 return@runBlocking newRequestWithToken(response.request, currentToken)
             }
-            var newAccessToken = tokenManger.refreshAndGetNewToken()
+            var newAccessToken = interceptorManger.refreshAndGetNewToken()
             if (newAccessToken.isEmpty()) {
-                newAccessToken = tokenManger.autoLogin()
+                newAccessToken = interceptorManger.autoLogin()
             }
             if (newAccessToken.isEmpty()) {
                 return@runBlocking null

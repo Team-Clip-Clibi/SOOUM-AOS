@@ -1,5 +1,6 @@
 package com.phew.datastore_local
 
+import com.phew.datastore_local.dto.ProfileInfoDTO
 import com.phew.datastore_local.dto.TokenDTO
 import com.phew.datastore_local.dto.UserInfoDTO
 
@@ -14,4 +15,11 @@ interface DataStore {
     suspend fun saveUserInfo(key: String, data: UserInfoDTO): Boolean
     suspend fun getUserInfo(key: String): UserInfoDTO?
     suspend fun clearAllData(): Boolean
+    suspend fun saveProfileInfo(
+        profileKey : String,
+        data : ProfileInfoDTO
+    ): Boolean
+    suspend fun getProfileInfo(
+        profileKey : String
+    ) : ProfileInfoDTO?
 }

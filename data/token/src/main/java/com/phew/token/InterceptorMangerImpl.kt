@@ -2,7 +2,7 @@ package com.phew.token
 
 import com.phew.domain.dto.Token
 import com.phew.domain.repository.DeviceRepository
-import com.phew.domain.token.TokenManger
+import com.phew.domain.interceptor.InterceptorManger
 import com.phew.network.dto.InfoDTO
 import com.phew.network.dto.TokenDTO
 import com.phew.network.retrofit.TokenRefreshHttp
@@ -14,10 +14,10 @@ import java.security.spec.X509EncodedKeySpec
 import javax.crypto.Cipher
 import javax.inject.Inject
 
-class TokenMangerImpl @Inject constructor(
+class InterceptorMangerImpl @Inject constructor(
     private val deviceRepository: DeviceRepository,
     private val tokenRefreshApi: TokenRefreshHttp,
-) : TokenManger {
+) : InterceptorManger {
 
     private val cacheMutex = Mutex()
     private val refreshMutex = Mutex()
@@ -113,6 +113,10 @@ class TokenMangerImpl @Inject constructor(
         val data = requestLogin.body() ?: return ""
         saveTokens(refreshToken = loginBody.refreshToken, accessToken = loginBody.accessToken)
         return data.accessToken
+    }
+
+    override suspend fun deleteAll(): Boolean {
+        return deviceRepository.deleteAll()
     }
 
     private fun makeSecurityKey(key: String): PublicKey {
