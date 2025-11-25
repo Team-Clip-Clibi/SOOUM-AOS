@@ -389,7 +389,7 @@ object AppBar {
                 .statusBarsPadding()
                 .zIndex(1f)
                 .background(NeutralColor.WHITE)
-                .padding(start = 4.dp, end = 4.dp),
+                .padding(start = 4.dp, end = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(

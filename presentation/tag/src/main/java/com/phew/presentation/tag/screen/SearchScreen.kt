@@ -31,12 +31,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -177,6 +182,7 @@ private fun SearchScreen(
 ) {
     SooumLog.d("SearchScreen", "recommendedTags=$recommendedTags")
     val focusManager = LocalFocusManager.current
+    var isSearchFieldFocused by remember { mutableStateOf(false) }
     
     // 스크롤 감지를 위한 상태 (list와 grid 모두)
     val isListScrolling by remember {
@@ -191,10 +197,11 @@ private fun SearchScreen(
         }
     }
     
-    // 스크롤 시 키보드 숨기기
+    // 스크롤 시 키보드 숨기기 및 포커스 상태 해제
     LaunchedEffect(isListScrolling, isGridScrolling) {
         if (isListScrolling || isGridScrolling) {
             focusManager.clearFocus()
+            isSearchFieldFocused = false
         }
     }
     
@@ -206,7 +213,10 @@ private fun SearchScreen(
             SearchAppBar(
                 value = searchValue,
                 placeholder = stringResource(R.string.tag_search_tag_placeholder),
-                onValueChange = onValueChange,
+                onValueChange = { value ->
+                    onValueChange(value)
+                    isSearchFieldFocused = true
+                },
                 onDeleteClick = onDeleteClick,
                 onBackClick = onBackPressed,
                 onSearch = onSearch,
@@ -234,6 +244,7 @@ private fun SearchScreen(
                 .pointerInput(Unit) {
                     detectTapGestures(onTap = {
                         focusManager.clearFocus()
+                        isSearchFieldFocused = false
                     })
                 }
         ) {
@@ -264,6 +275,7 @@ private fun SearchScreen(
                                 cardId = item.cardId,
                                 onClick = { cardId ->
                                     focusManager.clearFocus()
+                                    isSearchFieldFocused = false
                                     onClickCard(cardId)
                                 }
                             )
@@ -284,13 +296,14 @@ private fun SearchScreen(
                             content = "${item.usageCnt}",
                             onClick = { 
                                 focusManager.clearFocus()
+                                isSearchFieldFocused = false
                                 onItemClick(item.name)
                             }
                         )
                     }
                 }
-            } else if (searchValue.isNotBlank() && recommendedTags.isEmpty()) {
-                // 검색어가 있지만 추천 태그 결과가 없을 때
+            } else if (searchValue.isNotBlank() && recommendedTags.isEmpty() && !isSearchFieldFocused) {
+                // 검색어가 있지만 추천 태그 결과가 없고 포커싱 중이 아닐 때
                 EmptyCardList()
             }
         }

@@ -63,7 +63,7 @@ internal fun SearchListItem(
             Text(
                 text = title,
                 style = TextComponent.BODY_1_M_14,
-                color = NeutralColor.BLACK
+                color = if (isPressed) NeutralColor.GRAY_500 else NeutralColor.BLACK
             )
             Text(
                 text = content,
