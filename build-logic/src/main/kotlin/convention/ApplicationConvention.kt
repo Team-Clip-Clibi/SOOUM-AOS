@@ -31,12 +31,40 @@ class ApplicationConvention : Plugin<Project> {
                 versionName = "1.0.0"
                 testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
             }
-            buildTypes.getByName("release").apply {
-                isMinifyEnabled = false
-                proguardFiles(
-                    getDefaultProguardFile("proguard-android-optimize.txt"),
-                    "proguard-rules.pro"
-                )
+            signingConfigs {
+                create("release") {
+                    storeFile = file("sooumreleasekey.keystore")
+                    storePassword = "SooumAndroid"
+                    keyAlias = "SooumReleaseKey"
+                    keyPassword = "SooumAndroid"
+                }
+            }
+            buildTypes {
+                getByName("debug") {
+                    isMinifyEnabled = false
+                    isDebuggable = true
+                    versionNameSuffix = "-debug"
+                }
+                getByName("release") {
+                    isMinifyEnabled = true
+                    isDebuggable = false
+                    signingConfig = signingConfigs.getByName("release")
+                    proguardFiles(
+                        getDefaultProguardFile("proguard-android-optimize.txt"),
+                        "proguard-rules.pro"
+                    )
+                }
+            }
+            flavorDimensions += "environment"
+            productFlavors {
+                create("dev") {
+                    dimension = "environment"
+                    versionNameSuffix = "-dev"
+                }
+                create("prod") {
+                    dimension = "environment"
+                    versionNameSuffix = "-prod"
+                }
             }
             compileOptions {
                 sourceCompatibility = JavaVersion.VERSION_21
