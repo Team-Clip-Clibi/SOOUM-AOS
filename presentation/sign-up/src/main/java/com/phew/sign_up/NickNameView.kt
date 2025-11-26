@@ -80,7 +80,7 @@ fun NickNameView(viewModel: SignUpViewModel, onBack: () -> Unit, nextPage: () ->
                             nextPage()
                         }
                     },
-                    isEnable = (uiState.checkNickName is UiState.Success && (uiState.checkNickName as UiState.Success<Boolean>).data) && uiState.nickName.trim().length > 2
+                    isEnable = (uiState.checkNickName is UiState.Success && (uiState.checkNickName as UiState.Success<Boolean>).data) && (uiState.nickName.trim().length in 3..<9)
                 )
             }
         },
@@ -116,7 +116,6 @@ fun NickNameView(viewModel: SignUpViewModel, onBack: () -> Unit, nextPage: () ->
                             stringResource(R.string.signUp_nickName_helper)
                         }
                     }
-
                     else -> stringResource(R.string.signUp_nickName_helper)
                 }
             )
@@ -161,7 +160,9 @@ private fun InPutNickNameView(
         },
         value = nickName,
         onValueChange = { input ->
-            onValueChange(input)
+            if (input.length <= 8) {
+                onValueChange(input)
+            }
         },
         placeHolder = stringResource(R.string.signUp_nickName_hint_debug),
         helperUse = true,
