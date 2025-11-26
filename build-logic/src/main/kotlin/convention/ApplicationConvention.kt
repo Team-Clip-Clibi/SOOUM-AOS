@@ -33,10 +33,15 @@ class ApplicationConvention : Plugin<Project> {
             }
             signingConfigs {
                 create("release") {
-                    storeFile = file("sooumreleasekey.keystore")
-                    storePassword = "SooumAndroid"
-                    keyAlias = "SooumReleaseKey"
-                    keyPassword = "SooumAndroid"
+                    val keystorePropertiesFile = rootProject.file("keystore.properties")
+                    if (keystorePropertiesFile.exists()) {
+                        val properties = java.util.Properties()
+                        properties.load(java.io.FileInputStream(keystorePropertiesFile))
+                        storeFile = file(properties.getProperty("storeFile"))
+                        storePassword = properties.getProperty("storePassword")
+                        keyAlias = properties.getProperty("keyAlias")
+                        keyPassword = properties.getProperty("keyPassword")
+                    }
                 }
             }
             buildTypes {
