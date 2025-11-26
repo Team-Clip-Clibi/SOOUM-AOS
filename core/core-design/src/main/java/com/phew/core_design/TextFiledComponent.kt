@@ -124,7 +124,7 @@ object TextFiledComponent {
                     .fillMaxWidth()
                     .height(54.dp)
                     .background(color = NeutralColor.GRAY_100, shape = RoundedCornerShape(10.dp))
-                    .padding(start = 24.dp, end = 20.dp),
+                    .padding(start = 8.dp, end = 20.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
