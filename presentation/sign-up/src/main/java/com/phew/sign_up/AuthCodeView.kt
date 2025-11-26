@@ -169,7 +169,7 @@ private fun HandleAuthCode(
     snackBarHostState: SnackbarHostState,
 ) {
     val context = LocalContext.current
-    LaunchedEffect(uiState) {
+    LaunchedEffect(uiState.restoreAccountResult) {
         when (val result = uiState.restoreAccountResult) {
             is UiState.Fail -> {
                 when (result.errorMessage) {
@@ -179,12 +179,14 @@ private fun HandleAuthCode(
                             duration = SnackbarDuration.Short
                         )
                     }
+
                     ERROR_TRANSFER_CODE_INVALID -> {
                         snackBarHostState.showSnackbar(
                             message = context.getString(com.phew.core_design.R.string.error_auth_code_invalid),
                             duration = SnackbarDuration.Short
                         )
                     }
+
                     else -> {
                         snackBarHostState.showSnackbar(
                             message = context.getString(com.phew.core_design.R.string.error_app),
