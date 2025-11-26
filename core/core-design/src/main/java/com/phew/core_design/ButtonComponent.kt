@@ -906,7 +906,7 @@ object SignUpAgreeButton {
             Icon(
                 painter = painterResource(image),
                 contentDescription = null,
-                tint = if (isSelected) Primary.DARK else NeutralColor.GRAY_400,
+                tint = if (isSelected) Primary.DARK else NeutralColor.GRAY_200,
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
