@@ -33,7 +33,7 @@ class SignUpViewModel @Inject constructor(
     private val getNickName: GetNickName,
     private val requestSignUp: RequestSignUp,
     private val checkNickName: CheckNickName,
-    private val restoreAccount : RestoreAccount
+    private val restoreAccount: RestoreAccount
 ) : ViewModel() {
 
     private var _uiState = MutableStateFlow(SignUp())
@@ -129,7 +129,8 @@ class SignUpViewModel @Inject constructor(
      */
     fun restoreAccount() {
         viewModelScope.launch(Dispatchers.IO) {
-            when (val result = restoreAccount(RestoreAccount.Param(_uiState.value.authCode.trim()))) {
+            when (val result =
+                restoreAccount(RestoreAccount.Param(_uiState.value.authCode.trim()))) {
                 is DomainResult.Failure -> {
                     _uiState.update { state ->
                         state.copy(restoreAccountResult = UiState.Fail(result.error))
@@ -302,6 +303,15 @@ class SignUpViewModel @Inject constructor(
                     )
                 }
             }
+
+            CameraPickerAction.Default -> {
+                _uiState.update { state ->
+                    state.copy(
+                        profile = Uri.EMPTY,
+                        profileBottom = false
+                    )
+                }
+            }
         }
     }
 
@@ -401,7 +411,7 @@ data class SignUp(
     val checkSignUp: UiState<SignUpResult> = UiState.Loading,
     val checkNickName: UiState<Boolean> = UiState.Loading,
     val login: UiState<Unit> = UiState.Loading,
-    val restoreAccountResult : UiState<Unit> = UiState.Loading,
+    val restoreAccountResult: UiState<Unit> = UiState.Loading,
     val signUp: UiState<Unit> = UiState.Loading,
 )
 

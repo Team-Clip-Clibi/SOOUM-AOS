@@ -160,8 +160,7 @@ fun ProfileImageView(viewModel: SignUpViewModel, onBack: () -> Unit, nexPage: ()
         visible = uiState.profileBottom,
         onActionSelected = viewModel::onProfilePickerAction,
         onDismiss = viewModel::updateProfileBottom,
-        albumTextRes = R.string.signUp_picture_bottom_item_album,
-        cameraTextRes = R.string.signUp_picture_bottom_item_camera
+        useDefaultText = uiState.profile != Uri.EMPTY
     )
 }
 

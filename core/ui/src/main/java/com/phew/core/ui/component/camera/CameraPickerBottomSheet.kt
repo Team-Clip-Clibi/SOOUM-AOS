@@ -12,26 +12,44 @@ fun CameraPickerBottomSheet(
     visible: Boolean,
     onActionSelected: (CameraPickerAction) -> Unit,
     onDismiss: () -> Unit,
-    albumTextRes: Int = R.string.camera_picker_album,
-    cameraTextRes: Int = R.string.camera_picker_camera
+    useDefaultText: Boolean = false
 ) {
     if (!visible) return
-
-    BottomSheetComponent.BottomSheet(
-        data = arrayListOf(
+    val item = if (useDefaultText) {
+        arrayListOf(
             BottomSheetItem(
                 id = CameraPickerAction.Album.ordinal,
-                title = stringResource(id = albumTextRes)
+                title = stringResource(id = R.string.camera_picker_album)
             ),
             BottomSheetItem(
                 id = CameraPickerAction.Camera.ordinal,
-                title = stringResource(id = cameraTextRes)
+                title = stringResource(id = R.string.camera_picker_camera)
+            ),
+            BottomSheetItem(
+                id = CameraPickerAction.Default.ordinal,
+                title = stringResource(R.string.camera_picker_default)
             )
-        ),
+        )
+    } else {
+        arrayListOf(
+            BottomSheetItem(
+                id = CameraPickerAction.Album.ordinal,
+                title = stringResource(id = R.string.camera_picker_album)
+            ),
+            BottomSheetItem(
+                id = CameraPickerAction.Camera.ordinal,
+                title = stringResource(id = R.string.camera_picker_camera)
+            )
+        )
+    }
+    BottomSheetComponent.BottomSheet(
+        data =  item
+        ,
         onItemClick = { id ->
             when (id) {
                 CameraPickerAction.Album.ordinal -> onActionSelected(CameraPickerAction.Album)
                 CameraPickerAction.Camera.ordinal -> onActionSelected(CameraPickerAction.Camera)
+                CameraPickerAction.Default.ordinal -> onActionSelected(CameraPickerAction.Default)
             }
         },
         onDismiss = onDismiss
