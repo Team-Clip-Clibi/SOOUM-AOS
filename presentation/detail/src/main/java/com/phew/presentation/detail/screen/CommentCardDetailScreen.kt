@@ -91,6 +91,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import kotlinx.coroutines.launch
 import com.airbnb.lottie.compose.LottieConstants
+import com.phew.core_design.LoadingAnimation
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -163,11 +164,7 @@ internal fun CommentCardDetailScreen(
                 .windowInsetsPadding(WindowInsets.statusBars),
             contentAlignment = Alignment.Center
         ) {
-            LottieAnimation(
-                composition = composition,
-                progress = { refreshProgress },
-                modifier = Modifier.size(44.dp)
-            )
+            LoadingAnimation.LoadingView()
         }
         return
     }
