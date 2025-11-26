@@ -7,7 +7,7 @@
     <string name="card_detail_block">차단하기</string>
     <string name="card_detail_report">신고하기</string>
     <string name="card_detail_delete">삭제</string>
-    <string name="card_detail_block_dialog_title">차단하기겠어요?</string>
+    <string name="card_detail_block_dialog_title">차단하시겠어요?</string>
     <string name="card_detail_block_dialog_subtitle">%s님의 모든 카드를 볼 수 없어요.</string>
     <string name="card_detail_delete_dialog_title">카드를 삭제하시겠어요</string>
     <string name="card_detail_delete_dialog_content">삭제한 카드는 영구적으로 삭제되며, 복구할 수 없습니다.</string>
