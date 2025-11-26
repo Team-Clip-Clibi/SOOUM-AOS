@@ -32,12 +32,10 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.phew.core_design.R
 
 object TextFiledComponent {
     @Composable
@@ -180,7 +178,10 @@ object TextFiledComponent {
                         Icon(
                             painter = painterResource(R.drawable.ic_error_stoke),
                             contentDescription = "Error $helperText",
-                            tint = Danger.M_RED
+                            tint = Danger.M_RED,
+                            modifier = Modifier
+                                .size(16.dp)
+                                .padding(1.dp)
                         )
                     }
                     Text(
