@@ -1,6 +1,7 @@
 package com.phew.network
 
 
+import android.util.Log
 import com.phew.domain.interceptor.InterceptorManger
 import kotlinx.coroutines.runBlocking
 import okhttp3.Authenticator
@@ -33,6 +34,7 @@ class TokenAuthenticator @Inject constructor(
         }
     }
     private fun newRequestWithToken(request: Request, token: String): Request {
+        Log.e("okhttp.OkHttpClient" , "accessToken :$token")
         return request.newBuilder()
             .header("Authorization", "Bearer $token")
             .build()

@@ -29,27 +29,47 @@ class TeapotInterceptor @Inject constructor(
         when (response.code) {
             WITHDRAWAL_USER -> {
                 response.close()
-                scope.launch {
-                    globalEventBus.emitEvent(GlobalEvent.TeapotEvent)
+                interceptorManger.resetToken()
+                runBlocking {
                     val deleteToken = interceptorManger.deleteAll()
                     if (!deleteToken) {
-                        Log.e(tag , "Failed to delete tokens for withdrawn user.")
+                        Log.e(tag, "Failed to delete tokens for withdrawn user.")
                         globalEventBus.emitEvent(GlobalEvent.Error(ERROR_FAIL_JOB))
+                        return@runBlocking
                     }
+                }
+                scope.launch {
+                    Log.e("okhttp.OkHttpClient" , "accessToken : ${response.request.header("Authorization")?.removePrefix("Bearer ")}")
+                    globalEventBus.emitEvent(GlobalEvent.TeapotEvent)
                 }
                 throw IOException("Force Logout by 418")
             }
 
             HTTP_TOKEN_ERROR -> {
+                val failedToken = response.request.header("Authorization")?.removePrefix("Bearer ")
                 val newResponse = runBlocking {
-                    val newAccessToken = interceptorManger.autoLogin()
+                    val currentToken = interceptorManger.getAccessToken()
+                    if (failedToken != null && failedToken != currentToken) {
+                        val newRequest = newRequestWithToken(response.request, currentToken)
+                        return@runBlocking chain.proceed(newRequest)
+                    }
+                    var newAccessToken = interceptorManger.refreshAndGetNewToken()
                     if (newAccessToken.isEmpty()) {
-                        globalEventBus.emitEvent(GlobalEvent.TeapotEvent)
+                        newAccessToken = interceptorManger.autoLogin()
+                    }
+                    if (newAccessToken.isEmpty()) {
+                        Log.e(tag, "Failed to refresh and auto login.")
                         val deleteToken = interceptorManger.deleteAll()
                         if (!deleteToken) {
-                            Log.e(tag , "Failed to delete tokens for withdrawn user.")
+                            Log.e(tag, "Failed to delete tokens for withdrawn user.")
                             globalEventBus.emitEvent(GlobalEvent.Error(ERROR_FAIL_JOB))
+                            return@runBlocking null
                         }
+                        globalEventBus.emitEvent(GlobalEvent.TeapotEvent)
+                        return@runBlocking null
+                    }
+                    if (newAccessToken == failedToken) {
+                        globalEventBus.emitEvent(GlobalEvent.Error(ERROR_FAIL_JOB))
                         return@runBlocking null
                     }
                     response.close()
