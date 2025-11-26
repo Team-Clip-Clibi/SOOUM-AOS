@@ -112,9 +112,7 @@ fun AuthCodeView(viewModel: SignUpViewModel, onBack: () -> Unit, onRestoreSucces
                     viewModel.authCode(input)
                 },
                 placeHolder = stringResource(R.string.authCode_hint_title),
-                useHelper = true,
-                helperText = stringResource(R.string.authCode_txt_code_content),
-                helperTextColor = NeutralColor.GRAY_500
+                useHelper = false
             )
         }
     }
