@@ -6,18 +6,20 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -25,6 +27,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -37,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -49,27 +53,27 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
-import com.phew.core_common.ERROR_LOGOUT
-import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_design.AppBar
+import com.phew.core_design.DialogComponent
+import com.phew.core_design.LoadingAnimation
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
+import com.phew.core_design.component.refresh.RefreshBox
 import com.phew.domain.dto.Notice
 import com.phew.domain.dto.Notification
 import com.phew.feed.NAV_NOTICE_ACTIVATE
 import com.phew.feed.NAV_NOTICE_NOTIFY_INDEX
 import com.phew.feed.NotificationUi
+import com.phew.feed.NotifyTab
 import com.phew.feed.viewModel.FeedViewModel
 import com.phew.presentation.feed.R
-import kotlinx.coroutines.launch
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotifyView(
     viewModel: FeedViewModel,
     backClick: () -> Unit,
-    logout: () -> Unit,
-    snackBarHostState: SnackbarHostState,
 ) {
     var selectIndex by remember { mutableIntStateOf(NAV_NOTICE_ACTIVATE) }
     val lazyListState = rememberLazyListState()
@@ -79,149 +83,226 @@ fun NotifyView(
                     lazyListState.firstVisibleItemScrollOffset < 8
         }
     }
+    val uiState by viewModel.uiState.collectAsState()
     val notices = viewModel.notice.collectAsLazyPagingItems()
     val unRead = viewModel.unReadNotification.collectAsLazyPagingItems()
     val read = viewModel.readNotification.collectAsLazyPagingItems()
     val scope = rememberCoroutineScope()
     val networkErrorMsg = stringResource(com.phew.core_design.R.string.error_network)
     val onBack by rememberUpdatedState(newValue = backClick)
-    val onLogout by rememberUpdatedState(newValue = logout)
     val nestedScrollConnection = remember { object : NestedScrollConnection {} }
+    val snackBarHostState = remember { SnackbarHostState() }
+    val refreshState = rememberPullToRefreshState()
+    val data = when (selectIndex) {
+        NAV_NOTICE_ACTIVATE -> unRead
+        NAV_NOTICE_NOTIFY_INDEX -> notices
+        else -> notices
+    }
+    val isRefreshing by remember(data.loadState.refresh) {
+        derivedStateOf { data.loadState.refresh is LoadState.Loading }
+    }
     BackHandler { onBack() }
+    NoticeViewTopBar(
+        onBackClick = onBack,
+        snackBarHostState = snackBarHostState
+    ) { paddingValues ->
+        RefreshBox(
+            isRefresh = isRefreshing,
+            onRefresh = { data.refresh() },
+            state = refreshState,
+            paddingValues = paddingValues
+        ) { }
+    }
+//
+//    Column(
+//        modifier = Modifier
+//            .fillMaxSize()
+//            .background(NeutralColor.WHITE)
+//            .statusBarsPadding()
+//            .navigationBarsPadding()
+//    ) {
+//        TopBar(
+//            allClick = { selectIndex = NAV_NOTICE_ACTIVATE },
+//            noticeClick = { selectIndex = NAV_NOTICE_NOTIFY_INDEX },
+//            backClick = onBack,
+//            isTabsVisible = isTabsVisible,
+//            selectIndex = selectIndex
+//        )
+//
+//        when (selectIndex) {
+//            NAV_NOTICE_ACTIVATE -> {
+//                when {
+//                    unRead.loadState.refresh is LoadState.Loading || read.loadState.refresh is LoadState.Loading -> {
+//                        EmptyNotifyView()
+//                    }
+//
+//                    unRead.loadState.refresh is LoadState.Error || read.loadState.refresh is LoadState.Error -> {
+//                        val error = if (unRead.loadState.refresh is LoadState.Error) {
+//                            (unRead.loadState.refresh as LoadState.Error).error
+//                        } else (read.loadState.refresh as LoadState.Error).error
+//                        when (error.message) {
+//                            ERROR_NETWORK -> {
+//                                LaunchedEffect(error.message) {
+//                                    snackBarHostState.showSnackbar(
+//                                        message = networkErrorMsg,
+//                                        withDismissAction = true
+//                                    )
+//                                }
+//                            }
+//
+//                            ERROR_LOGOUT -> onLogout()
+//                            else -> error.cause?.printStackTrace()
+//                        }
+//                    }
+//
+//                    unRead.itemCount == 0 && read.itemCount == 0 -> {
+//                        EmptyNotifyView()
+//                    }
+//
+//                    else -> ActivateNotify(
+//                        read = read,
+//                        unRead = unRead,
+//                        nestedScrollConnection = nestedScrollConnection,
+//                        failToLoad = {
+//                            scope.launch {
+//                                snackBarHostState.showSnackbar(
+//                                    message = networkErrorMsg,
+//                                    withDismissAction = true,
+//                                    duration = SnackbarDuration.Short
+//                                )
+//                            }
+//                        },
+//                        lazyListState = lazyListState,
+//                    )
+//                }
+//            }
+//
+//            NAV_NOTICE_NOTIFY_INDEX -> {
+//                when {
+//                    notices.loadState.refresh is LoadState.Loading -> {
+//                        EmptyNotifyView()
+//                    }
+//
+//                    notices.loadState.refresh is LoadState.Error -> {
+//                        val error = (notices.loadState.refresh as LoadState.Error).error
+//                        when (error.message) {
+//                            ERROR_NETWORK -> {
+//                                LaunchedEffect(error.message) {
+//                                    snackBarHostState.showSnackbar(
+//                                        message = networkErrorMsg,
+//                                        withDismissAction = true
+//                                    )
+//                                }
+//                            }
+//
+//                            ERROR_LOGOUT -> onLogout()
+//                            else -> error.cause?.printStackTrace()
+//                        }
+//                    }
+//
+//                    notices.itemCount == 0 -> {
+//                        EmptyNotifyView()
+//                    }
+//
+//                    else -> {
+//                        NoticeView(
+//                            data = notices,
+//                            lazyListState = lazyListState,
+//                            nestedScrollConnection = nestedScrollConnection,
+//                            failToLoad = {
+//                                scope.launch {
+//                                    snackBarHostState.showSnackbar(
+//                                        message = networkErrorMsg,
+//                                        withDismissAction = true,
+//                                        duration = SnackbarDuration.Short
+//                                    )
+//                                }
+//                            }
+//                        )
+//                    }
+//                }
+//            }
+//        }
+//    }
+}
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(NeutralColor.WHITE)
-            .statusBarsPadding()
-            .navigationBarsPadding()
-    ) {
-        TopBar(
-            allClick = { selectIndex = NAV_NOTICE_ACTIVATE },
-            noticeClick = { selectIndex = NAV_NOTICE_NOTIFY_INDEX },
-            backClick = onBack,
-            isTabsVisible = isTabsVisible,
-            selectIndex = selectIndex
-        )
+@Composable
+private fun NoticeViewTopBar(
+    onBackClick: () -> Unit,
+    snackBarHostState: SnackbarHostState,
+    content: @Composable (PaddingValues) -> Unit,
+) {
+    Scaffold(
+        snackbarHost = {
+            DialogComponent.CustomAnimationSnackBarHost(hostState = snackBarHostState)
+        },
+        topBar = {
+            AppBar.IconLeftAppBar(
+                onClick = onBackClick,
+                appBarText = stringResource(R.string.home_notice_top_bar)
+            )
+        },
+        content = content
+    )
+}
 
-        when (selectIndex) {
-            NAV_NOTICE_ACTIVATE -> {
-                when {
-                    unRead.loadState.refresh is LoadState.Loading || read.loadState.refresh is LoadState.Loading -> {
-                        EmptyNotifyView()
-                    }
-
-                    unRead.loadState.refresh is LoadState.Error || read.loadState.refresh is LoadState.Error -> {
-                        val error = if (unRead.loadState.refresh is LoadState.Error) {
-                            (unRead.loadState.refresh as LoadState.Error).error
-                        } else (read.loadState.refresh as LoadState.Error).error
-                        when (error.message) {
-                            ERROR_NETWORK -> {
-                                LaunchedEffect(error.message) {
-                                    snackBarHostState.showSnackbar(
-                                        message = networkErrorMsg,
-                                        withDismissAction = true
-                                    )
-                                }
-                            }
-
-                            ERROR_LOGOUT -> onLogout()
-                            else -> error.cause?.printStackTrace()
-                        }
-                    }
-
-                    unRead.itemCount == 0 && read.itemCount == 0 -> {
-                        EmptyNotifyView()
-                    }
-
-                    else -> ActivateNotify(
-                        read = read,
-                        unRead = unRead,
-                        nestedScrollConnection = nestedScrollConnection,
-                        failToLoad = {
-                            scope.launch {
-                                snackBarHostState.showSnackbar(
-                                    message = networkErrorMsg,
-                                    withDismissAction = true,
-                                    duration = SnackbarDuration.Short
-                                )
-                            }
-                        },
-                        lazyListState = lazyListState,
-                    )
-                }
+@Composable
+private fun NotifyViewContent(
+    data: LazyPagingItems<Notice>,
+    onClickTab: (NotifyTab) -> Unit,
+    modifier: Modifier,
+    selectTab: NotifyTab,
+    paddingValues: PaddingValues,
+    snackBarHostState: SnackbarHostState,
+) {
+    val context = LocalContext.current
+    when (val refreshState = data.loadState.refresh) {
+        is LoadState.Error -> {
+            EmptyNotifyView()
+            LaunchedEffect(refreshState.error.message) {
+                snackBarHostState.showSnackbar(
+                    message = context.getString(com.phew.core_design.R.string.error_network),
+                    duration = SnackbarDuration.Short
+                )
             }
+        }
 
-            NAV_NOTICE_NOTIFY_INDEX -> {
-                when {
-                    notices.loadState.refresh is LoadState.Loading -> {
-                        EmptyNotifyView()
-                    }
+        LoadState.Loading -> {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(color = NeutralColor.WHITE),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                LoadingAnimation.LoadingView()
+            }
+        }
 
-                    notices.loadState.refresh is LoadState.Error -> {
-                        val error = (notices.loadState.refresh as LoadState.Error).error
-                        when (error.message) {
-                            ERROR_NETWORK -> {
-                                LaunchedEffect(error.message) {
-                                    snackBarHostState.showSnackbar(
-                                        message = networkErrorMsg,
-                                        withDismissAction = true
-                                    )
-                                }
-                            }
-
-                            ERROR_LOGOUT -> onLogout()
-                            else -> error.cause?.printStackTrace()
-                        }
-                    }
-
-                    notices.itemCount == 0 -> {
-                        EmptyNotifyView()
-                    }
-
-                    else -> {
-                        NoticeView(
-                            data = notices,
-                            lazyListState = lazyListState,
-                            nestedScrollConnection = nestedScrollConnection,
-                            failToLoad = {
-                                scope.launch {
-                                    snackBarHostState.showSnackbar(
-                                        message = networkErrorMsg,
-                                        withDismissAction = true,
-                                        duration = SnackbarDuration.Short
-                                    )
-                                }
-                            }
+        is LoadState.NotLoading -> {
+            when (data.itemCount) {
+                0 -> EmptyNotifyView()
+                else -> {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(1),
+                        modifier = modifier,
+                        contentPadding = PaddingValues(
+                            bottom = paddingValues.calculateBottomPadding(),
+                            top = paddingValues.calculateTopPadding(),
+                            start = 16.dp,
+                            end = 16.dp
                         )
+                    ) {
+                        item(span = { GridItemSpan(maxLineSpan) }) {
+                            NotificationUi.NotifyTabBar(
+                                selectData = selectTab,
+                                onClick = onClickTab
+                            )
+                        }
                     }
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun TopBar(
-    backClick: () -> Unit,
-    allClick: () -> Unit,
-    noticeClick: () -> Unit,
-    isTabsVisible: Boolean,
-    selectIndex: Int,
-) {
-    Column(modifier = Modifier
-        .fillMaxWidth()
-        .wrapContentHeight()) {
-        AppBar.IconLeftAppBar(
-            onClick = backClick,
-            appBarText = stringResource(R.string.home_notice_top_bar)
-        )
-        NotificationUi.AnimatedNoticeTabLayout(
-            allClick = allClick,
-            noticeClick = noticeClick,
-            isTabsVisible = isTabsVisible,
-            selectTabData = selectIndex
-        )
     }
 }
 

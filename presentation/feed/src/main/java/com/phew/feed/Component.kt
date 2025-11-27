@@ -22,10 +22,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
-import androidx.compose.material3.TabRowDefaults
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -45,7 +41,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.phew.core_common.TimeUtils
-import com.phew.core_common.log.SooumLog
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.NeutralColor.GRAY_400
 import com.phew.core_design.NeutralColor.GRAY_600
@@ -62,6 +57,7 @@ import com.phew.core_design.component.card.NotiCardData
 import com.phew.core_design.component.card.component.IndicatorDot
 import com.phew.core_design.component.tab.SooumTab
 import com.phew.core_design.component.tab.SooumTabRow
+import com.phew.core_design.label.LabelComponent
 import com.phew.core_design.theme.MAIN
 import com.phew.core_design.theme.M_YELLOW
 import com.phew.domain.dto.FeedCardType
@@ -388,72 +384,23 @@ object FeedUi {
 object NotificationUi {
 
     @Composable
-    internal fun AnimatedNoticeTabLayout(
-        selectTabData: Int,
-        allClick: () -> Unit,
-        noticeClick: () -> Unit,
-        isTabsVisible: Boolean,
+    internal fun NotifyTabBar(
+        selectData: NotifyTab,
+        onClick: (NotifyTab) -> Unit,
     ) {
-        val tabItem = listOf(
-            stringResource(R.string.home_notice_activate),
-            stringResource(R.string.home_notice_notice)
-        )
-        AnimatedVisibility(
-            visible = isTabsVisible,
-            enter = slideInVertically(
-                initialOffsetY = { -it },
-                animationSpec = tween(durationMillis = 150)
-            ),
-            exit = slideOutVertically(
-                targetOffsetY = { -it },
-                animationSpec = tween(durationMillis = 150)
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
+            LabelComponent.LabelView(
+                text = stringResource(R.string.home_notice_activate),
+                textColor = if (selectData == NotifyTab.NOTIFY_ACTIVATE) GRAY_600 else GRAY_400,
+                backgroundColor = if (selectData == NotifyTab.NOTIFY_ACTIVATE) GRAY_600 else WHITE,
+                onClick = { onClick(NotifyTab.NOTIFY_ACTIVATE) }
             )
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight()
-                    .background(color = WHITE)
-            ) {
-                TabRow(
-                    selectedTabIndex = selectTabData,
-                    modifier = Modifier
-                        .wrapContentWidth(align = Alignment.Start)
-                        .height(56.dp)
-                        .padding(start = 16.dp, end = 16.dp),
-                    containerColor = WHITE,
-                    contentColor = NeutralColor.BLACK,
-                    indicator = { tabPositions ->
-                        TabRowDefaults.SecondaryIndicator(
-                            Modifier
-                                .tabIndicatorOffset(tabPositions[selectTabData]),
-                            height = 2.dp,
-                            color = NeutralColor.BLACK
-                        )
-                    },
-                    divider = {}
-                ) {
-                    tabItem.forEachIndexed { index, title ->
-                        val isSelected = selectTabData == index
-                        Tab(
-                            selected = isSelected,
-                            onClick = {
-                                when (index) {
-                                    NAV_NOTICE_ACTIVATE -> allClick()
-                                    NAV_NOTICE_NOTIFY_INDEX -> noticeClick()
-                                }
-                            },
-                            text = {
-                                Text(
-                                    text = title,
-                                    style = TextComponent.BODY_1_M_14,
-                                    color = if (isSelected) GRAY_600 else GRAY_400,
-                                )
-                            },
-                        )
-                    }
-                }
-            }
+            LabelComponent.LabelView(
+                text = stringResource(R.string.home_notice_notice),
+                textColor = if (selectData == NotifyTab.NOTIFY_SERVICE) GRAY_600 else GRAY_400,
+                backgroundColor = if (selectData == NotifyTab.NOTIFY_SERVICE) GRAY_600 else WHITE,
+                onClick = { onClick(NotifyTab.NOTIFY_SERVICE) }
+            )
         }
     }
 
