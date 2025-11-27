@@ -94,7 +94,7 @@ fun ProfileImageView(viewModel: SignUpViewModel, onBack: () -> Unit, nexPage: ()
         onAlbumPicked = viewModel::onAlbumImagePicked,
         onCameraPermissionRequestConsumed = viewModel::onProfileCameraPermissionRequestConsumed,
         onCameraPermissionResult = viewModel::onProfileCameraPermissionResult,
-        onCameraCaptureLaunched = viewModel::onProfileCameraCaptureLaunched,
+        onCameraCaptureLaunched = remember(viewModel) { { viewModel.onProfileCameraCaptureLaunched() } },
         onCameraCaptureResult = { success, uri ->
             viewModel.onProfileCameraCaptureResult(success, uri)
         },

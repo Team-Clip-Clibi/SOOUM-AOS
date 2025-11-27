@@ -39,9 +39,32 @@ class SignUpViewModel @Inject constructor(
     private var _uiState = MutableStateFlow(SignUp())
     val uiState: StateFlow<SignUp> = _uiState.asStateFlow()
 
-    init {
-        generateNickName()
-        checkRegister()
+    /**
+     * 동의 화면에서 뒤로가기 클릭시 데이터 초기화
+     */
+    fun initSignUp() {
+        _uiState.update { state ->
+            state.copy(
+                nickName = "",
+                agreementAll = false,
+                agreedToTermsOfService = false,
+                agreedToPrivacyPolicy = false,
+                agreedToLocationTerms = false,
+                profile = Uri.EMPTY,
+                checkSignUp = UiState.Loading,
+            )
+        }
+    }
+
+    /**
+     * 인증 코드 초기화 함수
+     */
+    fun initAuthCode(){
+        _uiState.update { state ->
+            state.copy(
+                authCode = ""
+            )
+        }
     }
 
     /**
@@ -196,7 +219,7 @@ class SignUpViewModel @Inject constructor(
     /**
      * 회원 가입 가능 여부 확인
      */
-    private fun checkRegister() {
+     fun checkRegister() {
         viewModelScope.launch(Dispatchers.IO) {
             when (val result = checkSignUp()) {
                 is DomainResult.Failure -> {
@@ -215,9 +238,10 @@ class SignUpViewModel @Inject constructor(
                                     time = result.data.second,
                                     result = result.data.first
                                 )
-                            ),
+                            )
                         )
                     }
+                    generateNickName()
                 }
             }
         }
@@ -243,16 +267,6 @@ class SignUpViewModel @Inject constructor(
                     }
                 }
             }
-        }
-    }
-
-
-    /**
-     * 닉네임 중복 검사 여부 초기화
-     */
-    fun initNickName() {
-        _uiState.update { state ->
-            state.copy(checkNickName = UiState.Loading)
         }
     }
 
@@ -333,7 +347,7 @@ class SignUpViewModel @Inject constructor(
         }
     }
 
-    fun onProfileCameraCaptureLaunched(request: CameraCaptureRequest) {
+    fun onProfileCameraCaptureLaunched() {
         _uiState.update { state ->
             state.copy(pendingProfileCameraCapture = null)
         }

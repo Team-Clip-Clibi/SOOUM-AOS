@@ -44,6 +44,7 @@ fun AuthCodeView(viewModel: SignUpViewModel, onBack: () -> Unit, onRestoreSucces
     val uiState by viewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
     BackHandler {
+        viewModel.initAuthCode()
         onBack()
     }
     HandleAuthCode(
@@ -55,6 +56,7 @@ fun AuthCodeView(viewModel: SignUpViewModel, onBack: () -> Unit, onRestoreSucces
         topBar = {
             AppBar.IconLeftAppBar(
                 onClick = {
+                    viewModel.initAuthCode()
                     onBack()
                 },
                 appBarText = stringResource(R.string.authCode_top_bar)
@@ -177,12 +179,14 @@ private fun HandleAuthCode(
                             duration = SnackbarDuration.Short
                         )
                     }
+
                     ERROR_TRANSFER_CODE_INVALID -> {
                         snackBarHostState.showSnackbar(
                             message = context.getString(com.phew.core_design.R.string.error_auth_code_invalid),
                             duration = SnackbarDuration.Short
                         )
                     }
+
                     else -> {
                         snackBarHostState.showSnackbar(
                             message = context.getString(com.phew.core_design.R.string.error_app),

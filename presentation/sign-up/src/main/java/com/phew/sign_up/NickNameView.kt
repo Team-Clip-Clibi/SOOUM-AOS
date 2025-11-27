@@ -76,7 +76,6 @@ fun NickNameView(viewModel: SignUpViewModel, onBack: () -> Unit, nextPage: () ->
                     buttonText = stringResource(com.phew.core_design.R.string.common_next),
                     onClick = remember(nextPage) {
                         {
-                            viewModel.initNickName()
                             nextPage()
                         }
                     },

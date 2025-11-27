@@ -58,43 +58,22 @@ fun OnBoarding(
     val snackBarHostState = remember { SnackbarHostState() }
     val dialogShow = remember { mutableStateOf(false) }
     val withdrawalDialogShow = remember { mutableStateOf(showWithdrawalDialog) }
-    val context = LocalContext.current
-    val onHome = remember(home) { { home() } }
     BackHandler(onBack = remember(back) { { back() } })
-    LaunchedEffect(uiState, onHome, snackBarHostState, context) {
-        if (uiState.checkSignUp is UiState.Fail || uiState.login is UiState.Fail) {
-            snackBarHostState.showSnackbar(
-                message = context.getString(com.phew.core_design.R.string.error_network),
-                duration = SnackbarDuration.Short
-            )
-        }
-        if (uiState.login is UiState.Success) {
-            onHome()
-        }
-    }
+    HandleCheckSignUp(
+        checkSignUpState = uiState.checkSignUp,
+        loginState = uiState.login,
+        snackBarHostState = snackBarHostState,
+        signUp = signUp,
+        dialogShow = {
+            dialogShow.value = true
+        },
+        login = viewModel::login,
+        onHome = remember(home) { { home() } }
+    )
     Scaffold(
         bottomBar = {
             BottomView(
-                onClickStart = {
-                    when (val checkSignUpResult = uiState.checkSignUp) {
-                        is UiState.Success -> {
-                            when (checkSignUpResult.data.result) {
-                                SIGN_UP_OKAY -> {
-                                    signUp()
-                                }
-
-                                SIGN_UP_REGISTERED -> {
-                                    viewModel.login()
-                                }
-                                SIGN_UP_ALREADY_SIGN_UP -> {
-                                    viewModel.login()
-                                }
-                                else -> dialogShow.value = true
-                            }
-                        }
-                        else -> Unit
-                    }
-                },
+                onClickStart = viewModel::checkRegister,
                 onClickAlreadySignUp = remember(alreadySignUp) { alreadySignUp }
             )
         },
@@ -128,6 +107,53 @@ fun OnBoarding(
                     onDismiss = remember { { withdrawalDialogShow.value = false } }
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun HandleCheckSignUp(
+    checkSignUpState: UiState<SignUpResult>,
+    loginState: UiState<Unit>,
+    snackBarHostState: SnackbarHostState,
+    signUp: () -> Unit,
+    login: () -> Unit,
+    dialogShow: () -> Unit,
+    onHome: () -> Unit,
+) {
+    val context = LocalContext.current
+    LaunchedEffect(checkSignUpState, loginState, snackBarHostState) {
+        when (checkSignUpState) {
+            is UiState.Fail -> {
+                snackBarHostState.showSnackbar(
+                    message = context.getString(com.phew.core_design.R.string.error_network),
+                    duration = SnackbarDuration.Short
+                )
+            }
+
+            is UiState.Success -> {
+                when (checkSignUpState.data.result) {
+                    SIGN_UP_OKAY -> {
+                        signUp()
+                    }
+
+                    SIGN_UP_REGISTERED, SIGN_UP_ALREADY_SIGN_UP -> login()
+                    else -> dialogShow()
+                }
+            }
+
+            else -> Unit
+        }
+        when (loginState) {
+            is UiState.Fail -> {
+                snackBarHostState.showSnackbar(
+                    message = context.getString(com.phew.core_design.R.string.error_network),
+                    duration = SnackbarDuration.Short
+                )
+            }
+
+            is UiState.Success -> onHome()
+            else -> Unit
         }
     }
 }
