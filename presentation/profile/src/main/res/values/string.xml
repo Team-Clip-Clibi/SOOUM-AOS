@@ -29,4 +29,6 @@
     <string name="edit_profile_bottom_item_album">앨범에서 사진 선택</string>
     <string name="edit_profile_bottom_item_picture">사진 찍기</string>
     <string name="edit_profile_bottom_item_default">기본 이미지 적용</string>
+    <string name="edit_profile_picture_dialog_image_title">부적절한 사진으로 보여져요</string>
+    <string name="edit_profile_picture_dialog_image_content">다른 사진으로 변경하거나 기본 이미지를 사용해 주세요.</string>
 </resources>

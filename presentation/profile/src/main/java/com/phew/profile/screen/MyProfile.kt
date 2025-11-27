@@ -274,7 +274,7 @@ private fun MyProfileView(
                         shape = RoundedCornerShape(100.dp)
                     )
                     .clip(shape = RoundedCornerShape(size = 100.dp)),
-                contentScale = ContentScale.FillBounds
+                contentScale = ContentScale.Crop
             )
         }
         // 카드 , 팔로워, 팔로잉 숫자

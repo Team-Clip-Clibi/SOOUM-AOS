@@ -407,6 +407,16 @@ class SignUpViewModel @Inject constructor(
         }
     }
 
+    fun setImageDialog(result: Boolean) {
+        _uiState.update { state ->
+            state.copy(
+                imageDialog = result,
+                profile = if (!result) Uri.EMPTY else state.profile,
+                signUp = if (!result) state.signUp else UiState.Loading
+            )
+        }
+    }
+
 }
 
 data class SignUp(
@@ -427,6 +437,7 @@ data class SignUp(
     val login: UiState<Unit> = UiState.Loading,
     val restoreAccountResult: UiState<Unit> = UiState.Loading,
     val signUp: UiState<Unit> = UiState.Loading,
+    val imageDialog : Boolean = false
 )
 
 sealed interface UiState<out T> {
