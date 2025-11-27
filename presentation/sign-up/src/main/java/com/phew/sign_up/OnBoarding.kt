@@ -166,7 +166,7 @@ private fun TitleView() {
         color = NeutralColor.BLACK,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 4.dp)
+            .padding(bottom = 8.dp)
     )
     Text(
         text = stringResource(R.string.onBoarding_txt_sub_title),
