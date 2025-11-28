@@ -202,14 +202,18 @@ object TextFiledComponent {
         onDeleteClick: () -> Unit = {},
         onFieldClick: () -> Unit = {},
         onSearch: () -> Unit = {},
-        modifier: Modifier = Modifier
+        modifier: Modifier = Modifier,
+        focusRequester: FocusRequester? = null
     ) {
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
             modifier = modifier
                 .fillMaxWidth()
-                .height(44.dp),
+                .height(44.dp)
+                .let { baseModifier ->
+                    focusRequester?.let { baseModifier.focusRequester(it) } ?: baseModifier
+                },
             singleLine = true,
             readOnly = isReadOnly,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
