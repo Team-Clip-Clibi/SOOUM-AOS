@@ -58,6 +58,7 @@ import com.phew.core_design.component.card.component.IndicatorDot
 import com.phew.core_design.component.tab.SooumTab
 import com.phew.core_design.component.tab.SooumTabRow
 import com.phew.core_design.label.LabelComponent
+import com.phew.core_design.theme.GRAY_100
 import com.phew.core_design.theme.MAIN
 import com.phew.core_design.theme.M_YELLOW
 import com.phew.domain.dto.FeedCardType
@@ -388,17 +389,24 @@ object NotificationUi {
         selectData: NotifyTab,
         onClick: (NotifyTab) -> Unit,
     ) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    bottom = 9.5.dp, start = 16.dp,
+                    end = 16.dp
+                ), horizontalArrangement = Arrangement.Start
+        ) {
             LabelComponent.LabelView(
                 text = stringResource(R.string.home_notice_activate),
                 textColor = if (selectData == NotifyTab.NOTIFY_ACTIVATE) GRAY_600 else GRAY_400,
-                backgroundColor = if (selectData == NotifyTab.NOTIFY_ACTIVATE) GRAY_600 else WHITE,
+                backgroundColor = if (selectData == NotifyTab.NOTIFY_ACTIVATE) GRAY_100 else WHITE,
                 onClick = { onClick(NotifyTab.NOTIFY_ACTIVATE) }
             )
             LabelComponent.LabelView(
                 text = stringResource(R.string.home_notice_notice),
                 textColor = if (selectData == NotifyTab.NOTIFY_SERVICE) GRAY_600 else GRAY_400,
-                backgroundColor = if (selectData == NotifyTab.NOTIFY_SERVICE) GRAY_600 else WHITE,
+                backgroundColor = if (selectData == NotifyTab.NOTIFY_SERVICE) GRAY_100 else WHITE,
                 onClick = { onClick(NotifyTab.NOTIFY_SERVICE) }
             )
         }
@@ -461,7 +469,10 @@ object NotificationUi {
     }
 
     @Composable
-    internal fun NotifyViewUnread(data: Notification) {
+    internal fun NotifyViewUnread(data: Notification, onItemExpose: (Long) -> Unit) {
+        LaunchedEffect(data.notificationId) {
+            onItemExpose(data.notificationId)
+        }
         Column(
             modifier = Modifier
                 .fillMaxWidth()
