@@ -570,7 +570,7 @@ private fun ErrorView(
         androidx.compose.material3.Button(
             onClick = onRetry
         ) {
-            Text("다시 시도")
+            Text(stringResource(R.string.retry))
         }
     }
 }
@@ -729,7 +729,7 @@ private fun PagingAppendErrorItem(
         )
         Spacer(modifier = Modifier.height(12.dp))
         androidx.compose.material3.Button(onClick = onRetry) {
-            Text("다시 시도")
+            Text(stringResource(R.string.retry))
         }
     }
 }
