@@ -34,13 +34,8 @@ import androidx.compose.ui.unit.dp
 import com.phew.core.ui.component.camera.CameraPickerBottomSheet
 import com.phew.core.ui.component.camera.CameraPickerEffect
 import com.phew.core.ui.model.CameraPickerEffectState
-import com.phew.core_common.DomainResult
-import com.phew.core_common.ERROR
-import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.ERROR_UN_GOOD_IMAGE
-import com.phew.core_common.HTTP_NOT_FOUND
-import com.phew.core_common.HTTP_UN_GOOD_IMAGE
 import com.phew.core_design.AppBar
 import com.phew.core_design.AvatarComponent
 import com.phew.core_design.DialogComponent

@@ -15,32 +15,24 @@ fun CameraPickerBottomSheet(
     useDefaultText: Boolean = false
 ) {
     if (!visible) return
-    val item = if (useDefaultText) {
-        arrayListOf(
-            BottomSheetItem(
-                id = CameraPickerAction.Album.ordinal,
-                title = stringResource(id = R.string.camera_picker_album)
-            ),
-            BottomSheetItem(
-                id = CameraPickerAction.Camera.ordinal,
-                title = stringResource(id = R.string.camera_picker_camera)
-            ),
-            BottomSheetItem(
-                id = CameraPickerAction.Default.ordinal,
-                title = stringResource(R.string.camera_picker_default)
-            )
+    val item = arrayListOf(
+        BottomSheetItem(
+            id = CameraPickerAction.Album.ordinal,
+            title = stringResource(id = R.string.camera_picker_album)
+        ),
+        BottomSheetItem(
+            id = CameraPickerAction.Camera.ordinal,
+            title = stringResource(id = R.string.camera_picker_camera)
         )
-    } else {
-        arrayListOf(
-            BottomSheetItem(
-                id = CameraPickerAction.Album.ordinal,
-                title = stringResource(id = R.string.camera_picker_album)
-            ),
-            BottomSheetItem(
-                id = CameraPickerAction.Camera.ordinal,
-                title = stringResource(id = R.string.camera_picker_camera)
+    ).apply {
+        if (useDefaultText) {
+            add(
+                BottomSheetItem(
+                    id = CameraPickerAction.Default.ordinal,
+                    title = stringResource(R.string.camera_picker_default)
+                )
             )
-        )
+        }
     }
     BottomSheetComponent.BottomSheet(
         data =  item
