@@ -323,7 +323,7 @@ fun TagRankView(
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp)
-            .padding(end = 12.dp)
+            .padding( top= 4.dp, bottom = 4.dp, end = 12.dp)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
