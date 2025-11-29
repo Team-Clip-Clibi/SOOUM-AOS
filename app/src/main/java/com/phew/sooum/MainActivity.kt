@@ -20,16 +20,15 @@ import kotlinx.coroutines.launch
 import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import android.util.Log
 import com.google.firebase.messaging.FirebaseMessaging
 import com.phew.core.ui.compose.LifecycleAwareComposables
 import com.phew.core.ui.util.extension.LocalLifecycleAwareComposables
 import com.phew.core.ui.state.rememberSooumAppState
 import com.phew.core_common.log.SooumLog
 import com.phew.core_design.theme.SooumTheme
-import com.phew.sooum.debug.FCMTokenLogger
 import com.phew.sooum.navigation.DeepLinkHandler
 import com.phew.sooum.ui.SooumApp
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -63,24 +62,13 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(Unit) {
                 coroutineScope.launch {
                     try {
-                        FirebaseMessaging.getInstance().token
-                            .addOnCompleteListener { task ->
-                                if (!task.isSuccessful) {
-                                    SooumLog.w(TAG,"FCM_TOKEN_DEBUG 토큰 가져오기 실패 ${task.exception}")
-                                    return@addOnCompleteListener
-                                }
-
-                                // FCM 토큰 가져오기
-                                val token = task.result
-                                SooumLog.d("FCM_TOKEN_DEBUG", "==== FCM 토큰 ====")
-                                SooumLog.d("FCM_TOKEN_DEBUG", token)
-                                SooumLog.d("FCM_TOKEN_DEBUG", "==================")
-                                SooumLog.i("FCM_TOKEN", "현재 FCM 토큰: $token")
-                                
-                                SooumLog.d("TOKEN",token)
-                            }
+                        val token = FirebaseMessaging.getInstance().token.await()
+                        SooumLog.d("FCM_TOKEN_DEBUG", "==== FCM 토큰 ====")
+                        SooumLog.d("FCM_TOKEN_DEBUG", token)
+                        SooumLog.d("FCM_TOKEN_DEBUG", "==================")
+                        SooumLog.i("FCM_TOKEN", "현재 FCM 토큰: $token")
                     } catch (e: Exception) {
-                        SooumLog.e("FCM_TOKEN", "토큰 가져오기 실패: ${e.message}")
+                        SooumLog.w(TAG, "FCM 토큰 가져오기 실패 error=${e.message}")
                     }
                 }
             }

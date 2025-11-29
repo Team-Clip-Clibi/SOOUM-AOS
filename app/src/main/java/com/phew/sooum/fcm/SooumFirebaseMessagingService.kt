@@ -1,24 +1,23 @@
 package com.phew.sooum.fcm
 
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.Context
 import android.content.Intent
 import android.media.RingtoneManager
-import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.phew.core_common.log.SooumLog
 import com.phew.sooum.MainActivity
 import com.phew.sooum.R
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class SooumFirebaseMessagingService : FirebaseMessagingService() {
-    
-    private val notificationChannelManager by lazy {
-        NotificationChannelManager(applicationContext)
-    }
+
+    @Inject
+    lateinit var notificationChannelManager: NotificationChannelManager
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         SooumLog.d(TAG, "FCM 메시지 수신: ${remoteMessage.from}")
@@ -29,9 +28,9 @@ class SooumFirebaseMessagingService : FirebaseMessagingService() {
         }
 
         // 알림 표시
-        remoteMessage.notification?.let {
-            sendNotification(it.title, it.body, remoteMessage.data)
-        }
+        val title = remoteMessage.data["title"] ?: remoteMessage.notification?.title
+        val body = remoteMessage.data["body"] ?: remoteMessage.notification?.body
+        sendNotification(title, body, remoteMessage.data)
     }
 
     override fun onNewToken(token: String) {
@@ -42,7 +41,7 @@ class SooumFirebaseMessagingService : FirebaseMessagingService() {
 
     private fun sendNotification(title: String?, messageBody: String?, data: Map<String, String>) {
         val intent = createDeepLinkIntent(data)
-        
+
         val pendingIntent = PendingIntent.getActivity(
             this,
             0,
@@ -52,11 +51,11 @@ class SooumFirebaseMessagingService : FirebaseMessagingService() {
 
         // 알림 채널 생성
         notificationChannelManager.createNotificationChannels()
-        
+
         // 알림 타입에 따른 채널 ID 선택
         val notificationType = data["notification_type"] ?: "general"
         val channelId = notificationChannelManager.getChannelIdByType(notificationType)
-        
+
         val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
@@ -68,47 +67,63 @@ class SooumFirebaseMessagingService : FirebaseMessagingService() {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setStyle(NotificationCompat.BigTextStyle().bigText(messageBody))
 
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager =
+            getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         val notificationId = System.currentTimeMillis().toInt() // 고유한 ID 생성
         notificationManager.notify(notificationId, notificationBuilder.build())
-        
+
         SooumLog.d(TAG, "알림 표시 완료 - 타입: $notificationType, 채널: $channelId")
     }
 
     private fun createDeepLinkIntent(data: Map<String, String>): Intent {
         val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+
             // 딥링크 정보를 인텐트에 추가
             data.forEach { (key, value) ->
                 putExtra(key, value)
             }
-            
-            // TODO : 딥링크 타입 확인
-            when (data["type"]) {
-                "card_detail" -> {
-                    data["card_id"]?.let { cardId ->
-                        putExtra("deep_link", "sooum://detail/$cardId")
+
+            // 알림 타입별 딥링크 처리
+            val notificationType = NotificationType.fromString(data["notificationType"])
+            when (notificationType) {
+                // [카드] 타입 알림들 - 해당 카드 상세로 이동, 뒤로가기시 Feed Graph
+                NotificationType.FEED_LIKE, 
+                NotificationType.COMMENT_LIKE, 
+                NotificationType.COMMENT_WRITE -> {
+                    data["targetCardId"]?.let { cardId ->
+                        putExtra("deep_link", "sooum://card/$cardId?backTo=feed")
                     }
                 }
-                "profile" -> {
-                    data["user_id"]?.let { userId ->
-                        putExtra("deep_link", "sooum://profile/$userId")
+
+                // [태그] 타입 알림 - 해당 태그가 포함된 카드 상세로 이동, 뒤로가기시 태그 Graph
+                NotificationType.TAG_USAGE -> {
+                    data["targetCardId"]?.let { cardId ->
+                        putExtra("deep_link", "sooum://card/$cardId?backTo=tag")
                     }
                 }
-                "notification" -> {
-                    putExtra("deep_link", "sooum://notify")
+
+                // [팔로우] 타입 알림 - 팔로우 리스트 페이지로 이동, 뒤로가기시 마이 Graph
+                NotificationType.FOLLOW -> {
+                    putExtra("deep_link", "sooum://follow?backTo=my")
                 }
-                "feed" -> {
-                    putExtra("deep_link", "sooum://feed")
+
+                // [공지사항] 타입 알림들 - 공지사항 상세로 이동, 뒤로가기시 Feed Graph
+                NotificationType.BLOCKED, 
+                NotificationType.DELETED, 
+                NotificationType.TRANSFER_SUCCESS -> {
+                    data["notificationId"]?.let { notificationId ->
+                        putExtra("deep_link", "sooum://notice/$notificationId?backTo=feed")
+                    }
                 }
+
                 else -> {
                     // 기본적으로 홈으로 이동
                     putExtra("deep_link", "sooum://feed")
                 }
             }
         }
-        
+
         return intent
     }
 

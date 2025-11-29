@@ -30,76 +30,73 @@ class NotificationChannelManager @Inject constructor(
         }
     }
     
-    private fun createGeneralNotificationChannel() {
+    private fun createChannel(
+        channelId: String,
+        channelName: String,
+        importance: Int,
+        description: String,
+        vibrationPattern: LongArray,
+        lightColor: Int
+    ) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
-                GENERAL_CHANNEL_ID,
-                GENERAL_CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_HIGH
+                channelId,
+                channelName,
+                importance
             ).apply {
-                description = "일반 알림"
+                this.description = description
                 enableVibration(true)
-                vibrationPattern = longArrayOf(0, 1000, 500, 1000)
+                this.vibrationPattern = vibrationPattern
                 setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION), null)
-                lightColor = ContextCompat.getColor(context, android.R.color.holo_blue_bright)
+                this.lightColor = lightColor
                 enableLights(true)
             }
             notificationManager.createNotificationChannel(channel)
         }
+    }
+    
+    private fun createGeneralNotificationChannel() {
+        createChannel(
+            channelId = GENERAL_CHANNEL_ID,
+            channelName = GENERAL_CHANNEL_NAME,
+            importance = NotificationManager.IMPORTANCE_HIGH,
+            description = "일반 알림",
+            vibrationPattern = longArrayOf(0, 1000, 500, 1000),
+            lightColor = ContextCompat.getColor(context, android.R.color.holo_blue_bright)
+        )
     }
     
     private fun createCommentNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                COMMENT_CHANNEL_ID,
-                COMMENT_CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "댓글 알림"
-                enableVibration(true)
-                vibrationPattern = longArrayOf(0, 500, 200, 500)
-                setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION), null)
-                lightColor = ContextCompat.getColor(context, android.R.color.holo_green_light)
-                enableLights(true)
-            }
-            notificationManager.createNotificationChannel(channel)
-        }
+        createChannel(
+            channelId = COMMENT_CHANNEL_ID,
+            channelName = COMMENT_CHANNEL_NAME,
+            importance = NotificationManager.IMPORTANCE_HIGH,
+            description = "댓글 알림",
+            vibrationPattern = longArrayOf(0, 500, 200, 500),
+            lightColor = ContextCompat.getColor(context, android.R.color.holo_green_light)
+        )
     }
     
     private fun createLikeNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                LIKE_CHANNEL_ID,
-                LIKE_CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_DEFAULT
-            ).apply {
-                description = "좋아요 알림"
-                enableVibration(true)
-                vibrationPattern = longArrayOf(0, 300)
-                setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION), null)
-                lightColor = ContextCompat.getColor(context, android.R.color.holo_red_light)
-                enableLights(true)
-            }
-            notificationManager.createNotificationChannel(channel)
-        }
+        createChannel(
+            channelId = LIKE_CHANNEL_ID,
+            channelName = LIKE_CHANNEL_NAME,
+            importance = NotificationManager.IMPORTANCE_DEFAULT,
+            description = "좋아요 알림",
+            vibrationPattern = longArrayOf(0, 300),
+            lightColor = ContextCompat.getColor(context, android.R.color.holo_red_light)
+        )
     }
     
     private fun createFollowNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                FOLLOW_CHANNEL_ID,
-                FOLLOW_CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_DEFAULT
-            ).apply {
-                description = "팔로우 알림"
-                enableVibration(true)
-                vibrationPattern = longArrayOf(0, 200, 100, 200)
-                setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION), null)
-                lightColor = ContextCompat.getColor(context, android.R.color.holo_orange_light)
-                enableLights(true)
-            }
-            notificationManager.createNotificationChannel(channel)
-        }
+        createChannel(
+            channelId = FOLLOW_CHANNEL_ID,
+            channelName = FOLLOW_CHANNEL_NAME,
+            importance = NotificationManager.IMPORTANCE_DEFAULT,
+            description = "팔로우 알림",
+            vibrationPattern = longArrayOf(0, 200, 100, 200),
+            lightColor = ContextCompat.getColor(context, android.R.color.holo_orange_light)
+        )
     }
     
     fun getChannelIdByType(notificationType: String): String {
