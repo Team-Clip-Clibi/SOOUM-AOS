@@ -9,6 +9,7 @@
     <string name="home_feed_20km_distance">20km</string>
     <string name="home_feed_50km_distance">50km</string>
     <string name="home_feed_no_card">아직 작성된 글이 없어요\n하고 싶은 이야기를 카드로 남겨보세요</string>
+    <string name="home_feed_load_error">카드를 불러오지 못했어요. 다시 시도해주세요.</string>
     <string name="home_notice_top_bar">알림</string>
     <string name="home_notice_activate">활동</string>
     <string name="home_notice_notice">서비스 점검</string>

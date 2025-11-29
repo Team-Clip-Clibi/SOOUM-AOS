@@ -13,7 +13,6 @@ import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.model.navigation.OnBoardingArgs
 import com.phew.core.ui.model.navigation.ProfileArgs
 import com.phew.core.ui.state.SooumAppState
-import com.phew.core.ui.state.rememberSooumAppState
 import com.phew.home.navigation.homeGraph
 import com.phew.home.navigation.navigateToHomeGraph
 import com.phew.home.navigation.navigateToReport
@@ -45,7 +44,6 @@ fun SooumNavHost(
     mainViewModel: MainViewModel = hiltViewModel(),
 ) {
     val navController = appState.navController
-    val homeAppState = rememberSooumAppState()
     LaunchedEffect(Unit) {
         mainViewModel.globalEvent.collect { event ->
             if (event == GlobalEvent.TeapotEvent) {
@@ -82,7 +80,7 @@ fun SooumNavHost(
             )
 
             homeGraph(
-                appState = homeAppState,
+                appState = appState,
                 navController = navController,
                 finish = finish,
                 onBackPressed = {

@@ -125,7 +125,7 @@ internal fun FollowerScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Image(
-                        painter = painterResource(com.phew.core_design.R.drawable.ic_deleted_card_sv),
+                        painter = painterResource(com.phew.core_design.R.drawable.ic_deleted_card),
                         contentDescription = result.errorMessage,
                         modifier = Modifier
                             .height(130.dp)
@@ -322,7 +322,7 @@ private fun FollowerView(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Image(
-                    painter = painterResource(com.phew.core_design.R.drawable.ic_deleted_card_sv),
+                    painter = painterResource(com.phew.core_design.R.drawable.ic_deleted_card),
                     contentDescription = refreshState.error.message,
                     modifier = Modifier
                         .height(130.dp)

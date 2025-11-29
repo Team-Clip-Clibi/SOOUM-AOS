@@ -124,7 +124,7 @@ internal fun MyProfile(
                         .background(color = NeutralColor.WHITE)
                 ) {
                     Image(
-                        painter = painterResource(com.phew.core_design.R.drawable.ic_deleted_card_sv),
+                        painter = painterResource(com.phew.core_design.R.drawable.ic_deleted_card),
                         contentDescription = profileState.errorMessage,
                         modifier = Modifier
                             .height(130.dp)

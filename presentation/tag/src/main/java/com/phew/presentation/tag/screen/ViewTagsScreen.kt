@@ -248,7 +248,7 @@ private fun EmptyViewTags() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
-            painter = painterResource(DesignR.drawable.ic_deleted_card_sv),
+            painter = painterResource(DesignR.drawable.ic_deleted_card),
             contentDescription = "no data",
             modifier = Modifier
                 .height(130.dp)
