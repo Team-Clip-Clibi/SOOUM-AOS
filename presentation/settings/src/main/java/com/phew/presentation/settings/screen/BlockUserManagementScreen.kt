@@ -209,7 +209,8 @@ private fun BlockUserManagementScreen(
             buttonTextEnd = stringResource(R.string.block_user_dialog_disable),
             onClick = onUnblockConfirm,
             onDismiss = onUnblockCancel,
-            rightButtonBaseColor = Danger.M_RED
+            rightButtonBaseColor = Danger.M_RED,
+            startButtonTextColor = NeutralColor.GRAY_600
         )
     }
 }

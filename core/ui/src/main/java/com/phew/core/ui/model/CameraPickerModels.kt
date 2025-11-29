@@ -7,7 +7,8 @@ import android.net.Uri
  */
 enum class CameraPickerAction {
     Album,
-    Camera
+    Camera,
+    Default
 }
 
 data class CameraCaptureRequest(

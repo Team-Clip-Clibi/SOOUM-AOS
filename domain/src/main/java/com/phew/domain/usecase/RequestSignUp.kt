@@ -12,6 +12,9 @@ import com.phew.core_common.ERROR
 import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.ERROR_FAIL_PACKAGE_IMAGE
 import com.phew.core_common.ERROR_NETWORK
+import com.phew.core_common.ERROR_UN_GOOD_IMAGE
+import com.phew.core_common.HTTP_NOT_FOUND
+import com.phew.core_common.HTTP_UN_GOOD_IMAGE
 import com.phew.domain.BuildConfig
 import com.phew.domain.dto.Token
 import com.phew.domain.repository.DeviceRepository
@@ -73,7 +76,13 @@ class RequestSignUp @Inject constructor(
                 data = file,
                 url = uploadImageUrl
             )
-            if (requestImageUpload is DataResult.Fail) return DomainResult.Failure(ERROR_NETWORK)
+            if (requestImageUpload is DataResult.Fail){
+                return when(requestImageUpload.code){
+                    HTTP_NOT_FOUND -> DomainResult.Failure(ERROR_NETWORK)
+                    HTTP_UN_GOOD_IMAGE -> DomainResult.Failure(ERROR_UN_GOOD_IMAGE)
+                    else -> DomainResult.Failure(ERROR_FAIL_JOB)
+                }
+            }
         } else {
             fileName = null
         }

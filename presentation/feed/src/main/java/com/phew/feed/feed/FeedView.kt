@@ -66,6 +66,7 @@ import com.phew.core_design.DialogComponent
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
 import com.phew.core.ui.component.home.HomeTabType
+import com.phew.core_design.LoadingAnimation
 import com.phew.domain.dto.FeedCardType
 import com.phew.domain.dto.Latest
 import com.phew.domain.dto.Notice
@@ -82,7 +83,6 @@ import com.phew.feed.viewModel.UiState
 import com.phew.presentation.feed.R
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
-import kotlin.text.append
 import com.phew.core.ui.R as CoreUiR
 
 
@@ -202,10 +202,9 @@ fun FeedView(
                     val lastVisibleIndex = visibleItems.lastOrNull()?.index ?: 0
                     val totalItems = lazyListState.layoutInfo.totalItemsCount
 
-                    val state = currentPagingState
                     if (lastVisibleIndex >= totalItems - 5 &&
-                        state is FeedPagingState.Success &&
-                        state.hasNextPage &&
+                        currentPagingState is FeedPagingState.Success &&
+                        currentPagingState.hasNextPage &&
                         totalItems > 0
                     ) {
                         viewModel.loadMoreFeeds()
@@ -536,7 +535,7 @@ private fun FeedListView(
                             .padding(16.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        androidx.compose.material3.CircularProgressIndicator()
+                        LoadingAnimation.LoadingView()
                     }
                 }
             }
@@ -585,7 +584,6 @@ private fun LatestFeedPagingContent(
     feedNoticeClick: (String) -> Unit,
 ) {
     val isLoading = latestFeedItems.loadState.refresh is LoadState.Loading
-    val isAppending = latestFeedItems.loadState.append is LoadState.Loading
     val isPagingRefreshing = isRefreshing || isLoading
     
     // 빈 화면 처리

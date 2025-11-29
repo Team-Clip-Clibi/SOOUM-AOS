@@ -91,6 +91,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import kotlinx.coroutines.launch
 import com.airbnb.lottie.compose.LottieConstants
+import com.phew.core_design.LoadingAnimation
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -163,11 +164,7 @@ internal fun CommentCardDetailScreen(
                 .windowInsetsPadding(WindowInsets.statusBars),
             contentAlignment = Alignment.Center
         ) {
-            LottieAnimation(
-                composition = composition,
-                progress = { refreshProgress },
-                modifier = Modifier.size(44.dp)
-            )
+            LoadingAnimation.LoadingView()
         }
         return
     }
@@ -611,7 +608,8 @@ private fun BottomSheetView(
                 showDeleteDialog = false
             },
             rightButtonBaseColor = Danger.M_RED,
-            rightButtonClickColor = Danger.D_RED
+            rightButtonClickColor = Danger.D_RED,
+            startButtonTextColor = NeutralColor.GRAY_600
         )
     }
 
@@ -629,7 +627,8 @@ private fun BottomSheetView(
                 showBlockDialog = false
                 onBlockMember()
             },
-            onDismiss = { showBlockDialog = false }
+            onDismiss = { showBlockDialog = false },
+            startButtonTextColor = NeutralColor.GRAY_600
         )
     }
 }

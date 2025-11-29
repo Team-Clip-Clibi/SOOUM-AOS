@@ -274,7 +274,7 @@ private fun MyProfileView(
                         shape = RoundedCornerShape(100.dp)
                     )
                     .clip(shape = RoundedCornerShape(size = 100.dp)),
-                contentScale = ContentScale.FillBounds
+                contentScale = ContentScale.Crop
             )
         }
         // 카드 , 팔로워, 팔로잉 숫자
@@ -355,6 +355,8 @@ private fun ProfileCardView(
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
         modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(1.dp),
+        verticalArrangement = Arrangement.spacedBy(1.dp),
         contentPadding = PaddingValues(bottom = paddingValues.calculateBottomPadding() + 63.dp)
     ) {
         item(span = { GridItemSpan(maxLineSpan) }) {
