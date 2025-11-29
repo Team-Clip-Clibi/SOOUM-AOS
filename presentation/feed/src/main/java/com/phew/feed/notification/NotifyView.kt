@@ -84,8 +84,7 @@ fun NotifyView(
         derivedStateOf {
             when (selectIndex) {
                 NotifyTab.NOTIFY_ACTIVATE -> {
-                    unRead.loadState.refresh is LoadState.Loading
-                    read.loadState.refresh is LoadState.Loading
+                    unRead.loadState.refresh is LoadState.Loading || read.loadState.refresh is LoadState.Loading
                 }
 
                 NotifyTab.NOTIFY_SERVICE -> notices.loadState.refresh is LoadState.Loading
