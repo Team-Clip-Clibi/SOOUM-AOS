@@ -286,7 +286,7 @@ private fun TagView(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Image(
-                            painter = painterResource(DesignR.drawable.ic_deleted_card),
+                            painter = painterResource(DesignR.drawable.ic_deleted_card_sv),
                             modifier = Modifier.size(48.dp),
                             contentDescription = "error fail rank tag"
                         )

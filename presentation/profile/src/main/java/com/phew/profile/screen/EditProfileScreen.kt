@@ -273,7 +273,7 @@ private fun ErrorView(errorMessage: String) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
-            painter = painterResource(com.phew.core_design.R.drawable.ic_deleted_card),
+            painter = painterResource(com.phew.core_design.R.drawable.ic_deleted_card_sv),
             contentDescription = errorMessage,
             modifier = Modifier
                 .height(130.dp)

@@ -376,7 +376,7 @@ private fun EmptyCardList() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
-            painter = painterResource(com.phew.core_design.R.drawable.ic_deleted_card),
+            painter = painterResource(com.phew.core_design.R.drawable.ic_deleted_card_sv),
             contentDescription = "no notify",
             contentScale = ContentScale.Fit,
             modifier = Modifier
