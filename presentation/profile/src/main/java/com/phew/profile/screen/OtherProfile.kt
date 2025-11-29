@@ -280,6 +280,8 @@ private fun ProfileContentView(
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
         modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(1.dp),
+        verticalArrangement = Arrangement.spacedBy(1.dp),
     ) {
         item(span = { GridItemSpan(maxLineSpan) }) {
             ProfileView(
@@ -455,7 +457,7 @@ private fun ProfileView(
                         shape = RoundedCornerShape(100.dp)
                     )
                     .clip(shape = RoundedCornerShape(size = 100.dp)),
-                contentScale = ContentScale.FillBounds
+                contentScale = ContentScale.Crop
             )
         }
         Row(

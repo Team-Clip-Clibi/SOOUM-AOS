@@ -20,6 +20,7 @@
     <string name="card_deleted">삭제된 카드예요</string>
     <string name="camera_picker_album">앨범에서 사진 선택</string>
     <string name="camera_picker_camera">사진 찍기</string>
+    <string name="camera_picker_default">기본 이미지 적용</string>
     <string name="write_card_content_placeholder">숨에서 편하게 이야기 나눠요</string>
     <string name="permission_settings_positive">설정 이동</string>
     <string name="permission_settings_negative">취소</string>

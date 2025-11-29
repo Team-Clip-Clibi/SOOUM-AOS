@@ -91,7 +91,7 @@ object ProfileComponent {
             modifier = Modifier
                 .fillMaxWidth()
                 .background(color = NeutralColor.WHITE)
-                .padding(top = 16.dp, start = 16.dp, end = 16.dp)
+                .padding(top = 16.dp)
         ) {
             TabBar.TabBarTwo(
                 data = listOf(

@@ -394,6 +394,17 @@ class ProfileViewModel @Inject constructor(
             )
         }
     }
+
+    fun setImageDialog(result: Boolean) {
+        _uiState.update { state ->
+            state.copy(
+                imageDialog = result,
+                updateProfile = if (!result) state.updateProfile else UiState.Loading,
+                defaultImage = if (!result) true else state.defaultImage,
+                newProfileImageUri = if (!result) Uri.EMPTY else state.newProfileImageUri
+            )
+        }
+    }
 }
 
 data class Profile(
@@ -418,6 +429,7 @@ data class Profile(
     val errorMessage: String = "",
     val changeProfile: Boolean = false,
     val imageChange : Boolean = false,
+    val imageDialog : Boolean = false
 )
 
 sealed interface UiState<out T> {

@@ -278,8 +278,6 @@ private fun ContentView(
             .padding(
                 top = paddingValues.calculateTopPadding(),
                 bottom = paddingValues.calculateBottomPadding(),
-                start = 16.dp,
-                end = 16.dp
             )
     ) {
         TabBar.TabBarTwo(

@@ -2,6 +2,8 @@ package com.phew.core_design
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -27,6 +29,9 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.draw.drawBehind
 
 object BottomSheetComponent {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -36,6 +41,7 @@ object BottomSheetComponent {
         onItemClick: (Int) -> Unit,
         onDismiss: () -> Unit,
     ) {
+
         val sheetState = rememberModalBottomSheetState(
             skipPartiallyExpanded = true
         )
@@ -61,11 +67,28 @@ object BottomSheetComponent {
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(data) { viewItem ->
+                    val interactionSource = remember { MutableInteractionSource() }
+                    val isPressed by interactionSource.collectIsPressedAsState()
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
-                            .clickable { onItemClick(viewItem.id) }
+                            .drawBehind {
+                                val color = if(isPressed) {
+                                    NeutralColor.GRAY_100
+                                } else {
+                                    NeutralColor.WHITE
+                                }
+                                drawRect(color)
+                            }
+                            .clickable(
+                                interactionSource = interactionSource,
+                                indication = null,
+                                enabled = true,
+                                onClick = {
+                                    onItemClick(viewItem.id)
+                                }
+                            )
                             .padding(horizontal = 16.dp, vertical = 12.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
                         verticalAlignment = Alignment.CenterVertically, // 아이콘/텍스트 세로 정렬 유지

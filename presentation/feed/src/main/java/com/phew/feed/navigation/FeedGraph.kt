@@ -97,13 +97,9 @@ fun NavGraphBuilder.feedGraph(
             val navBackStackEntry =
                 remember(nav) { navController.getBackStackEntry(FEED_GRAPH) }
             val feedViewModel: FeedViewModel = hiltViewModel(navBackStackEntry)
-            val snackBarHostState = remember { SnackbarHostState() }
-
             NotifyView(
                 viewModel = feedViewModel,
-                snackBarHostState = snackBarHostState,
                 backClick = { navController.popBackStack() },
-                logout = {}
             )
         }
     }

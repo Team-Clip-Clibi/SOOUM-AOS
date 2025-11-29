@@ -49,8 +49,10 @@ import com.phew.profile.R
 import com.phew.profile.UiState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
 import com.phew.core_common.ERROR_LOGOUT
 import com.phew.core_common.ERROR_NETWORK
+import com.phew.core_common.ERROR_UN_GOOD_IMAGE
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.TextComponent
 
@@ -64,10 +66,14 @@ internal fun EditProfileScreen(viewModel: ProfileViewModel, onBackPress: () -> U
     } else {
         arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
     }
-    ObserverUpdateState(updateProfile = uiState.updateProfile, onBackPress = {
-        viewModel.initEditProfile()
-        onBackPress()
-    }, snackbarHostState = snackBarHostState)
+    ObserverUpdateState(
+        updateProfile = uiState.updateProfile, onBackPress = {
+            viewModel.initEditProfile()
+            onBackPress()
+        },
+        snackbarHostState = snackBarHostState,
+        onImageDialog = viewModel::setImageDialog
+    )
     CameraPickerEffect(
         effectState = CameraPickerEffectState(
             launchAlbum = uiState.useAlbum,
@@ -172,6 +178,11 @@ internal fun EditProfileScreen(viewModel: ProfileViewModel, onBackPress: () -> U
                     onDismiss = remember { { bottomSheetView = false } },
                     profileImage = result.data.profileImageUrl
                 )
+                if (uiState.imageDialog) {
+                    ShowImageDialog(
+                        onClick = viewModel::setImageDialog
+                    )
+                }
             }
         }
     }
@@ -292,30 +303,39 @@ private fun ObserverUpdateState(
     updateProfile: UiState<Unit>,
     onBackPress: () -> Unit,
     snackbarHostState: SnackbarHostState,
+    onImageDialog: (Boolean) -> Unit,
 ) {
-    when (updateProfile) {
-        is UiState.Fail -> {
-            val message = when (updateProfile.errorMessage) {
-                ERROR_NETWORK -> stringResource(com.phew.core_design.R.string.error_network)
-                ERROR_LOGOUT -> stringResource(com.phew.core_design.R.string.error_log_out)
-                else -> stringResource(com.phew.core_design.R.string.error_app)
-            }
-            LaunchedEffect(updateProfile.errorMessage) {
-                snackbarHostState.showSnackbar(
-                    message = message,
-                    duration = SnackbarDuration.Short
-                )
-                if (updateProfile.errorMessage == ERROR_LOGOUT) {
-                    onBackPress()
-                    return@LaunchedEffect
+    val context = LocalContext.current
+    LaunchedEffect(updateProfile) {
+        when (updateProfile) {
+            is UiState.Fail -> {
+                when (updateProfile.errorMessage) {
+                    ERROR_NETWORK -> {
+                        snackbarHostState.showSnackbar(
+                            message = context.getString(com.phew.core_design.R.string.error_network),
+                            duration = SnackbarDuration.Short
+                        )
+                    }
+
+                    ERROR_UN_GOOD_IMAGE -> {
+                        onImageDialog(true)
+                    }
                 }
             }
-        }
 
-        is UiState.Success -> {
-            onBackPress()
+            is UiState.Success<*> -> onBackPress()
+            else -> Unit
         }
-
-        else -> Unit
     }
+}
+
+@Composable
+private fun ShowImageDialog(onClick: (Boolean) -> Unit) {
+    DialogComponent.DefaultButtonOne(
+        title = stringResource(R.string.edit_profile_picture_dialog_image_title),
+        description = stringResource(R.string.edit_profile_picture_dialog_image_content),
+        buttonText = stringResource(com.phew.core_design.R.string.common_okay),
+        onClick = { onClick(false) },
+        onDismiss = { onClick(false) }
+    )
 }

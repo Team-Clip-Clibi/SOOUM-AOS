@@ -67,6 +67,7 @@ import com.phew.core_design.DialogComponent
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
 import com.phew.core.ui.component.home.HomeTabType
+import com.phew.core_design.LoadingAnimation
 import com.phew.domain.dto.FeedCardType
 import com.phew.domain.dto.Latest
 import com.phew.domain.dto.Notice
@@ -360,7 +361,7 @@ private fun FeedContent(
         )
         return
     }
-    
+
     when (currentPagingState) {
         is FeedPagingState.None,
         is FeedPagingState.Loading -> {
@@ -542,7 +543,7 @@ private fun FeedListView(
                             .padding(16.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        androidx.compose.material3.CircularProgressIndicator()
+                        LoadingAnimation.LoadingView()
                     }
                 }
             }
@@ -595,7 +596,7 @@ private fun LatestFeedPagingContent(
     val isAppending = appendLoadState is LoadState.Loading
     val isPagingRefreshing = isRefreshing || isLoading
     val refreshError = latestFeedItems.loadState.refresh as? LoadState.Error
-    
+
     if (refreshError != null && latestFeedItems.itemCount == 0) {
         ErrorView(
             message = refreshError.error.message ?: stringResource(R.string.home_feed_load_error),
