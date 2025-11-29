@@ -14,10 +14,10 @@ class SetReadActivateNotify @Inject constructor(private val repository: NotifyRe
     data class Param(
         val notifyId: List<Long>
     )
-    private val Tag = "test"
+    private val tag = "SetReadActivateNotify"
     suspend operator fun invoke(param: Param): DomainResult<Unit, String> {
         if (param.notifyId.isEmpty()) {
-            Log.e(Tag , "notify data is Empty")
+            Log.e(tag , "notify data is Empty")
             return DomainResult.Success(Unit)
         }
         return supervisorScope {

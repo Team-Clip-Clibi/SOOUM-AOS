@@ -1,6 +1,5 @@
 package com.phew.feed.viewModel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
@@ -445,7 +444,6 @@ class FeedViewModel @Inject constructor(
     fun addItemAsRead(notifyId: Long) {
         viewModelScope.launch {
             mutex.withLock {
-                Log.e("okhttp.OkHttpClient" , "Success to add item")
                 unreadIdBuffer.add(notifyId)
             }
         }
@@ -726,12 +724,6 @@ enum class DistanceType(val value: Double) {
     KM_15(15.0),
     KM_20(20.0),
     KM_50(50.0);
-
-    companion object {
-        fun fromValue(value: Double): DistanceType {
-            return entries.find { distanceType -> distanceType.value == value } ?: KM_1
-        }
-    }
 }
 
 sealed interface UiState<out T> {
