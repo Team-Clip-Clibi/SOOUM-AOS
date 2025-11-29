@@ -51,6 +51,6 @@ interface NotifyHttp {
      */
     @PATCH(BuildConfig.API_URL_READ_ACTIVATE)
     suspend fun requestReadActivateNotify(
-        @Path("id") lastId: Long
+        @Path("id") id: Long
     ): Response<Unit>
 }
