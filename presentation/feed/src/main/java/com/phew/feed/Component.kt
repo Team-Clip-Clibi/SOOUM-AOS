@@ -35,6 +35,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -156,9 +158,9 @@ object FeedUi {
         recentClick: () -> Unit,
         popularClick: () -> Unit,
         nearClick: () -> Unit,
-        isTabsVisible: Boolean,
         onDistanceClick: (DistanceType) -> Unit,
         selectDistanceType: DistanceType,
+        translationY: Float,
     ) {
         val tabItem = listOf(
             stringResource(R.string.home_feed_tab_recent_card),
@@ -166,89 +168,93 @@ object FeedUi {
             stringResource(R.string.home_feed_tab_near_card)
         )
 
-        AnimatedVisibility(
-            visible = isTabsVisible,
-            enter = slideInVertically(
-                initialOffsetY = { -it },
-                animationSpec = tween(durationMillis = 150)
-            ),
-            exit = slideOutVertically(
-                targetOffsetY = { -it },
-                animationSpec = tween(durationMillis = 150)
-            )
+        val defaultHeight = 56.dp
+        val distanceRowHeight = 56.dp
+        val totalHeightPx = with(LocalDensity.current) {
+            (defaultHeight + if (selectTabData == NAV_HOME_NEAR_INDEX) distanceRowHeight else 0.dp).toPx()
+        }
+
+        val animatedHeightPx = (totalHeightPx + translationY).coerceIn(0f, totalHeightPx)
+        val animatedHeightDp = with(LocalDensity.current) { animatedHeightPx.toDp() }
+
+        val alpha = (1 + (translationY / totalHeightPx)).coerceIn(0f, 1f)
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(animatedHeightDp)
+                .graphicsLayer {
+                    this.translationY = translationY
+                    this.alpha = alpha
+                }
+                .background(color = WHITE)
         ) {
-            Column(
+            SooumTabRow(
+                selectedTabIndex = selectTabData,
+                modifier = Modifier.fillMaxWidth()
+                    .height(defaultHeight),
+            ) {
+                tabItem.forEachIndexed { index, title ->
+                    SooumTab(
+                        selected = selectTabData == index,
+                        onClick = {
+                            when (index) {
+                                NAV_HOME_FEED_INDEX -> recentClick()
+                                NAV_HOME_POPULAR_INDEX -> popularClick()
+                                NAV_HOME_NEAR_INDEX -> nearClick()
+                            }
+                        },
+                        text = {
+                            Text(
+                                text = title,
+                                style = TextComponent.TITLE_2_SB_16,
+                                color = LocalContentColor.current
+                            )
+                        }
+                    )
+                }
+            }
+            HorizontalDivider(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .wrapContentHeight()
-                    .background(color = WHITE)
-            ) {
-                SooumTabRow(
-                    selectedTabIndex = selectTabData,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    tabItem.forEachIndexed { index, title ->
-                        SooumTab(
-                            selected = selectTabData == index,
-                            onClick = {
-                                when (index) {
-                                    NAV_HOME_FEED_INDEX -> recentClick()
-                                    NAV_HOME_POPULAR_INDEX -> popularClick()
-                                    NAV_HOME_NEAR_INDEX -> nearClick()
-                                }
-                            },
-                            text = {
-                                Text(
-                                    text = title,
-                                    style = TextComponent.TITLE_2_SB_16,
-                                    color = LocalContentColor.current
-                                )
-                            }
-                        )
-                    }
-                }
-                HorizontalDivider(
+                    .height(1.dp),
+                color = NeutralColor.GRAY_200
+            )
+            if (selectTabData == NAV_HOME_NEAR_INDEX) {
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(1.dp),
-                    color = NeutralColor.GRAY_200
-                )
-                if (selectTabData == NAV_HOME_NEAR_INDEX) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp)
-                            .background(color = WHITE)
-                            .padding(start = 16.dp, end = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.Start),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        DistanceText(
-                            distance = stringResource(R.string.home_feed_1km_distance),
-                            onClick = { onDistanceClick(DistanceType.KM_1) },
-                            isSelect = selectDistanceType == DistanceType.KM_1
-                        )
-                        DistanceText(
-                            distance = stringResource(R.string.home_feed_5km_distance),
-                            onClick = { onDistanceClick(DistanceType.KM_5) },
-                            isSelect = selectDistanceType == DistanceType.KM_5
-                        )
-                        DistanceText(
-                            distance = stringResource(R.string.home_feed_10km_distance),
-                            onClick = { onDistanceClick(DistanceType.KM_10) },
-                            isSelect = selectDistanceType == DistanceType.KM_10
-                        )
-                        DistanceText(
-                            distance = stringResource(R.string.home_feed_20km_distance),
-                            onClick = { onDistanceClick(DistanceType.KM_20) },
-                            isSelect = selectDistanceType == DistanceType.KM_20
-                        )
-                        DistanceText(
-                            distance = stringResource(R.string.home_feed_50km_distance),
-                            onClick = { onDistanceClick(DistanceType.KM_50) },
-                            isSelect = selectDistanceType == DistanceType.KM_50
-                        )
-                    }
+                        .height(distanceRowHeight)
+                        .background(color = WHITE)
+                        .padding(start = 16.dp, end = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.Start),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    DistanceText(
+                        distance = stringResource(R.string.home_feed_1km_distance),
+                        onClick = { onDistanceClick(DistanceType.KM_1) },
+                        isSelect = selectDistanceType == DistanceType.KM_1
+                    )
+                    DistanceText(
+                        distance = stringResource(R.string.home_feed_5km_distance),
+                        onClick = { onDistanceClick(DistanceType.KM_5) },
+                        isSelect = selectDistanceType == DistanceType.KM_5
+                    )
+                    DistanceText(
+                        distance = stringResource(R.string.home_feed_10km_distance),
+                        onClick = { onDistanceClick(DistanceType.KM_10) },
+                        isSelect = selectDistanceType == DistanceType.KM_10
+                    )
+                    DistanceText(
+                        distance = stringResource(R.string.home_feed_20km_distance),
+                        onClick = { onDistanceClick(DistanceType.KM_20) },
+                        isSelect = selectDistanceType == DistanceType.KM_20
+                    )
+                    DistanceText(
+                        distance = stringResource(R.string.home_feed_50km_distance),
+                        onClick = { onDistanceClick(DistanceType.KM_50) },
+                        isSelect = selectDistanceType == DistanceType.KM_50
+                    )
                 }
             }
         }

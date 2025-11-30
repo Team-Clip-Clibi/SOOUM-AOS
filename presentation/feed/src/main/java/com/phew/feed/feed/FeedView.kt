@@ -29,6 +29,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -83,6 +84,8 @@ import com.phew.feed.viewModel.UiState
 import com.phew.presentation.feed.R
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlin.text.append
 import com.phew.core.ui.R as CoreUiR
 
 
@@ -100,8 +103,8 @@ fun FeedView(
     webViewClick: (String) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val isRefreshing = uiState.refresh is UiState.Loading
     val feedNoticeState = uiState.feedNotification
+    val latestFeedItems = viewModel.latestFeedPaging.collectAsLazyPagingItems()
     val lazyListState = rememberLazyListState()
     var hasScrolledToTop by rememberSaveable { mutableStateOf(false) }
     var previousHomeTab by rememberSaveable { mutableStateOf<HomeTabType?>(null) }
@@ -109,13 +112,22 @@ fun FeedView(
     val currentHomeTab = remember(navBackStackEntry) {
         HomeTabType.findHome(navBackStackEntry?.destination?.route)
     }
-    
-    val latestFeedItems = viewModel.latestFeedPaging.collectAsLazyPagingItems()
-    var isTabsVisible by remember { mutableStateOf(true) }
+    val currentPagingState = uiState.currentPagingState
+    val pagingStateForEffect by rememberUpdatedState(currentPagingState)
+    val isLatestRefreshing = latestFeedItems.loadState.refresh is LoadState.Loading
+    val isRefreshing = when (uiState.currentTab) {
+        FeedType.Latest -> isLatestRefreshing
+        else -> currentPagingState is FeedPagingState.Loading
+    }
+    val toolbarHeight = 56.dp
+    val toolbarHeightPx = with(LocalDensity.current) { toolbarHeight.toPx() }
+    val toolbarOffsetHeightPx = remember { mutableStateOf(0f) }
     val nestedScrollConnection = remember {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                isTabsVisible = available.y > 0 || lazyListState.firstVisibleItemIndex == 0
+                val delta = available.y
+                val newOffset = toolbarOffsetHeightPx.value + delta
+                toolbarOffsetHeightPx.value = newOffset.coerceIn(-toolbarHeightPx, 0f)
                 return Offset.Zero
             }
         }
@@ -148,7 +160,10 @@ fun FeedView(
     // Scroll to top handling from AppState
     LaunchedEffect(appState) {
         appState.feedScrollToTopEvent.collect {
-            lazyListState.animateScrollToItem(0)
+            if (!lazyListState.isScrollInProgress) {
+                lazyListState.animateScrollToItem(0)
+                toolbarOffsetHeightPx.value = 0f
+            }
         }
     }
 
@@ -179,21 +194,16 @@ fun FeedView(
         }
     }
 
-    // 화면 진입(탭 이동) 시 한 번만 스크롤 초기화
     LaunchedEffect(hasScrolledToTop) {
-        if (!hasScrolledToTop) {
+        if (!hasScrolledToTop && !lazyListState.isScrollInProgress) {
             lazyListState.animateScrollToItem(0)
             hasScrolledToTop = true
         }
     }
 
-    // 리컴포지션 최적화: 페이징 상태 직접 참조
-    val currentPagingState = uiState.currentPagingState
 
-    // 무한 스크롤 감지
     val isLoadingMore = currentPagingState is FeedPagingState.LoadingMore
 
-    // 기존 커스텀 페이징 무한 스크롤 (Popular, Distance 탭에서만 사용)
     LaunchedEffect(lazyListState, uiState.currentTab) {
         if (uiState.currentTab != FeedType.Latest) {
             snapshotFlow { lazyListState.layoutInfo.visibleItemsInfo }
@@ -202,9 +212,10 @@ fun FeedView(
                     val lastVisibleIndex = visibleItems.lastOrNull()?.index ?: 0
                     val totalItems = lazyListState.layoutInfo.totalItemsCount
 
+                    val state = pagingStateForEffect
                     if (lastVisibleIndex >= totalItems - 5 &&
-                        currentPagingState is FeedPagingState.Success &&
-                        currentPagingState.hasNextPage &&
+                        state is FeedPagingState.Success &&
+                        state.hasNextPage &&
                         totalItems > 0
                     ) {
                         viewModel.loadMoreFeeds()
@@ -218,6 +229,7 @@ fun FeedView(
             .fillMaxSize()
             .background(color = NeutralColor.GRAY_100)
             .systemBarsPadding()
+            .nestedScroll(nestedScrollConnection)
     ) {
         TopLayout(
             currentTab = uiState.currentTab,
@@ -228,13 +240,13 @@ fun FeedView(
                 viewModel.switchTab(FeedType.Popular)
             },
             nearClick = viewModel::checkLocationPermission,
-            isTabsVisible = isTabsVisible,
             notice = feedNoticeState is UiState.Success && feedNoticeState.data.isNotEmpty(),
             noticeClick = noticeClick,
             distanceClick = { value ->
                 viewModel.switchDistanceTab(value)
             },
-            selectDistance = uiState.distanceTab
+            selectDistance = uiState.distanceTab,
+            toolbarOffsetHeightPx = toolbarOffsetHeightPx.value
         )
 
         FeedContent(
@@ -282,11 +294,11 @@ private fun TopLayout(
     recentClick: () -> Unit,
     popularClick: () -> Unit,
     nearClick: () -> Unit,
-    isTabsVisible: Boolean,
     notice: Boolean,
     noticeClick: () -> Unit,
     distanceClick: (DistanceType) -> Unit,
-    selectDistance : DistanceType
+    selectDistance : DistanceType,
+    toolbarOffsetHeightPx: Float,
 ) {
     val selectIndex = when (currentTab) {
         FeedType.Latest -> NAV_HOME_FEED_INDEX
@@ -307,11 +319,11 @@ private fun TopLayout(
             recentClick = recentClick,
             popularClick = popularClick,
             nearClick = nearClick,
-            isTabsVisible = isTabsVisible,
             onDistanceClick = { value ->
                 distanceClick(value)
             },
-            selectDistanceType = selectDistance
+            selectDistanceType = selectDistance,
+            translationY = toolbarOffsetHeightPx
         )
     }
 }
@@ -349,8 +361,7 @@ private fun FeedContent(
         )
         return
     }
-    
-    // 기존 로직 (Popular, Distance)
+
     when (currentPagingState) {
         is FeedPagingState.None,
         is FeedPagingState.Loading -> {
@@ -358,8 +369,6 @@ private fun FeedContent(
         }
 
         is FeedPagingState.LoadingMore -> {
-            // LoadingMore일 때도 성공 상태의 데이터를 표시하고 로딩 인디케이터를 추가
-            // 하지만 현재 상태에서는 기존 데이터가 없으므로 빈 화면 표시
             if (currentPagingState.existingData.isEmpty()) {
                 EmptyFeedView()
             } else {
@@ -495,7 +504,6 @@ private fun FeedListView(
             state = lazyListState
         ) {
             item {
-                // 더 좋은 방법이 있으면 수정 필요
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
@@ -563,7 +571,7 @@ private fun ErrorView(
         androidx.compose.material3.Button(
             onClick = onRetry
         ) {
-            Text("다시 시도")
+            Text(stringResource(R.string.retry))
         }
     }
 }
@@ -584,8 +592,21 @@ private fun LatestFeedPagingContent(
     feedNoticeClick: (String) -> Unit,
 ) {
     val isLoading = latestFeedItems.loadState.refresh is LoadState.Loading
+    val appendLoadState = latestFeedItems.loadState.append
+    val isAppending = appendLoadState is LoadState.Loading
     val isPagingRefreshing = isRefreshing || isLoading
-    
+    val refreshError = latestFeedItems.loadState.refresh as? LoadState.Error
+
+    if (refreshError != null && latestFeedItems.itemCount == 0) {
+        ErrorView(
+            message = refreshError.error.message ?: stringResource(R.string.home_feed_load_error),
+            onRetry = {
+                latestFeedItems.retry()
+            }
+        )
+        return
+    }
+
     // 빈 화면 처리
     if (latestFeedItems.itemCount == 0 && !isPagingRefreshing) {
         EmptyFeedView()
@@ -669,13 +690,47 @@ private fun LatestFeedPagingContent(
                 }
             }
             // 다음 페이지 로딩 중 상태 표시
-            if (latestFeedItems.loadState.append is LoadState.Loading) {
+            if (isAppending) {
                 item {
                     Box(modifier = Modifier.fillParentMaxWidth()) {
                         CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                     }
                 }
             }
+
+            val appendError = appendLoadState as? LoadState.Error
+            if (appendError != null) {
+                item {
+                    PagingAppendErrorItem(
+                        message = appendError.error.message ?: stringResource(R.string.home_feed_load_error),
+                        onRetry = { latestFeedItems.retry() }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PagingAppendErrorItem(
+    message: String,
+    onRetry: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = message,
+            style = TextComponent.BODY_1_M_14,
+            color = NeutralColor.GRAY_400,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        androidx.compose.material3.Button(onClick = onRetry) {
+            Text(stringResource(R.string.retry))
         }
     }
 }

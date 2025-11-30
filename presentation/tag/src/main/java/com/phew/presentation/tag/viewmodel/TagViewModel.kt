@@ -43,6 +43,7 @@ data class TagUiState(
     val searchValue: String = "",
     val recommendedTags: List<TagInfo> = emptyList(),
     val searchPerformed: Boolean = false,
+    val isSearchLoading: Boolean = false,
     val cardDataItems: Flow<PagingData<TagCardContent>> = flowOf(PagingData.empty()),
     val nickName: String = "",
     val favoriteTags: List<FavoriteTag> = emptyList(),
@@ -186,7 +187,7 @@ class TagViewModel @Inject constructor(
     }
 
     fun onValueChange(value: String) {
-        _uiState.update { it.copy(searchValue = value, searchPerformed = false) }
+        _uiState.update { it.copy(searchValue = value, searchPerformed = false, isSearchLoading = false) }
     }
 
     fun onDeleteClick() {
@@ -194,7 +195,8 @@ class TagViewModel @Inject constructor(
             it.copy(
                 searchValue = "",
                 recommendedTags = emptyList(),
-                searchPerformed = false
+                searchPerformed = false,
+                isSearchLoading = false
             )
         }
     }
@@ -205,6 +207,14 @@ class TagViewModel @Inject constructor(
 
         SooumLog.d(TAG, "performSearch tag=$tag, tagId=$tagId")
 
+        // 즉시 로딩 상태 설정
+        _uiState.update {
+            it.copy(
+                isSearchLoading = true,
+                recommendedTags = emptyList()
+            )
+        }
+
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 // 태그의 즐겨찾기 상태 확인을 위해 첫 번째 데이터 로드
@@ -214,8 +224,8 @@ class TagViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         searchPerformed = true,
+                        isSearchLoading = false,
                         searchValue = tag,
-                        recommendedTags = emptyList(),
                         cardDataItems = cardsPagingFlow,
                         currentSearchedTag = selectedTag,
                         currentTagFavoriteState = false // 초기값, 실제 값은 paging data에서 업데이트됨
@@ -223,6 +233,7 @@ class TagViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 SooumLog.e(TAG, "Failed to perform search: ${e.message}")
+                _uiState.update { it.copy(isSearchLoading = false) }
                 emitSearchScreenEffect(TagUiEffect.ShowNetworkErrorSnackbar { performSearch(tag) })
             }
         }
