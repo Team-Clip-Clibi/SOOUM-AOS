@@ -9,11 +9,11 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -28,8 +28,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.phew.core_design.NeutralColor
@@ -104,39 +106,53 @@ fun ImageGrid(
         modifier = modifier
             .fillMaxWidth()
     ) {
-        val chunkedImages = displayImages.chunked(columns)
+        val gridCells = remember(displayImages) {
+            val base = displayImages.map { GridCell.Image(it) } + GridCell.Camera
+            val remainder = base.size % columns
+            if (remainder == 0) {
+                base
+            } else {
+                val padding = List(columns - remainder) { GridCell.Placeholder }
+                base + padding
+            }
+        }
+
+        val containerWidth = maxWidth
 
         Column(
-            modifier
+            Modifier
+                .width(containerWidth)
                 .clip(RoundedCornerShape(12.dp))
                 .border(1.dp, NeutralColor.GRAY_200, RoundedCornerShape(12.dp))
         ) {
-            chunkedImages.forEachIndexed { rowIndex, rowImages ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    rowImages.forEach { cardImage ->
-                        GridImageItem(
-                            cardImage = cardImage,
-                            isSelected = selectedImageName == cardImage.imageName,
-                            onClick = { onImageClick(cardImage.imageName) },
-                            modifier = Modifier
-                                .weight(1f)
-                                .aspectRatio(1f)
-                        )
-                    }
+            FixedGrid(
+                columns = columns,
+                modifier = Modifier.width(containerWidth)
+            ) {
+                gridCells.forEach { cell ->
+                    when (cell) {
+                        is GridCell.Image -> {
+                            GridImageItem(
+                                cardImage = cell.cardImage,
+                                isSelected = selectedImageName == cell.cardImage.imageName,
+                                onClick = { onImageClick(cell.cardImage.imageName) },
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .aspectRatio(1f)
+                            )
+                        }
 
-                    // 마지막 줄에 카메라 아이템 추가
-                    if (rowIndex == chunkedImages.lastIndex) {
-                        val remaining = columns - rowImages.size
-                        if (remaining > 0) {
-                            // 마지막 셀 자리에 카메라 넣기
+                        GridCell.Camera -> {
                             CameraGridItem(
                                 onClick = onCameraClick,
                                 modifier = Modifier
-                                    .weight(1f)
+                                    .fillMaxSize()
                                     .aspectRatio(1f)
                             )
+                        }
+
+                        GridCell.Placeholder -> {
+                            Box(modifier = Modifier.fillMaxSize())
                         }
                     }
                 }
@@ -156,7 +172,6 @@ fun GridImageItem(
     //  TODO 흰색선이 컬러 탭에서만 보임 (앞에 두개)
     Box(
         modifier = modifier
-            .aspectRatio(1f)
             .clickable(
                 onClick = onClick,
                 indication = null,
@@ -200,7 +215,6 @@ private fun CameraGridItem(
 ) {
     Box(
         modifier = modifier
-            .aspectRatio(1f)
             .background(NeutralColor.GRAY_100)
             .clickable(
                 onClick = onClick,
@@ -216,6 +230,46 @@ private fun CameraGridItem(
             modifier = Modifier.size(24.dp)
         )
     }
+}
+
+@Composable
+private fun FixedGrid(
+    columns: Int,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    Layout(
+        modifier = modifier,
+        content = content
+    ) { measurables, constraints ->
+        val maxWidth = constraints.maxWidth
+        check(maxWidth != Constraints.Infinity) {
+            "FixedGrid requires a bounded width."
+        }
+        val cellWidth = maxWidth / columns
+        val cellConstraints = Constraints.fixed(cellWidth, cellWidth)
+        val placeables = measurables.map { measurable ->
+            measurable.measure(cellConstraints)
+        }
+        val rows = if (placeables.isEmpty()) 0 else (placeables.size + columns - 1) / columns
+        val height = cellWidth * rows
+
+        layout(maxWidth, height) {
+            placeables.forEachIndexed { index, placeable ->
+                val row = index / columns
+                val column = index % columns
+                val x = column * cellWidth
+                val y = row * cellWidth
+                placeable.placeRelative(x, y)
+            }
+        }
+    }
+}
+
+private sealed interface GridCell {
+    data class Image(val cardImage: CardImageDefault) : GridCell
+    data object Camera : GridCell
+    data object Placeholder : GridCell
 }
 
 
