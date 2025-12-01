@@ -1,9 +1,13 @@
 package com.phew.sooum.navigation
 
+import android.os.Bundle
+import androidx.navigation.NavController
+import androidx.navigation.NavDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.navOptions
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.model.navigation.ProfileArgs
+import com.phew.core.ui.component.home.HomeTabType
 import com.phew.core_common.log.SooumLog
 import com.phew.feed.navigation.navigateToFeedGraph
 import com.phew.home.navigation.navigateToHomeGraph
@@ -103,56 +107,68 @@ class DeepLinkHandler {
         
         private fun navigateToDetail(navController: NavHostController, cardId: Long) {
             SooumLog.d(TAG, "카드 상세로 이동: $cardId")
-            
-            // 먼저 홈으로 이동한 다음 상세로 이동
-            navController.navigateToHomeGraph(
-                navOptions = navOptions {
-                    popUpTo(SPLASH_GRAPH) {
-                        inclusive = true
-                    }
-                    launchSingleTop = true
-                }
-            )
-            
-            // 약간의 지연을 두고 상세 페이지로 이동
-            navController.navigateToDetailGraph(
-                cardDetailArgs = CardDetailArgs(cardId = cardId)
-            )
+            ensureHomeGraph(navController) {
+                navController.navigateToDetailGraph(
+                    cardDetailArgs = CardDetailArgs(cardId = cardId)
+                )
+            }
         }
         
         private fun navigateToProfile(navController: NavHostController, userId: Long) {
             SooumLog.d(TAG, "프로필로 이동: $userId")
-            
-            // 먼저 홈으로 이동한 다음 프로필로 이동
-            navController.navigateToHomeGraph(
-                navOptions = navOptions {
-                    popUpTo(SPLASH_GRAPH) {
-                        inclusive = true
-                    }
-                    launchSingleTop = true
-                }
-            )
-            
-            navController.navigateToProfileGraphWithArgs(
-                ProfileArgs(userId = userId)
-            )
+            ensureHomeGraph(navController) {
+                navController.navigateToProfileGraphWithArgs(
+                    ProfileArgs(userId = userId)
+                )
+            }
         }
         
         private fun navigateToNotification(navController: NavHostController) {
             SooumLog.d(TAG, "알림으로 이동")
-            
-            // 먼저 홈으로 이동한 다음 알림으로 이동
+            ensureHomeGraph(navController) {
+                navController.navigateToFeedGraph()
+            }
+        }
+
+        private fun ensureHomeGraph(
+            navController: NavHostController,
+            onReady: () -> Unit
+        ) {
+            if (navController.currentDestination?.route.isHomeDestination()) {
+                onReady()
+                return
+            }
+
+            val listener = object : NavController.OnDestinationChangedListener {
+                override fun onDestinationChanged(
+                    controller: NavController,
+                    destination: NavDestination,
+                    arguments: Bundle?
+                ) {
+                    if (destination.route.isHomeDestination()) {
+                        controller.removeOnDestinationChangedListener(this)
+                        onReady()
+                    }
+                }
+            }
+            navController.addOnDestinationChangedListener(listener)
+
             navController.navigateToHomeGraph(
                 navOptions = navOptions {
                     popUpTo(SPLASH_GRAPH) {
                         inclusive = true
                     }
                     launchSingleTop = true
+                    restoreState = true
                 }
             )
-            
-            // 피드 그래프로 이동 후 알림으로 이동
-            navController.navigateToFeedGraph()
+        }
+
+        private fun String?.isHomeDestination(): Boolean {
+            if (this.isNullOrEmpty()) return false
+            return HomeTabType.entries.any { tab ->
+                this.startsWith(tab.graph) || this.startsWith(tab.route)
+            }
         }
     }
 }

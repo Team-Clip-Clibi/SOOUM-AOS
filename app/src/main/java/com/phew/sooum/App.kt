@@ -3,15 +3,18 @@ package com.phew.sooum
 import android.app.Application
 import com.phew.sooum.fcm.NotificationChannelManager
 import dagger.hilt.android.HiltAndroidApp
+import javax.inject.Inject
 
 @HiltAndroidApp
 class App : Application() {
+
+    @Inject
+    lateinit var notificationChannelManager: NotificationChannelManager
     
     override fun onCreate() {
         super.onCreate()
         
-        // 알림 채널 생성 - Application 컨텍스트에서 직접 생성
-        val notificationChannelManager = NotificationChannelManager(this)
+        // Hilt로 주입받은 채널 매니저 사용
         notificationChannelManager.createNotificationChannels()
     }
 }

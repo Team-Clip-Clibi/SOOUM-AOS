@@ -49,9 +49,6 @@ class SooumFirebaseMessagingService : FirebaseMessagingService() {
             PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // 알림 채널 생성
-        notificationChannelManager.createNotificationChannels()
-
         // 알림 타입에 따른 채널 ID 선택
         val notificationType = data["notification_type"] ?: "general"
         val channelId = notificationChannelManager.getChannelIdByType(notificationType)
@@ -77,6 +74,7 @@ class SooumFirebaseMessagingService : FirebaseMessagingService() {
 
     private fun createDeepLinkIntent(data: Map<String, String>): Intent {
         val intent = Intent(this, MainActivity::class.java).apply {
+            action = Intent.ACTION_MAIN
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
 
             // 딥링크 정보를 인텐트에 추가
