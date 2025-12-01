@@ -544,9 +544,9 @@ object MediumButton {
         textStyle: TextStyle? = null,
     ) {
         BlinkMediumButton(
-            baseColor = NeutralColor.GRAY_200,
-            disabledColor = NeutralColor.GRAY_200,
-            borderColor = NeutralColor.GRAY_200,
+            baseColor = NeutralColor.GRAY_100,
+            disabledColor = NeutralColor.GRAY_100,
+            borderColor = NeutralColor.GRAY_100,
             onClick = onClick,
             enabled = isEnable
         ) {

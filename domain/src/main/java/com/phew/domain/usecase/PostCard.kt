@@ -40,7 +40,7 @@ class PostCard @Inject constructor(
         val tags: List<String>,
     )
 
-    suspend operator fun invoke(data: Param): DomainResult<Unit, String> {
+    suspend operator fun invoke(data: Param): DomainResult<Long, String> {
         when (val checkedPostBanned = networkRepository.requestCheckUploadCard()) {
             is DataResult.Fail -> return DomainResult.Failure(ERROR_FAIL_JOB)
             is DataResult.Success -> {
@@ -67,7 +67,7 @@ class PostCard @Inject constructor(
     private suspend fun uploadCardData(
         param: Param,
         imageInfo: UploadImageInfo,
-    ): DomainResult<Unit, String> {
+    ): DomainResult<Long, String> {
         val locationPermissionCheck = deviceRepository.getLocationPermission()
         val (latitude, longitude) = if (locationPermissionCheck) {
             val location = deviceRepository.requestLocation()
@@ -75,7 +75,7 @@ class PostCard @Inject constructor(
         } else {
             null to null
         }
-        val requestUploadCard = if (!param.answerCard) {
+        val uploadResult = if (!param.answerCard) {
             networkRepository.requestUploadCard(
                 isDistanceShared = locationPermissionCheck,
                 content = param.content,
@@ -88,7 +88,7 @@ class PostCard @Inject constructor(
                 imageType = imageInfo.type
             )
         } else {
-            if (param.cardId == null) DomainResult.Failure(ERROR_FAIL_JOB)
+            if (param.cardId == null) return DomainResult.Failure(ERROR_FAIL_JOB) // Ensure early exit for null cardId
             networkRepository.requestUploadCardAnswer(
                 cardId = param.cardId ?: 0L,
                 content = param.content,
@@ -101,10 +101,14 @@ class PostCard @Inject constructor(
                 tag = param.tags
             )
         }
-        return if (requestUploadCard == HTTP_SUCCESS) {
-            DomainResult.Success(Unit)
-        } else {
-            DomainResult.Failure(ERROR_FAIL_JOB)
+
+        return when (uploadResult) {
+            is DataResult.Success -> {
+                DomainResult.Success(uploadResult.data.cardId)
+            }
+            is DataResult.Fail -> {
+                DomainResult.Failure(uploadResult.message ?: ERROR_FAIL_JOB)
+            }
         }
     }
 

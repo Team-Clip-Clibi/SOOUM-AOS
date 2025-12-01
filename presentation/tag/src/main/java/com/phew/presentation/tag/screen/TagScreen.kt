@@ -417,7 +417,7 @@ private fun FavoriteTagsList(
                         modifier = Modifier
                             .size(6.dp)
                             .background(
-                                color = if (index == currentPage) Primary.DARK else NeutralColor.GRAY_300,
+                                color = if (index == currentPage) NeutralColor.BLACK else NeutralColor.GRAY_300,
                                 shape = CircleShape
                             )
                     )

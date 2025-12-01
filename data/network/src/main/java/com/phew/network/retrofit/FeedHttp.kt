@@ -22,6 +22,8 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 import retrofit2.http.Url
 
+import com.phew.network.dto.response.feed.CardIdResponseDto // Added import
+
 interface FeedHttp {
     /**
      * Popular Feed url
@@ -89,7 +91,7 @@ interface FeedHttp {
     @POST(BuildConfig.API_URL_UPLOAD_CARD)
     suspend fun requestUploadCard(
         @Body request: RequestUploadCardDTO,
-    ): Response<Unit>
+    ): Response<CardIdResponseDto> // Changed return type
 
     /**
      * Card answer Upload url
@@ -98,7 +100,7 @@ interface FeedHttp {
     suspend fun requestUploadAnswerCard(
         @Path("cardId") cardId: Long,
         @Body request: RequestUploadCardAnswerDTO,
-    ): Response<Unit>
+    ): Response<CardIdResponseDto> // Changed return type
 
     /**
      * checked user baned upload card

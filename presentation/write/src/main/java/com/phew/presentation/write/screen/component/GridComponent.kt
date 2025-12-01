@@ -153,6 +153,7 @@ fun GridImageItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    //  TODO 흰색선이 컬러 탭에서만 보임 (앞에 두개)
     Box(
         modifier = modifier
             .aspectRatio(1f)

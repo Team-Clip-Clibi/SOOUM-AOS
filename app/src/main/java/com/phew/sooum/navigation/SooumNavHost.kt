@@ -19,6 +19,7 @@ import com.phew.home.navigation.navigateToHomeGraph
 import com.phew.home.navigation.navigateToReport
 import com.phew.presentation.detail.navigation.detailGraph
 import com.phew.core.ui.model.navigation.WriteArgs
+import com.phew.core_common.log.SooumLog
 import com.phew.domain.interceptor.GlobalEvent
 import com.phew.presentation.MainViewModel
 import com.phew.presentation.detail.navigation.navigateToDetailGraph
@@ -90,7 +91,8 @@ fun SooumNavHost(
                 },
                 webView = webView,
                 onWriteComplete = {
-
+                    navController.popBackStack()
+                    navController.navigateToDetailGraph(cardDetailArgs = it)
                 },
                 onLogOut = {
                     navController.navigateToSignUpGraph(
@@ -188,9 +190,10 @@ fun SooumNavHost(
                     SooumOnBackPressed(appState = appState)
                 },
                 onWriteComplete = {
-                    navController.popBackStack()
+                    navController.navigateToDetailGraph(cardDetailArgs = it)
                 },
                 onDetailWriteComplete = {
+                    SooumLog.d(TAG, "onDetailWriteComplete")
                     navController.popBackStack()
                 }
             )

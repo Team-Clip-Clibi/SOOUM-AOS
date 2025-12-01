@@ -115,7 +115,7 @@ class WriteViewModel @Inject constructor(
     /**
      * 완료 이벤트
      */
-    private val _writeCompleteEvent = MutableSharedFlow<Unit>()
+    private val _writeCompleteEvent = MutableSharedFlow<Long>()
     val writeCompleteEvent = _writeCompleteEvent.asSharedFlow()
 
     private suspend fun getLocationSafely(): Location {
@@ -437,7 +437,7 @@ private fun requestCameraImageForBackground() {
                     "onWriteComplete state: selectedDefaultImageName=${state.selectedDefaultImageName}, activeBackgroundUri=${state.activeBackgroundUri}"
                 )
 
-                val result = try {
+                val result: DomainResult<Long, String> = try {
                     if (state.parentCardId != null) {
                         // 댓글 작성 (PostCardReply 사용)
                         val (imgType, imgName) = when {
@@ -512,7 +512,8 @@ private fun requestCameraImageForBackground() {
                                 isWriteInProgress = false
                             )
                         }
-                        _writeCompleteEvent.emit(Unit)
+                        SooumLog.d(TAG, "onWriteComplete success: ${result.data}")
+                        _writeCompleteEvent.emit(result.data)
                     }
 
                     is DomainResult.Failure -> {

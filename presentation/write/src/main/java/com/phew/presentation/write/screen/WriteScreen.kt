@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
@@ -88,6 +89,8 @@ import com.phew.presentation.write.R as WriteR
  *  1. 완료 되면 어디로 이동해야 하는지
  */
 import androidx.navigation.NavController
+import com.phew.core.ui.model.navigation.CardDetailArgs
+import com.phew.core_common.log.SooumLog
 
 @Composable
 internal fun WriteRoute(
@@ -96,7 +99,7 @@ internal fun WriteRoute(
     args: WriteArgs? = null,
     viewModel: WriteViewModel = hiltViewModel(),
     onBackPressed: () -> Unit,
-    onWriteComplete: () -> Unit
+    onWriteComplete: (CardDetailArgs) -> Unit
 ) {
     BackHandler {
         onBackPressed()
@@ -136,8 +139,9 @@ internal fun WriteRoute(
     // 완료 이벤트 처리
     LaunchedEffect(Unit) {
         viewModel.writeCompleteEvent.collect {
+            SooumLog.d(TAG, "writeCompleteEvent")
             navController.previousBackStackEntry?.savedStateHandle?.set("card_added", true)
-            onWriteComplete()
+            onWriteComplete(CardDetailArgs(cardId = it))
         }
     }
 
@@ -655,18 +659,16 @@ private fun OptionButtons(
             .fillMaxWidth()
             .background(NeutralColor.WHITE)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(NeutralColor.GRAY_200)
-                .height(1.dp)
-        )
+        Spacer(modifier = Modifier
+            .height(1.dp)
+            .background(NeutralColor.GRAY_200))
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             options.forEach { option ->
                 val isDistanceOption = option.id == WriteOptions.DISTANCE_OPTION_ID

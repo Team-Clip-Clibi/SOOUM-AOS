@@ -13,6 +13,8 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
 
+import com.phew.network.dto.response.feed.CardIdResponseDto // Added import
+
 /**
  *  카드 상세 조회
  */
@@ -50,7 +52,7 @@ interface CardDetailsInquiryHttp {
     suspend fun postCardDetail(
         @Path("cardId") cardId: Long,
         @Body body: RequestUploadCardAnswerDTO
-    ): Response<Unit>
+    ): Response<CardIdResponseDto> // Changed return type
 
     /**
      *  카드 삭제

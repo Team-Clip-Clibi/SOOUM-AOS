@@ -26,7 +26,7 @@ class PostCardReply @Inject constructor(
         val isDistanceShared: Boolean
     )
 
-    suspend operator fun invoke(param: Param): DomainResult<Unit, String> {
+    suspend operator fun invoke(param: Param): DomainResult<Long, String> {
         val locationPermissionCheck = deviceRepository.getLocationPermission()
         val (latitude, longitude) = if (locationPermissionCheck && param.isDistanceShared) {
             val location = deviceRepository.requestLocation()
@@ -47,7 +47,7 @@ class PostCardReply @Inject constructor(
         )
 
         return when (val result = repository.postCardReply(param.cardId, request)) {
-            is DataResult.Success -> DomainResult.Success(Unit)
+            is DataResult.Success -> DomainResult.Success(result.data.cardId)
             is DataResult.Fail -> mapFailure(result)
         }
     }
