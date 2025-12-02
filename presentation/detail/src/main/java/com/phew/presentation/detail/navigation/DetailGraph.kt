@@ -7,6 +7,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
+import androidx.navigation.navOptions
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.model.navigation.CardDetailCommentArgs
 import com.phew.core.ui.model.navigation.TagViewArgs
@@ -30,7 +31,12 @@ fun NavHostController.navigateToDetailGraph(
     navOptions: NavOptions? = null,
 ) {
     SooumLog.i(TAG, "navigateToDetailGraph() $cardDetailArgs")
-    this.navigate(DETAIL_GRAPH.asNavArg(cardDetailArgs), navOptions)
+    this.navigate(DETAIL_GRAPH.asNavArg(cardDetailArgs), navOptions {
+        popUpTo(DETAIL_GRAPH) {
+            inclusive = true
+        }
+        launchSingleTop = true
+    })
 }
 
 private fun NavHostController.navigateToDetailRoute(

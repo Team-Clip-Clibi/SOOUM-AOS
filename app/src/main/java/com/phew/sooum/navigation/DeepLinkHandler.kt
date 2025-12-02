@@ -16,9 +16,7 @@ import com.phew.profile.navigateToProfileGraphWithArgs
 import com.phew.sign_up.navigation.SIGN_UP_GRAPH
 import com.phew.splash.navigation.SPLASH_GRAPH
 
-/**
- *  TODO 기획에서 양식 받아야 함
- */
+
 class DeepLinkHandler {
     
     companion object {
@@ -38,10 +36,11 @@ class DeepLinkHandler {
                         navigateToFeed(navController)
                     }
                     
-                    deepLinkUrl.startsWith("sooum://detail/") -> {
-                        val cardId = extractCardIdFromUrl(deepLinkUrl)
+                    deepLinkUrl.startsWith("sooum://card/") -> {
+                        val cardId = extractCardIdFromCardUrl(deepLinkUrl)
+                        val backTo = extractBackToParam(deepLinkUrl)
                         if (cardId != null) {
-                            navigateToDetail(navController, cardId)
+                            navigateToDetail(navController, cardId, backTo)
                         } else {
                             SooumLog.e(TAG, "카드 ID를 추출할 수 없습니다: $deepLinkUrl")
                             navigateToFeed(navController)
@@ -50,8 +49,9 @@ class DeepLinkHandler {
                     
                     deepLinkUrl.startsWith("sooum://profile/") -> {
                         val userId = extractUserIdFromUrl(deepLinkUrl)
+                        val backTo = extractBackToParam(deepLinkUrl)
                         if (userId != null) {
-                            navigateToProfile(navController, userId)
+                            navigateToProfile(navController, userId, backTo)
                         } else {
                             SooumLog.e(TAG, "사용자 ID를 추출할 수 없습니다: $deepLinkUrl")
                             navigateToFeed(navController)
@@ -73,10 +73,12 @@ class DeepLinkHandler {
             }
         }
         
-        private fun extractCardIdFromUrl(url: String): Long? {
+        private fun extractCardIdFromCardUrl(url: String): Long? {
             return try {
-                val path = url.removePrefix("sooum://detail/")
-                path.toLongOrNull()
+                val path = url.removePrefix("sooum://card/")
+                // 쿼리 파라미터 제거 (?backTo=feed 등)
+                val cardIdString = path.split("?").firstOrNull() ?: path
+                cardIdString.toLongOrNull()
             } catch (e: Exception) {
                 SooumLog.e(TAG, "카드 ID 추출 실패: ${e.message}")
                 null
@@ -86,9 +88,21 @@ class DeepLinkHandler {
         private fun extractUserIdFromUrl(url: String): Long? {
             return try {
                 val path = url.removePrefix("sooum://profile/")
-                path.toLongOrNull()
+                // 쿼리 파라미터 제거 (?backTo=feed 등)
+                val userIdString = path.split("?").firstOrNull() ?: path
+                userIdString.toLongOrNull()
             } catch (e: Exception) {
                 SooumLog.e(TAG, "사용자 ID 추출 실패: ${e.message}")
+                null
+            }
+        }
+        
+        private fun extractBackToParam(url: String): String? {
+            return try {
+                val uri = android.net.Uri.parse(url)
+                uri.getQueryParameter("backTo")
+            } catch (e: Exception) {
+                SooumLog.e(TAG, "backTo 파라미터 추출 실패: ${e.message}")
                 null
             }
         }
@@ -105,17 +119,53 @@ class DeepLinkHandler {
             )
         }
         
-        private fun navigateToDetail(navController: NavHostController, cardId: Long) {
-            SooumLog.d(TAG, "카드 상세로 이동: $cardId")
-            ensureHomeGraph(navController) {
-                navController.navigateToDetailGraph(
-                    cardDetailArgs = CardDetailArgs(cardId = cardId)
-                )
+        private fun navigateToDetail(navController: NavHostController, cardId: Long, backTo: String? = null) {
+            SooumLog.d(TAG, "카드 상세로 이동: $cardId, backTo: $backTo")
+            
+            // backTo 파라미터에 따라 적절한 그래프로 먼저 이동
+            when (backTo) {
+                "tag" -> {
+                    // 태그 화면을 백스택에 넣고 카드 상세로 이동
+                    ensureHomeGraph(navController) {
+                        // TODO: 태그 화면으로 먼저 이동 후 카드 상세
+                        navController.navigateToDetailGraph(
+                            cardDetailArgs = CardDetailArgs(cardId = cardId)
+                        )
+                    }
+                }
+                "my" -> {
+                    // 마이 화면을 백스택에 넣고 카드 상세로 이동  
+                    ensureHomeGraph(navController) {
+                        // TODO: 마이 화면으로 먼저 이동 후 카드 상세
+                        navController.navigateToDetailGraph(
+                            cardDetailArgs = CardDetailArgs(cardId = cardId)
+                        )
+                    }
+                }
+                "feed", null -> {
+                    // 기본적으로 피드에서 카드 상세로 이동
+                    ensureHomeGraph(navController) {
+                        navController.navigateToDetailGraph(
+                            cardDetailArgs = CardDetailArgs(cardId = cardId)
+                        )
+                    }
+                }
+                else -> {
+                    // 알 수 없는 backTo 값이면 기본 동작
+                    ensureHomeGraph(navController) {
+                        navController.navigateToDetailGraph(
+                            cardDetailArgs = CardDetailArgs(cardId = cardId)
+                        )
+                    }
+                }
             }
         }
         
-        private fun navigateToProfile(navController: NavHostController, userId: Long) {
-            SooumLog.d(TAG, "프로필로 이동: $userId")
+        private fun navigateToProfile(navController: NavHostController, userId: Long, backTo: String? = null) {
+            SooumLog.d(TAG, "프로필로 이동: $userId, backTo: $backTo")
+            
+            // 홈 그래프를 확인한 후 프로필로 이동
+            // backTo 파라미터는 참고용으로만 사용 (실제 백스택 동작은 안드로이드 네비게이션에 의존)
             ensureHomeGraph(navController) {
                 navController.navigateToProfileGraphWithArgs(
                     ProfileArgs(userId = userId)

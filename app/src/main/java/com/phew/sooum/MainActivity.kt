@@ -149,6 +149,30 @@ class MainActivity : ComponentActivity() {
                 if (!deepLink.isNullOrBlank()) {
                     SooumLog.d(TAG, "FCM 딥링크 감지: $deepLink")
                     pendingDeepLink = deepLink
+                } else {
+                    // 딥링크가 없더라도 FCM 알림 클릭인지 확인
+                    val notificationType = intent.getStringExtra("notificationType")
+                    if (!notificationType.isNullOrBlank()) {
+                        SooumLog.d(TAG, "FCM 알림 클릭 감지, 알림 타입: $notificationType")
+                        // 알림 타입에 따른 기본 딥링크 생성
+                        pendingDeepLink = when (notificationType) {
+                            "FEED_LIKE", "COMMENT_LIKE", "COMMENT_WRITE" -> {
+                                val cardId = intent.getStringExtra("targetCardId")
+                                if (cardId != null) "sooum://card/$cardId?backTo=feed" else "sooum://feed"
+                            }
+                            "TAG_USAGE" -> {
+                                val cardId = intent.getStringExtra("targetCardId")
+                                if (cardId != null) "sooum://card/$cardId?backTo=tag" else "sooum://feed"
+                            }
+                            "FOLLOW" -> "sooum://follow?backTo=my"
+                            "BLOCKED", "DELETED", "TRANSFER_SUCCESS" -> {
+                                val notificationId = intent.getStringExtra("notificationId")
+                                if (notificationId != null) "sooum://notice/$notificationId?backTo=feed" else "sooum://feed"
+                            }
+                            else -> "sooum://feed"
+                        }
+                        SooumLog.d(TAG, "생성된 기본 딥링크: $pendingDeepLink")
+                    }
                 }
             }
         }

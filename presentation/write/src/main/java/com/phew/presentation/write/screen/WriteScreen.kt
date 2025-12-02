@@ -83,11 +83,6 @@ import com.phew.core_design.component.filter.SooumFilter
 import com.phew.presentation.write.model.BackgroundFilterType
 import com.phew.presentation.write.screen.component.ImageGrid
 import com.phew.presentation.write.R as WriteR
-
-/**
- *  추후 작업
- *  1. 완료 되면 어디로 이동해야 하는지
- */
 import androidx.navigation.NavController
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core_common.log.SooumLog

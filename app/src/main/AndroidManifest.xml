@@ -54,10 +54,11 @@
             </intent-filter>
             
             <!-- 딥링크 Intent Filter -->
-            <intent-filter android:autoVerify="true">
+            <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
+                <!-- sooum 스킴(scheme)을 사용하는 모든 URI를 수신 -->
                 <data android:scheme="sooum" />
             </intent-filter>
         </activity>
