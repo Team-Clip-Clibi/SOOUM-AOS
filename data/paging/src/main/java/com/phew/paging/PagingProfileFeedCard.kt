@@ -31,18 +31,29 @@ class PagingProfileFeedCard(
                 }
 
                 is DataResult.Success -> {
-                    if (request.data.second.isEmpty() || request.data.first == HTTP_NO_MORE_CONTENT) {
-                        return LoadResult.Page(
-                            data = emptyList(),
-                            prevKey = null,
-                            nextKey = null
-                        )
+                    when{
+                        request.data.second.isEmpty() || request.data.first == HTTP_NO_MORE_CONTENT -> {
+                            return LoadResult.Page(
+                                data = emptyList(),
+                                prevKey = null,
+                                nextKey = null
+                            )
+                        }
+                        request.data.second.isNotEmpty() && request.data.second.last().cardId == params.key -> {
+                            return LoadResult.Page(
+                                data = emptyList(),
+                                prevKey = null,
+                                nextKey = null
+                            )
+                        }
+                        else -> {
+                            return LoadResult.Page(
+                                data = request.data.second,
+                                prevKey = null,
+                                nextKey =  request.data.second.last().cardId
+                            )
+                        }
                     }
-                    return LoadResult.Page(
-                        data = request.data.second,
-                        prevKey = null,
-                        nextKey = if (request.data.second.last().cardId == params.key) null else request.data.second.last().cardId
-                    )
                 }
             }
         } catch (e: Exception) {
