@@ -144,7 +144,7 @@ class DataStoreImpl @Inject constructor(
         }
     }
 
-    override suspend fun saveProfileInfo(
+    override suspend fun saveNickName(
         profileKey: String,
         data: ProfileInfoDTO,
     ): Boolean {
@@ -175,7 +175,7 @@ class DataStoreImpl @Inject constructor(
         }
     }
 
-    override suspend fun getProfileInfo(profileKey: String): ProfileInfoDTO? {
+    override suspend fun getNickName(profileKey: String): ProfileInfoDTO? {
         try {
             profileInfoDTO?.let { data ->
                 return data

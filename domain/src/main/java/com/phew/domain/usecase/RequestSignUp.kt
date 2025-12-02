@@ -123,9 +123,7 @@ class RequestSignUp @Inject constructor(
                 if (!saveToken) return DomainResult.Failure(ERROR_FAIL_JOB)
                 val saveProfile = deviceRepository.saveProfileInfo(
                     profileKey = BuildConfig.PROFILE_KEY,
-                    nickName = data.nickName,
-                    profileImageUrl = data.profileImage,
-                    profileImageName = fileName ?: ""
+                    nickName = data.nickName
                 )
                 if (!saveProfile) return DomainResult.Failure(ERROR_FAIL_JOB)
                 return DomainResult.Success(Unit)

@@ -8,7 +8,6 @@ import com.phew.domain.dto.NoticeSource
 import com.phew.domain.dto.Notification
 import com.phew.domain.repository.network.NotifyRepository
 import com.phew.network.retrofit.NotifyHttp
-import com.phew.repository.mapper.apiCall
 import com.phew.repository.mapper.toDomain
 import javax.inject.Inject
 
