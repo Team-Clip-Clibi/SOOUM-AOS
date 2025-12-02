@@ -30,21 +30,12 @@ class PagingProfileCommentCard(private val repository: ProfileRepository) :
 
                 is DataResult.Success -> {
                     when {
-                        request.data.second.isEmpty() || request.data.first == HTTP_NO_MORE_CONTENT -> {
+                        request.data.second.isEmpty() || request.data.first == HTTP_NO_MORE_CONTENT || request.data.second.isNotEmpty() && request.data.second.last().cardId == params.key -> {
                             return LoadResult.Page(
-                                data = emptyList(),
-                                prevKey = null,
-                                nextKey = null
+                                data = emptyList(), prevKey = null, nextKey = null
                             )
                         }
 
-                        request.data.second.isNotEmpty() && request.data.second.last().cardId == params.key -> {
-                            return LoadResult.Page(
-                                data = emptyList(),
-                                prevKey = null,
-                                nextKey = null
-                            )
-                        }
 
                         else -> {
                             return LoadResult.Page(
