@@ -48,6 +48,7 @@ class DataStoreImpl @Inject constructor(
 
     @Volatile
     private var userInfo: UserInfoDTO? = null
+
     @Volatile
     private var profileInfoDTO: ProfileInfoDTO? = null
 
@@ -55,7 +56,7 @@ class DataStoreImpl @Inject constructor(
         try {
             val token = TokenDTO(data.first, data.second)
             val jsonString = gson.toJson(token)
-            sharedPreferences.edit(commit = true) { putString(key, jsonString) }
+            sharedPreferences.edit { putString(key, jsonString) }
             cachedToken = token
             return true
         } catch (e: Exception) {
@@ -94,7 +95,7 @@ class DataStoreImpl @Inject constructor(
 
     override suspend fun insertFirebaseToken(key: String, data: String): Boolean {
         try {
-            sharedPreferences.edit(commit = true) { putString(key, data) }
+            sharedPreferences.edit { putString(key, data) }
             return true
         } catch (e: Exception) {
             e.printStackTrace()
@@ -114,7 +115,7 @@ class DataStoreImpl @Inject constructor(
 
     override suspend fun insertNotifyAgree(key: String, data: Boolean): Boolean {
         try {
-            sharedPreferences.edit(commit = true) { putBoolean(key, data) }
+            sharedPreferences.edit { putBoolean(key, data) }
             return true
         } catch (e: Exception) {
             e.printStackTrace()
@@ -135,7 +136,7 @@ class DataStoreImpl @Inject constructor(
     override suspend fun saveUserInfo(key: String, data: UserInfoDTO): Boolean {
         try {
             val jsonString = gson.toJson(data)
-            sharedPreferences.edit(commit = true) { putString(key, jsonString) }
+            sharedPreferences.edit { putString(key, jsonString) }
             userInfo = data
             return true
         } catch (e: Exception) {
@@ -155,7 +156,7 @@ class DataStoreImpl @Inject constructor(
             when (val beforeData = sharedPreferences.getString(profileKey, null)) {
                 null -> {
                     val jsonString = gson.toJson(data)
-                    sharedPreferences.edit(commit = true) { putString(profileKey, jsonString) }
+                    sharedPreferences.edit { putString(profileKey, jsonString) }
                     profileInfoDTO = data
                     return true
                 }
@@ -164,7 +165,7 @@ class DataStoreImpl @Inject constructor(
                     val beforeProfileInfoDTO = gson.fromJson(beforeData, ProfileInfoDTO::class.java)
                     if (beforeProfileInfoDTO.equals(data)) return true
                     val jsonString = gson.toJson(data)
-                    sharedPreferences.edit(commit = true) { putString(profileKey, jsonString) }
+                    sharedPreferences.edit { putString(profileKey, jsonString) }
                     profileInfoDTO = data
                     return true
                 }
@@ -207,7 +208,7 @@ class DataStoreImpl @Inject constructor(
 
     override suspend fun clearAllData(): Boolean {
         try {
-            sharedPreferences.edit(commit = true) { clear() }
+            sharedPreferences.edit { clear() }
             cachedToken = null
             userInfo = null
             profileInfoDTO = null
