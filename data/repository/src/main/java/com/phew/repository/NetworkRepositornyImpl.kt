@@ -8,7 +8,6 @@ import com.phew.domain.dto.NoticeSource
 import com.phew.domain.dto.Notification
 import com.phew.domain.repository.network.NotifyRepository
 import com.phew.network.retrofit.NotifyHttp
-import com.phew.repository.mapper.apiCall
 import com.phew.repository.mapper.toDomain
 import javax.inject.Inject
 
@@ -206,7 +205,7 @@ class NotifyRepositoryImpl @Inject constructor(private val notifyHttp: NotifyHtt
 
     override suspend fun requestReadNotify(notifyId: Long): Int{
         try{
-            return notifyHttp.requestReadActivateNotify(lastId = notifyId).code()
+            return notifyHttp.requestReadActivateNotify(id = notifyId).code()
         }catch (e: Exception){
             e.printStackTrace()
             return APP_ERROR_CODE

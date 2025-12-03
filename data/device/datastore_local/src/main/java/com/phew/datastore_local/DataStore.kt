@@ -15,11 +15,11 @@ interface DataStore {
     suspend fun saveUserInfo(key: String, data: UserInfoDTO): Boolean
     suspend fun getUserInfo(key: String): UserInfoDTO?
     suspend fun clearAllData(): Boolean
-    suspend fun saveProfileInfo(
+    suspend fun saveNickName(
         profileKey : String,
         data : ProfileInfoDTO
     ): Boolean
-    suspend fun getProfileInfo(
+    suspend fun getNickName(
         profileKey : String
     ) : ProfileInfoDTO?
 }
