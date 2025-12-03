@@ -60,7 +60,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.paging.compose.LazyPagingItems
-import androidx.paging.compose.itemKey
+import com.phew.core_common.BOTTOM_NAVIGATION_HEIGHT
 import com.phew.core_design.CustomFont
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.LoadingAnimation
@@ -357,7 +357,7 @@ private fun ProfileCardView(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(1.dp),
         verticalArrangement = Arrangement.spacedBy(1.dp),
-        contentPadding = PaddingValues(bottom = paddingValues.calculateBottomPadding() + 63.dp)
+        contentPadding = PaddingValues(bottom = paddingValues.calculateBottomPadding() + BOTTOM_NAVIGATION_HEIGHT.dp)
     ) {
         item(span = { GridItemSpan(maxLineSpan) }) {
             MyProfileView(

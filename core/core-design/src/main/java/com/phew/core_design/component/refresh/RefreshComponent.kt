@@ -46,6 +46,7 @@ fun RefreshBox(
     onRefresh : () -> Unit,
     state : PullToRefreshState,
     paddingValues: PaddingValues,
+    indicatorTopPadding: Dp = 0.dp,
     content : @Composable (() -> Unit)
 ){
     val composition by rememberLottieComposition(
@@ -66,7 +67,7 @@ fun RefreshBox(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = paddingValues.calculateTopPadding())
+                    .padding(top = paddingValues.calculateTopPadding() + indicatorTopPadding)
                     .height(100.dp),
                 contentAlignment = Alignment.Center
             ) {

@@ -30,6 +30,7 @@ import com.phew.domain.usecase.SetReadActivateNotify
 import com.phew.domain.usecase.SetReadActivateNotify.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -139,6 +140,7 @@ class FeedViewModel @Inject constructor(
 
     // Latest Feed Paging
     private val _latestFeedLocation = MutableStateFlow<Pair<Double?, Double?>>(null to null)
+    @OptIn(ExperimentalCoroutinesApi::class)
     val latestFeedPaging: Flow<PagingData<Latest>> = _latestFeedLocation
         .flatMapLatest { (latitude, longitude) ->
             getLatestFeed(latitude, longitude)
@@ -721,7 +723,6 @@ enum class DistanceType(val value: Double) {
     KM_1(1.0),
     KM_5(5.0),
     KM_10(10.0),
-    KM_15(15.0),
     KM_20(20.0),
     KM_50(50.0);
 }

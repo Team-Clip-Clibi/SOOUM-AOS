@@ -50,7 +50,7 @@ class SignUpViewModel @Inject constructor(
                 agreedToTermsOfService = false,
                 agreedToPrivacyPolicy = false,
                 agreedToLocationTerms = false,
-                profile = Uri.EMPTY,
+                profile = listOf(Uri.EMPTY),
                 checkSignUp = UiState.Loading,
             )
         }
@@ -99,7 +99,7 @@ class SignUpViewModel @Inject constructor(
                     agreedToPrivacyPolicy = _uiState.value.agreedToPrivacyPolicy,
                     agreedToTermsOfService = _uiState.value.agreedToTermsOfService,
                     nickName = _uiState.value.nickName,
-                    profileImage = _uiState.value.profile.toString()
+                    profileImage = uiState.value.profile.lastOrNull()?.toString() ?: Uri.EMPTY.toString()
                 )
             )) {
                 is DomainResult.Failure -> {
@@ -285,7 +285,7 @@ class SignUpViewModel @Inject constructor(
      */
     private fun updateProfile(uri: Uri) {
         _uiState.update { state ->
-            state.copy(profile = uri)
+            state.copy(profile = state.profile + uri)
         }
     }
 
@@ -321,7 +321,7 @@ class SignUpViewModel @Inject constructor(
             CameraPickerAction.Default -> {
                 _uiState.update { state ->
                     state.copy(
-                        profile = Uri.EMPTY,
+                        profile = listOf(Uri.EMPTY),
                         profileBottom = false
                     )
                 }
@@ -400,7 +400,7 @@ class SignUpViewModel @Inject constructor(
 
                 is DomainResult.Success -> {
                     _uiState.update { state ->
-                        state.copy(profile = result.data)
+                        state.copy(profile = state.profile + data)
                     }
                 }
             }
@@ -411,7 +411,13 @@ class SignUpViewModel @Inject constructor(
         _uiState.update { state ->
             state.copy(
                 imageDialog = result,
-                profile = if (!result) Uri.EMPTY else state.profile,
+                profile = if (!result) {
+                    if (state.profile.size > 1) {
+                        state.profile.dropLast(1)
+                    } else {
+                        listOf(Uri.EMPTY)
+                    }
+                } else state.profile,
                 signUp = if (!result) state.signUp else UiState.Loading
             )
         }
@@ -426,7 +432,7 @@ data class SignUp(
     val agreedToLocationTerms: Boolean = false,
     val agreedToPrivacyPolicy: Boolean = false,
     val nickName: String = "",
-    val profile: Uri = Uri.EMPTY,
+    val profile: List<Uri> = listOf(Uri.EMPTY),
     val profileBottom: Boolean = false,
     val shouldLaunchProfileAlbum: Boolean = false,
     val shouldRequestProfileCameraPermission: Boolean = false,

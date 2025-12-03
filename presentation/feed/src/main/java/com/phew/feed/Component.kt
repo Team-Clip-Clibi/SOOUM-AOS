@@ -1,9 +1,5 @@
 package com.phew.feed
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -35,8 +31,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -83,6 +77,7 @@ object FeedUi {
     internal fun FeedNoticeView(
         feedNotice: List<Notice>,
         feedNoticeClick: (String) -> Unit,
+        modifier : Modifier = Modifier
     ) {
         if (feedNotice.isEmpty()) return
         val pagerState = rememberPagerState(
@@ -97,7 +92,7 @@ object FeedUi {
             }
         }
         Box(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
         ) {
@@ -153,14 +148,13 @@ object FeedUi {
     }
 
     @Composable
-    internal fun AnimatedFeedTabLayout(
+    internal fun FeedTab(
         selectTabData: Int,
         recentClick: () -> Unit,
         popularClick: () -> Unit,
         nearClick: () -> Unit,
         onDistanceClick: (DistanceType) -> Unit,
         selectDistanceType: DistanceType,
-        translationY: Float,
     ) {
         val tabItem = listOf(
             stringResource(R.string.home_feed_tab_recent_card),
@@ -168,31 +162,14 @@ object FeedUi {
             stringResource(R.string.home_feed_tab_near_card)
         )
 
-        val defaultHeight = 56.dp
-        val distanceRowHeight = 56.dp
-        val totalHeightPx = with(LocalDensity.current) {
-            (defaultHeight + if (selectTabData == NAV_HOME_NEAR_INDEX) distanceRowHeight else 0.dp).toPx()
-        }
-
-        val animatedHeightPx = (totalHeightPx + translationY).coerceIn(0f, totalHeightPx)
-        val animatedHeightDp = with(LocalDensity.current) { animatedHeightPx.toDp() }
-
-        val alpha = (1 + (translationY / totalHeightPx)).coerceIn(0f, 1f)
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(animatedHeightDp)
-                .graphicsLayer {
-                    this.translationY = translationY
-                    this.alpha = alpha
-                }
                 .background(color = WHITE)
         ) {
             SooumTabRow(
                 selectedTabIndex = selectTabData,
                 modifier = Modifier.fillMaxWidth()
-                    .height(defaultHeight),
             ) {
                 tabItem.forEachIndexed { index, title ->
                     SooumTab(
@@ -224,7 +201,6 @@ object FeedUi {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(distanceRowHeight)
                         .background(color = WHITE)
                         .padding(start = 16.dp, end = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.Start),

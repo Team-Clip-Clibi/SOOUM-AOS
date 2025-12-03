@@ -158,7 +158,7 @@ fun ProfileImageView(viewModel: SignUpViewModel, onBack: () -> Unit, nexPage: ()
             TitleView()
             ContentView(
                 onClick = viewModel::updateProfileBottom,
-                url = uiState.profile
+                url = uiState.profile.last()
             )
         }
         if (uiState.imageDialog) {
@@ -172,7 +172,7 @@ fun ProfileImageView(viewModel: SignUpViewModel, onBack: () -> Unit, nexPage: ()
         visible = uiState.profileBottom,
         onActionSelected = viewModel::onProfilePickerAction,
         onDismiss = viewModel::updateProfileBottom,
-        useDefaultText = uiState.profile != Uri.EMPTY
+        useDefaultText = uiState.profile.last() != Uri.EMPTY
     )
 }
 

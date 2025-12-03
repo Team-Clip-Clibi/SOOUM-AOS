@@ -12,7 +12,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
 import androidx.navigation.navigation
 import com.phew.core.ui.component.home.HomeTabType
-import com.phew.core.ui.state.SooumAppState
 import com.phew.core_design.slideComposable
 import com.phew.feed.feed.FeedView
 import com.phew.feed.notification.NotifyView
@@ -45,7 +44,6 @@ private fun NavHostController.navigateToNotify(
 
 
 fun NavGraphBuilder.feedGraph(
-    appState: SooumAppState,
     navController: NavHostController,
     finish: () -> Unit,
     onBackPressed: () -> Unit,
@@ -74,7 +72,6 @@ fun NavGraphBuilder.feedGraph(
             FeedView(
                 viewModel = feedViewModel,
                 navController = navController,
-                appState = appState,
                 finish = onBackPressed,
                 requestPermission = {
                     feedViewModel.onPermissionRequest(
