@@ -58,6 +58,7 @@ import com.phew.core_design.DialogComponent
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
 import com.phew.core.ui.component.home.HomeTabType
+import com.phew.core_common.BOTTOM_NAVIGATION_HEIGHT
 import com.phew.core_design.LoadingAnimation
 import com.phew.core_design.component.refresh.RefreshBox
 import com.phew.domain.dto.FeedCardType
@@ -193,7 +194,7 @@ fun FeedView(
                     .background(color = NeutralColor.GRAY_100)
                     .padding(
                         top = paddingValues.calculateTopPadding(),
-                        bottom = paddingValues.calculateBottomPadding() + 63.dp
+                        bottom = paddingValues.calculateBottomPadding() + BOTTOM_NAVIGATION_HEIGHT.dp
                     )
             ) {
                 FeedContentView(
@@ -216,7 +217,8 @@ fun FeedView(
                     onClick = viewModel::navigateToDetail,
                     onRemoveCard = viewModel::removeFeedCard,
                     currentPagingState = uiState.currentPagingState,
-                    pullOffsetPx = pullOffsetPx
+                    pullOffsetPx = pullOffsetPx,
+                    onRefresh = viewModel::refreshCurrentTab
                 )
                 if (uiState.shouldShowPermissionRationale) {
                     DialogComponent.DefaultButtonTwo(
@@ -274,7 +276,8 @@ private fun FeedContentView(
     onClick: (String) -> Unit,
     onRemoveCard: (String) -> Unit,
     currentPagingState: FeedPagingState,
-    pullOffsetPx: Float
+    pullOffsetPx: Float,
+    onRefresh : () -> Unit
 ) {
     val selectIndex = when (currentTab) {
         FeedType.Latest -> NAV_HOME_FEED_INDEX
@@ -365,6 +368,36 @@ private fun FeedContentView(
                                 }
                             }
                         }
+                        when(val appendState = latestFeedItems.loadState.append){
+                            is LoadState.Error -> {
+                                item(span = { GridItemSpan(maxLineSpan) }) {
+                                    ErrorView(
+                                        message = appendState.error.message
+                                            ?: stringResource(R.string.home_feed_load_error),
+                                        onRetry = {
+                                            latestFeedItems.retry()
+                                        }
+                                    )
+                                }
+                            }
+                            is LoadState.Loading -> {
+                                item(span = { GridItemSpan(maxLineSpan) }) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 20.dp)
+                                            .graphicsLayer { translationY = pullOffsetPx }
+                                    ) {
+                                        LoadingAnimation.LoadingView(
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
+                                    }
+                                }
+                            }
+                            is LoadState.NotLoading -> {
+                                // No-op
+                            }
+                        }
                     }
                 }
             }
@@ -375,9 +408,7 @@ private fun FeedContentView(
                         item(span = { GridItemSpan(maxLineSpan) }) {
                             ErrorView(
                                 message = currentPagingState.message,
-                                onRetry = {
-                                    // Retry 동작은 FeedContentView를 호출하는 쪽에서 처리
-                                }
+                                onRetry = onRefresh
                             )
                         }
                     }
