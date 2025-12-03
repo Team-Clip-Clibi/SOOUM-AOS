@@ -42,7 +42,6 @@ fun NavGraphBuilder.homeGraph(
     navigation(route = HOME_GRAPH, startDestination = FEED_GRAPH) {
         // Feed Card Graph
         feedGraph(
-            appState = appState,
             navController = navController,
             finish = finish,
             onBackPressed = onBackPressed,
