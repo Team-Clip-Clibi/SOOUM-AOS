@@ -93,6 +93,7 @@ fun FeedView(
     webViewClick: (String) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val unRead = viewModel.unReadActivateAlarm.collectAsLazyPagingItems()
     val feedNoticeState = uiState.feedNotification
     val latestFeedItems = viewModel.latestFeedPaging.collectAsLazyPagingItems()
     val lazyListState = rememberLazyListState()
@@ -178,7 +179,7 @@ fun FeedView(
     }
     TopView(
         noticeClick = noticeClick,
-        newNotice = feedNoticeState is UiState.Success && feedNoticeState.data.isNotEmpty(),
+        newNotice = unRead.itemCount != 0,
         snackBarHostState = snackBarHostState
     ) { paddingValues ->
         RefreshBox(
