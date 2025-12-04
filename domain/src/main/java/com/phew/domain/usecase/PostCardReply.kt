@@ -50,8 +50,7 @@ class PostCardReply @Inject constructor(
             imgName = param.imgName,
             tags = param.tags
         )
-        val result =  repository.postCardReply(param.cardId, request)
-        return when (result) {
+        return when (val result =  repository.postCardReply(param.cardId, request)) {
             is DataResult.Success -> DomainResult.Success(Unit)
             is DataResult.Fail -> mapFailure(result)
         }
