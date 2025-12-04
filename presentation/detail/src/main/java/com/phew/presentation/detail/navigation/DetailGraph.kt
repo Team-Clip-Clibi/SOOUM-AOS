@@ -1,6 +1,5 @@
 package com.phew.presentation.detail.navigation
 
-import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -24,7 +23,8 @@ import com.phew.presentation.detail.screen.CommentCardDetailScreen
 val DETAIL_GRAPH = "detail_graph".asNavParam()
 
 private val DETAIL_ROUTE = "detail_route".asNavParam()
-private val COMMENT_ROUTE = "comment_route".asNavParam()
+private const val COMMENT_ROUTE_BASE = "comment_route"
+private val COMMENT_ROUTE = COMMENT_ROUTE_BASE.asNavParam()
 
 fun NavHostController.navigateToDetailGraph(
     cardDetailArgs: CardDetailArgs,
@@ -47,7 +47,7 @@ private fun NavHostController.navigateToDetailRoute(
 }
 
 
-private fun NavHostController.navigateToDetailCommentRoute(
+fun NavHostController.navigateToDetailCommentRoute(
     cardDetailCommentArgs: CardDetailCommentArgs,
     navOptions: NavOptions? = null,
 ) {
@@ -115,8 +115,32 @@ fun NavGraphBuilder.detailGraph(
                     onNavigateToComment = { commentArgs ->
                         navController.navigate(COMMENT_ROUTE.asNavArg(commentArgs))
                     },
-                    onBackPressed = {
-                        navController.popBackStack()
+                    onBackPressed = { parentId ->
+                        val previousRoute = navController.previousBackStackEntry?.destination?.route
+                        val hasDetailInStack = previousRoute?.contains("detail", ignoreCase = true) == true
+                        val hasCommentInStack = previousRoute?.startsWith(COMMENT_ROUTE_BASE) == true
+                        val shouldNavigateToParent = parentId > 0L && !hasDetailInStack && !hasCommentInStack
+
+                        SooumLog.d(
+                            TAG,
+                            "onBackPressed() parentId=$parentId, prevRoute=$previousRoute, navigateParent=$shouldNavigateToParent"
+                        )
+
+                        if (shouldNavigateToParent) {
+                            navController.popBackStack()
+                            navController.navigate(
+                                COMMENT_ROUTE.asNavArg(CardDetailCommentArgs(parentId)),
+                                navOptions {
+                                    launchSingleTop = true
+                                }
+                            )
+                        } else {
+                            val popped = navController.popBackStack()
+                            if (!popped) {
+                                SooumLog.w(TAG, "Fail to popBackStack from comment route, navigating home")
+                                navToHome()
+                            }
+                        }
                     },
                     onFeedPressed = navToHome,
                     onNavigateToWrite = { cardId ->

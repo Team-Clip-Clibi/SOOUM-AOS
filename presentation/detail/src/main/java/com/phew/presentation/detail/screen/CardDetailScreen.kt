@@ -322,8 +322,7 @@ internal fun CardDetailRoute(
         onClickCommentView = { commentCardId ->
             onNavigateToComment(
                 CardDetailCommentArgs(
-                    cardId = commentCardId,
-                    parentId = args.cardId
+                    cardId = commentCardId
                 )
             )
         },

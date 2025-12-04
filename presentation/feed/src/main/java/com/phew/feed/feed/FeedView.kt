@@ -29,6 +29,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -82,6 +83,7 @@ import com.phew.feed.viewModel.UiState
 import com.phew.presentation.feed.R
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
 import kotlin.text.append
 import com.phew.core.ui.R as CoreUiR
 
@@ -103,6 +105,7 @@ fun FeedView(
     val isRefreshing = uiState.refresh is UiState.Loading
     val feedNoticeState = uiState.feedNotification
     val lazyListState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
     var hasScrolledToTop by rememberSaveable { mutableStateOf(false) }
     var previousHomeTab by rememberSaveable { mutableStateOf<HomeTabType?>(null) }
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -224,16 +227,30 @@ fun FeedView(
             currentTab = uiState.currentTab,
             recentClick = {
                 viewModel.switchTab(FeedType.Latest)
+                coroutineScope.launch {
+                    lazyListState.animateScrollToItem(0)
+                }
             },
             popularClick = {
                 viewModel.switchTab(FeedType.Popular)
+                coroutineScope.launch {
+                    lazyListState.animateScrollToItem(0)
+                }
             },
-            nearClick = viewModel::checkLocationPermission,
+            nearClick = {
+                viewModel.checkLocationPermission()
+                coroutineScope.launch {
+                    lazyListState.animateScrollToItem(0)
+                }
+            },
             isTabsVisible = isTabsVisible,
             notice = feedNoticeState is UiState.Success && feedNoticeState.data.isNotEmpty(),
             noticeClick = noticeClick,
             distanceClick = { value ->
                 viewModel.switchDistanceTab(value)
+                coroutineScope.launch {
+                    lazyListState.animateScrollToItem(0)
+                }
             },
             selectDistance = uiState.distanceTab
         )

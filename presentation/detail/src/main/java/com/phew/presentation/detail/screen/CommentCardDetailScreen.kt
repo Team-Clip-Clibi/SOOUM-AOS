@@ -178,16 +178,22 @@ internal fun CommentCardDetailScreen(
     var showBottomSheet by remember { mutableStateOf(false) }
     val isDelete = uiState.deleteSuccess || isTimerExpired
     val snackBarHostState = remember { SnackbarHostState() }
-    val onBackPressedLambda = remember(args.parentId) { { onBackPressed(args.parentId) } }
+    val onBackPressedLambda = remember(cardDetail.previousCardId) { { 
+        val parentId = cardDetail.previousCardId?.toLongOrNull() ?: 0L
+        SooumLog.d(TAG, "parentId : $parentId")
+        onBackPressed(parentId) 
+    } }
     val showBottomSheetLambda = remember { { showBottomSheet = true } }
     val onExpireLambda = remember { { isTimerExpired = true } }
     val onClickLikeLambda = remember(args.cardId) { { viewModel.toggleLike(args.cardId) } }
-    val onClickPreviousCard = remember { { onBackPressed(args.parentId) } }
+    val onClickPreviousCard = remember(cardDetail.previousCardId) { { 
+        val parentId = cardDetail.previousCardId?.toLongOrNull() ?: 0L
+        onBackPressed(parentId) 
+    } }
     val onCommentClickLambda: (Long) -> Unit = remember(args.cardId) {
         { childId ->
             onNavigateToComment(
                 CardDetailCommentArgs(
-                    parentId = args.cardId,
                     cardId = childId
                 )
             )
