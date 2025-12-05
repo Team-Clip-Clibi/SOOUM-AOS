@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -40,6 +41,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.PointerType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
@@ -213,6 +218,8 @@ internal fun WriteRoute(
         onRemoveTag = viewModel::removeTag,
         onRelatedTagClick = { tagItem -> viewModel.addTag(tagItem.name) },
         focusTagInput = uiState.focusTagInput,
+        onCompleteTagInput = viewModel::completeTagInput,
+        onResetTagInput = viewModel::resetTagInput,
         onTagFocusHandled = viewModel::onTagInputFocusHandled,
         onWriteComplete = viewModel::onWriteComplete,
         showBackgroundPicker = uiState.showBackgroundPickerSheet,
@@ -275,6 +282,8 @@ private fun WriteScreen(
     onRemoveTag: (String) -> Unit,
     onRelatedTagClick: (NumberTagItem) -> Unit,
     focusTagInput: Boolean,
+    onCompleteTagInput: () -> Unit,
+    onResetTagInput: () -> Unit,
     onTagFocusHandled: () -> Unit,
     onWriteComplete: () -> Unit,
     showBackgroundPicker: Boolean,
@@ -330,14 +339,28 @@ private fun WriteScreen(
 
     var isCardFocused by remember { mutableStateOf(false) }
     val isImeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
-    val isScrolling = rememberScrollState().isScrollInProgress
+    var lastImeVisible by remember { mutableStateOf(isImeVisible) }
+    val finalizeTagInputIfNeeded: () -> Unit = {
+        if (currentTagInput.isNotBlank()) {
+            onCompleteTagInput()
+        } else {
+            onResetTagInput()
+        }
+    }
 
-    LaunchedEffect(isImeVisible, isScrolling, isCardFocused) {
-        if (!isImeVisible || isScrolling || isCardFocused) {
+    LaunchedEffect(isImeVisible) {
+        if (!isImeVisible && lastImeVisible) {
             hideRelatedTags()
-            if (isCardFocused) {
-                isCardFocused = false
-            }
+            finalizeTagInputIfNeeded()
+        }
+        lastImeVisible = isImeVisible
+    }
+
+    LaunchedEffect(isCardFocused) {
+        if (isCardFocused) {
+            hideRelatedTags()
+            finalizeTagInputIfNeeded()
+            isCardFocused = false
         }
     }
 
@@ -403,8 +426,11 @@ private fun WriteScreen(
         }
     ) { innerPadding ->
         val scrollState = rememberScrollState()
-        LaunchedEffect(scrollState.isScrollInProgress) {
-            if (scrollState.isScrollInProgress) {
+        var isUserDragging by remember { mutableStateOf(false) }
+        LaunchedEffect(scrollState.isScrollInProgress, isUserDragging) {
+            if (scrollState.isScrollInProgress && isUserDragging) {
+                finalizeTagInputIfNeeded()
+                hideRelatedTags()
                 keyboard?.hide()
                 focusManager.clearFocus()
             }
@@ -419,6 +445,26 @@ private fun WriteScreen(
             Column(
                 modifier = Modifier
                     .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .pointerInput(isImeVisible) {
+                        awaitPointerEventScope {
+                            while (true) {
+                                val event = awaitPointerEvent()
+                                if (!isImeVisible) continue
+                                val dragDetected = event.changes.any { pointer ->
+                                    pointer.type == PointerType.Touch &&
+                                        pointer.pressed &&
+                                        !pointer.isConsumed &&
+                                        pointer.positionChange() != Offset.Zero
+                                }
+                                if (dragDetected) {
+                                    isUserDragging = true
+                                }
+                                if (!event.changes.any { it.pressed }) {
+                                    isUserDragging = false
+                                }
+                            }
+                        }
+                    }
                     .verticalScroll(scrollState)
                     .weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -465,11 +511,19 @@ private fun WriteScreen(
                     fontItem = CustomFont.fontData,
                     selectedFont = selectedFont,
                     onFontSelected = onFontSelected
-                )
-            }
+                    )
+                }
 
             val showRelatedTags = relatedTags.isNotEmpty() && isImeVisible
             val showOptionButtons = relatedTags.isEmpty() && !isImeVisible
+            val density = LocalDensity.current
+            LaunchedEffect(showRelatedTags) {
+                if (showRelatedTags) {
+                    //   TODO 고정 값이 아닌 다른 방안이 필요
+                    val shift = with(density) { 30.dp.toPx() }
+                    scrollState.animateScrollBy(shift)
+                }
+            }
 
             if (showRelatedTags) {
                 NumberTagFlowLayout(

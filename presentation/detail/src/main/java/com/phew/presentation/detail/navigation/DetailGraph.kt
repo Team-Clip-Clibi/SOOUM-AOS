@@ -62,7 +62,7 @@ fun NavGraphBuilder.detailGraph(
     onNavigateToReport: (Long) -> Unit,
     onNavigateToViewTags: (TagViewArgs) -> Unit,
     navToHome: () -> Unit,
-    onTagPressed: () -> Unit,
+    onTagPressed: () -> Unit = {},
     onProfileScreen: (Long) -> Unit,
 ) {
     navigation(

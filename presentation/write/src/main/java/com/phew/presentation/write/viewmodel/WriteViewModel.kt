@@ -127,13 +127,6 @@ class WriteViewModel @Inject constructor(
         }
     }
 
-    private fun getLocation() {
-        viewModelScope.launch {
-            val location = getLocationSafely()
-            // TODO: Update state with location if needed
-        }
-    }
-
     fun onInitialLocationPermissionCheck(isGranted: Boolean) {
         _uiState.update { state ->
             val adjustedIds = adjustOptionForPermission(state.selectedOptionIds, isGranted)
@@ -228,6 +221,21 @@ class WriteViewModel @Inject constructor(
 
     fun onTagInputFocusHandled() {
         _uiState.update { it.copy(focusTagInput = false) }
+    }
+
+    fun completeTagInput() {
+        _uiState.update {
+            it.copy(tagInputCompleteSignal = it.tagInputCompleteSignal + 1)
+        }
+    }
+
+    fun resetTagInput() {
+        _uiState.update {
+            it.copy(
+                currentTagInput = "",
+                tagInputCompleteSignal = it.tagInputCompleteSignal + 1
+            )
+        }
     }
 
     fun addTag(tag: String) {
@@ -415,8 +423,7 @@ private fun requestCameraImageForBackground() {
     fun hideRelatedTags() {
         _uiState.update {
             it.copy(
-                relatedTags = emptyList(),
-                currentTagInput = ""
+                relatedTags = emptyList()
             )
         }
     }
