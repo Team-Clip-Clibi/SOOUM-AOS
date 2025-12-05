@@ -8,5 +8,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class CardDetailCommentArgs(
     val cardId: Long,
-    val parentId: Long
+    val parentId: Long,
+    val backTo: String? = null
 ): java.io.Serializable

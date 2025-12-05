@@ -79,6 +79,7 @@ import com.phew.presentation.detail.model.MoreAction
 import com.phew.presentation.detail.viewmodel.CardDetailError
 import com.phew.presentation.detail.viewmodel.CardDetailViewModel
 import com.phew.core_design.CustomFont
+import com.phew.presentation.detail.component.CardDetailTopBar
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -91,6 +92,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import kotlinx.coroutines.launch
 import com.airbnb.lottie.compose.LottieConstants
+import com.phew.core_design.LoadingAnimation
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -103,6 +105,7 @@ internal fun CommentCardDetailScreen(
     onNavigateToViewTags: (com.phew.core.ui.model.navigation.TagViewArgs) -> Unit,
     onBackPressed: (Long) -> Unit,
     onFeedPressed: () -> Unit,
+    onTagPressed: () -> Unit,
     onProfileClick: (Long) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -163,11 +166,7 @@ internal fun CommentCardDetailScreen(
                 .windowInsetsPadding(WindowInsets.statusBars),
             contentAlignment = Alignment.Center
         ) {
-            LottieAnimation(
-                composition = composition,
-                progress = { refreshProgress },
-                modifier = Modifier.size(44.dp)
-            )
+            LoadingAnimation.LoadingView()
         }
         return
     }
@@ -194,7 +193,8 @@ internal fun CommentCardDetailScreen(
         { childId ->
             onNavigateToComment(
                 CardDetailCommentArgs(
-                    cardId = childId
+                    cardId = childId,
+                    parentId = cardDetail.cardId
                 )
             )
         }
@@ -244,16 +244,28 @@ internal fun CommentCardDetailScreen(
     }
     val refreshState = rememberPullToRefreshState()
     val density = LocalDensity.current
+    val showDetailTopBar = cardDetail.previousCardId.isNullOrEmpty()
     Scaffold(
         topBar = {
-            TopLayout(
-                storyRemainingMillis = cardDetail.endTime,
-                onFeedPressed = onFeedPressed,
-                onBackPressed = onBackPressedLambda,
-                showBottomSheet = showBottomSheetLambda,
-                onExpire = onExpireLambda,
-                memberId = cardDetail.memberId
-            )
+            if (showDetailTopBar) {
+                CardDetailTopBar(
+                    remainingTimeMillis = cardDetail.endTime,
+                    onBackPressed = onBackPressedLambda,
+                    onMoreClick = showBottomSheetLambda
+                )
+            } else {
+                TopLayout(
+                    storyRemainingMillis = cardDetail.endTime,
+                    onFeedPressed = when (args.backTo) {
+                        "tag" -> onTagPressed
+                        else -> onFeedPressed
+                    },
+                    onBackPressed = onBackPressedLambda,
+                    showBottomSheet = showBottomSheetLambda,
+                    onExpire = onExpireLambda,
+                    memberId = cardDetail.memberId
+                )
+            }
         },
         snackbarHost = {
             DialogComponent.CustomAnimationSnackBarHost(hostState = snackBarHostState)

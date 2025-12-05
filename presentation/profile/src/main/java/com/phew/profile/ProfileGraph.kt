@@ -4,6 +4,7 @@ import androidx.compose.runtime.remember
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
+import androidx.navigation.NavOptions
 import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
 import com.phew.core.ui.component.home.HomeTabType
@@ -42,6 +43,23 @@ fun NavHostController.navigateToProfileGraphWithArgs(
 ) {
     this.navigate(OTHER_PROFILE_DESTINATION_ROUTE.asNavArg(profileArgs))
 }
+
+fun NavHostController.navigateToFollowScreen(
+    isMyProfile: Boolean,
+    selectTab: Int,
+    navOptions: NavOptions? = null
+) {
+    this.navigate(
+        FOLLOW_ROUTE_DESTINATION_ROUTE.asNavArg(
+            FollowArgs(
+                isMyProfile = isMyProfile,
+                selectTab = selectTab
+            )
+        ),
+        navOptions
+    )
+}
+
 fun NavHostController.navigateToEditProfile(
 ) {
     this.navigate(CHANGE_PROFILE_BASE)

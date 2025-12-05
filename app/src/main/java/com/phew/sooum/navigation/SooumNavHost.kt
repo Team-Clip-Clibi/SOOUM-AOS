@@ -9,6 +9,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.navOptions
 import com.phew.core.ui.component.back.SooumOnBackPressed
+import com.phew.core.ui.component.home.HomeTabType
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.model.navigation.OnBoardingArgs
 import com.phew.core.ui.model.navigation.ProfileArgs
@@ -176,6 +177,24 @@ fun SooumNavHost(
                             launchSingleTop = true
                         }
                     )
+                },
+                onTagPressed = {
+                    navController.navigateToHomeGraph(
+                        navOptions = navOptions {
+                            popUpTo(SIGN_UP_GRAPH) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    )
+                    // TAG 탭으로 이동하는 로직 추가 - LaunchedEffect를 사용하여 다음 프레임에 실행
+                    navController.navigate(HomeTabType.TAG.graph) {
+                        launchSingleTop = true
+                        restoreState = true
+                        popUpTo(HomeTabType.FEED.route) {
+                            saveState = true
+                        }
+                    }
                 },
                 onProfileScreen = { profileId ->
                     navController.navigateToProfileGraphWithArgs(ProfileArgs(profileId))

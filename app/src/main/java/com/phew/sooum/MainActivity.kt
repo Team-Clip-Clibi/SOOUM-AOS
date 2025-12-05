@@ -76,7 +76,7 @@ class MainActivity : ComponentActivity() {
             // 딥링크 처리
             LaunchedEffect(pendingDeepLink) {
                 pendingDeepLink?.let { deepLink ->
-                    DeepLinkHandler.handleDeepLink(appState.navController, deepLink)
+                    DeepLinkHandler.handleDeepLink(appState.navController, deepLink, appState)
                     pendingDeepLink = null
                 }
             }
@@ -156,15 +156,19 @@ class MainActivity : ComponentActivity() {
                         SooumLog.d(TAG, "FCM 알림 클릭 감지, 알림 타입: $notificationType")
                         // 알림 타입에 따른 기본 딥링크 생성
                         pendingDeepLink = when (notificationType) {
-                            "FEED_LIKE", "COMMENT_LIKE", "COMMENT_WRITE" -> {
+                            "FEED_LIKE" -> {
                                 val cardId = intent.getStringExtra("targetCardId")
-                                if (cardId != null) "sooum://card/$cardId?backTo=feed" else "sooum://feed"
+                                if (cardId != null) "sooum://card/$cardId?backTo=feed&view=detail" else "sooum://feed"
+                            }
+                            "COMMENT_LIKE", "COMMENT_WRITE" -> {
+                                val cardId = intent.getStringExtra("targetCardId")
+                                if (cardId != null) "sooum://card/$cardId?backTo=feed&view=comment" else "sooum://feed"
                             }
                             "TAG_USAGE" -> {
                                 val cardId = intent.getStringExtra("targetCardId")
                                 if (cardId != null) "sooum://card/$cardId?backTo=tag" else "sooum://feed"
                             }
-                            "FOLLOW" -> "sooum://follow?backTo=my"
+                            "FOLLOW" -> "sooum://follow?tab=follower"
                             "BLOCKED", "DELETED", "TRANSFER_SUCCESS" -> {
                                 val notificationId = intent.getStringExtra("notificationId")
                                 if (notificationId != null) "sooum://notice/$notificationId?backTo=feed" else "sooum://feed"

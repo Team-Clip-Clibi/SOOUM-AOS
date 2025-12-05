@@ -4,9 +4,6 @@ enum class NotificationType(val value: String) {
     FEED_LIKE("FEED_LIKE"),
     COMMENT_LIKE("COMMENT_LIKE"),
     COMMENT_WRITE("COMMENT_WRITE"),
-    BLOCKED("BLOCKED"),
-    DELETED("DELETED"),
-    TRANSFER_SUCCESS("TRANSFER_SUCCESS"),
     FOLLOW("FOLLOW"),
     TAG_USAGE("TAG_USAGE");
 

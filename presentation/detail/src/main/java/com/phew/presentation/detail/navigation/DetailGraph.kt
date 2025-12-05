@@ -47,11 +47,11 @@ private fun NavHostController.navigateToDetailRoute(
 }
 
 
-fun NavHostController.navigateToDetailCommentRoute(
+fun NavHostController.navigateToDetailCommentDirect(
     cardDetailCommentArgs: CardDetailCommentArgs,
     navOptions: NavOptions? = null,
 ) {
-    SooumLog.i(TAG, "navigateToDetailRoute() $cardDetailCommentArgs")
+    SooumLog.i(TAG, "navigateToDetailCommentDirect() $cardDetailCommentArgs")
     this.navigate(COMMENT_ROUTE.asNavArg(cardDetailCommentArgs), navOptions)
 }
 
@@ -62,6 +62,7 @@ fun NavGraphBuilder.detailGraph(
     onNavigateToReport: (Long) -> Unit,
     onNavigateToViewTags: (TagViewArgs) -> Unit,
     navToHome: () -> Unit,
+    onTagPressed: () -> Unit,
     onProfileScreen: (Long) -> Unit,
 ) {
     navigation(
@@ -129,7 +130,12 @@ fun NavGraphBuilder.detailGraph(
                         if (shouldNavigateToParent) {
                             navController.popBackStack()
                             navController.navigate(
-                                COMMENT_ROUTE.asNavArg(CardDetailCommentArgs(parentId)),
+                                COMMENT_ROUTE.asNavArg(
+                                    CardDetailCommentArgs(
+                                        cardId = parentId,
+                                        parentId = 0L
+                                    )
+                                ),
                                 navOptions {
                                     launchSingleTop = true
                                 }
@@ -143,6 +149,7 @@ fun NavGraphBuilder.detailGraph(
                         }
                     },
                     onFeedPressed = navToHome,
+                    onTagPressed = onTagPressed,
                     onNavigateToWrite = { cardId ->
                         onNavigateToWrite(cardId)
                     },

@@ -23,17 +23,17 @@ import kotlinx.coroutines.delay
 fun SooumBackHandler(
     appState: SooumAppState
 ) {
-    val isHomeRoute by rememberUpdatedState(newValue = appState.isHomeLevelDestination)
+    val isHomeRoute = appState.isHomeLevelDestination
+    val currentRoute = appState.currentDestination?.route
+
+    SooumLog.d(TAG, "isFeedHome? = $currentRoute")
 
     if (isHomeRoute) {
-        val currentDestination = appState.navController.currentBackStackEntry?.destination
-        val route = requireNotNull(currentDestination?.route)
-
-        SooumLog.d(TAG, "isFeedHome? = ${appState.currentDestination?.route}")
-        if (isFeedHome(appState.currentDestination?.route)) {
+        if (isFeedHome(currentRoute)) {
             SooumExitBackHandler()
         } else {
             BackHandler {
+                val route = requireNotNull(currentRoute)
                 appState.navController.navigate(
                     route = HomeTabType.FEED.route,
                     navOptions = navOptions { popUpTo(route) { inclusive = true } }
