@@ -1,4 +1,4 @@
-package com.phew.sign_up
+package com.phew.sign_up.view
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -38,9 +38,17 @@ import com.phew.core_design.NeutralColor
 import com.phew.core_design.Primary
 import com.phew.core_design.TextComponent
 import com.phew.core_design.TextFiledComponent
+import com.phew.sign_up.R
+import com.phew.sign_up.SignUp
+import com.phew.sign_up.SignUpViewModel
+import com.phew.sign_up.UiState
 
 @Composable
-fun AuthCodeView(viewModel: SignUpViewModel, onBack: () -> Unit, onRestoreSuccess: () -> Unit) {
+fun AuthCodeView(
+    viewModel: SignUpViewModel,
+    onBack: () -> Unit,
+    onRestoreSuccess: () -> Unit,
+) {
     val uiState by viewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
     BackHandler {
