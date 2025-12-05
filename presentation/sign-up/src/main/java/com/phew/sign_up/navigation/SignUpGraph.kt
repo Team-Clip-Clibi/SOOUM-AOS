@@ -1,5 +1,6 @@
 package com.phew.sign_up.navigation
 
+import android.util.Log
 import androidx.compose.runtime.remember
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
