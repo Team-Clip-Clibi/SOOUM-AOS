@@ -29,7 +29,6 @@ class TeapotInterceptor @Inject constructor(
         when (response.code) {
             WITHDRAWAL_USER -> {
                 response.close()
-                interceptorManger.resetToken()
                 runBlocking {
                     val deleteToken = interceptorManger.deleteAll()
                     if (!deleteToken) {
@@ -39,7 +38,6 @@ class TeapotInterceptor @Inject constructor(
                     }
                 }
                 scope.launch {
-                    Log.e("okhttp.OkHttpClient" , "accessToken : ${response.request.header("Authorization")?.removePrefix("Bearer ")}")
                     globalEventBus.emitEvent(GlobalEvent.TeapotEvent)
                 }
                 throw IOException("Force Logout by 418")

@@ -53,7 +53,7 @@ class TransferAccount @Inject constructor(
             }
 
             is DataResult.Success -> {
-                val deleteAll = deviceRepository.deleteAll()
+                val deleteAll = interceptorManger.deleteAll()
                 if(!deleteAll) return Result.failure(Exception(ERROR_FAIL_JOB))
                 interceptorManger.resetToken()
                 val saveToken = deviceRepository.saveToken(

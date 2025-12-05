@@ -73,7 +73,7 @@ class RestoreAccount @Inject constructor(
                 if (!saveToken) return DomainResult.Failure(ERROR_FAIL_JOB)
                 when (val profile = profileRepository.requestMyProfile()) {
                     is DataResult.Fail -> {
-                        deviceRepository.deleteAll()
+                        interceptorManger.deleteAll()
                         return DomainResult.Failure(ERROR_FAIL_JOB)
                     }
 
@@ -86,7 +86,7 @@ class RestoreAccount @Inject constructor(
                             profileImageName = data.profileImgName
                         )
                         if (!saveProfileResult) {
-                            deviceRepository.deleteAll()
+                            interceptorManger.deleteAll()
                             return DomainResult.Failure(ERROR_FAIL_JOB)
                         }
                         return DomainResult.Success(Unit)
