@@ -5,7 +5,6 @@ import com.phew.core_common.DataResult
 import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR_ALREADY_CARD_DELETE
 import com.phew.core_common.ERROR_FAIL_JOB
-import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.HTTP_CARD_ALREADY_DELETE
 import com.phew.core_common.HTTP_NOT_FOUND
 import com.phew.domain.repository.network.CardDetailRepository
@@ -25,7 +24,7 @@ class LikeCard @Inject constructor(
         return when (result.code) {
             APP_ERROR_CODE -> DomainResult.Failure(result.message ?: ERROR_FAIL_JOB)
             HTTP_CARD_ALREADY_DELETE -> DomainResult.Failure(ERROR_ALREADY_CARD_DELETE)
-            HTTP_NOT_FOUND -> DomainResult.Failure(ERROR_NETWORK)
+            HTTP_NOT_FOUND -> DomainResult.Failure(ERROR_FAIL_JOB)
             else -> DomainResult.Failure(ERROR_FAIL_JOB)
         }
     }

@@ -14,7 +14,7 @@ class CheckCardAlreadyDelete @Inject constructor(private val repository: CardFee
     suspend operator fun invoke(param: Param): DomainResult<Boolean, String> {
         return when (val request = repository.requestCheckCardDelete(cardId = param.cardId)) {
             is DataResult.Fail -> {
-                DomainResult.Failure(ERROR_NETWORK)
+                DomainResult.Failure(request.message ?: ERROR_NETWORK)
             }
 
             is DataResult.Success -> {

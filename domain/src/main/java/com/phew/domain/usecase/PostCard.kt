@@ -20,7 +20,6 @@ import com.phew.core_common.HTTP_NOT_FOUND
 import com.phew.core_common.HTTP_SUCCESS
 import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.network.CardFeedRepository
-import com.phew.domain.repository.network.MembersRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
@@ -111,7 +110,7 @@ class PostCard @Inject constructor(
             HTTP_SUCCESS -> DomainResult.Success(Unit)
             HTTP_BAD_REQUEST -> DomainResult.Failure(ERROR_ACCOUNT_SUSPENDED)
             HTTP_CARD_ALREADY_DELETE -> DomainResult.Failure(ERROR_ALREADY_CARD_DELETE)
-            HTTP_NOT_FOUND -> DomainResult.Failure(ERROR_NETWORK)
+            HTTP_NOT_FOUND -> DomainResult.Failure(ERROR_FAIL_JOB)
             else -> DomainResult.Failure(ERROR_FAIL_JOB)
         }
     }
