@@ -27,4 +27,5 @@
     <string name="home_notice_under_card_like_comment">%1$s님이 회원님의 답카드에 좋아요를 남겼어요.</string>
     <string name="home_notice_limit_card_comment">운영정책 위반으로 인해 %1$s까지 카드추가가 제한됩니다.</string>
     <string name="home_notice_delete_card">운영정책 위반으로 인해 작성된 카드가 삭제 처리되었습니다.</string>
+    <string name="home_feed_dialog_delete_title">삭제된 카드예요</string>
 </resources>
