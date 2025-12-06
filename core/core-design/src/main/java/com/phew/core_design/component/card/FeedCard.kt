@@ -212,7 +212,7 @@ private fun FeedCardImpl(
                 ambientColor = UnKnowColor.color
             ),
         shape = RoundedCornerShape(16.dp),
-        color = Primary.MAIN,
+        color = NeutralColor.WHITE,
         border = BorderStroke(1.dp, NeutralColor.GRAY_100)
     ) {
         Column(
@@ -261,7 +261,7 @@ private fun FeedAdminCardImpl(
                 ambientColor = UnKnowColor.color
             ),
         shape = RoundedCornerShape(16.dp),
-        color = Primary.MAIN,
+        color = NeutralColor.WHITE,
         border = BorderStroke(1.dp, NeutralColor.GRAY_200)
     ) {
         Column(
