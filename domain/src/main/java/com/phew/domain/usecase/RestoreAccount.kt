@@ -8,8 +8,10 @@ import com.phew.core_common.ERROR_TRANSFER_CODE_INVALID
 import com.phew.core_common.HTTP_BAD_REQUEST
 import com.phew.domain.BuildConfig
 import com.phew.domain.dto.Token
+import com.phew.domain.interceptor.InterceptorManger
 import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.network.MembersRepository
+import com.phew.domain.repository.network.ProfileRepository
 import com.phew.domain.repository.network.SignUpRepository
 import java.security.KeyFactory
 import java.security.PublicKey
@@ -21,6 +23,8 @@ class RestoreAccount @Inject constructor(
     private val membersRepository: MembersRepository,
     private val signUpRepository: SignUpRepository,
     private val deviceRepository: DeviceRepository,
+    private val interceptorManger: InterceptorManger,
+    private val profileRepository: ProfileRepository,
 ) {
     data class Param(
         val transferCode: String,
@@ -30,13 +34,18 @@ class RestoreAccount @Inject constructor(
         val transferRsaKey = signUpRepository.requestSecurityKey()
         if (transferRsaKey is DataResult.Fail) return DomainResult.Failure(ERROR_NETWORK)
         val deviceId = deviceRepository.requestDeviceId()
-        val transferEncryptedInfo = makeDeviceInfo(key = (transferRsaKey as DataResult.Success).data, deviceInfo = deviceId)
-        val codeResult = membersRepository.transferAccount(transferCode = param.transferCode , deviceId = transferEncryptedInfo)
+        val transferEncryptedInfo =
+            makeDeviceInfo(key = (transferRsaKey as DataResult.Success).data, deviceInfo = deviceId)
+        val codeResult = membersRepository.transferAccount(
+            transferCode = param.transferCode,
+            deviceId = transferEncryptedInfo
+        )
         if (codeResult != Result.success(Unit)) return DomainResult.Failure(
             ERROR_TRANSFER_CODE_INVALID
         )
         val loginKey = signUpRepository.requestSecurityKey()
-        val loginEncryptedInfo = makeDeviceInfo(key = (loginKey as DataResult.Success).data, deviceInfo = deviceId)
+        val loginEncryptedInfo =
+            makeDeviceInfo(key = (loginKey as DataResult.Success).data, deviceInfo = deviceId)
         val modelName = deviceRepository.requestDeviceModel()
         val osVersion = deviceRepository.requestDeviceOS()
         when (val request = signUpRepository.requestLogin(
@@ -52,6 +61,8 @@ class RestoreAccount @Inject constructor(
             }
 
             is DataResult.Success -> {
+                deviceRepository.deleteAll()
+                interceptorManger.resetToken()
                 val saveToken = deviceRepository.saveToken(
                     key = BuildConfig.TOKEN_KEY,
                     data = Token(
@@ -60,7 +71,27 @@ class RestoreAccount @Inject constructor(
                     )
                 )
                 if (!saveToken) return DomainResult.Failure(ERROR_FAIL_JOB)
-                return DomainResult.Success(Unit)
+                when (val profile = profileRepository.requestMyProfile()) {
+                    is DataResult.Fail -> {
+                        interceptorManger.deleteAll()
+                        return DomainResult.Failure(ERROR_FAIL_JOB)
+                    }
+
+                    is DataResult.Success -> {
+                        val data = profile.data
+                        val saveProfileResult = deviceRepository.saveProfileInfo(
+                            profileKey = BuildConfig.PROFILE_KEY,
+                            nickName = data.nickname,
+                            profileImageUrl = data.profileImageUrl,
+                            profileImageName = data.profileImgName
+                        )
+                        if (!saveProfileResult) {
+                            interceptorManger.deleteAll()
+                            return DomainResult.Failure(ERROR_FAIL_JOB)
+                        }
+                        return DomainResult.Success(Unit)
+                    }
+                }
             }
         }
     }

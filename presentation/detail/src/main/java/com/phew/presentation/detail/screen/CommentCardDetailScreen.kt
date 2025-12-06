@@ -104,7 +104,7 @@ internal fun CommentCardDetailScreen(
     onNavigateToViewTags: (com.phew.core.ui.model.navigation.TagViewArgs) -> Unit,
     onBackPressed: (Long) -> Unit,
     onFeedPressed: () -> Unit,
-    onProfileClick: (Long) -> Unit
+    onProfileClick: (Long) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val comments: LazyPagingItems<CardComment> = viewModel.commentsPagingData
@@ -127,16 +127,21 @@ internal fun CommentCardDetailScreen(
                     // 화면을 벗어날 때 flag 설정
                     hasResumed = false
                 }
+
                 Lifecycle.Event.ON_RESUME -> {
                     // 두 번째 Resume부터만 새로고침 (WriteScreen에서 복귀 시)
                     if (hasResumed) {
-                        SooumLog.d(TAG, "CommentCardDetailScreen resumed from WriteScreen - refreshing data")
+                        SooumLog.d(
+                            TAG,
+                            "CommentCardDetailScreen resumed from WriteScreen - refreshing data"
+                        )
                         viewModel.loadCardDetail(args.cardId)
                         viewModel.requestComment(args.cardId)
                     } else {
                         hasResumed = true
                     }
                 }
+
                 else -> {}
             }
         }
@@ -218,6 +223,12 @@ internal fun CommentCardDetailScreen(
             Unit // 명시적으로 Unit 반환
         }
     }
+    LaunchedEffect(uiState.error) {
+      if(uiState.error == CardDetailError.CARD_DELETE){
+          viewModel.setDeleteDialog()
+      }
+    }
+
     HandleBlockUser(
         blockSuccess = uiState.blockSuccess,
         nickName = cardDetail.nickname,
@@ -226,7 +237,7 @@ internal fun CommentCardDetailScreen(
         snackBarHostState = snackBarHostState
     )
     val errorType = uiState.error
-    if (errorType != null) {
+    if (errorType != null && errorType != CardDetailError.CARD_DELETE) {
         HandleError(
             errorType = errorType,
             snackBarHostState = snackBarHostState,
@@ -323,6 +334,12 @@ internal fun CommentCardDetailScreen(
                         deleteCard = deleteCardLambda
                     )
                 }
+                if (uiState.deleteErrorDialog) {
+                    DeleteDialog(onClick = {
+                        viewModel.clearError()
+                        onFeedPressed()
+                    })
+                }
             }
         }
     }
@@ -393,7 +410,6 @@ private fun CardView(
             .fillMaxSize()
             .background(color = NeutralColor.WHITE)
     ) {
-
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
@@ -695,6 +711,7 @@ private fun HandleError(
         CardDetailError.COMMENTS_LOAD_FAILED -> stringResource(R.string.card_detail_error_comments)
         CardDetailError.CARD_LOAD_FAILED -> stringResource(R.string.card_detail_error_load_card)
         CardDetailError.NETWORK_ERROR -> stringResource(R.string.card_detail_error_load_card)
+        else -> ""
     }
     LaunchedEffect(errorType) {
         snackBarHostState.showSnackbar(
@@ -703,6 +720,16 @@ private fun HandleError(
         )
         onDismissError()
     }
+}
+
+@Composable
+private fun DeleteDialog(onClick: () -> Unit){
+    DialogComponent.NoDescriptionButtonOne(
+        title = stringResource(com.phew.presentation.detail.R.string.card_detail_dialog_delete_title),
+        buttonText = stringResource(com.phew.core_design.R.string.common_okay),
+        onClick = onClick,
+        onDismiss = onClick
+    )
 }
 
 private const val TAG = "CardCommentDetailScreen"

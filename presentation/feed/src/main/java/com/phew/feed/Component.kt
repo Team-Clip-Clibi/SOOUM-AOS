@@ -1,5 +1,7 @@
 package com.phew.feed
 
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -88,7 +90,13 @@ object FeedUi {
             while (true) {
                 delay(5000L)
                 val nextPage = pagerState.currentPage + 1
-                pagerState.animateScrollToPage(nextPage)
+                pagerState.animateScrollToPage(
+                    page = nextPage,
+                    animationSpec = tween(
+                        durationMillis = 500,
+                        easing = LinearOutSlowInEasing
+                    )
+                )
             }
         }
         Box(
@@ -101,7 +109,7 @@ object FeedUi {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(71.dp)
-                    .clip(RoundedCornerShape(16.dp))
+                    .clip(RoundedCornerShape(20.dp))
             ) { page ->
                 val actualIndex = page % feedNotice.size
                 val currentNotice = feedNotice[actualIndex]
@@ -400,7 +408,7 @@ object NotificationUi {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(102.dp)
+                .height(76.dp)
                 .background(color = WHITE)
                 .padding(start = 24.dp, top = 16.dp, end = 24.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Top),
@@ -445,7 +453,7 @@ object NotificationUi {
                 text = data.content,
                 style = TextComponent.SUBTITLE_1_M_16,
                 color = GRAY_600,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().padding(start = 24.dp)
             )
         }
     }

@@ -331,6 +331,7 @@ object MediumButton {
         disabledColor: Color = NeutralColor.GRAY_200,
         borderColor: Color = baseColor,
         onClick: () -> Unit,
+        showStroke : Boolean = true,
         content: @Composable RowScope.() -> Unit,
     ) {
         val interactionSource = remember { MutableInteractionSource() }
@@ -341,7 +342,17 @@ object MediumButton {
                 .fillMaxWidth()
                 .height(48.dp)
                 .clip(shape = RoundedCornerShape(10.dp))
-                .border(width = 1.dp, color = borderColor, shape = RoundedCornerShape(10.dp))
+                .then(
+                    if (showStroke) {
+                        Modifier.border(
+                            width = 1.dp,
+                            color = borderColor,
+                            shape = RoundedCornerShape(10.dp)
+                        )
+                    } else {
+                        Modifier
+                    }
+                )
                 .drawBehind {
                     val color = when {
                         !enabled -> disabledColor
@@ -495,7 +506,8 @@ object MediumButton {
             disabledColor = disabledColor,
             borderColor = borderColor,
             onClick = onClick,
-            enabled = isEnable
+            enabled = isEnable,
+            showStroke = false
         ) {
             Text(
                 text = buttonText,

@@ -98,6 +98,8 @@ class NetworkConvention : Plugin<Project> {
                     properties.getProperty("api_url_withdrawal_account", "")
                 val rejoinableDate: String = properties.getProperty("api_url_rejoinable_date", "")
                 val readActivateAlarm: String = properties.getProperty("api_url_activate_read", "")
+                val checkCardDelete: String =
+                    properties.getProperty("api_url_check_card_delete", "")
                 val notifyToggle: String = properties.getProperty("api_url_notify_toggle", "")
 
                 buildConfigField("String", "BASE_URL", baseUrl)
@@ -162,6 +164,8 @@ class NetworkConvention : Plugin<Project> {
                 buildConfigField("String", "API_URL_WITHDRAWAL_ACCOUNT", withdrawalAccount)
                 buildConfigField("String", "API_URL_REJOINABLE_DATE", rejoinableDate)
                 buildConfigField("String", "API_URL_READ_ACTIVATE", readActivateAlarm)
+                buildConfigField("String", "API_URL_CHECK_CARD_DELETE", checkCardDelete)
+
                 buildConfigField("String", "API_URL_NOTIFY_TOGGLE", notifyToggle)
             }
             buildFeatures.buildConfig = true
