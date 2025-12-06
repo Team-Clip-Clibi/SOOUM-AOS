@@ -26,7 +26,9 @@ import com.phew.core.ui.util.extension.LocalLifecycleAwareComposables
 import com.phew.core.ui.state.rememberSooumAppState
 import com.phew.core_common.log.SooumLog
 import com.phew.core_design.theme.SooumTheme
+import com.phew.sooum.fcm.NotificationType
 import com.phew.sooum.navigation.DeepLinkHandler
+import com.phew.sooum.session.TransferSuccessHandler
 import com.phew.sooum.ui.SooumApp
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -36,7 +38,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var lifecycleAwareComposables: LifecycleAwareComposables
-    
+    @Inject
+    lateinit var deepLinkHandler: DeepLinkHandler
+
     private var pendingDeepLink by mutableStateOf<String?>(null)
 
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
@@ -76,7 +80,11 @@ class MainActivity : ComponentActivity() {
             // 딥링크 처리
             LaunchedEffect(pendingDeepLink) {
                 pendingDeepLink?.let { deepLink ->
-                    DeepLinkHandler.handleDeepLink(appState.navController, deepLink, appState)
+                    deepLinkHandler.handleDeepLink(
+                        navController = appState.navController,
+                        deepLinkUrl = deepLink,
+                        appState = appState
+                    )
                     pendingDeepLink = null
                 }
             }
@@ -156,23 +164,21 @@ class MainActivity : ComponentActivity() {
                         SooumLog.d(TAG, "FCM 알림 클릭 감지, 알림 타입: $notificationType")
                         // 알림 타입에 따른 기본 딥링크 생성
                         pendingDeepLink = when (notificationType) {
-                            "FEED_LIKE" -> {
+                            NotificationType.FEED_LIKE.value  -> {
                                 val cardId = intent.getStringExtra("targetCardId")
                                 if (cardId != null) "sooum://card/$cardId?backTo=feed&view=detail" else "sooum://feed"
                             }
-                            "COMMENT_LIKE", "COMMENT_WRITE" -> {
+                            NotificationType.COMMENT_LIKE.value,
+                            NotificationType.COMMENT_WRITE.value -> {
                                 val cardId = intent.getStringExtra("targetCardId")
                                 if (cardId != null) "sooum://card/$cardId?backTo=feed&view=comment" else "sooum://feed"
                             }
-                            "TAG_USAGE" -> {
+                            NotificationType.TAG_USAGE.value -> {
                                 val cardId = intent.getStringExtra("targetCardId")
                                 if (cardId != null) "sooum://card/$cardId?backTo=tag" else "sooum://feed"
                             }
-                            "FOLLOW" -> "sooum://follow?tab=follower"
-                            "BLOCKED", "DELETED", "TRANSFER_SUCCESS" -> {
-                                val notificationId = intent.getStringExtra("notificationId")
-                                if (notificationId != null) "sooum://notice/$notificationId?backTo=feed" else "sooum://feed"
-                            }
+                            NotificationType.FOLLOW.value -> "sooum://follow?tab=follower"
+                            NotificationType.TRANSFER_SUCCESS.value -> TransferSuccessHandler.TRANSFER_SUCCESS_DEEP_LINK
                             else -> "sooum://feed"
                         }
                         SooumLog.d(TAG, "생성된 기본 딥링크: $pendingDeepLink")

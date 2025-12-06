@@ -81,9 +81,7 @@ class RestoreAccount @Inject constructor(
                         val data = profile.data
                         val saveProfileResult = deviceRepository.saveProfileInfo(
                             profileKey = BuildConfig.PROFILE_KEY,
-                            nickName = data.nickname,
-                            profileImageUrl = data.profileImageUrl,
-                            profileImageName = data.profileImgName
+                            nickName = data.nickname
                         )
                         if (!saveProfileResult) {
                             interceptorManger.deleteAll()

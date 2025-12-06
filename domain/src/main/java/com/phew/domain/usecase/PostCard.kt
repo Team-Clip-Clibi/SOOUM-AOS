@@ -107,11 +107,13 @@ class PostCard @Inject constructor(
             )
         }
         return when (uploadResult) {
-            HTTP_SUCCESS -> DomainResult.Success(uploadResult.data.cardId)
-            HTTP_BAD_REQUEST -> DomainResult.Failure(ERROR_ACCOUNT_SUSPENDED)
-            HTTP_CARD_ALREADY_DELETE -> DomainResult.Failure(ERROR_ALREADY_CARD_DELETE)
-            HTTP_NOT_FOUND -> DomainResult.Failure(ERROR_FAIL_JOB)
-            else -> DomainResult.Failure(ERROR_FAIL_JOB)
+            is DataResult.Success -> DomainResult.Success(uploadResult.data.cardId)
+            is DataResult.Fail -> when (uploadResult.code) {
+                HTTP_BAD_REQUEST -> DomainResult.Failure(ERROR_ACCOUNT_SUSPENDED)
+                HTTP_CARD_ALREADY_DELETE -> DomainResult.Failure(ERROR_ALREADY_CARD_DELETE)
+                HTTP_NOT_FOUND -> DomainResult.Failure(ERROR_FAIL_JOB)
+                else -> DomainResult.Failure(ERROR_FAIL_JOB)
+            }
         }
     }
 

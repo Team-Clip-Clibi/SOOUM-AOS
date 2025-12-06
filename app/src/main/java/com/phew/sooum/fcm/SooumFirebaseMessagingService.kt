@@ -12,12 +12,15 @@ import com.phew.sooum.R
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import androidx.core.net.toUri
+import com.phew.sooum.session.TransferSuccessHandler
 
 @AndroidEntryPoint
 class SooumFirebaseMessagingService : FirebaseMessagingService() {
 
     @Inject
     lateinit var notificationChannelManager: NotificationChannelManager
+    @Inject
+    lateinit var transferSuccessHandler: TransferSuccessHandler
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         SooumLog.d(TAG, "FCM 메시지 수신: ${remoteMessage.from}")
@@ -26,6 +29,14 @@ class SooumFirebaseMessagingService : FirebaseMessagingService() {
         // 데이터 페이로드 확인
         if (remoteMessage.data.isNotEmpty()) {
             SooumLog.d(TAG, "메시지 데이터: ${remoteMessage.data}")
+        }
+
+        val notificationType = NotificationType.fromString(remoteMessage.data["notificationType"])
+
+        val isTransferSuccess = notificationType == NotificationType.TRANSFER_SUCCESS
+        if (isTransferSuccess) {
+            SooumLog.d(TAG, "계정 이전 성공 알림 수신 - 즉시 로그아웃 처리")
+            transferSuccessHandler.handleFromService(this)
         }
 
         // notification 필드가 있는 경우, 시스템이 이미 알림을 표시했을 수 있음
@@ -111,6 +122,10 @@ class SooumFirebaseMessagingService : FirebaseMessagingService() {
             // [팔로우] 타입 알림 - 팔로우한 사용자 프로필로 이동, 뒤로가기시 마이 Graph
             NotificationType.FOLLOW.value -> {
                 deepLinkString = "sooum://follow?tab=follower"
+            }
+
+            NotificationType.TRANSFER_SUCCESS.value -> {
+                deepLinkString = TransferSuccessHandler.TRANSFER_SUCCESS_DEEP_LINK
             }
         }
 
