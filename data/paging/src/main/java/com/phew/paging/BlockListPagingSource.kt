@@ -13,21 +13,21 @@ class BlockListPagingSource @Inject constructor(
 ) : PagingSource<Long, BlockMember>() {
 
     override suspend fun load(params: LoadParams<Long>): LoadResult<Long, BlockMember> {
-        val key = params.key ?: -1
+        val key = params.key
         return try {
-            when (val result = repository.getBlockListPaging(key)) {
-                is DataResult.Success -> {
-                    val users = result.data
-                    LoadResult.Page(
-                        data = users,
-                        prevKey = null,
-                        nextKey = if (users.isEmpty()) null else users.last().blockId
-                    )
-                }
-                is DataResult.Fail -> {
-                    LoadResult.Error(result.throwable ?: IOException("Paging Error"))
+            val users = if (key == null) {
+                repository.getBlockList().getOrThrow()
+            } else {
+                when (val result = repository.getBlockListPaging(key)) {
+                    is DataResult.Success -> result.data
+                    is DataResult.Fail -> throw result.throwable ?: IOException("Paging Error")
                 }
             }
+            LoadResult.Page(
+                data = users,
+                prevKey = null,
+                nextKey = users.lastOrNull()?.blockId
+            )
         } catch (e: Exception) {
             LoadResult.Error(e)
         }

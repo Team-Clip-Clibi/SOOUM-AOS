@@ -41,7 +41,8 @@ import com.phew.presentation.settings.viewmodel.TransferAccountEvent
 internal fun LoadPreviousAccountRoute(
     modifier: Modifier = Modifier,
     viewModel: LoadPreviousAccountViewModel = hiltViewModel(),
-    onBackPressed: () -> Unit
+    onBackPressed: () -> Unit,
+    onNavigateToFeed: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var transferCode by remember { mutableStateOf("") }
@@ -84,7 +85,7 @@ internal fun LoadPreviousAccountRoute(
             onClick = {
                 showSuccessDialog = false
                 viewModel.clearTransferEvent()
-                onBackPressed()
+                onNavigateToFeed()
             },
             onDismiss = {
                 showSuccessDialog = false

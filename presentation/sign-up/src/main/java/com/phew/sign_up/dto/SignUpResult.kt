@@ -12,8 +12,9 @@ data class SignUpResult (
         get() {
             return try {
                 val parsedTime = LocalDateTime.parse(time)
-                val outputFormatter = DateTimeFormatter.ofPattern("YYYY년 MM월 dd일")
-                outputFormatter.format(parsedTime)
+                val adjustedTime = parsedTime.plusDays(1)
+                val outputFormatter = DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
+                outputFormatter.format(adjustedTime)
             } catch (e: DateTimeParseException) {
                 time
             }

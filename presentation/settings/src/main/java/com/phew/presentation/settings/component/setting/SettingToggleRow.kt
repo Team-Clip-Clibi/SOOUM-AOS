@@ -6,17 +6,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.phew.core_design.NeutralColor
-import com.phew.core_design.Primary
 import com.phew.core_design.TextComponent
+import com.phew.core_design.component.control.SooumSwitch
 
 @Composable
 fun SettingToggleRow(
@@ -52,18 +49,10 @@ fun SettingToggleRow(
             }
         }
 
-        Switch(
-            modifier = Modifier
-                .height(32.dp)
-                .width(52.dp),
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = NeutralColor.WHITE,
-                checkedTrackColor = Primary.MAIN,
-                uncheckedThumbColor = NeutralColor.WHITE,
-                uncheckedTrackColor = NeutralColor.GRAY_300
-            )
+        SooumSwitch(
+            isSelected = checked,
+            isDisabled = false,
+            onClick = { onCheckedChange(!checked) }
         )
     }
 }

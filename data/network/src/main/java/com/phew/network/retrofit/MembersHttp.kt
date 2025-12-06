@@ -6,6 +6,7 @@ import com.phew.network.dto.TransferCodeDTO
 import com.phew.network.dto.request.account.TransferAccountRequestDTO
 import com.phew.network.dto.request.account.WithdrawalRequestDTO
 import com.phew.network.dto.response.RejoinableDateResponseDTO
+import com.phew.network.dto.request.NotifyToggleRequestDTO
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -34,4 +35,7 @@ interface MembersHttp {
     
     @GET(BuildConfig.API_URL_REJOINABLE_DATE)
     suspend fun getRejoinableDate(): Response<RejoinableDateResponseDTO>
+    
+    @PATCH(BuildConfig.API_URL_NOTIFY_TOGGLE)
+    suspend fun toggleNotification(@Body request: NotifyToggleRequestDTO): Response<Unit>
 }

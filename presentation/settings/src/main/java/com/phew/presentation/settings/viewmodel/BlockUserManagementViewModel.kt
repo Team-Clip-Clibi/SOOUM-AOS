@@ -67,7 +67,8 @@ class BlockUserManagementViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             showUnblockDialog = false,
-                            selectedBlockMember = null
+                            selectedBlockMember = null,
+                            removedBlockMemberIds = it.removedBlockMemberIds + blockMember.blockMemberId
                         )
                     }
                     _uiEffect.emit(BlockUserManagementUiEffect.ShowUnblockSuccess)
@@ -92,11 +93,19 @@ class BlockUserManagementViewModel @Inject constructor(
             }
         }
     }
+
+    fun onRefreshComplete() {
+        _uiState.update {
+            if (it.removedBlockMemberIds.isEmpty()) it
+            else it.copy(removedBlockMemberIds = emptySet())
+        }
+    }
 }
 
 data class BlockUserManagementUiState(
     val showUnblockDialog: Boolean = false,
-    val selectedBlockMember: BlockMember? = null
+    val selectedBlockMember: BlockMember? = null,
+    val removedBlockMemberIds: Set<Long> = emptySet()
 )
 
 sealed class BlockUserManagementUiEffect {
