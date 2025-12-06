@@ -83,7 +83,7 @@ fun NickNameView(viewModel: SignUpViewModel, onBack: () -> Unit, nextPage: () ->
                             nextPage()
                         }
                     },
-                    isEnable = (uiState.checkNickName is UiState.Success && (uiState.checkNickName as UiState.Success<Boolean>).data) && (uiState.nickName.trim().length in 3..<9)
+                    isEnable = (uiState.checkNickName is UiState.Success && (uiState.checkNickName as UiState.Success<Boolean>).data) && (uiState.nickName.trim().length in 2..<9)
                 )
             }
         },

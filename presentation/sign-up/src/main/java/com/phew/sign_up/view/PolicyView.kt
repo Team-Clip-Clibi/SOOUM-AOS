@@ -67,9 +67,6 @@ fun PolicyView(uri: String, viewModel: SignUpViewModel = hiltViewModel(), onBack
                     loadUrl(uri)
                 }
             },
-            update = {
-
-            }
         )
         if (uiState.loadPolicyView) {
             Column(modifier = Modifier.align(Alignment.Center)) {
