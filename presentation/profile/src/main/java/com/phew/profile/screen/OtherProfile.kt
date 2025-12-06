@@ -403,7 +403,7 @@ private fun ProfileView(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column {
-                Row {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = stringResource(R.string.profile_txt_visit_total),
                         style = TextComponent.CAPTION_2_M_12,
@@ -419,8 +419,7 @@ private fun ProfileView(
                     Image(
                         painter = painterResource(com.phew.core_design.R.drawable.ic_spot),
                         modifier = Modifier
-                            .size(3.dp)
-                            .padding(1.dp),
+                            .size(3.dp),
                         colorFilter = ColorFilter.tint(color = NeutralColor.GRAY_400),
                         contentDescription = stringResource(R.string.profile_txt_visit_total) + profile.totalVisitCnt.toString() + stringResource(
                             R.string.profile_txt_visit_today

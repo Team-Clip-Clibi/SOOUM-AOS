@@ -30,7 +30,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
@@ -59,6 +58,7 @@ import com.phew.core_design.component.card.CommentBodyContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.ui.Alignment
 import androidx.paging.compose.LazyPagingItems
 import com.phew.core_common.BOTTOM_NAVIGATION_HEIGHT
 import com.phew.core_design.CustomFont
@@ -220,7 +220,7 @@ private fun MyProfileView(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column {
-                Row {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = stringResource(R.string.profile_txt_visit_total),
                         style = TextComponent.CAPTION_2_M_12,
@@ -236,8 +236,7 @@ private fun MyProfileView(
                     Image(
                         painter = painterResource(com.phew.core_design.R.drawable.ic_spot),
                         modifier = Modifier
-                            .size(3.dp)
-                            .padding(1.dp),
+                            .size(3.dp),
                         colorFilter = ColorFilter.tint(color = NeutralColor.GRAY_400),
                         contentDescription = stringResource(R.string.profile_txt_visit_total) + profile.totalVisitCnt.toString() + stringResource(
                             R.string.profile_txt_visit_today
