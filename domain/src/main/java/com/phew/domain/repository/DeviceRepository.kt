@@ -33,11 +33,9 @@ interface DeviceRepository {
     suspend fun saveProfileInfo(
         profileKey: String,
         nickName: String,
-        profileImageUrl: String,
-        profileImageName: String,
     ): Boolean
 
     suspend fun getProfileInfo(
         profileKey: String,
-    ): Triple<String, String, String>?
+    ): String?
 }

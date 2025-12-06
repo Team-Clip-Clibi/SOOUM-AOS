@@ -2,7 +2,9 @@ package com.phew.domain.dto
 
 import java.time.Duration
 import java.time.Instant
+import java.time.LocalDateTime
 import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -25,8 +27,10 @@ data class FeedLikeNotification(
 
     private fun String.toRelativeTime(): String {
         val pastInstant: Instant = try {
-            Instant.parse(this)
+            val localDateTime = LocalDateTime.parse(this)
+            localDateTime.toInstant(ZoneOffset.UTC)
         } catch (e: Exception) {
+            e.printStackTrace()
             return "날짜 오류"
         }
         val nowInstant: Instant = Instant.now()
@@ -67,8 +71,10 @@ data class FollowNotification(
 
     private fun String.toRelativeTime(): String {
         val pastInstant: Instant = try {
-            Instant.parse(this)
+            val localDateTime = LocalDateTime.parse(this)
+            localDateTime.toInstant(ZoneOffset.UTC)
         } catch (e: Exception) {
+            e.printStackTrace()
             return "날짜 오류"
         }
         val nowInstant: Instant = Instant.now()
@@ -109,8 +115,10 @@ data class UserBlockNotification(
 
     private fun String.toBlockTime(): String {
         val pastInstant: Instant = try {
-            Instant.parse(this)
+            val localDateTime = LocalDateTime.parse(this)
+            localDateTime.toInstant(ZoneOffset.UTC)
         } catch (e: Exception) {
+            e.printStackTrace()
             return "날짜 오류"
         }
         val pastDateTime = pastInstant.atZone(ZoneId.systemDefault())
@@ -120,8 +128,10 @@ data class UserBlockNotification(
 
     private fun String.toRelativeTime(): String {
         val pastInstant: Instant = try {
-            Instant.parse(this)
+            val localDateTime = LocalDateTime.parse(this)
+            localDateTime.toInstant(ZoneOffset.UTC)
         } catch (e: Exception) {
+            e.printStackTrace()
             return "날짜 오류"
         }
         val nowInstant: Instant = Instant.now()
@@ -160,8 +170,10 @@ data class UserDeleteNotification(
 
     private fun String.toViewTime(): String {
         val pastInstant: Instant = try {
-            Instant.parse(this)
+            val localDateTime = LocalDateTime.parse(this)
+            localDateTime.toInstant(ZoneOffset.UTC)
         } catch (e: Exception) {
+            e.printStackTrace()
             return "날짜 오류"
         }
         val nowInstant: Instant = Instant.now()
@@ -203,8 +215,10 @@ data class UserCommentLike(
 
     private fun String.toRelativeTime(): String {
         val pastInstant: Instant = try {
-            Instant.parse(this)
+            val localDateTime = LocalDateTime.parse(this)
+            localDateTime.toInstant(ZoneOffset.UTC)
         } catch (e: Exception) {
+            e.printStackTrace()
             return "날짜 오류"
         }
         val nowInstant: Instant = Instant.now()
@@ -246,8 +260,10 @@ data class UserCommentWrite(
 
     private fun String.toRelativeTime(): String {
         val pastInstant: Instant = try {
-            Instant.parse(this)
+            val localDateTime = LocalDateTime.parse(this)
+            localDateTime.toInstant(ZoneOffset.UTC)
         } catch (e: Exception) {
+            e.printStackTrace()
             return "날짜 오류"
         }
         val nowInstant: Instant = Instant.now()

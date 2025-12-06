@@ -703,7 +703,8 @@ private fun CardDetailScreen(
                 onShowDeleteDialogChange(false)
             },
             rightButtonBaseColor = Danger.M_RED,
-            rightButtonClickColor = Danger.D_RED
+            rightButtonClickColor = Danger.D_RED,
+            startButtonTextColor = NeutralColor.GRAY_600,
         )
     }
 
@@ -721,7 +722,8 @@ private fun CardDetailScreen(
                 onShowBlockDialogChange(false)
                 onBlockMember(memberId, nickName)
             },
-            onDismiss = { onShowBlockDialogChange(false) }
+            onDismiss = { onShowBlockDialogChange(false) },
+            startButtonTextColor = NeutralColor.GRAY_600
         )
     }
 }

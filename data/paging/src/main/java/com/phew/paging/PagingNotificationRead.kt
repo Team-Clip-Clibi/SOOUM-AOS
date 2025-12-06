@@ -4,7 +4,6 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.phew.core_common.DataResult
 import com.phew.core_common.ERROR_NETWORK
-import com.phew.core_common.HTTP_INVALID_TOKEN
 import com.phew.domain.dto.Notification
 import com.phew.domain.repository.network.NotifyRepository
 import java.io.IOException
@@ -15,55 +14,41 @@ class PagingNotificationRead @Inject constructor(
 ) : PagingSource<Long, Notification>() {
 
     override fun getRefreshKey(state: PagingState<Long, Notification>): Long? {
-        return state.anchorPosition?.let { anchorPosition ->
-            state.closestPageToPosition(anchorPosition)?.prevKey
-                ?: state.closestPageToPosition(anchorPosition)?.nextKey
-        }
+        return null
     }
 
     override suspend fun load(params: LoadParams<Long>): LoadResult<Long, Notification> {
         val key = params.key ?: -1L
-
-        return try {
-            val result = if (key == -1L) {
-                notifyRepository.requestNotificationRead()
-            } else {
-                notifyRepository.requestNotificationReadPatch(lastId = key)
-            }
-
+        try {
+            val result =
+                if (key == -1L) notifyRepository.requestNotificationRead() else notifyRepository.requestNotificationReadPatch(
+                    lastId = key
+                )
             when (result) {
+                is DataResult.Fail -> return LoadResult.Error(IOException(ERROR_NETWORK))
                 is DataResult.Success -> {
-                    val uniqueList = result.data.second
-                        .distinctBy { it.notificationId }
-                    val notificationList = if(key != -1L){
-                        uniqueList.filter { data -> data.notificationId != key }
-                    }else{
-                        uniqueList
-                    }
-                    val lastItemId = notificationList.lastOrNull()?.notificationId
-
-                    val nextKey = if (notificationList.isEmpty() || lastItemId == key) {
-                        null
+                    val readData = result.data.second
+                    val currentKey = params.key ?: -1L
+                    val read = if (currentKey != -1L) {
+                        readData.filter { data -> data.notificationId < currentKey }
                     } else {
-                        notificationList.last().notificationId
+                        readData
                     }
-                    LoadResult.Page(
-                        data = notificationList.sortedBy { data ->data.notificationId },
+                    if (read.isEmpty()) return LoadResult.Page(
+                        data = emptyList(),
                         prevKey = null,
-                        nextKey = nextKey
+                        nextKey = null
                     )
-                }
-                is DataResult.Fail -> {
-                    val exception = if (result.code == HTTP_INVALID_TOKEN) {
-                        SecurityException("Invalid Token")
-                    } else {
-                        IOException(ERROR_NETWORK)
-                    }
-                    LoadResult.Error(exception)
+                    return LoadResult.Page(
+                        data = read,
+                        prevKey = null,
+                        nextKey = read.last().notificationId
+                    )
                 }
             }
         } catch (e: Exception) {
-            LoadResult.Error(e)
+            e.printStackTrace()
+            return LoadResult.Error(e)
         }
     }
 }

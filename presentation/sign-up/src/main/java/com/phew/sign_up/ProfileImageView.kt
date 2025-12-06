@@ -34,8 +34,8 @@ import androidx.compose.ui.unit.dp
 import com.phew.core.ui.component.camera.CameraPickerBottomSheet
 import com.phew.core.ui.component.camera.CameraPickerEffect
 import com.phew.core.ui.model.CameraPickerEffectState
-import com.phew.core_common.ERROR
 import com.phew.core_common.ERROR_NETWORK
+import com.phew.core_common.ERROR_UN_GOOD_IMAGE
 import com.phew.core_design.AppBar
 import com.phew.core_design.AvatarComponent
 import com.phew.core_design.DialogComponent
@@ -52,17 +52,22 @@ fun ProfileImageView(viewModel: SignUpViewModel, onBack: () -> Unit, nexPage: ()
     BackHandler {
         onBack()
     }
-    LaunchedEffect(uiState) {
-        when(val result = uiState.signUp){
-            is UiState.Fail ->{
-                when(result.errorMessage){
+    LaunchedEffect(uiState.signUp) {
+        when (val result = uiState.signUp) {
+            is UiState.Fail -> {
+                when (result.errorMessage) {
                     ERROR_NETWORK -> {
                         snackBarHostState.showSnackbar(
                             message = context.getString(com.phew.core_design.R.string.error_network),
                             duration = SnackbarDuration.Short
                         )
                     }
-                    ERROR -> {
+
+                    ERROR_UN_GOOD_IMAGE -> {
+                        viewModel.setImageDialog(true)
+                    }
+
+                    else -> {
                         snackBarHostState.showSnackbar(
                             message = context.getString(com.phew.core_design.R.string.error_app),
                             duration = SnackbarDuration.Short
@@ -70,9 +75,11 @@ fun ProfileImageView(viewModel: SignUpViewModel, onBack: () -> Unit, nexPage: ()
                     }
                 }
             }
-            is UiState.Success-> {
+
+            is UiState.Success -> {
                 nexPage()
             }
+
             else -> Unit
         }
     }
@@ -94,7 +101,7 @@ fun ProfileImageView(viewModel: SignUpViewModel, onBack: () -> Unit, nexPage: ()
         onAlbumPicked = viewModel::onAlbumImagePicked,
         onCameraPermissionRequestConsumed = viewModel::onProfileCameraPermissionRequestConsumed,
         onCameraPermissionResult = viewModel::onProfileCameraPermissionResult,
-        onCameraCaptureLaunched = viewModel::onProfileCameraCaptureLaunched,
+        onCameraCaptureLaunched = remember(viewModel) { { viewModel.onProfileCameraCaptureLaunched() } },
         onCameraCaptureResult = { success, uri ->
             viewModel.onProfileCameraCaptureResult(success, uri)
         },
@@ -151,7 +158,12 @@ fun ProfileImageView(viewModel: SignUpViewModel, onBack: () -> Unit, nexPage: ()
             TitleView()
             ContentView(
                 onClick = viewModel::updateProfileBottom,
-                url = uiState.profile
+                url = uiState.profile.last()
+            )
+        }
+        if (uiState.imageDialog) {
+            ShowDialog(
+                onDialogClick = remember(viewModel) { { viewModel.setImageDialog(false) } }
             )
         }
     }
@@ -160,8 +172,7 @@ fun ProfileImageView(viewModel: SignUpViewModel, onBack: () -> Unit, nexPage: ()
         visible = uiState.profileBottom,
         onActionSelected = viewModel::onProfilePickerAction,
         onDismiss = viewModel::updateProfileBottom,
-        albumTextRes = R.string.signUp_picture_bottom_item_album,
-        cameraTextRes = R.string.signUp_picture_bottom_item_camera
+        useDefaultText = uiState.profile.last() != Uri.EMPTY
     )
 }
 
@@ -200,4 +211,15 @@ private fun ContentView(onClick: () -> Unit, url: Uri) {
             url = url
         )
     }
+}
+
+@Composable
+private fun ShowDialog(onDialogClick: () -> Unit) {
+    DialogComponent.DefaultButtonOne(
+        title = stringResource(R.string.signUp_picture_dialog_image_title),
+        description = stringResource(R.string.signUp_picture_dialog_image_content),
+        buttonText = stringResource(com.phew.core_design.R.string.common_okay),
+        onClick = onDialogClick,
+        onDismiss = onDialogClick
+    )
 }

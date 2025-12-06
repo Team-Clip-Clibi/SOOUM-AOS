@@ -45,8 +45,6 @@ fun NavGraphBuilder.homeGraph(
         feedGraph(
             appState = appState,
             navController = navController,
-            finish = finish,
-            onBackPressed = onBackPressed,
             webView = webView
         )
 

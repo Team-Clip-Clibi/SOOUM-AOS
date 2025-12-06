@@ -8,7 +8,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.navOptions
@@ -95,7 +94,6 @@ fun SooumExitBackHandler(
             backPressState = BackPressState.Idle
         }
     }
-
     BackHandler {
         SooumLog.d(TAG, "BackHandler triggered - Current backPressState: $backPressState")
         if (backPressState is BackPressState.Idle) {
@@ -111,7 +109,6 @@ fun SooumExitBackHandler(
         } else if (backPressState is BackPressState.InitialTouch) {
             SooumLog.d(TAG, "State is InitialTouch - exiting app")
             onDismiss()
-
             context.findActivity().finish()
         } else {
             SooumLog.d(TAG, "Unexpected state: $backPressState")

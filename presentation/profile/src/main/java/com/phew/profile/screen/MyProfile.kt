@@ -60,7 +60,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.paging.compose.LazyPagingItems
-import androidx.paging.compose.itemKey
+import com.phew.core_common.BOTTOM_NAVIGATION_HEIGHT
 import com.phew.core_design.CustomFont
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.LoadingAnimation
@@ -274,7 +274,7 @@ private fun MyProfileView(
                         shape = RoundedCornerShape(100.dp)
                     )
                     .clip(shape = RoundedCornerShape(size = 100.dp)),
-                contentScale = ContentScale.FillBounds
+                contentScale = ContentScale.Crop
             )
         }
         // 카드 , 팔로워, 팔로잉 숫자
@@ -355,7 +355,9 @@ private fun ProfileCardView(
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
         modifier = modifier,
-        contentPadding = PaddingValues(bottom = paddingValues.calculateBottomPadding() + 63.dp)
+        horizontalArrangement = Arrangement.spacedBy(1.dp),
+        verticalArrangement = Arrangement.spacedBy(1.dp),
+        contentPadding = PaddingValues(bottom = paddingValues.calculateBottomPadding() + BOTTOM_NAVIGATION_HEIGHT.dp)
     ) {
         item(span = { GridItemSpan(maxLineSpan) }) {
             MyProfileView(

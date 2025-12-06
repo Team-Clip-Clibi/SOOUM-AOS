@@ -202,4 +202,13 @@ class NotifyRepositoryImpl @Inject constructor(private val notifyHttp: NotifyHtt
             )
         }
     }
+
+    override suspend fun requestReadNotify(notifyId: Long): Int{
+        try{
+            return notifyHttp.requestReadActivateNotify(id = notifyId).code()
+        }catch (e: Exception){
+            e.printStackTrace()
+            return APP_ERROR_CODE
+        }
+    }
 }

@@ -318,6 +318,7 @@ class WriteViewModel @Inject constructor(
                     )
                 }
             }
+            else -> Unit
         }
     }
 

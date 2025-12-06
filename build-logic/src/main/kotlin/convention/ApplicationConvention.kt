@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
 class ApplicationConvention : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
         val libs = extensions.getByType<VersionCatalogsExtension>().named("libs")
-
         pluginManager.apply("com.android.application")
         pluginManager.apply("org.jetbrains.kotlin.android")
         pluginManager.apply("com.google.dagger.hilt.android")
@@ -20,6 +19,7 @@ class ApplicationConvention : Plugin<Project> {
         pluginManager.apply("com.google.devtools.ksp")
         pluginManager.apply("com.google.gms.google-services")
         pluginManager.apply("sooum.android.lint.convention")
+        pluginManager.apply("com.google.firebase.crashlytics")
         extensions.getByType<ApplicationExtension>().apply {
             namespace = "com.phew.sooum"
             compileSdk = 36
@@ -114,6 +114,7 @@ class ApplicationConvention : Plugin<Project> {
             "implementation"(libs.findLibrary("compose-nav").get())
             //firebase
             "implementation"(libs.findLibrary("firebase-bom").get())
+            "implementation"(libs.findLibrary("firebase-crashlytics").get())
             //module
             add("implementation", project(":presentation"))
             add("implementation", project(":presentation:splash"))

@@ -18,11 +18,13 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.phew.core.ui.state.SooumAppState
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.phew.core.ui.compose.ComposableType
 import com.phew.core.ui.compose.ComposableVisibleState
 import com.phew.core.ui.compose.LifecycleAwareComposableRegister
 import com.phew.core.ui.util.extension.isHomeLevelTab
+import com.phew.core_common.log.SooumLog
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
 import com.phew.core_design.component.bottomappbar.SooumNavigationBar
@@ -95,6 +97,10 @@ fun SooumBottomBar(
                                     navController.navigate(tab.graph) {
                                         popUpTo(HomeTabType.FEED.route)
                                         launchSingleTop = true
+                                    }
+                                    scope.launch {
+                                        delay(150)
+                                        appState.scrollFeedToTop()
                                     }
                                 }
                             }

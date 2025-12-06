@@ -28,3 +28,5 @@ const val HTTP_SUCCESS = 200
 //banner category
 const val BANNER_NEWS = "news"
 const val BANNER_SERVICE = "service"
+//bottom navigation height
+const val BOTTOM_NAVIGATION_HEIGHT = 63

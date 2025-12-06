@@ -629,7 +629,8 @@ private fun BottomSheetView(
                 showDeleteDialog = false
             },
             rightButtonBaseColor = Danger.M_RED,
-            rightButtonClickColor = Danger.D_RED
+            rightButtonClickColor = Danger.D_RED,
+            startButtonTextColor = NeutralColor.GRAY_600
         )
     }
 
@@ -647,7 +648,8 @@ private fun BottomSheetView(
                 showBlockDialog = false
                 onBlockMember()
             },
-            onDismiss = { showBlockDialog = false }
+            onDismiss = { showBlockDialog = false },
+            startButtonTextColor = NeutralColor.GRAY_600
         )
     }
 }

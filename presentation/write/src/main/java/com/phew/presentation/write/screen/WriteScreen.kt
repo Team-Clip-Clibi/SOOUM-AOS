@@ -564,7 +564,8 @@ private fun WriteScreen(
                 onRequestLocationPermission()
                 onDismissLocationDialog()
             },
-            onDismiss = onDismissLocationDialog
+            onDismiss = onDismissLocationDialog,
+            startButtonTextColor = NeutralColor.GRAY_600
         )
     }
 
@@ -580,7 +581,8 @@ private fun WriteScreen(
                 settingsLauncher.launch(appSettingsIntent(context))
                 onDismissCameraDialog()
             },
-            onDismiss = onDismissCameraDialog
+            onDismiss = onDismissCameraDialog,
+            startButtonTextColor = NeutralColor.GRAY_600
         )
     }
 
@@ -596,7 +598,8 @@ private fun WriteScreen(
                 settingsLauncher.launch(appSettingsIntent(context))
                 onDismissGalleryDialog()
             },
-            onDismiss = onDismissGalleryDialog
+            onDismiss = onDismissGalleryDialog,
+            startButtonTextColor = NeutralColor.GRAY_600
         )
     }
 
@@ -639,7 +642,9 @@ private fun BackgroundSelect(
     onImageSelected: (String) -> Unit,
     onCameraClick: () -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxWidth().padding(top = 24.dp)) {
+    Column(modifier = Modifier
+        .fillMaxWidth()
+        .padding(top = 24.dp)) {
         Text(
             text = stringResource(com.phew.presentation.write.R.string.write_screen_background_section),
             style = TextComponent.CAPTION_1_SB_12.copy(color = Primary.DARK),

@@ -46,6 +46,7 @@ fun RefreshBox(
     onRefresh : () -> Unit,
     state : PullToRefreshState,
     paddingValues: PaddingValues,
+    indicatorTopPadding: Dp = 0.dp,
     content : @Composable (() -> Unit)
 ){
     val composition by rememberLottieComposition(
@@ -66,8 +67,8 @@ fun RefreshBox(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(100.dp)
-                    .padding(top = paddingValues.calculateTopPadding()),
+                    .padding(top = paddingValues.calculateTopPadding() + indicatorTopPadding)
+                    .height(100.dp),
                 contentAlignment = Alignment.Center
             ) {
                 val progress = if (isRefresh) refreshProgress else state.distanceFraction
@@ -75,7 +76,7 @@ fun RefreshBox(
                     LottieAnimation(
                         composition = composition,
                         progress = { progress },
-                        modifier = Modifier.size(80.dp)
+                        modifier = Modifier.size(44.dp)
                     )
                 }
             }

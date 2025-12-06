@@ -5,6 +5,8 @@ import com.phew.network.dto.NoticeDto
 import com.phew.network.dto.NotificationDTO
 import retrofit2.Response
 import retrofit2.http.GET
+import retrofit2.http.PATCH
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface NotifyHttp {
@@ -43,4 +45,12 @@ interface NotifyHttp {
     suspend fun requestNotificationReadPatch(
         @Query("lastId") lastId: Long
     ): Response<List<NotificationDTO>>
+
+    /**
+     * 활동 알람 처리
+     */
+    @PATCH(BuildConfig.API_URL_READ_ACTIVATE)
+    suspend fun requestReadActivateNotify(
+        @Path("id") id: Long
+    ): Response<Unit>
 }
