@@ -1,5 +1,5 @@
 package com.phew.domain.model
 
-data class NotifyToggle(
+data class NotifyToggleRequest(
     val isAllowNotify: Boolean
 )

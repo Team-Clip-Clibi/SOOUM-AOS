@@ -11,6 +11,8 @@ import com.phew.domain.usecase.GetActivityRestrictionDate
 import com.phew.domain.usecase.GetRefreshToken
 import com.phew.domain.usecase.GetRejoinableDate
 import com.phew.domain.usecase.ToggleNotification
+import com.phew.domain.repository.DeviceRepository
+import com.phew.domain.BuildConfig
 import com.phew.presentation.settings.model.setting.SettingNavigationEvent
 import com.phew.presentation.settings.model.setting.SettingItem
 import com.phew.presentation.settings.model.setting.SettingItemId
@@ -34,7 +36,8 @@ class SettingViewModel @Inject constructor(
     private val checkAppVersionNew: CheckAppVersionNew,
     private val getRejoinableDate: GetRejoinableDate,
     private val getRefreshToken: GetRefreshToken,
-    private val toggleNotification: ToggleNotification
+    private val toggleNotification: ToggleNotification,
+    private val deviceRepository: DeviceRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -54,6 +57,7 @@ class SettingViewModel @Inject constructor(
         loadActivityRestrictionDate()
         checkAppVersion()
         loadRejoinableDate()
+        loadNotificationState()
     }
 
     private fun createSettingItems(): List<SettingItem> {
@@ -105,12 +109,12 @@ class SettingViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             
-            when (val result = toggleNotification()) {
+            when (val result = toggleNotification(enabled)) {
                 is DataResult.Success -> {
                     _uiState.update { 
                         it.copy(
                             isLoading = false,
-                            notificationEnabled = result.data.isAllowNotify
+                            notificationEnabled = enabled
                         ) 
                     }
                 }
@@ -262,6 +266,17 @@ class SettingViewModel @Inject constructor(
                 _uiState.update { it.copy(rejoinableDate = rejoinableDate) }
             }.onFailure {
                 // 실패시 처리 (필요시)
+            }
+        }
+    }
+    
+    private fun loadNotificationState() {
+        viewModelScope.launch {
+            val userInfo = deviceRepository.getUserInfo(BuildConfig.USER_INFO_KEY)
+            userInfo?.let {
+                _uiState.update { currentState ->
+                    currentState.copy(notificationEnabled = it.isNotifyAgree)
+                }
             }
         }
     }
