@@ -332,14 +332,16 @@ private fun ProfileContentView(
                         ) { index ->
                             val item = cardData[index]
                             if (item != null) {
-                                CommentBodyContent(
-                                    contentText = item.cardContent,
-                                    imgUrl = item.cardImgUrl,
-                                    fontFamily = CustomFont.findFontValueByServerName(item.font).data.previewTypeface,
-                                    textMaxLines = 4,
-                                    cardId = item.cardId,
-                                    onClick = onClickCard
-                                )
+                                Box(modifier = Modifier.padding(bottom = 1.dp)) {
+                                    CommentBodyContent(
+                                        contentText = item.cardContent,
+                                        imgUrl = item.cardImgUrl,
+                                        fontFamily = CustomFont.findFontValueByServerName(item.font).data.previewTypeface,
+                                        textMaxLines = 4,
+                                        cardId = item.cardId,
+                                        onClick = onClickCard
+                                    )
+                                }
                             }
                         }
                     }

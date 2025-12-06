@@ -355,7 +355,7 @@ private fun ProfileCardView(
         columns = GridCells.Fixed(3),
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(1.dp),
-        verticalArrangement = Arrangement.spacedBy(1.dp),
+        verticalArrangement = Arrangement.spacedBy(0.dp),
         contentPadding = PaddingValues(bottom = paddingValues.calculateBottomPadding() + BOTTOM_NAVIGATION_HEIGHT.dp)
     ) {
         item(span = { GridItemSpan(maxLineSpan) }) {
@@ -434,14 +434,16 @@ private fun ProfileCardView(
                         ) { index ->
                             val item = cardData[index]
                             if (item != null) {
-                                CommentBodyContent(
-                                    contentText = item.cardContent,
-                                    imgUrl = item.cardImgUrl,
-                                    fontFamily = CustomFont.findFontValueByServerName(item.font).data.previewTypeface,
-                                    textMaxLines = 4,
-                                    cardId = item.cardId,
-                                    onClick = onClickCard
-                                )
+                                Box(modifier = Modifier.padding(bottom = 1.dp)) {
+                                    CommentBodyContent(
+                                        contentText = item.cardContent,
+                                        imgUrl = item.cardImgUrl,
+                                        fontFamily = CustomFont.findFontValueByServerName(item.font).data.previewTypeface,
+                                        textMaxLines = 4,
+                                        cardId = item.cardId,
+                                        onClick = onClickCard
+                                    )
+                                }
                             }
                         }
                     }
