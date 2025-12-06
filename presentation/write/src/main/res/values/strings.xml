@@ -6,4 +6,7 @@
     <string name="write_screen_background_section">배경</string>
     <string name="write_screen_font_section">글씨체</string>
     <string name="write_card_content_default_placeholder">숨에서 편하게 이야기 나눠요</string>
+    <string name="write_screen_dialog_restrict_title">이용 제한 안내</string>
+    <string name="write_screen_dialog_restrict_message">신고된 카드로 인해 1일간 카드 추가가 제한됩니다. 카드 추가는 %1$s부터 가능합니다.</string>
+    <string name="write_screen_dialog_delete_title">삭제된 카드예요</string>
 </resources>
