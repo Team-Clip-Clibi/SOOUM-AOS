@@ -1,4 +1,4 @@
-package com.phew.sign_up
+package com.phew.sign_up.view
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -43,6 +43,9 @@ import com.phew.domain.SIGN_UP_BANNED
 import com.phew.domain.SIGN_UP_OKAY
 import com.phew.domain.SIGN_UP_REGISTERED
 import com.phew.domain.SIGN_UP_WITHDRAWN
+import com.phew.sign_up.R
+import com.phew.sign_up.SignUpViewModel
+import com.phew.sign_up.UiState
 import com.phew.sign_up.dto.SignUpResult
 
 @Composable

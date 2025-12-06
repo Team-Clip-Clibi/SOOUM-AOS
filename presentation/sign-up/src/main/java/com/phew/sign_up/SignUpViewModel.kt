@@ -423,6 +423,10 @@ class SignUpViewModel @Inject constructor(
         }
     }
 
+    fun loadPolicyView(isStart: Boolean) {
+        _uiState.update { state -> state.copy(loadPolicyView = isStart) }
+    }
+
 }
 
 data class SignUp(
@@ -443,7 +447,8 @@ data class SignUp(
     val login: UiState<Unit> = UiState.Loading,
     val restoreAccountResult: UiState<Unit> = UiState.Loading,
     val signUp: UiState<Unit> = UiState.Loading,
-    val imageDialog : Boolean = false
+    val imageDialog : Boolean = false,
+    val loadPolicyView : Boolean = false
 )
 
 sealed interface UiState<out T> {

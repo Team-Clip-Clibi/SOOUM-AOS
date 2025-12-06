@@ -1,4 +1,4 @@
-package com.phew.sign_up
+package com.phew.sign_up.view
 
 import android.Manifest
 import android.net.Uri
@@ -42,6 +42,10 @@ import com.phew.core_design.DialogComponent
 import com.phew.core_design.LargeButton
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
+import com.phew.sign_up.Component
+import com.phew.sign_up.R
+import com.phew.sign_up.SignUpViewModel
+import com.phew.sign_up.UiState
 
 
 @Composable

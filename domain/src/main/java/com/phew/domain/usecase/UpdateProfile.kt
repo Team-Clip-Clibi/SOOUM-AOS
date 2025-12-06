@@ -3,6 +3,8 @@ package com.phew.domain.usecase
 import android.content.ContentResolver
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.media.ExifInterface
 import android.net.Uri
 import androidx.core.net.toUri
 import com.phew.core_common.DataResult
@@ -71,9 +73,7 @@ class UpdateProfile @Inject constructor(
                 )
                 if (requestUploadImage is DataResult.Fail) {
                     return when (requestUploadImage.code) {
-                        HTTP_INVALID_TOKEN -> DomainResult.Failure(ERROR_LOGOUT)
                         HTTP_NOT_FOUND -> DomainResult.Failure(ERROR_NETWORK)
-                        HTTP_UN_GOOD_IMAGE -> DomainResult.Failure(ERROR_UN_GOOD_IMAGE)
                         else -> DomainResult.Failure(ERROR_FAIL_JOB)
                     }
                 }
@@ -92,6 +92,7 @@ class UpdateProfile @Inject constructor(
                 when (request.code) {
                     HTTP_INVALID_TOKEN -> DomainResult.Failure(ERROR_LOGOUT)
                     HTTP_NOT_FOUND -> DomainResult.Failure(ERROR_NETWORK)
+                    HTTP_UN_GOOD_IMAGE -> DomainResult.Failure(ERROR_UN_GOOD_IMAGE)
                     else -> DomainResult.Failure(ERROR_FAIL_JOB)
                 }
             }
@@ -103,15 +104,33 @@ class UpdateProfile @Inject constructor(
     private fun ContentResolver.readAsCompressedJpegRequestBody(
         uri: Uri,
     ): RequestBody {
-        val inputStream =
-            openInputStream(uri) ?: throw IOException("Failed to open InputStream for URI : $uri")
+        // 1. EXIF 정보를 읽기 위해 스트림을 엽니다.
+        val inputForExif = openInputStream(uri)
+        val orientation = inputForExif?.use {
+            val exif = ExifInterface(it)
+            exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+        } ?: ExifInterface.ORIENTATION_NORMAL
+        val inputStream = openInputStream(uri)
+            ?: throw IOException("Failed to open InputStream for URI : $uri")
         inputStream.use { stream ->
             val bitmap = BitmapFactory.decodeStream(stream)
                 ?: throw IOException("Fail to decode bitmap from URI :$uri")
+            val rotatedBitmap = rotateBitmap(bitmap, orientation)
             val byteArrayOutputStream = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 50, byteArrayOutputStream)
+            rotatedBitmap.compress(Bitmap.CompressFormat.JPEG, 50, byteArrayOutputStream)
             val byteArray = byteArrayOutputStream.toByteArray()
             return byteArray.toRequestBody("image/jpeg".toMediaTypeOrNull())
         }
+    }
+
+    private fun rotateBitmap(bitmap: Bitmap, orientation: Int): Bitmap {
+        val matrix = Matrix()
+        when (orientation) {
+            ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
+            ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
+            ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
+            else -> return bitmap // 회전이 필요 없으면 원본 반환
+        }
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
     }
 }
