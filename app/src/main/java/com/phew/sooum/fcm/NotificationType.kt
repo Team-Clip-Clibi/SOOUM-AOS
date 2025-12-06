@@ -5,7 +5,8 @@ enum class NotificationType(val value: String) {
     COMMENT_LIKE("COMMENT_LIKE"),
     COMMENT_WRITE("COMMENT_WRITE"),
     FOLLOW("FOLLOW"),
-    TAG_USAGE("TAG_USAGE");
+    TAG_USAGE("TAG_USAGE"),
+    TRANSFER_SUCCESS("TRANSFER_SUCCESS");
 
     companion object {
         fun fromString(value: String?): NotificationType? {
