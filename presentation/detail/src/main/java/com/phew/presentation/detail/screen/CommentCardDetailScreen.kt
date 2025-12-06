@@ -79,6 +79,7 @@ import com.phew.presentation.detail.model.MoreAction
 import com.phew.presentation.detail.viewmodel.CardDetailError
 import com.phew.presentation.detail.viewmodel.CardDetailViewModel
 import com.phew.core_design.CustomFont
+import com.phew.presentation.detail.component.CardDetailTopBar
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -104,7 +105,8 @@ internal fun CommentCardDetailScreen(
     onNavigateToViewTags: (com.phew.core.ui.model.navigation.TagViewArgs) -> Unit,
     onBackPressed: (Long) -> Unit,
     onFeedPressed: () -> Unit,
-    onProfileClick: (Long) -> Unit,
+    onTagPressed: () -> Unit,
+    onProfileClick: (Long) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val comments: LazyPagingItems<CardComment> = viewModel.commentsPagingData
@@ -180,17 +182,24 @@ internal fun CommentCardDetailScreen(
     var showBottomSheet by remember { mutableStateOf(false) }
     val isDelete = uiState.deleteSuccess || isTimerExpired
     val snackBarHostState = remember { SnackbarHostState() }
-    val onBackPressedLambda = remember(args.parentId) { { onBackPressed(args.parentId) } }
+    val onBackPressedLambda = remember(cardDetail.previousCardId) { {
+        val parentId = cardDetail.previousCardId?.toLongOrNull() ?: 0L
+        SooumLog.d(TAG, "parentId : $parentId")
+        onBackPressed(parentId)
+    } }
     val showBottomSheetLambda = remember { { showBottomSheet = true } }
     val onExpireLambda = remember { { isTimerExpired = true } }
     val onClickLikeLambda = remember(args.cardId) { { viewModel.toggleLike(args.cardId) } }
-    val onClickPreviousCard = remember { { onBackPressed(args.parentId) } }
+    val onClickPreviousCard = remember(cardDetail.previousCardId) { {
+        val parentId = cardDetail.previousCardId?.toLongOrNull() ?: 0L
+        onBackPressed(parentId)
+    } }
     val onCommentClickLambda: (Long) -> Unit = remember(args.cardId) {
         { childId ->
             onNavigateToComment(
                 CardDetailCommentArgs(
-                    parentId = args.cardId,
-                    cardId = childId
+                    cardId = childId,
+                    parentId = cardDetail.cardId
                 )
             )
         }
@@ -246,16 +255,28 @@ internal fun CommentCardDetailScreen(
     }
     val refreshState = rememberPullToRefreshState()
     val density = LocalDensity.current
+    val showDetailTopBar = cardDetail.previousCardId.isNullOrEmpty()
     Scaffold(
         topBar = {
-            TopLayout(
-                storyRemainingMillis = cardDetail.endTime,
-                onFeedPressed = onFeedPressed,
-                onBackPressed = onBackPressedLambda,
-                showBottomSheet = showBottomSheetLambda,
-                onExpire = onExpireLambda,
-                memberId = cardDetail.memberId
-            )
+            if (showDetailTopBar) {
+                CardDetailTopBar(
+                    remainingTimeMillis = cardDetail.endTime,
+                    onBackPressed = onBackPressedLambda,
+                    onMoreClick = showBottomSheetLambda
+                )
+            } else {
+                TopLayout(
+                    storyRemainingMillis = cardDetail.endTime,
+                    onFeedPressed = when (args.backTo) {
+                        "tag" -> onTagPressed
+                        else -> onFeedPressed
+                    },
+                    onBackPressed = onBackPressedLambda,
+                    showBottomSheet = showBottomSheetLambda,
+                    onExpire = onExpireLambda,
+                    memberId = cardDetail.memberId
+                )
+            }
         },
         snackbarHost = {
             DialogComponent.CustomAnimationSnackBarHost(hostState = snackBarHostState)

@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -46,6 +47,7 @@ internal fun SettingItemRow(
             )
             
             item.subtitle?.let { subtitle ->
+                Spacer(Modifier.height(2.dp))
                 Text(
                     text = subtitle,
                     style = TextComponent.CAPTION_3_M_10,

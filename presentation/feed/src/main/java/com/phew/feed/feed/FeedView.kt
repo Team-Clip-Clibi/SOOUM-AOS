@@ -18,7 +18,8 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
@@ -31,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -75,17 +77,20 @@ import com.phew.feed.viewModel.FeedViewModel
 import com.phew.feed.viewModel.NavigationEvent
 import com.phew.feed.viewModel.UiState
 import com.phew.presentation.feed.R
+import com.phew.core.ui.state.SooumAppState
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
+import kotlin.text.append
 import com.phew.core.ui.R as CoreUiR
 
 
 @OptIn(FlowPreview::class, ExperimentalMaterial3Api::class)
 @Composable
 fun FeedView(
+    appState: SooumAppState,
     viewModel: FeedViewModel,
     navController: NavHostController,
-    finish: () -> Unit,
     requestPermission: () -> Unit,
     closeDialog: () -> Unit,
     noticeClick: () -> Unit,
@@ -96,7 +101,8 @@ fun FeedView(
     val unRead = viewModel.unReadActivateAlarm.collectAsLazyPagingItems()
     val feedNoticeState = uiState.feedNotification
     val latestFeedItems = viewModel.latestFeedPaging.collectAsLazyPagingItems()
-    val lazyListState = rememberLazyListState()
+    val lazyGridState = rememberLazyGridState()
+    val coroutineScope = rememberCoroutineScope()
     var hasScrolledToTop by rememberSaveable { mutableStateOf(false) }
     var previousHomeTab by rememberSaveable { mutableStateOf<HomeTabType?>(null) }
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -105,9 +111,7 @@ fun FeedView(
     }
     val currentPagingState = uiState.currentPagingState
     val pagingStateForEffect by rememberUpdatedState(currentPagingState)
-    BackHandler {
-        finish()
-    }
+
     // Navigation event handling
     LaunchedEffect(viewModel) {
         viewModel.navigationEvent.collect { event ->
@@ -142,21 +146,36 @@ fun FeedView(
             previousHomeTab = currentHomeTab
         }
     }
-    LaunchedEffect(hasScrolledToTop) {
-        if (!hasScrolledToTop && !lazyListState.isScrollInProgress) {
-            lazyListState.animateScrollToItem(0)
-            hasScrolledToTop = true
+
+    // 스크롤 관리: 탭 이동 시 초기화 & feedScrollToTopEvent 처리
+    LaunchedEffect(Unit) {
+        // feedScrollToTopEvent 처리
+        launch {
+            appState.feedScrollToTopEvent.collect {
+                lazyGridState.animateScrollToItem(0)
+            }
+        }
+
+        // 탭 이동 시 스크롤 초기화 처리
+        launch {
+            snapshotFlow { hasScrolledToTop }
+                .collect { scrolledToTop ->
+                    if (!scrolledToTop) {
+                        lazyGridState.animateScrollToItem(0)
+                        hasScrolledToTop = true
+                    }
+                }
         }
     }
-    LaunchedEffect(lazyListState, uiState.currentTab) {
+    LaunchedEffect(lazyGridState, uiState.currentTab) {
         if (uiState.currentTab != FeedType.Latest) {
-            snapshotFlow { lazyListState.layoutInfo.visibleItemsInfo }
+            snapshotFlow { lazyGridState.layoutInfo.visibleItemsInfo }
                 .debounce(100)
                 .collect { visibleItems ->
                     val lastVisibleIndex = visibleItems.lastOrNull()?.index ?: 0
-                    val totalItems = lazyListState.layoutInfo.totalItemsCount
+                    val totalItems = lazyGridState.layoutInfo.totalItemsCount
 
-                    val state = pagingStateForEffect
+                    val state = currentPagingState
                     if (lastVisibleIndex >= totalItems - 5 &&
                         state is FeedPagingState.Success &&
                         state.hasNextPage &&
@@ -202,6 +221,7 @@ fun FeedView(
                     modifier = Modifier
                         .fillMaxSize()
                         .graphicsLayer { clip = false },
+                    lazyGridState = lazyGridState,
                     recentClick = {
                         viewModel.switchTab(FeedType.Latest)
                     },
@@ -275,7 +295,9 @@ private fun TopView(
 
 @Composable
 private fun FeedContentView(
-    modifier: Modifier, recentClick: () -> Unit,
+    modifier: Modifier,
+    lazyGridState: LazyGridState,
+    recentClick: () -> Unit,
     popularClick: () -> Unit,
     nearClick: () -> Unit,
     distanceClick: (DistanceType) -> Unit,
@@ -297,6 +319,7 @@ private fun FeedContentView(
     }
     LazyVerticalGrid(
         columns = GridCells.Fixed(1),
+        state = lazyGridState,
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
@@ -586,4 +609,5 @@ private fun classifyLatestFeedType(item: Latest): FeedCardType {
             likeValue = item.likeCount.toString()
         )
     }
+
 }

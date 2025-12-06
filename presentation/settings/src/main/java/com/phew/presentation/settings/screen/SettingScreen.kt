@@ -298,7 +298,6 @@ private fun SettingScreen(
                     subtitle = getLocalizedSubtitle(item.id),
                     endText = getEndText(item.id)
                 )
-                HorizontalDivider(thickness = 1.dp, color = NeutralColor.GRAY_100)
                 SettingItemRow(
                     item = localizedItem,
                     onClick = onLoadPreviousAccountClick
@@ -356,7 +355,6 @@ private fun SettingScreen(
                     subtitle = getLocalizedSubtitle(item.id),
                     endText = getEndText(item.id)
                 )
-                HorizontalDivider(thickness = 1.dp, color = NeutralColor.GRAY_100)
                 SettingItemRow(
                     item = localizedItem,
                     onClick = onInquiryClick

@@ -103,6 +103,7 @@ import com.phew.core_design.theme.GRAY_400
 import com.phew.domain.dto.CardComment
 import com.phew.presentation.detail.component.CardDetailBottom
 import com.phew.presentation.detail.component.CardDetailHeader
+import com.phew.presentation.detail.component.CardDetailTopBar
 import com.phew.presentation.detail.model.MoreAction
 import com.phew.presentation.detail.viewmodel.CardDetailError
 import com.phew.presentation.detail.viewmodel.CardDetailViewModel
@@ -434,38 +435,11 @@ private fun CardDetailScreen(
     Scaffold(
         modifier = modifier,
         topBar = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(NeutralColor.WHITE),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                TextButtonAppBar(
-                    startImage = R.drawable.ic_left,
-                    endImage = R.drawable.ic_more_stroke_circle,
-                    appBarText = stringResource(DetailR.string.card_title_comment),
-                    startClick = onBackPressed,
-                    endClick = { onShowBottomSheetChange(true) }
-                )
-                if (remainingTimeMillis.toString().trim() != "0") {
-                    Box(
-                        modifier = Modifier
-                            .width(53.dp)
-                            .height(23.dp)
-                            .background(NeutralColor.WHITE)
-                            .border(1.dp, NeutralColor.GRAY_200, RoundedCornerShape(100.dp)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = TimeUtils.formatMillisToTimer(remainingTimeMillis),
-                            color = Primary.DARK,
-                            style = TextComponent.CAPTION_3_M_10,
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                }
-            }
+            CardDetailTopBar(
+                remainingTimeMillis = remainingTimeMillis,
+                onBackPressed = onBackPressed,
+                onMoreClick = { onShowBottomSheetChange(true) }
+            )
         },
         snackbarHost = {
             DialogComponent.CustomAnimationSnackBarHost(hostState = snackBarHostState)

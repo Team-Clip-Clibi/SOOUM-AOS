@@ -92,7 +92,7 @@ object TagDesignTokens {
     val ColorfulIconTint = Primary.MAIN
 
     // 아이콘 색상
-    val IconTint = NeutralColor.GRAY_400
+    val IconTint = NeutralColor.GRAY_300
 
     // 사이즈
     val TagRadius = 8.dp
@@ -295,8 +295,11 @@ internal fun TagRow(
                 onInputFocusChanged = { focused ->
                     if (!focused) {
                         if (!awaitingFocus) {
-                            input = ""
-                            state = TagState.AddNew
+                            state = if (input.isBlank()) {
+                                TagState.AddNew
+                            } else {
+                                TagState.Input
+                            }
                         }
                     } else {
                         awaitingFocus = false

@@ -121,7 +121,7 @@ class WriteViewModel @Inject constructor(
     /**
      * 완료 이벤트
      */
-    private val _writeCompleteEvent = MutableSharedFlow<Unit>()
+    private val _writeCompleteEvent = MutableSharedFlow<Long>()
     val writeCompleteEvent = _writeCompleteEvent.asSharedFlow()
 
     private suspend fun getLocationSafely(): Location {
@@ -130,13 +130,6 @@ class WriteViewModel @Inject constructor(
         } catch (e: Exception) {
             // 위치 정보 가져오기 실패 시 빈 위치 반환
             Location.EMPTY
-        }
-    }
-
-    private fun getLocation() {
-        viewModelScope.launch {
-            val location = getLocationSafely()
-            // TODO: Update state with location if needed
         }
     }
 
@@ -234,6 +227,21 @@ class WriteViewModel @Inject constructor(
 
     fun onTagInputFocusHandled() {
         _uiState.update { it.copy(focusTagInput = false) }
+    }
+
+    fun completeTagInput() {
+        _uiState.update {
+            it.copy(tagInputCompleteSignal = it.tagInputCompleteSignal + 1)
+        }
+    }
+
+    fun resetTagInput() {
+        _uiState.update {
+            it.copy(
+                currentTagInput = "",
+                tagInputCompleteSignal = it.tagInputCompleteSignal + 1
+            )
+        }
     }
 
     fun addTag(tag: String) {
@@ -422,8 +430,7 @@ class WriteViewModel @Inject constructor(
     fun hideRelatedTags() {
         _uiState.update {
             it.copy(
-                relatedTags = emptyList(),
-                currentTagInput = ""
+                relatedTags = emptyList()
             )
         }
     }
@@ -444,7 +451,7 @@ class WriteViewModel @Inject constructor(
                     "onWriteComplete state: selectedDefaultImageName=${state.selectedDefaultImageName}, activeBackgroundUri=${state.activeBackgroundUri}"
                 )
 
-                val result = try {
+                val result: DomainResult<Long, String> = try {
                     if (state.parentCardId != null) {
                         // 댓글 작성 (PostCardReply 사용)
                         val (imgType, imgName) = when {
@@ -519,7 +526,8 @@ class WriteViewModel @Inject constructor(
                                 isWriteInProgress = false
                             )
                         }
-                        _writeCompleteEvent.emit(Unit)
+                        SooumLog.d(TAG, "onWriteComplete success: ${result.data}")
+                        _writeCompleteEvent.emit(result.data)
                     }
 
                     is DomainResult.Failure -> {

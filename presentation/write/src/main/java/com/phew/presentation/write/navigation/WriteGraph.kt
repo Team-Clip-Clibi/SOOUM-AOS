@@ -6,6 +6,7 @@ import androidx.navigation.NavOptions
 import androidx.navigation.navigation
 import androidx.navigation.navArgument
 import com.phew.core.ui.component.home.HomeTabType
+import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.model.navigation.WriteArgs
 import com.phew.core.ui.navigation.NavArgKey
 import com.phew.core.ui.navigation.asNavArg
@@ -45,7 +46,7 @@ fun NavGraphBuilder.writeGraph(
     appState: SooumAppState,
     navController: NavHostController,
     onBackPressed: () -> Unit,
-    onWriteComplete: () -> Unit,
+    onWriteComplete: (CardDetailArgs) -> Unit,
     onDetailWriteComplete: () -> Unit = {},
     onHome : () -> Unit = {}
 ) {
@@ -83,7 +84,7 @@ fun NavGraphBuilder.writeGraph(
                     if (args?.parentCardId != null) {
                         onDetailWriteComplete()
                     } else {
-                        onWriteComplete()
+                        onWriteComplete(it)
                     }
                 },
                 onHome = onHome

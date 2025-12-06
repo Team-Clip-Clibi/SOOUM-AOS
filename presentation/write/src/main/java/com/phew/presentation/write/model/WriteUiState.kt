@@ -36,6 +36,7 @@ data class WriteUiState(
     val showCameraPermissionDialog: Boolean = false,
     val showGalleryPermissionDialog: Boolean = false,
     val focusTagInput: Boolean = false,
+    val tagInputCompleteSignal: Int = 0,
     val isWriteCompleted: Boolean = false,
     val shouldShowPermissionRationale: Boolean = false,
     val isWriteInProgress: Boolean = false,
