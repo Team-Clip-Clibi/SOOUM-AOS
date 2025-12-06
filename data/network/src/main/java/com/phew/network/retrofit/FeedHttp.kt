@@ -9,6 +9,7 @@ import com.phew.network.dto.request.feed.RequestUploadCardAnswerDTO
 import com.phew.network.dto.request.feed.RequestUploadCardDTO
 import com.phew.network.dto.request.feed.TagInfoListDTO
 import com.phew.network.dto.response.BackgroundImageDTO
+import com.phew.network.dto.response.CheckCardDeleteDTO
 import com.phew.network.dto.response.DistanceDTO
 import com.phew.network.dto.response.LatestDto
 import com.phew.network.dto.response.PopularDto
@@ -124,4 +125,12 @@ interface FeedHttp {
     suspend fun requestCheckBackgroundImage(
         @Path("imgName") imgName: String,
     ): Response<BackgroundImageDTO>
+
+    /**
+     * 삭제된 카드 인지 확인
+     */
+    @GET(BuildConfig.API_URL_CHECK_CARD_DELETE)
+    suspend fun requestCheckCardDelete(
+        @Path("cardId") cardId: Long,
+    ): Response<CheckCardDeleteDTO>
 }

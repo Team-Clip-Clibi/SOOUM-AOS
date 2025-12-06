@@ -187,16 +187,23 @@ internal fun CardDetailRoute(
 
     val context = LocalContext.current
     // 에러 처리
-    uiState.error?.let { errorType ->
-        val errorMessage = when (errorType) {
-            CardDetailError.COMMENTS_LOAD_FAILED -> stringResource(DetailR.string.card_detail_error_comments)
-            CardDetailError.CARD_LOAD_FAILED -> stringResource(DetailR.string.card_detail_error_load_card)
-            CardDetailError.NETWORK_ERROR -> stringResource(DetailR.string.card_detail_error_load_card)
-        }
-        
-        LaunchedEffect(errorType) {
-            Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
-            viewModel.clearError()
+    LaunchedEffect(uiState.error) {
+        when (uiState.error) {
+            CardDetailError.COMMENTS_LOAD_FAILED, CardDetailError.NETWORK_ERROR, CardDetailError.CARD_LOAD_FAILED , CardDetailError.FAIL -> {
+                val message = when(uiState.error){
+                    CardDetailError.COMMENTS_LOAD_FAILED -> context.getString(DetailR.string.card_detail_error_comments)
+                    CardDetailError.CARD_LOAD_FAILED -> context.getString(DetailR.string.card_detail_error_load_card)
+                    CardDetailError.NETWORK_ERROR -> context.getString(DetailR.string.card_detail_error_load_card)
+                    CardDetailError.FAIL -> context.getString(R.string.error_app)
+                    else -> ""
+                }
+                Toast.makeText(context , message , Toast.LENGTH_SHORT).show()
+                viewModel.clearError()
+            }
+            CardDetailError.CARD_DELETE -> {
+                viewModel.setDeleteDialog()
+            }
+            else -> Unit
         }
     }
 
@@ -341,7 +348,8 @@ internal fun CardDetailRoute(
         cardId = args.cardId,
         snackBarHostState = snackBarHostState,
         remainingTimeMillis = remainingTimeMillis,
-        isExpire = (cardDetail.storyExpirationTime != null && (cardDetail.endTime ?: 0L) <= 0L) || isDelete,
+        isExpire = (cardDetail.storyExpirationTime != null && (cardDetail.endTime
+            ?: 0L) <= 0L) || isDelete,
         isOwnCard = cardDetail.isOwnCard,
         deleteCard = { cardId ->
             viewModel.requestDeleteCard(cardId)
@@ -357,9 +365,14 @@ internal fun CardDetailRoute(
         density = density,
         onPreviousCardClick = onPreviousCardClick,
         profileClick = { id ->
-            if(!cardDetail.isOwnCard){
+            if (!cardDetail.isOwnCard) {
                 profileClick(id)
             }
+        },
+        deleteErrorDialog = uiState.deleteErrorDialog,
+        onClickDeleteErrorDialog = {
+            viewModel.clearError()
+            onBackPressed()
         }
     )
 }
@@ -414,7 +427,9 @@ private fun CardDetailScreen(
     refreshState: androidx.compose.material3.pulltorefresh.PullToRefreshState,
     density: androidx.compose.ui.unit.Density,
     onPreviousCardClick: () -> Unit = { },
-    profileClick : (Long) -> Unit
+    profileClick : (Long) -> Unit,
+    deleteErrorDialog : Boolean,
+    onClickDeleteErrorDialog : () -> Unit
 ) {
 
     Scaffold(
@@ -626,6 +641,14 @@ private fun CardDetailScreen(
                                         }
                                     }
                                 }
+                            }
+                            if (deleteErrorDialog) {
+                                DialogComponent.NoDescriptionButtonOne(
+                                    title = stringResource(com.phew.presentation.detail.R.string.card_detail_dialog_delete_title),
+                                    buttonText = stringResource(R.string.common_okay),
+                                    onClick = onClickDeleteErrorDialog,
+                                    onDismiss = onClickDeleteErrorDialog
+                                )
                             }
                         }
                     }

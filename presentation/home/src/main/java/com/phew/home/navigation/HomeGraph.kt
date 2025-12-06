@@ -3,6 +3,7 @@ package com.phew.home.navigation
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
+import androidx.navigation.navOptions
 import androidx.navigation.navigation
 import com.phew.core.ui.component.back.SooumOnBackPressed
 import com.phew.core.ui.model.navigation.CardDetailArgs
@@ -10,6 +11,7 @@ import com.phew.core.ui.state.SooumAppState
 import com.phew.feed.navigation.FEED_GRAPH
 import com.phew.feed.navigation.feedGraph
 import com.phew.presentation.tag.navigation.tagGraph
+import com.phew.presentation.write.navigation.WRITE_GRAPH
 import com.phew.presentation.write.navigation.writeGraph
 import com.phew.reports.REPORT_GRAPH_ROUTE_PREFIX
 import com.phew.profile.profileGraph
@@ -58,6 +60,16 @@ fun NavGraphBuilder.homeGraph(
             onDetailWriteComplete = {
                 // Detail에서 Write 완료 시에는 Home에서 처리할 필요 없음 (Detail에서 직접 처리)
                 navController.popBackStack()
+            },
+            onHome = {
+                navController.navigateToHomeGraph(
+                    navOptions = navOptions {
+                        popUpTo(WRITE_GRAPH) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
+                )
             }
         )
         tagGraph(

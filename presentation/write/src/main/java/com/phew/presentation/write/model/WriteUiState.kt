@@ -8,8 +8,11 @@ import com.phew.domain.dto.CardImageDefault
 import com.phew.domain.dto.TagInfo
 import com.phew.presentation.write.component.NumberTagItem
 import com.phew.presentation.write.model.BackgroundConfig.imagesByFilter
+import com.phew.presentation.write.utils.WriteErrorCase
+import com.phew.presentation.write.viewmodel.UiState
 
-private val DefaultFilter: BackgroundFilterType = BackgroundConfig.filterNames.firstOrNull() ?: BackgroundFilterType.COLOR
+private val DefaultFilter: BackgroundFilterType =
+    BackgroundConfig.filterNames.firstOrNull() ?: BackgroundFilterType.COLOR
 private val DefaultFilterSelection: Int? = imagesByFilter[DefaultFilter]?.firstOrNull()
 
 data class WriteUiState(
@@ -39,7 +42,10 @@ data class WriteUiState(
     val isWriteInProgress: Boolean = false,
     val parentCardId: Long? = null,
     val cardDefaultImagesByCategory: Map<BackgroundFilterType, List<CardImageDefault>> = emptyMap(),
-    val selectedDefaultImageName: String? = null
+    val selectedDefaultImageName: String? = null,
+    val showErrorDialog: Boolean = false,
+    val activateDate : UiState<String> = UiState.Loading,
+    val errorCase: WriteErrorCase = WriteErrorCase.NONE
 ) {
     val isContentValid: Boolean
         get() = content.isNotBlank()

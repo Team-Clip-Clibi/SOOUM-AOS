@@ -7,6 +7,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -129,6 +130,7 @@ object ProfileComponent {
                 style = TextComponent.BODY_1_M_14,
                 color = NeutralColor.GRAY_500
             )
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = data,
                 style = TextComponent.TITLE_1_SB_18,

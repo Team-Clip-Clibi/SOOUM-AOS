@@ -31,6 +31,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -91,6 +92,8 @@ import com.phew.presentation.write.R as WriteR
 import androidx.navigation.NavController
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core_common.log.SooumLog
+import com.phew.presentation.write.utils.WriteErrorCase
+import com.phew.presentation.write.viewmodel.UiState
 
 @Composable
 internal fun WriteRoute(
@@ -99,7 +102,8 @@ internal fun WriteRoute(
     args: WriteArgs? = null,
     viewModel: WriteViewModel = hiltViewModel(),
     onBackPressed: () -> Unit,
-    onWriteComplete: (CardDetailArgs) -> Unit
+    onWriteComplete: (CardDetailArgs) -> Unit,
+    onHome: () -> Unit,
 ) {
     BackHandler {
         onBackPressed()
@@ -151,9 +155,14 @@ internal fun WriteRoute(
             viewModel.setParentCardId(parentCardId)
         }
     }
-
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val compareContent = stringResource(WriteR.string.write_card_content_default_placeholder)
+
+    LaunchedEffect(uiState.errorCase) {
+        if(uiState.errorCase != WriteErrorCase.NONE){
+            viewModel.showErrorDialog(true)
+        }
+    }
 
     WriteScreen(
         modifier = modifier,
@@ -236,7 +245,18 @@ internal fun WriteRoute(
         onCameraCaptureResult = viewModel::onBackgroundCameraCaptureResult,
         onGallerySettingsResult = viewModel::onGallerySettingsResult,
         onCameraSettingsResult = viewModel::onCameraSettingsResult,
-        hideRelatedTags = viewModel::hideRelatedTags
+        hideRelatedTags = viewModel::hideRelatedTags,
+        showErrorDialog = uiState.showErrorDialog,
+        activateDate = if(uiState.activateDate is  UiState.Success) {
+            (uiState.activateDate as UiState.Success).data
+        } else {
+            ""
+        },
+        errorCase = uiState.errorCase,
+        onClickErrorDialog = {
+            viewModel.showErrorDialog(false)
+            onHome()
+        }
     )
 }
 
@@ -301,9 +321,12 @@ private fun WriteScreen(
     onRequestGalleryPermissionFromSettings: () -> Unit,
     onGallerySettingsResult: (Boolean) -> Unit,
     onCameraSettingsResult: (Boolean) -> Unit,
-    hideRelatedTags: () -> Unit
+    hideRelatedTags: () -> Unit,
+    showErrorDialog: Boolean,
+    activateDate: String,
+    errorCase: WriteErrorCase,
+    onClickErrorDialog: () -> Unit,
 ) {
-
     val snackBarHostState = remember { SnackbarHostState() }
     val cameraPermissions = arrayOf(Manifest.permission.CAMERA)
     val albumPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -585,6 +608,15 @@ private fun WriteScreen(
             startButtonTextColor = NeutralColor.GRAY_600
         )
     }
+    if (showErrorDialog) {
+        ErrorDialog(
+            errorCase = errorCase,
+            activateDate = activateDate,
+            context = context,
+            onclick = onClickErrorDialog,
+            snackBarHostState = snackBarHostState
+        )
+    }
 
     if (showGalleryPermissionDialog) {
         DialogComponent.DefaultButtonTwo(
@@ -608,6 +640,59 @@ private fun WriteScreen(
         onActionSelected = onCameraPickerAction,
         onDismiss = onCameraPickerDismissed
     )
+}
+
+@Composable
+private fun ErrorDialog(
+    errorCase: WriteErrorCase,
+    activateDate: String,
+    snackBarHostState: SnackbarHostState,
+    context: Context,
+    onclick: () -> Unit,
+) {
+    when (errorCase) {
+        WriteErrorCase.ERROR_RESTRICT -> {
+            DialogComponent.DefaultButtonOne(
+                title = stringResource(com.phew.presentation.write.R.string.write_screen_dialog_restrict_title),
+                description = stringResource(
+                    com.phew.presentation.write.R.string.write_screen_dialog_restrict_message,
+                    activateDate
+                ),
+                onClick = onclick,
+                onDismiss = onclick,
+                buttonText = stringResource(com.phew.core_design.R.string.common_okay)
+            )
+        }
+
+        WriteErrorCase.ERROR_DELETE -> {
+            DialogComponent.NoDescriptionButtonOne(
+                title = stringResource(com.phew.presentation.write.R.string.write_screen_dialog_delete_title),
+                buttonText = stringResource(com.phew.core_design.R.string.common_okay),
+                onClick = onclick,
+                onDismiss = onclick
+            )
+        }
+
+        WriteErrorCase.ERROR_NETWORK -> {
+            LaunchedEffect(errorCase) {
+                snackBarHostState.showSnackbar(
+                    message = context.getString(com.phew.core_design.R.string.error_network),
+                    duration = SnackbarDuration.Short
+                )
+            }
+        }
+
+        WriteErrorCase.ERROR_JOB_FAIL -> {
+            LaunchedEffect(errorCase) {
+                snackBarHostState.showSnackbar(
+                    message = context.getString(com.phew.core_design.R.string.error_app),
+                    duration = SnackbarDuration.Short
+                )
+            }
+        }
+
+        else -> Unit
+    }
 }
 
 private fun appSettingsIntent(context: Context): Intent =

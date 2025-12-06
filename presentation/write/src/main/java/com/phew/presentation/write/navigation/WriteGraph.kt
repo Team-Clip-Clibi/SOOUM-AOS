@@ -47,7 +47,8 @@ fun NavGraphBuilder.writeGraph(
     navController: NavHostController,
     onBackPressed: () -> Unit,
     onWriteComplete: (CardDetailArgs) -> Unit,
-    onDetailWriteComplete: () -> Unit = {}
+    onDetailWriteComplete: () -> Unit = {},
+    onHome : () -> Unit = {}
 ) {
     navigation(
         route = WRITE_GRAPH,
@@ -59,7 +60,8 @@ fun NavGraphBuilder.writeGraph(
                 navController = navController,
                 args = null,
                 onBackPressed = onBackPressed,
-                onWriteComplete = onWriteComplete
+                onWriteComplete = onWriteComplete,
+                onHome = onBackPressed
             )
         }
         
@@ -84,7 +86,8 @@ fun NavGraphBuilder.writeGraph(
                     } else {
                         onWriteComplete(it)
                     }
-                }
+                },
+                onHome = onHome
             )
         }
     }

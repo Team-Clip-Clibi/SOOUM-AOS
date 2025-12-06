@@ -98,6 +98,7 @@ fun FeedView(
     webViewClick: (String) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val unRead = viewModel.unReadActivateAlarm.collectAsLazyPagingItems()
     val feedNoticeState = uiState.feedNotification
     val latestFeedItems = viewModel.latestFeedPaging.collectAsLazyPagingItems()
     val lazyGridState = rememberLazyGridState()
@@ -110,7 +111,7 @@ fun FeedView(
     }
     val currentPagingState = uiState.currentPagingState
     val pagingStateForEffect by rememberUpdatedState(currentPagingState)
-    
+
     // Navigation event handling
     LaunchedEffect(viewModel) {
         viewModel.navigationEvent.collect { event ->
@@ -154,7 +155,7 @@ fun FeedView(
                 lazyGridState.animateScrollToItem(0)
             }
         }
-        
+
         // 탭 이동 시 스크롤 초기화 처리
         launch {
             snapshotFlow { hasScrolledToTop }
@@ -197,7 +198,7 @@ fun FeedView(
     }
     TopView(
         noticeClick = noticeClick,
-        newNotice = feedNoticeState is UiState.Success && feedNoticeState.data.isNotEmpty(),
+        newNotice = unRead.itemCount != 0,
         snackBarHostState = snackBarHostState
     ) { paddingValues ->
         RefreshBox(
@@ -217,7 +218,9 @@ fun FeedView(
                     )
             ) {
                 FeedContentView(
-                    modifier = Modifier.fillMaxSize().graphicsLayer { clip = false },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer { clip = false },
                     lazyGridState = lazyGridState,
                     recentClick = {
                         viewModel.switchTab(FeedType.Latest)
@@ -256,6 +259,14 @@ fun FeedView(
                         startButtonTextColor = NeutralColor.GRAY_600
                     )
                 }
+                if (uiState.checkCardDelete is UiState.Success && (uiState.checkCardDelete as UiState.Success<Boolean>).data) {
+                    DialogComponent.NoDescriptionButtonOne(
+                        title = stringResource(R.string.home_feed_dialog_delete_title),
+                        buttonText = stringResource(com.phew.core_design.R.string.common_okay),
+                        onDismiss = viewModel::initCheckCardDelete,
+                        onClick = viewModel::initCheckCardDelete
+                    )
+                }
             }
         }
     }
@@ -284,7 +295,7 @@ private fun TopView(
 
 @Composable
 private fun FeedContentView(
-    modifier: Modifier, 
+    modifier: Modifier,
     lazyGridState: LazyGridState,
     recentClick: () -> Unit,
     popularClick: () -> Unit,
@@ -333,7 +344,8 @@ private fun FeedContentView(
             FeedUi.FeedNoticeView(
                 feedNotice = feedNotice,
                 feedNoticeClick = feedNoticeClick,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
                     .graphicsLayer { translationY = pullOffsetPx }
             )
         }
@@ -510,7 +522,8 @@ private fun FeedContentView(
 @Composable
 private fun EmptyFeedView() {
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
             .padding(vertical = 100.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally

@@ -8,10 +8,15 @@ import android.net.Uri
 import androidx.core.net.toUri
 import com.phew.core_common.DataResult
 import com.phew.core_common.DomainResult
+import com.phew.core_common.ERROR_ACCOUNT_SUSPENDED
+import com.phew.core_common.ERROR_ALREADY_CARD_DELETE
 import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.ERROR_FAIL_PACKAGE_IMAGE
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.ERROR_UN_GOOD_IMAGE
+import com.phew.core_common.HTTP_BAD_REQUEST
+import com.phew.core_common.HTTP_CARD_ALREADY_DELETE
+import com.phew.core_common.HTTP_NOT_FOUND
 import com.phew.core_common.HTTP_SUCCESS
 import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.network.CardFeedRepository
@@ -101,14 +106,12 @@ class PostCard @Inject constructor(
                 tag = param.tags
             )
         }
-
         return when (uploadResult) {
-            is DataResult.Success -> {
-                DomainResult.Success(uploadResult.data.cardId)
-            }
-            is DataResult.Fail -> {
-                DomainResult.Failure(uploadResult.message ?: ERROR_FAIL_JOB)
-            }
+            HTTP_SUCCESS -> DomainResult.Success(uploadResult.data.cardId)
+            HTTP_BAD_REQUEST -> DomainResult.Failure(ERROR_ACCOUNT_SUSPENDED)
+            HTTP_CARD_ALREADY_DELETE -> DomainResult.Failure(ERROR_ALREADY_CARD_DELETE)
+            HTTP_NOT_FOUND -> DomainResult.Failure(ERROR_FAIL_JOB)
+            else -> DomainResult.Failure(ERROR_FAIL_JOB)
         }
     }
 

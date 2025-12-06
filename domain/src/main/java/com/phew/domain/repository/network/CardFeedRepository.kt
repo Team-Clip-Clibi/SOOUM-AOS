@@ -60,4 +60,5 @@ interface CardFeedRepository {
 
     suspend fun requestUploadImage(data: RequestBody, url: String): DataResult<Unit>
     suspend fun requestCheckImage(imageName: String): DataResult<Boolean>
+    suspend fun requestCheckCardDelete(cardId: Long): DataResult<Boolean>
 }

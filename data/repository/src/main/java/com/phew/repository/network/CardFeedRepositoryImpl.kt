@@ -5,7 +5,6 @@ import com.phew.core_common.DataResult
 import com.phew.core_common.HTTP_NOT_FOUND
 import com.phew.core_common.HTTP_SUCCESS
 import com.phew.core_common.HTTP_NO_MORE_CONTENT
-import com.phew.core_common.log.SooumLog
 import com.phew.domain.dto.CardDefaultImagesResponse
 import com.phew.domain.dto.CardImageDefault
 import com.phew.domain.dto.CheckedBaned
@@ -300,6 +299,13 @@ class CardFeedRepositoryImpl @Inject constructor(
         return apiCall(
             apiCall = { feedHttp.requestCheckBackgroundImage(imgName = imageName) },
             mapper = { result -> result.isAvailableImg }
+        )
+    }
+
+    override suspend fun requestCheckCardDelete(cardId: Long): DataResult<Boolean> {
+        return apiCall(
+            apiCall = { feedHttp.requestCheckCardDelete(cardId = cardId) },
+            mapper = { data -> data.isDeleted }
         )
     }
 }

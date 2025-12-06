@@ -37,9 +37,14 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import androidx.core.net.toUri
+import com.phew.core_common.ERROR_ACCOUNT_SUSPENDED
+import com.phew.core_common.ERROR_ALREADY_CARD_DELETE
+import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_design.CustomFont
+import com.phew.domain.usecase.GetActivityRestrictionDate
 
 import com.phew.presentation.write.model.BackgroundFilterType
+import com.phew.presentation.write.utils.WriteErrorCase
 
 @HiltViewModel
 class WriteViewModel @Inject constructor(
@@ -49,7 +54,8 @@ class WriteViewModel @Inject constructor(
     private val getRelatedTag: GetRelatedTag,
     private val getCardDefaultImage: GetCardDefaultImage,
     private val postCard: PostCard,
-    private val postCardReply: PostCardReply
+    private val postCardReply: PostCardReply,
+    private val activateDate: GetActivityRestrictionDate,
 ) : ViewModel() {
 
     private val locationPermissions = arrayOf(
@@ -400,7 +406,7 @@ class WriteViewModel @Inject constructor(
         }
     }
 
-private fun requestCameraImageForBackground() {
+    private fun requestCameraImageForBackground() {
         viewModelScope.launch(Dispatchers.IO) {
             when (val result = createImageFile()) {
                 is DomainResult.Success -> {
@@ -525,12 +531,52 @@ private fun requestCameraImageForBackground() {
                     }
 
                     is DomainResult.Failure -> {
-                        _uiState.update { it.copy(isWriteInProgress = false) }
+                        _uiState.update {
+                            it.copy(
+                                isWriteInProgress = false,
+                                errorCase = when (result.error) {
+                                    ERROR_NETWORK -> WriteErrorCase.ERROR_NETWORK
+                                    ERROR_ACCOUNT_SUSPENDED -> WriteErrorCase.ERROR_RESTRICT
+                                    ERROR_ALREADY_CARD_DELETE -> WriteErrorCase.ERROR_DELETE
+                                    else -> WriteErrorCase.ERROR_JOB_FAIL
+                                }
+                            )
+                        }
+                        if (_uiState.value.errorCase == WriteErrorCase.ERROR_RESTRICT) {
+                            getActivateDate()
+                        }
                         SooumLog.e(TAG, "onWriteComplete failed: ${result.error}")
                         // Handle error - could add error state to UI
                     }
                 }
             }
+        }
+    }
+
+    private fun getActivateDate() {
+        viewModelScope.launch(Dispatchers.IO) {
+            when (val result = activateDate()) {
+                is DomainResult.Success -> {
+                    _uiState.update { state ->
+                        state.copy(activateDate = UiState.Success(result.data ?: "ERROR"))
+                    }
+                }
+
+                is DomainResult.Failure -> {
+                    _uiState.update { state ->
+                        state.copy(activateDate = UiState.Fail(ERROR_NETWORK))
+                    }
+                }
+            }
+        }
+    }
+
+    fun showErrorDialog(show: Boolean) {
+        _uiState.update { state ->
+            state.copy(
+                showErrorDialog = show,
+                errorCase = if (!show) WriteErrorCase.NONE else state.errorCase
+            )
         }
     }
 
@@ -598,5 +644,11 @@ private fun requestCameraImageForBackground() {
         }
     }
 }
+sealed interface UiState<out T> {
+    data object Loading : UiState<Nothing>
+    data class Success<T>(val data: T) : UiState<T>
+    data class Fail(val errorMessage: String) : UiState<Nothing>
+}
+
 
 private const val TAG = "WriteViewModel"

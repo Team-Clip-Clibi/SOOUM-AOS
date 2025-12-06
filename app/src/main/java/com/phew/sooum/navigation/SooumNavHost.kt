@@ -21,9 +21,11 @@ import com.phew.presentation.detail.navigation.detailGraph
 import com.phew.core.ui.model.navigation.WriteArgs
 import com.phew.core_common.log.SooumLog
 import com.phew.domain.interceptor.GlobalEvent
+import com.phew.feed.navigation.navigateToFeedGraph
 import com.phew.presentation.MainViewModel
 import com.phew.presentation.detail.navigation.navigateToDetailGraph
 import com.phew.presentation.tag.navigation.navigateToViewTagsWithArgs
+import com.phew.presentation.write.navigation.WRITE_GRAPH
 import com.phew.presentation.write.navigation.navigateToWriteGraphWithArgs
 import com.phew.presentation.write.navigation.writeGraph
 import com.phew.profile.navigateToProfileGraphWithArgs
