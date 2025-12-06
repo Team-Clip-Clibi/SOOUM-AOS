@@ -93,6 +93,7 @@ fun FeedView(
     webViewClick: (String) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val unRead = viewModel.unReadActivateAlarm.collectAsLazyPagingItems()
     val feedNoticeState = uiState.feedNotification
     val latestFeedItems = viewModel.latestFeedPaging.collectAsLazyPagingItems()
     val lazyListState = rememberLazyListState()
@@ -178,7 +179,7 @@ fun FeedView(
     }
     TopView(
         noticeClick = noticeClick,
-        newNotice = feedNoticeState is UiState.Success && feedNoticeState.data.isNotEmpty(),
+        newNotice = unRead.itemCount != 0,
         snackBarHostState = snackBarHostState
     ) { paddingValues ->
         RefreshBox(
@@ -198,7 +199,9 @@ fun FeedView(
                     )
             ) {
                 FeedContentView(
-                    modifier = Modifier.fillMaxSize().graphicsLayer { clip = false },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer { clip = false },
                     recentClick = {
                         viewModel.switchTab(FeedType.Latest)
                     },
@@ -234,6 +237,14 @@ fun FeedView(
                             closeDialog()
                         },
                         startButtonTextColor = NeutralColor.GRAY_600
+                    )
+                }
+                if (uiState.checkCardDelete is UiState.Success && (uiState.checkCardDelete as UiState.Success<Boolean>).data) {
+                    DialogComponent.NoDescriptionButtonOne(
+                        title = stringResource(R.string.home_feed_dialog_delete_title),
+                        buttonText = stringResource(com.phew.core_design.R.string.common_okay),
+                        onDismiss = viewModel::initCheckCardDelete,
+                        onClick = viewModel::initCheckCardDelete
                     )
                 }
             }
@@ -310,7 +321,8 @@ private fun FeedContentView(
             FeedUi.FeedNoticeView(
                 feedNotice = feedNotice,
                 feedNoticeClick = feedNoticeClick,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
                     .graphicsLayer { translationY = pullOffsetPx }
             )
         }
@@ -487,7 +499,8 @@ private fun FeedContentView(
 @Composable
 private fun EmptyFeedView() {
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
             .padding(vertical = 100.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally

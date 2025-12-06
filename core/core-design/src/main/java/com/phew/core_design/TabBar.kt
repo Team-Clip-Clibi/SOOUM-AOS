@@ -37,7 +37,7 @@ object TabBar {
                 indicator = { tabPositions ->
                     TabRowDefaults.SecondaryIndicator(
                         modifier = Modifier.tabIndicatorOffset(tabPositions[selectTabData]),
-                        height = 2.dp,
+                        height = 3.dp,
                         color = NeutralColor.BLACK
                     )
                 },

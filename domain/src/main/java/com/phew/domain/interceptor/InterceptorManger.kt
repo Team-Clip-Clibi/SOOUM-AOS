@@ -8,4 +8,5 @@ interface InterceptorManger {
     suspend fun refreshAndGetNewToken(): String
     suspend fun autoLogin(): String
     suspend fun deleteAll(): Boolean
+    fun resetToken()
 }

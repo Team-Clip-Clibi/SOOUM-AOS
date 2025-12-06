@@ -1,6 +1,9 @@
 package com.phew.domain.usecase
 
 import com.phew.core_common.DataResult
+import com.phew.core_common.ERROR_FAIL_JOB
+import com.phew.domain.BuildConfig
+import com.phew.domain.interceptor.InterceptorManger
 import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.network.MembersRepository
 import com.phew.domain.repository.network.SignUpRepository
@@ -14,6 +17,7 @@ class TransferAccount @Inject constructor(
     private val membersRepository: MembersRepository,
     private val deviceRepository: DeviceRepository,
     private val signUpRepository: SignUpRepository,
+    private val interceptorManger : InterceptorManger
 ) {
     data class Param(
         val transferCode: String,
@@ -49,8 +53,11 @@ class TransferAccount @Inject constructor(
             }
 
             is DataResult.Success -> {
+                val deleteAll = interceptorManger.deleteAll()
+                if(!deleteAll) return Result.failure(Exception(ERROR_FAIL_JOB))
+                interceptorManger.resetToken()
                 val saveToken = deviceRepository.saveToken(
-                    key = "TOKEN_KEY",
+                    key = BuildConfig.TOKEN_KEY,
                     data = com.phew.domain.dto.Token(
                         refreshToken = request.data.refreshToken,
                         accessToken = request.data.accessToken

@@ -47,13 +47,18 @@ object BottomSheetComponent {
         )
 
         ModalBottomSheet(
-            modifier = Modifier.padding(start= 16.dp , end = 16.dp)
+            modifier = Modifier
+                .padding(start = 16.dp, end = 16.dp)
                 .windowInsetsPadding(WindowInsets.navigationBars)
                 .padding(vertical = 10.dp),
             sheetState = sheetState,
             onDismissRequest = onDismiss,
             shape = RoundedCornerShape(28.dp),
-            dragHandle = { BottomSheetDefaults.DragHandle() },
+            dragHandle = {
+                BottomSheetDefaults.DragHandle(
+                    color = NeutralColor.GRAY_300,
+                )
+            },
             containerColor = NeutralColor.WHITE,
         ) {
             LazyColumn(
@@ -74,7 +79,7 @@ object BottomSheetComponent {
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
                             .drawBehind {
-                                val color = if(isPressed) {
+                                val color = if (isPressed) {
                                     NeutralColor.GRAY_100
                                 } else {
                                     NeutralColor.WHITE

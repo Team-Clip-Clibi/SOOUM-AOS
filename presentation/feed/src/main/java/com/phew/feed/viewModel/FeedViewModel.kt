@@ -8,6 +8,7 @@ import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.domain.dto.FeedData
 import com.phew.core_common.DataResult
 import com.phew.core_common.DomainResult
+import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.log.SooumLog
 import com.phew.domain.dto.DistanceCard
 import com.phew.domain.dto.FeedCardType
@@ -20,6 +21,7 @@ import com.phew.domain.dto.Notify
 import com.phew.domain.dto.Popular
 import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.network.CardFeedRepository
+import com.phew.domain.usecase.CheckCardAlreadyDelete
 import com.phew.domain.usecase.CheckLocationPermission
 import com.phew.domain.usecase.GetFeedNotification
 import com.phew.domain.usecase.GetLatestFeed
@@ -51,7 +53,6 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.collections.emptyList
 
-
 @HiltViewModel
 class FeedViewModel @Inject constructor(
     private val locationAsk: CheckLocationPermission,
@@ -62,7 +63,8 @@ class FeedViewModel @Inject constructor(
     private val cardFeedRepository: CardFeedRepository,
     private val deviceRepository: DeviceRepository,
     private val notification: GetFeedNotification,
-    private val readNotify : SetReadActivateNotify
+    private val readNotify: SetReadActivateNotify,
+    private val checkCardDelete: CheckCardAlreadyDelete,
 ) :
     ViewModel() {
     private val _uiState = MutableStateFlow(Home())
@@ -679,12 +681,42 @@ class FeedViewModel @Inject constructor(
     }
 
     fun navigateToDetail(cardId: String) {
+        if (_uiState.value.checkCardDelete is UiState.Loading) return
+        val cardIdLong = cardId.toLongOrNull()
+        if (cardIdLong == null) {
+            _uiState.update { state ->
+                state.copy(
+                    checkCardDelete = UiState.Fail(ERROR_FAIL_JOB)
+                )
+            }
+            return
+        }
         viewModelScope.launch {
-            val cardIdLong = cardId.toLongOrNull()
-            if (cardIdLong != null) {
-                _navigationEvent.emit(NavigationEvent.NavigateToDetail(CardDetailArgs(cardIdLong)))
+            _uiState.update { state -> state.copy(checkCardDelete = UiState.Loading) }
+            when (val result = checkCardDelete(CheckCardAlreadyDelete.Param(cardId = cardIdLong))) {
+                is DomainResult.Failure -> {
+                    _uiState.update { state ->
+                        state.copy(checkCardDelete = UiState.Fail(result.error))
+                    }
+                }
+
+                is DomainResult.Success -> {
+                    _uiState.update { state -> state.copy(checkCardDelete = UiState.Success(result.data)) }
+                    if (!result.data) _navigationEvent.emit(
+                        NavigationEvent.NavigateToDetail(
+                            CardDetailArgs(cardIdLong)
+                        )
+                    )
+                }
             }
         }
+    }
+
+    fun initCheckCardDelete() {
+        _uiState.update { state ->
+            state.copy(checkCardDelete = UiState.None)
+        }
+        refreshCurrentTab()
     }
 
 }
@@ -705,7 +737,8 @@ data class Home(
     val location: Location = Location.EMPTY,
     val shouldShowPermissionRationale: Boolean = false,
     val feedNotification: UiState<List<Notice>> = UiState.Loading,
-    val setReadNotify : UiState<Unit> = UiState.Loading
+    val setReadNotify: UiState<Unit> = UiState.Loading,
+    val checkCardDelete: UiState<Boolean> = UiState.None,
 ) {
     val currentPagingState: FeedPagingState
         get() = when (currentTab) {

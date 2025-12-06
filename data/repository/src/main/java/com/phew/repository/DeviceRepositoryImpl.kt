@@ -38,7 +38,7 @@ class DeviceRepositoryImpl @Inject constructor(
     override suspend fun saveToken(key: String, data: Token): Boolean {
         return dataStoreLocal.insertToken(
             key = key,
-            data = Pair(data.refreshToken, data.refreshToken)
+            data = Pair(data.refreshToken, data.accessToken)
         )
     }
 
