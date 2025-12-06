@@ -38,6 +38,7 @@ import com.phew.domain.model.AppVersionStatusType
 import com.phew.domain.model.BlockMember
 import com.phew.domain.model.RejoinableDate
 import com.phew.domain.model.TransferCode
+import com.phew.domain.model.NotifyToggle
 import com.phew.domain.model.TagInfo as DomainTagInfo
 import com.phew.domain.model.TagInfoList
 import com.phew.domain.model.TagCards
@@ -53,6 +54,7 @@ import com.phew.network.dto.response.BlockMemberResponseDTO
 import com.phew.network.dto.response.FavoriteTagItemDTO
 import com.phew.network.dto.response.FavoriteTagsResponseDTO
 import com.phew.network.dto.response.RejoinableDateResponseDTO
+import com.phew.network.dto.response.NotifyToggleResponseDTO
 import com.phew.network.dto.request.feed.CheckBanedDTO
 import com.phew.network.dto.request.feed.ImageInfoDTO
 import com.phew.network.dto.request.feed.TagInfoDTO
@@ -479,6 +481,12 @@ internal fun FavoriteTagItemDTO.toDomain(): FavoriteTag {
     return FavoriteTag(
         id = this.id,
         name = this.name
+    )
+}
+
+internal fun NotifyToggleResponseDTO.toDomain(): NotifyToggle {
+    return NotifyToggle(
+        isAllowNotify = this.isAllowNotify
     )
 }
 

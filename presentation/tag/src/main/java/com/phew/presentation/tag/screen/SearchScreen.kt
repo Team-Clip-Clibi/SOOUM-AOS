@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -320,7 +321,7 @@ private fun SearchScreen(
                 recommendedTags.isNotEmpty() -> {
                     LazyColumn(
                         state = listState,
-                        modifier = Modifier.height(144.dp)
+                        modifier = Modifier.fillMaxHeight()
                     ) {
                         itemsIndexed(
                             items = recommendedTags,
