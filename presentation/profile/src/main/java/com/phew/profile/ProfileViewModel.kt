@@ -1,6 +1,7 @@
 package com.phew.profile
 
 import android.net.Uri
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
@@ -94,7 +95,8 @@ class ProfileViewModel @Inject constructor(
                             ),
                             isRefreshing = false,
                             nickname = "",
-                            userId = 0L
+                            userId = 0L,
+                            newProfileImageUri = listOf(Uri.EMPTY) + request.data.profileImageUrl.toUri()
                         )
                     }
                 }
@@ -220,14 +222,12 @@ class ProfileViewModel @Inject constructor(
                 UpdateProfile.Param(
                     nickName = if (_uiState.value.changeNickName == (_uiState.value.profileInfo as UiState.Success).data.nickname) null else _uiState.value.changeNickName,
                     imgName = when {
-                        !_uiState.value.defaultImage && !_uiState.value.useAlbum && !_uiState.value.useCamera -> (_uiState.value.profileInfo as UiState.Success).data.profileImgName
+                        !_uiState.value.useAlbum && !_uiState.value.useCamera && _uiState.value.newProfileImageUri.size == 2 -> (_uiState.value.profileInfo as UiState.Success).data.profileImgName
                         else -> ""
                     },
-                    profileImage = when {
-                        _uiState.value.defaultImage -> null
-                        !_uiState.value.imageChange -> (_uiState.value.profileInfo as UiState.Success).data.profileImgName
-                        else -> _uiState.value.newProfileImageUri.toString()
-                    },
+//                    profileImage = if (_uiState.value.newProfileImageUri.size == 2) null else _uiState.value.newProfileImageUri.last()
+//                        .toString(),
+                    profileImage = if(_uiState.value.newProfileImageUri.last() == Uri.EMPTY) null else _uiState.value.newProfileImageUri.last().toString(),
                     isImageChange = _uiState.value.imageChange
                 )
             )) {
@@ -276,7 +276,6 @@ class ProfileViewModel @Inject constructor(
             state.copy(
                 useAlbum = true,
                 useCamera = false,
-                defaultImage = false,
                 imageChange = true
             )
         }
@@ -287,7 +286,6 @@ class ProfileViewModel @Inject constructor(
             state.copy(
                 useAlbum = false,
                 useCamera = true,
-                defaultImage = false,
                 imageChange = true
             )
         }
@@ -296,11 +294,11 @@ class ProfileViewModel @Inject constructor(
     fun selectDefaultImage() {
         _uiState.update { state ->
             state.copy(
-                defaultImage = true,
                 useAlbum = false,
                 useCamera = false,
                 changeProfile = true,
-                imageChange = true
+                imageChange = true,
+                newProfileImageUri = listOf(Uri.EMPTY)
             )
         }
     }
@@ -318,8 +316,7 @@ class ProfileViewModel @Inject constructor(
     fun onAlbumPicked(uri: Uri) {
         _uiState.update {
             it.copy(
-                newProfileImageUri = uri,
-                defaultImage = false,
+                newProfileImageUri = it.newProfileImageUri + uri,
                 changeProfile = true
             )
         }
@@ -366,7 +363,7 @@ class ProfileViewModel @Inject constructor(
                 is DomainResult.Success -> {
                     _uiState.update { state ->
                         state.copy(
-                            newProfileImageUri = result.data,
+                            newProfileImageUri = state.newProfileImageUri + result.data,
                             changeProfile = true
                         )
                     }
@@ -380,16 +377,16 @@ class ProfileViewModel @Inject constructor(
             state.copy(pendingProfileCameraCapture = null)
         }
     }
-    fun initEditProfile(){
+
+    fun initEditProfile() {
         _uiState.update { state ->
             state.copy(
                 pendingProfileCameraCapture = null,
                 changeNickName = null,
-                newProfileImageUri = Uri.EMPTY,
+                newProfileImageUri = listOf(Uri.EMPTY),
                 errorMessage = "",
                 useCamera = false,
                 useAlbum = false,
-                defaultImage = false,
                 updateProfile = UiState.Loading
             )
         }
@@ -400,8 +397,11 @@ class ProfileViewModel @Inject constructor(
             state.copy(
                 imageDialog = result,
                 updateProfile = if (!result) state.updateProfile else UiState.Loading,
-                defaultImage = if (!result) true else state.defaultImage,
-                newProfileImageUri = if (!result) Uri.EMPTY else state.newProfileImageUri
+                newProfileImageUri = if (!result) {
+                    if (state.newProfileImageUri.size > 1) state.newProfileImageUri.dropLast(1) else listOf(
+                        Uri.EMPTY
+                    )
+                } else state.newProfileImageUri
             )
         }
     }
@@ -414,7 +414,7 @@ data class Profile(
     val follow: Flow<PagingData<FollowData>> = emptyFlow(),
     val following: Flow<PagingData<FollowData>> = emptyFlow(),
     val event: UiState<Unit> = UiState.Success(Unit),
-    val updateProfile : UiState<Unit> = UiState.Loading,
+    val updateProfile: UiState<Unit> = UiState.Loading,
     val isRefreshing: Boolean = false,
     val userId: Long = 0L,
     val nickname: String = "",
@@ -423,13 +423,12 @@ data class Profile(
     val pendingProfileCameraCapture: CameraCaptureRequest? = null,
     val useAlbum: Boolean = false,
     val useCamera: Boolean = false,
-    val defaultImage: Boolean = false,
     var changeNickName: String? = null,
-    var newProfileImageUri: Uri = Uri.EMPTY,
+    var newProfileImageUri: List<Uri> = listOf(Uri.EMPTY),
     val errorMessage: String = "",
     val changeProfile: Boolean = false,
-    val imageChange : Boolean = false,
-    val imageDialog : Boolean = false
+    val imageChange: Boolean = false,
+    val imageDialog: Boolean = false
 )
 
 sealed interface UiState<out T> {
