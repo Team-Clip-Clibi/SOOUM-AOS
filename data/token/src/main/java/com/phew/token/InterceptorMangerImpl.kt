@@ -116,7 +116,14 @@ class InterceptorMangerImpl @Inject constructor(
     }
 
     override suspend fun deleteAll(): Boolean {
+        cachedRefreshToken = ""
+        cachedAccessToken = ""
         return deviceRepository.deleteAll()
+    }
+
+    override fun resetToken() {
+        cachedAccessToken = ""
+        cachedRefreshToken = ""
     }
 
     private fun makeSecurityKey(key: String): PublicKey {
