@@ -14,6 +14,7 @@ import com.phew.domain.model.TagInfo
 import com.phew.domain.model.TagInfoList
 import com.phew.domain.usecase.AddFavoriteTag
 import com.phew.domain.usecase.GetFavoriteTags
+import com.phew.domain.usecase.GetProfileInfo
 import com.phew.domain.usecase.GetRelatedTags
 import com.phew.domain.usecase.GetTagCardsPaging
 import com.phew.domain.usecase.GetTagRank
@@ -65,6 +66,7 @@ class TagViewModel @Inject constructor(
     private val getTagCardsPaging: GetTagCardsPaging,
     private val getRelatedTags: GetRelatedTags,
     private val getUserInfo: GetUserInfo,
+    private val getProfileInfo: GetProfileInfo,
     private val getFavoriteTags: GetFavoriteTags,
     private val addFavoriteTag: AddFavoriteTag,
     private val removeFavoriteTag: RemoveFavoriteTag,
@@ -110,11 +112,13 @@ class TagViewModel @Inject constructor(
     private fun loadUserInfo() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
+                val profileNickName = getProfileInfo(BuildConfig.PROFILE_KEY)
                 val userInfo = getUserInfo(GetUserInfo.Param(key = BuildConfig.USER_INFO_KEY))
+                val resolvedNickName = profileNickName ?: userInfo?.nickName.orEmpty()
                 _uiState.update {
-                    it.copy(nickName = userInfo?.nickName ?: "")
+                    it.copy(nickName = resolvedNickName)
                 }
-                SooumLog.d(TAG, "Success to load user info: ${userInfo?.nickName}")
+                SooumLog.d(TAG, "Success to load nickname: $resolvedNickName")
             } catch (e: Exception) {
                 SooumLog.e(TAG, "Failed to load user info: ${e.message}")
             }
