@@ -1,4 +1,4 @@
-package com.phew.sign_up
+package com.phew.sign_up.view
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -29,6 +28,7 @@ import com.phew.core_design.LargeButton
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.Primary
 import com.phew.core_design.TextComponent
+import com.phew.sign_up.R
 
 @Composable
 fun SignUpFinish(home: () -> Unit) {

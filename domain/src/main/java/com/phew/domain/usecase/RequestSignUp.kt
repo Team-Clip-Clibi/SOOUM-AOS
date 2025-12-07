@@ -100,7 +100,11 @@ class RequestSignUp @Inject constructor(
         )
         when (request) {
             is DataResult.Fail -> {
-                return DomainResult.Failure(ERROR_NETWORK)
+                return when(request.code){
+                    HTTP_NOT_FOUND -> DomainResult.Failure(ERROR_NETWORK)
+                    HTTP_UN_GOOD_IMAGE -> DomainResult.Failure(ERROR_UN_GOOD_IMAGE)
+                    else -> DomainResult.Failure(ERROR_FAIL_JOB)
+                }
             }
 
             is DataResult.Success -> {

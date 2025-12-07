@@ -3,7 +3,6 @@ package com.phew.presentation.detail.screen
 import android.annotation.SuppressLint
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -21,7 +20,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -86,20 +84,17 @@ import com.phew.core.ui.model.navigation.TagViewArgs
 import com.phew.domain.dto.CardDetailTag
 import com.phew.core_common.TimeUtils
 import com.phew.core_common.log.SooumLog
-import com.phew.core_design.AppBar.TextButtonAppBar
 import com.phew.core_design.BottomSheetComponent
 import com.phew.core_design.BottomSheetItem
 import com.phew.core_design.Danger
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.NeutralColor
-import com.phew.core_design.Primary
 import com.phew.core_design.R
 import com.phew.core_design.TextComponent
 import com.phew.core_design.UnKnowColor
 import com.phew.presentation.detail.R as DetailR
 import com.phew.core_design.component.card.CardDetail
 import com.phew.core_design.component.card.CardViewComment
-import com.phew.core_design.theme.GRAY_400
 import com.phew.domain.dto.CardComment
 import com.phew.presentation.detail.component.CardDetailBottom
 import com.phew.presentation.detail.component.CardDetailHeader

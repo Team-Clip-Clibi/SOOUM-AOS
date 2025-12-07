@@ -50,7 +50,6 @@ import com.phew.profile.UiState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
-import com.phew.core_common.ERROR_LOGOUT
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.ERROR_UN_GOOD_IMAGE
 import com.phew.core_design.DialogComponent
@@ -133,11 +132,7 @@ internal fun EditProfileScreen(viewModel: ProfileViewModel, onBackPress: () -> U
             is UiState.Success -> {
                 ChangeProfileView(
                     paddingValues = paddingValues,
-                    imageUrl = when{
-                        uiState.defaultImage -> ""
-                        uiState.newProfileImageUri == Uri.EMPTY -> result.data.profileImageUrl
-                        else -> uiState.newProfileImageUri.toString()
-                    },
+                    imageUrl =uiState.newProfileImageUri.lastOrNull()?.toString() ?: "",
                     nickName = uiState.changeNickName ?: result.data.nickname,
                     onAvatarClick = { bottomSheetView = true },
                     onValueChange = remember(viewModel::changeNickName) {
@@ -158,21 +153,16 @@ internal fun EditProfileScreen(viewModel: ProfileViewModel, onBackPress: () -> U
                     albumClick = remember(viewModel) {
                         {
                             viewModel.selectAlbum()
-                            bottomSheetView = false
                         }
                     },
                     cameraClick = remember(viewModel) {
                         {
-
                             viewModel.selectCamera()
-                            bottomSheetView = false
-
                         }
                     },
                     defaultClick = remember(viewModel) {
                         {
                             viewModel.selectDefaultImage()
-                            bottomSheetView = false
                         }
                     },
                     onDismiss = remember { { bottomSheetView = false } },

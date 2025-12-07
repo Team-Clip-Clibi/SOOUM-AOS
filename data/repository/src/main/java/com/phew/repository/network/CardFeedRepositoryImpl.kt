@@ -2,8 +2,6 @@ package com.phew.repository.network
 
 import com.phew.core_common.APP_ERROR_CODE
 import com.phew.core_common.DataResult
-import com.phew.core_common.HTTP_NOT_FOUND
-import com.phew.core_common.HTTP_SUCCESS
 import com.phew.core_common.HTTP_NO_MORE_CONTENT
 import com.phew.domain.dto.CardDefaultImagesResponse
 import com.phew.domain.dto.CardImageDefault

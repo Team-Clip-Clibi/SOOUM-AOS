@@ -3,7 +3,6 @@ package com.phew.profile.screen
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -31,7 +30,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
@@ -64,6 +62,7 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.Alignment
 import androidx.paging.compose.LazyPagingItems
 import com.phew.core_common.BOTTOM_NAVIGATION_HEIGHT
 import com.phew.core_design.CustomFont
@@ -230,7 +229,7 @@ private fun MyProfileView(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column {
-                Row {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = stringResource(R.string.profile_txt_visit_total),
                         style = TextComponent.CAPTION_2_M_12,
@@ -466,14 +465,16 @@ private fun ProfileCardView(
                         ) { index ->
                             val item = cardData[index]
                             if (item != null) {
-                                CommentBodyContent(
-                                    contentText = item.cardContent,
-                                    imgUrl = item.cardImgUrl,
-                                    fontFamily = CustomFont.findFontValueByServerName(item.font).data.previewTypeface,
-                                    textMaxLines = 4,
-                                    cardId = item.cardId,
-                                    onClick = onClickCard
-                                )
+                                Box(modifier = Modifier.padding(bottom = 1.dp)) {
+                                    CommentBodyContent(
+                                        contentText = item.cardContent,
+                                        imgUrl = item.cardImgUrl,
+                                        fontFamily = CustomFont.findFontValueByServerName(item.font).data.previewTypeface,
+                                        textMaxLines = 4,
+                                        cardId = item.cardId,
+                                        onClick = onClickCard
+                                    )
+                                }
                             }
                         }
                     }

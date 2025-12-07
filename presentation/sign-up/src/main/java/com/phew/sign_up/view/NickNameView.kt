@@ -1,4 +1,4 @@
-package com.phew.sign_up
+package com.phew.sign_up.view
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -33,6 +33,10 @@ import com.phew.core_design.LargeButton
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
 import com.phew.core_design.TextFiledComponent
+import com.phew.sign_up.Component
+import com.phew.sign_up.R
+import com.phew.sign_up.SignUpViewModel
+import com.phew.sign_up.UiState
 
 @Composable
 fun NickNameView(viewModel: SignUpViewModel, onBack: () -> Unit, nextPage: () -> Unit) {
@@ -79,7 +83,7 @@ fun NickNameView(viewModel: SignUpViewModel, onBack: () -> Unit, nextPage: () ->
                             nextPage()
                         }
                     },
-                    isEnable = (uiState.checkNickName is UiState.Success && (uiState.checkNickName as UiState.Success<Boolean>).data) && (uiState.nickName.trim().length in 3..<9)
+                    isEnable = (uiState.checkNickName is UiState.Success && (uiState.checkNickName as UiState.Success<Boolean>).data) && (uiState.nickName.trim().length in 2..<9)
                 )
             }
         },
@@ -163,7 +167,6 @@ private fun InPutNickNameView(
                 onValueChange(input)
             }
         },
-        placeHolder = stringResource(R.string.signUp_nickName_hint_debug),
         helperUse = true,
         helperText = hint,
         showError = showError

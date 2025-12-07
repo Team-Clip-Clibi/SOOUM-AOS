@@ -58,22 +58,19 @@ class MembersRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun transferAccount(transferCode: String, info: String): Result<Unit> {
+    override suspend fun transferAccount(transferCode: String, deviceId: String): Result<Unit> {
         SooumLog.d(TAG, "transferAccount - transferCode: $transferCode")
 
         return try {
-            val deviceId = info.ifEmpty { deviceInfo.deviceId() }
             val deviceModel = deviceInfo.modelName()
             val deviceOsVersion = deviceInfo.osVersion()
-
             val request = TransferAccountRequestDTO(
                 transferCode = transferCode,
-                encryptedDeviceId = deviceId, // 실제로는 암호화된 값이어야 함
+                encryptedDeviceId = deviceId,
                 deviceType = "ANDROID",
                 deviceModel = deviceModel,
                 deviceOsVersion = deviceOsVersion
             )
-
             when (val result = apiCall(
                 apiCall = { membersHttp.transferAccount(request) },
                 mapper = { Unit }
