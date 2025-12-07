@@ -10,10 +10,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -90,7 +92,7 @@ object TagDesignTokens {
     val ColorfulIconTint = Primary.MAIN
 
     // 아이콘 색상
-    val IconTint = NeutralColor.GRAY_400
+    val IconTint = NeutralColor.GRAY_300
 
     // 사이즈
     val TagRadius = 8.dp
@@ -142,7 +144,8 @@ fun Tag(
     requestFocusKey: Int = 0,
     showRemoveIcon: Boolean = false,
     onInputFocusChanged: (Boolean) -> Unit = {},
-    fontFamily: FontFamily = FontFamily.Default
+    fontFamily: FontFamily = FontFamily.Default,
+    hideKeyboardOnFocusLost: Boolean = true
 ) {
     when (state) {
         TagState.AddNew -> TagAddNew(onClick = onClick, modifier = modifier)
@@ -157,7 +160,8 @@ fun Tag(
             modifier = modifier,
             requestFocusKey = requestFocusKey,
             onFocusChanged = onInputFocusChanged,
-            fontFamily = fontFamily
+            fontFamily = fontFamily,
+            hideKeyboardOnFocusLost = hideKeyboardOnFocusLost
         )
 
         TagState.Default -> TagDefault(
@@ -293,14 +297,18 @@ internal fun TagRow(
                 onInputFocusChanged = { focused ->
                     if (!focused) {
                         if (!awaitingFocus) {
-                            input = ""
-                            state = TagState.AddNew
+                            state = if (input.isBlank()) {
+                                TagState.AddNew
+                            } else {
+                                TagState.Input
+                            }
                         }
                     } else {
                         awaitingFocus = false
                     }
                 },
-                fontFamily = fontFamily
+                fontFamily = fontFamily,
+                hideKeyboardOnFocusLost = !awaitingFocus
             )
         }
     }
@@ -314,13 +322,16 @@ fun TagRankView(
     id: Long,
     onClick: (Long) -> Unit,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp)
-            .padding(top = 4.dp, bottom = 4.dp, end = 12.dp)
+            .padding( top= 4.dp, bottom = 4.dp, end = 12.dp)
             .clickable(
-                interactionSource = remember { MutableInteractionSource() },
+                interactionSource = interactionSource,
                 indication = null,
                 onClick = { onClick(id) }
             ),
@@ -338,8 +349,9 @@ fun TagRankView(
             Text(
                 text = text,
                 style = TextComponent.SUBTITLE_1_M_16,
-                color = NeutralColor.GRAY_600
+                color = if (isPressed) NeutralColor.GRAY_400 else NeutralColor.GRAY_600
             )
+            Spacer(Modifier.height(2.dp))
             Text(
                 text = when {
                     userCount < 1000 -> userCount.toString()
@@ -355,7 +367,7 @@ fun TagRankView(
                     }
                 },
                 style = TextComponent.CAPTION_2_M_12,
-                color = NeutralColor.GRAY_500
+                color = if (isPressed) NeutralColor.GRAY_300 else NeutralColor.GRAY_500
             )
         }
     }
@@ -404,7 +416,8 @@ private fun TagInputField(
     modifier: Modifier = Modifier,
     requestFocusKey: Int = 0,
     onFocusChanged: (Boolean) -> Unit = {},
-    fontFamily: FontFamily = FontFamily.Default
+    fontFamily: FontFamily = FontFamily.Default,
+    hideKeyboardOnFocusLost: Boolean = true
 ) {
     var isFocused by remember { mutableStateOf(false) }
     var isCompleted by remember { mutableStateOf(false) }
@@ -519,8 +532,9 @@ private fun TagInputField(
                 if (it.isFocused) {
                     isCompleted = false
                 } else {
-                    // 포커스가 해제되면 키보드를 숨김
-                    keyboardController?.hide()
+                    if (hideKeyboardOnFocusLost) {
+                        keyboardController?.hide()
+                    }
                     if (text.isNotEmpty()) {
                         isCompleted = true
                     }

@@ -9,13 +9,14 @@
     <string name="home_feed_20km_distance">20km</string>
     <string name="home_feed_50km_distance">50km</string>
     <string name="home_feed_no_card">아직 작성된 글이 없어요\n하고 싶은 이야기를 카드로 남겨보세요</string>
+    <string name="home_feed_load_error">카드를 불러오지 못했어요. 다시 시도해주세요.</string>
     <string name="home_notice_top_bar">알림</string>
     <string name="home_notice_activate">활동</string>
     <string name="home_notice_notice">서비스 점검</string>
     <string name="home_notice_news">숨 새소식</string>
     <string name="home_notice_last_title">지난 알림</string>
     <string name="home_notice_service">서비스 안내</string>
-    <string name="home_notice_no_notice">아직 알림이 없어요</string>
+    <string name="home_notice_no_notice">아직 표시할 알림이 없어요</string>
     <string name="home_notice_item_feed_like">카드</string>
     <string name="home_notice_item_follow">팔로우</string>
     <string name="home_notice_item_limit">제한</string>
@@ -26,4 +27,5 @@
     <string name="home_notice_under_card_like_comment">%1$s님이 회원님의 답카드에 좋아요를 남겼어요.</string>
     <string name="home_notice_limit_card_comment">운영정책 위반으로 인해 %1$s까지 카드추가가 제한됩니다.</string>
     <string name="home_notice_delete_card">운영정책 위반으로 인해 작성된 카드가 삭제 처리되었습니다.</string>
+    <string name="home_feed_dialog_delete_title">삭제된 카드예요</string>
 </resources>

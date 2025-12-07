@@ -1,4 +1,4 @@
-package com.phew.sign_up
+package com.phew.sign_up.view
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -27,21 +27,36 @@ import com.phew.core_design.NeutralColor
 import com.phew.core_design.Primary
 import com.phew.core_design.SignUpAgreeButton
 import com.phew.core_design.TextComponent
+import com.phew.sign_up.AGREEMENT_ALL
+import com.phew.sign_up.AGREEMENT_LOCATION
+import com.phew.sign_up.AGREEMENT_PERSONAL
+import com.phew.sign_up.AGREEMENT_SERVICE
+import com.phew.sign_up.Component
+import com.phew.sign_up.R
+import com.phew.sign_up.SignUp
+import com.phew.sign_up.SignUpViewModel
 
 @Composable
 fun SignUpAgreementView(
     viewModel: SignUpViewModel,
     nextPage: () -> Unit,
     back: () -> Unit,
+    onClickService: () -> Unit,
+    onClickLocation: () -> Unit,
+    onClickPrivate: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
     BackHandler {
+        viewModel.initSignUp()
         back()
     }
     Scaffold(
         topBar = {
             AppBar.IconLeftAppBar(
-                onClick = back,
+                onClick = {
+                    viewModel.initSignUp()
+                    back()
+                },
                 appBarText = stringResource(R.string.signUp_app_bar)
             )
         },
@@ -78,9 +93,14 @@ fun SignUpAgreementView(
                 )
         ) {
             PageNumberView()
-            ContentView(uiState = uiState, onClick = remember(viewModel) {
-                { agreement: String -> viewModel.agreement(agreement) }
-            })
+            ContentView(
+                uiState = uiState,
+                onClick = remember(viewModel) {
+                    { agreement: String -> viewModel.agreement(agreement) }
+                },
+                onClickService = onClickService,
+                onClickLocation = onClickLocation,
+                onClickPrivate = onClickPrivate)
         }
     }
 }
@@ -102,7 +122,12 @@ private fun PageNumberView() {
 }
 
 @Composable
-private fun ContentView(uiState: SignUp, onClick: (String) -> Unit) {
+private fun ContentView(
+    uiState: SignUp, onClick: (String) -> Unit,
+    onClickService: () -> Unit,
+    onClickLocation: () -> Unit,
+    onClickPrivate: () -> Unit,
+) {
     Text(
         text = stringResource(R.string.signUp_agree_txt_title),
         style = TextComponent.HEAD_2_B_24,
@@ -126,9 +151,7 @@ private fun ContentView(uiState: SignUp, onClick: (String) -> Unit) {
             onClick(AGREEMENT_SERVICE)
         },
         isSelected = uiState.agreedToTermsOfService || uiState.agreementAll,
-        endClick = {
-            //TODO 추후 노션 연결
-        }
+        endClick = onClickService
     )
     SignUpAgreeButton.AgreeButton(
         text = stringResource(R.string.signUp_agree_txt_location),
@@ -136,9 +159,7 @@ private fun ContentView(uiState: SignUp, onClick: (String) -> Unit) {
             onClick(AGREEMENT_LOCATION)
         },
         isSelected = uiState.agreedToLocationTerms || uiState.agreementAll,
-        endClick = {
-            //TODO 추후 노션 연결
-        }
+        endClick = onClickLocation
     )
     SignUpAgreeButton.AgreeButton(
         text = stringResource(R.string.signUp_agree_personal),
@@ -146,8 +167,6 @@ private fun ContentView(uiState: SignUp, onClick: (String) -> Unit) {
             onClick(AGREEMENT_PERSONAL)
         },
         isSelected = uiState.agreedToPrivacyPolicy || uiState.agreementAll,
-        endClick = {
-            //TODO 추후 노션 연결
-        }
+        endClick = onClickPrivate
     )
 }

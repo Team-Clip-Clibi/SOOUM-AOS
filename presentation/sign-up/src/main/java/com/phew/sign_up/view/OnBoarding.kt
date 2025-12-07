@@ -1,4 +1,4 @@
-package com.phew.sign_up
+package com.phew.sign_up.view
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -43,6 +43,9 @@ import com.phew.domain.SIGN_UP_BANNED
 import com.phew.domain.SIGN_UP_OKAY
 import com.phew.domain.SIGN_UP_REGISTERED
 import com.phew.domain.SIGN_UP_WITHDRAWN
+import com.phew.sign_up.R
+import com.phew.sign_up.SignUpViewModel
+import com.phew.sign_up.UiState
 import com.phew.sign_up.dto.SignUpResult
 
 @Composable
@@ -58,43 +61,22 @@ fun OnBoarding(
     val snackBarHostState = remember { SnackbarHostState() }
     val dialogShow = remember { mutableStateOf(false) }
     val withdrawalDialogShow = remember { mutableStateOf(showWithdrawalDialog) }
-    val context = LocalContext.current
-    val onHome = remember(home) { { home() } }
     BackHandler(onBack = remember(back) { { back() } })
-    LaunchedEffect(uiState, onHome, snackBarHostState, context) {
-        if (uiState.checkSignUp is UiState.Fail || uiState.login is UiState.Fail) {
-            snackBarHostState.showSnackbar(
-                message = context.getString(com.phew.core_design.R.string.error_network),
-                duration = SnackbarDuration.Short
-            )
-        }
-        if (uiState.login is UiState.Success) {
-            onHome()
-        }
-    }
+    HandleCheckSignUp(
+        checkSignUpState = uiState.checkSignUp,
+        loginState = uiState.login,
+        snackBarHostState = snackBarHostState,
+        signUp = signUp,
+        dialogShow = {
+            dialogShow.value = true
+        },
+        login = viewModel::login,
+        onHome = remember(home) { { home() } }
+    )
     Scaffold(
         bottomBar = {
             BottomView(
-                onClickStart = {
-                    when (val checkSignUpResult = uiState.checkSignUp) {
-                        is UiState.Success -> {
-                            when (checkSignUpResult.data.result) {
-                                SIGN_UP_OKAY -> {
-                                    signUp()
-                                }
-
-                                SIGN_UP_REGISTERED -> {
-                                    viewModel.login()
-                                }
-                                SIGN_UP_ALREADY_SIGN_UP -> {
-                                    viewModel.login()
-                                }
-                                else -> dialogShow.value = true
-                            }
-                        }
-                        else -> Unit
-                    }
-                },
+                onClickStart = viewModel::checkRegister,
                 onClickAlreadySignUp = remember(alreadySignUp) { alreadySignUp }
             )
         },
@@ -133,6 +115,53 @@ fun OnBoarding(
 }
 
 @Composable
+private fun HandleCheckSignUp(
+    checkSignUpState: UiState<SignUpResult>,
+    loginState: UiState<Unit>,
+    snackBarHostState: SnackbarHostState,
+    signUp: () -> Unit,
+    login: () -> Unit,
+    dialogShow: () -> Unit,
+    onHome: () -> Unit,
+) {
+    val context = LocalContext.current
+    LaunchedEffect(checkSignUpState, loginState, snackBarHostState) {
+        when (checkSignUpState) {
+            is UiState.Fail -> {
+                snackBarHostState.showSnackbar(
+                    message = context.getString(com.phew.core_design.R.string.error_network),
+                    duration = SnackbarDuration.Short
+                )
+            }
+
+            is UiState.Success -> {
+                when (checkSignUpState.data.result) {
+                    SIGN_UP_OKAY -> {
+                        signUp()
+                    }
+
+                    SIGN_UP_REGISTERED, SIGN_UP_ALREADY_SIGN_UP -> login()
+                    else -> dialogShow()
+                }
+            }
+
+            else -> Unit
+        }
+        when (loginState) {
+            is UiState.Fail -> {
+                snackBarHostState.showSnackbar(
+                    message = context.getString(com.phew.core_design.R.string.error_network),
+                    duration = SnackbarDuration.Short
+                )
+            }
+
+            is UiState.Success -> onHome()
+            else -> Unit
+        }
+    }
+}
+
+@Composable
 private fun TitleView() {
     Text(
         text = stringResource(R.string.onBoarding_txt_title),
@@ -140,7 +169,7 @@ private fun TitleView() {
         color = NeutralColor.BLACK,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 4.dp)
+            .padding(bottom = 8.dp)
     )
     Text(
         text = stringResource(R.string.onBoarding_txt_sub_title),
@@ -232,7 +261,7 @@ private fun DialogView(data: SignUpResult, onclick: () -> Unit) {
         SIGN_UP_BANNED -> {
             DialogComponent.DefaultButtonOne(
                 title = stringResource(R.string.onBoarding_dialog_banned_title),
-                description = stringResource(R.string.onBoarding_dialog_banned_content, data.time),
+                description = stringResource(R.string.onBoarding_dialog_banned_content, data.reFormTime),
                 onClick = onclick,
                 onDismiss = onclick,
                 buttonText = stringResource(com.phew.core_design.R.string.common_okay)
@@ -242,7 +271,7 @@ private fun DialogView(data: SignUpResult, onclick: () -> Unit) {
         SIGN_UP_WITHDRAWN -> {
             DialogComponent.DefaultButtonOne(
                 title = stringResource(R.string.onBoarding_dialog_withdraw_title),
-                description = stringResource(R.string.onBoarding_dialog_withdraw_content, data.time),
+                description = stringResource(R.string.onBoarding_dialog_withdraw_content, data.reFormTime),
                 onClick = onclick,
                 onDismiss = onclick,
                 buttonText = stringResource(com.phew.core_design.R.string.common_okay)
@@ -261,4 +290,3 @@ private fun WithdrawalCompleteDialog(onDismiss: () -> Unit) {
         buttonText = stringResource(com.phew.core_design.R.string.common_okay)
     )
 }
-

@@ -114,7 +114,7 @@ private fun CardViewCommentImpl(
                 modifier = Modifier.weight(1f),
                 contentText = contentText,
                 imgUrl = thumbnailUri,
-                fontFamily = resolveFontFamily(font = font),
+                font = font,
                 textMaxLines = 4,
                 useFixedHeight = false
             )
@@ -200,33 +200,4 @@ fun CommentBodyContent(
             )
         }
     }
-}
-fun Modifier.shimmerEffect(): Modifier = composed {
-    val transition = rememberInfiniteTransition(label = "shimmer")
-    val translateAnim by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1000f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = 1000, // 1초 동안 반짝임
-                easing = LinearEasing
-            ),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "shimmer"
-    )
-
-    val shimmerColors = listOf(
-        Color.LightGray.copy(alpha = 0.6f),
-        Color.LightGray.copy(alpha = 0.2f),
-        Color.LightGray.copy(alpha = 0.6f),
-    )
-
-    val brush = Brush.linearGradient(
-        colors = shimmerColors,
-        start = Offset.Zero,
-        end = Offset(x = translateAnim, y = translateAnim)
-    )
-
-    background(brush)
 }

@@ -38,7 +38,7 @@ class DeviceRepositoryImpl @Inject constructor(
     override suspend fun saveToken(key: String, data: Token): Boolean {
         return dataStoreLocal.insertToken(
             key = key,
-            data = Pair(data.refreshToken, data.refreshToken)
+            data = Pair(data.refreshToken, data.accessToken)
         )
     }
 
@@ -119,25 +119,15 @@ class DeviceRepositoryImpl @Inject constructor(
     override suspend fun saveProfileInfo(
         profileKey: String,
         nickName: String,
-        profileImageUrl: String,
-        profileImageName: String,
     ): Boolean {
-        return dataStoreLocal.saveProfileInfo(
+        return dataStoreLocal.saveNickName(
             profileKey = profileKey, data = ProfileInfoDTO(
-                nickName = nickName,
-                profileImageUrl = profileImageUrl,
-                profileImageName = profileImageName
+                nickName = nickName
             )
         )
     }
 
-    override suspend fun getProfileInfo(profileKey: String): Triple<String, String, String>? {
-        return dataStoreLocal.getProfileInfo(profileKey = profileKey)?.let { data ->
-            Triple(
-                data.nickName,
-                data.profileImageUrl,
-                data.profileImageName
-            )
-        }
+    override suspend fun getProfileInfo(profileKey: String): String? {
+        return dataStoreLocal.getNickName(profileKey = profileKey)?.nickName
     }
 }

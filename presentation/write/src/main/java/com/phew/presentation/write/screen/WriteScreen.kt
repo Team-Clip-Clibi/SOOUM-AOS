@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,7 +29,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,6 +42,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.PointerType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
@@ -82,12 +89,11 @@ import com.phew.core_design.component.filter.SooumFilter
 import com.phew.presentation.write.model.BackgroundFilterType
 import com.phew.presentation.write.screen.component.ImageGrid
 import com.phew.presentation.write.R as WriteR
-
-/**
- *  추후 작업
- *  1. 완료 되면 어디로 이동해야 하는지
- */
 import androidx.navigation.NavController
+import com.phew.core.ui.model.navigation.CardDetailArgs
+import com.phew.core_common.log.SooumLog
+import com.phew.presentation.write.utils.WriteErrorCase
+import com.phew.presentation.write.viewmodel.UiState
 
 @Composable
 internal fun WriteRoute(
@@ -96,7 +102,8 @@ internal fun WriteRoute(
     args: WriteArgs? = null,
     viewModel: WriteViewModel = hiltViewModel(),
     onBackPressed: () -> Unit,
-    onWriteComplete: () -> Unit
+    onWriteComplete: (CardDetailArgs) -> Unit,
+    onHome: () -> Unit,
 ) {
     BackHandler {
         onBackPressed()
@@ -136,8 +143,9 @@ internal fun WriteRoute(
     // 완료 이벤트 처리
     LaunchedEffect(Unit) {
         viewModel.writeCompleteEvent.collect {
+            SooumLog.d(TAG, "writeCompleteEvent")
             navController.previousBackStackEntry?.savedStateHandle?.set("card_added", true)
-            onWriteComplete()
+            onWriteComplete(CardDetailArgs(cardId = it))
         }
     }
 
@@ -147,9 +155,14 @@ internal fun WriteRoute(
             viewModel.setParentCardId(parentCardId)
         }
     }
-
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val compareContent = stringResource(WriteR.string.write_card_content_default_placeholder)
+
+    LaunchedEffect(uiState.errorCase) {
+        if(uiState.errorCase != WriteErrorCase.NONE){
+            viewModel.showErrorDialog(true)
+        }
+    }
 
     WriteScreen(
         modifier = modifier,
@@ -214,6 +227,8 @@ internal fun WriteRoute(
         onRemoveTag = viewModel::removeTag,
         onRelatedTagClick = { tagItem -> viewModel.addTag(tagItem.name) },
         focusTagInput = uiState.focusTagInput,
+        onCompleteTagInput = viewModel::completeTagInput,
+        onResetTagInput = viewModel::resetTagInput,
         onTagFocusHandled = viewModel::onTagInputFocusHandled,
         onWriteComplete = viewModel::onWriteComplete,
         showBackgroundPicker = uiState.showBackgroundPickerSheet,
@@ -230,7 +245,18 @@ internal fun WriteRoute(
         onCameraCaptureResult = viewModel::onBackgroundCameraCaptureResult,
         onGallerySettingsResult = viewModel::onGallerySettingsResult,
         onCameraSettingsResult = viewModel::onCameraSettingsResult,
-        hideRelatedTags = viewModel::hideRelatedTags
+        hideRelatedTags = viewModel::hideRelatedTags,
+        showErrorDialog = uiState.showErrorDialog,
+        activateDate = if(uiState.activateDate is  UiState.Success) {
+            (uiState.activateDate as UiState.Success).data
+        } else {
+            ""
+        },
+        errorCase = uiState.errorCase,
+        onClickErrorDialog = {
+            viewModel.showErrorDialog(false)
+            onHome()
+        }
     )
 }
 
@@ -276,6 +302,8 @@ private fun WriteScreen(
     onRemoveTag: (String) -> Unit,
     onRelatedTagClick: (NumberTagItem) -> Unit,
     focusTagInput: Boolean,
+    onCompleteTagInput: () -> Unit,
+    onResetTagInput: () -> Unit,
     onTagFocusHandled: () -> Unit,
     onWriteComplete: () -> Unit,
     showBackgroundPicker: Boolean,
@@ -293,9 +321,12 @@ private fun WriteScreen(
     onRequestGalleryPermissionFromSettings: () -> Unit,
     onGallerySettingsResult: (Boolean) -> Unit,
     onCameraSettingsResult: (Boolean) -> Unit,
-    hideRelatedTags: () -> Unit
+    hideRelatedTags: () -> Unit,
+    showErrorDialog: Boolean,
+    activateDate: String,
+    errorCase: WriteErrorCase,
+    onClickErrorDialog: () -> Unit,
 ) {
-
     val snackBarHostState = remember { SnackbarHostState() }
     val cameraPermissions = arrayOf(Manifest.permission.CAMERA)
     val albumPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -331,14 +362,28 @@ private fun WriteScreen(
 
     var isCardFocused by remember { mutableStateOf(false) }
     val isImeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
-    val isScrolling = rememberScrollState().isScrollInProgress
+    var lastImeVisible by remember { mutableStateOf(isImeVisible) }
+    val finalizeTagInputIfNeeded: () -> Unit = {
+        if (currentTagInput.isNotBlank()) {
+            onCompleteTagInput()
+        } else {
+            onResetTagInput()
+        }
+    }
 
-    LaunchedEffect(isImeVisible, isScrolling, isCardFocused) {
-        if (!isImeVisible || isScrolling || isCardFocused) {
+    LaunchedEffect(isImeVisible) {
+        if (!isImeVisible && lastImeVisible) {
             hideRelatedTags()
-            if (isCardFocused) {
-                isCardFocused = false
-            }
+            finalizeTagInputIfNeeded()
+        }
+        lastImeVisible = isImeVisible
+    }
+
+    LaunchedEffect(isCardFocused) {
+        if (isCardFocused) {
+            hideRelatedTags()
+            finalizeTagInputIfNeeded()
+            isCardFocused = false
         }
     }
 
@@ -404,8 +449,11 @@ private fun WriteScreen(
         }
     ) { innerPadding ->
         val scrollState = rememberScrollState()
-        LaunchedEffect(scrollState.isScrollInProgress) {
-            if (scrollState.isScrollInProgress) {
+        var isUserDragging by remember { mutableStateOf(false) }
+        LaunchedEffect(scrollState.isScrollInProgress, isUserDragging) {
+            if (scrollState.isScrollInProgress && isUserDragging) {
+                finalizeTagInputIfNeeded()
+                hideRelatedTags()
                 keyboard?.hide()
                 focusManager.clearFocus()
             }
@@ -420,6 +468,26 @@ private fun WriteScreen(
             Column(
                 modifier = Modifier
                     .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .pointerInput(isImeVisible) {
+                        awaitPointerEventScope {
+                            while (true) {
+                                val event = awaitPointerEvent()
+                                if (!isImeVisible) continue
+                                val dragDetected = event.changes.any { pointer ->
+                                    pointer.type == PointerType.Touch &&
+                                        pointer.pressed &&
+                                        !pointer.isConsumed &&
+                                        pointer.positionChange() != Offset.Zero
+                                }
+                                if (dragDetected) {
+                                    isUserDragging = true
+                                }
+                                if (!event.changes.any { it.pressed }) {
+                                    isUserDragging = false
+                                }
+                            }
+                        }
+                    }
                     .verticalScroll(scrollState)
                     .weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -466,11 +534,19 @@ private fun WriteScreen(
                     fontItem = CustomFont.fontData,
                     selectedFont = selectedFont,
                     onFontSelected = onFontSelected
-                )
-            }
+                    )
+                }
 
             val showRelatedTags = relatedTags.isNotEmpty() && isImeVisible
             val showOptionButtons = relatedTags.isEmpty() && !isImeVisible
+            val density = LocalDensity.current
+            LaunchedEffect(showRelatedTags) {
+                if (showRelatedTags) {
+                    //   TODO 고정 값이 아닌 다른 방안이 필요
+                    val shift = with(density) { 30.dp.toPx() }
+                    scrollState.animateScrollBy(shift)
+                }
+            }
 
             if (showRelatedTags) {
                 NumberTagFlowLayout(
@@ -511,7 +587,8 @@ private fun WriteScreen(
                 onRequestLocationPermission()
                 onDismissLocationDialog()
             },
-            onDismiss = onDismissLocationDialog
+            onDismiss = onDismissLocationDialog,
+            startButtonTextColor = NeutralColor.GRAY_600
         )
     }
 
@@ -527,7 +604,17 @@ private fun WriteScreen(
                 settingsLauncher.launch(appSettingsIntent(context))
                 onDismissCameraDialog()
             },
-            onDismiss = onDismissCameraDialog
+            onDismiss = onDismissCameraDialog,
+            startButtonTextColor = NeutralColor.GRAY_600
+        )
+    }
+    if (showErrorDialog) {
+        ErrorDialog(
+            errorCase = errorCase,
+            activateDate = activateDate,
+            context = context,
+            onclick = onClickErrorDialog,
+            snackBarHostState = snackBarHostState
         )
     }
 
@@ -543,7 +630,8 @@ private fun WriteScreen(
                 settingsLauncher.launch(appSettingsIntent(context))
                 onDismissGalleryDialog()
             },
-            onDismiss = onDismissGalleryDialog
+            onDismiss = onDismissGalleryDialog,
+            startButtonTextColor = NeutralColor.GRAY_600
         )
     }
 
@@ -552,6 +640,59 @@ private fun WriteScreen(
         onActionSelected = onCameraPickerAction,
         onDismiss = onCameraPickerDismissed
     )
+}
+
+@Composable
+private fun ErrorDialog(
+    errorCase: WriteErrorCase,
+    activateDate: String,
+    snackBarHostState: SnackbarHostState,
+    context: Context,
+    onclick: () -> Unit,
+) {
+    when (errorCase) {
+        WriteErrorCase.ERROR_RESTRICT -> {
+            DialogComponent.DefaultButtonOne(
+                title = stringResource(com.phew.presentation.write.R.string.write_screen_dialog_restrict_title),
+                description = stringResource(
+                    com.phew.presentation.write.R.string.write_screen_dialog_restrict_message,
+                    activateDate
+                ),
+                onClick = onclick,
+                onDismiss = onclick,
+                buttonText = stringResource(com.phew.core_design.R.string.common_okay)
+            )
+        }
+
+        WriteErrorCase.ERROR_DELETE -> {
+            DialogComponent.NoDescriptionButtonOne(
+                title = stringResource(com.phew.presentation.write.R.string.write_screen_dialog_delete_title),
+                buttonText = stringResource(com.phew.core_design.R.string.common_okay),
+                onClick = onclick,
+                onDismiss = onclick
+            )
+        }
+
+        WriteErrorCase.ERROR_NETWORK -> {
+            LaunchedEffect(errorCase) {
+                snackBarHostState.showSnackbar(
+                    message = context.getString(com.phew.core_design.R.string.error_network),
+                    duration = SnackbarDuration.Short
+                )
+            }
+        }
+
+        WriteErrorCase.ERROR_JOB_FAIL -> {
+            LaunchedEffect(errorCase) {
+                snackBarHostState.showSnackbar(
+                    message = context.getString(com.phew.core_design.R.string.error_app),
+                    duration = SnackbarDuration.Short
+                )
+            }
+        }
+
+        else -> Unit
+    }
 }
 
 private fun appSettingsIntent(context: Context): Intent =
@@ -586,7 +727,9 @@ private fun BackgroundSelect(
     onImageSelected: (String) -> Unit,
     onCameraClick: () -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxWidth().padding(top = 24.dp)) {
+    Column(modifier = Modifier
+        .fillMaxWidth()
+        .padding(top = 24.dp)) {
         Text(
             text = stringResource(com.phew.presentation.write.R.string.write_screen_background_section),
             style = TextComponent.CAPTION_1_SB_12.copy(color = Primary.DARK),
@@ -655,18 +798,16 @@ private fun OptionButtons(
             .fillMaxWidth()
             .background(NeutralColor.WHITE)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(NeutralColor.GRAY_200)
-                .height(1.dp)
-        )
+        Spacer(modifier = Modifier
+            .height(1.dp)
+            .background(NeutralColor.GRAY_200))
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             options.forEach { option ->
                 val isDistanceOption = option.id == WriteOptions.DISTANCE_OPTION_ID

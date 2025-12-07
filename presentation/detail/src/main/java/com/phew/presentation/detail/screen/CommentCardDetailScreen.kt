@@ -79,6 +79,7 @@ import com.phew.presentation.detail.model.MoreAction
 import com.phew.presentation.detail.viewmodel.CardDetailError
 import com.phew.presentation.detail.viewmodel.CardDetailViewModel
 import com.phew.core_design.CustomFont
+import com.phew.presentation.detail.component.CardDetailTopBar
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -91,6 +92,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import kotlinx.coroutines.launch
 import com.airbnb.lottie.compose.LottieConstants
+import com.phew.core_design.LoadingAnimation
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -103,6 +105,7 @@ internal fun CommentCardDetailScreen(
     onNavigateToViewTags: (com.phew.core.ui.model.navigation.TagViewArgs) -> Unit,
     onBackPressed: (Long) -> Unit,
     onFeedPressed: () -> Unit,
+    onTagPressed: () -> Unit,
     onProfileClick: (Long) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -126,16 +129,21 @@ internal fun CommentCardDetailScreen(
                     // 화면을 벗어날 때 flag 설정
                     hasResumed = false
                 }
+
                 Lifecycle.Event.ON_RESUME -> {
                     // 두 번째 Resume부터만 새로고침 (WriteScreen에서 복귀 시)
                     if (hasResumed) {
-                        SooumLog.d(TAG, "CommentCardDetailScreen resumed from WriteScreen - refreshing data")
+                        SooumLog.d(
+                            TAG,
+                            "CommentCardDetailScreen resumed from WriteScreen - refreshing data"
+                        )
                         viewModel.loadCardDetail(args.cardId)
                         viewModel.requestComment(args.cardId)
                     } else {
                         hasResumed = true
                     }
                 }
+
                 else -> {}
             }
         }
@@ -163,11 +171,7 @@ internal fun CommentCardDetailScreen(
                 .windowInsetsPadding(WindowInsets.statusBars),
             contentAlignment = Alignment.Center
         ) {
-            LottieAnimation(
-                composition = composition,
-                progress = { refreshProgress },
-                modifier = Modifier.size(44.dp)
-            )
+            LoadingAnimation.LoadingView()
         }
         return
     }
@@ -178,17 +182,24 @@ internal fun CommentCardDetailScreen(
     var showBottomSheet by remember { mutableStateOf(false) }
     val isDelete = uiState.deleteSuccess || isTimerExpired
     val snackBarHostState = remember { SnackbarHostState() }
-    val onBackPressedLambda = remember(args.parentId) { { onBackPressed(args.parentId) } }
+    val onBackPressedLambda = remember(cardDetail.previousCardId) { {
+        val parentId = cardDetail.previousCardId?.toLongOrNull() ?: 0L
+        SooumLog.d(TAG, "parentId : $parentId")
+        onBackPressed(parentId)
+    } }
     val showBottomSheetLambda = remember { { showBottomSheet = true } }
     val onExpireLambda = remember { { isTimerExpired = true } }
     val onClickLikeLambda = remember(args.cardId) { { viewModel.toggleLike(args.cardId) } }
-    val onClickPreviousCard = remember { { onBackPressed(args.parentId) } }
+    val onClickPreviousCard = remember(cardDetail.previousCardId) { {
+        val parentId = cardDetail.previousCardId?.toLongOrNull() ?: 0L
+        onBackPressed(parentId)
+    } }
     val onCommentClickLambda: (Long) -> Unit = remember(args.cardId) {
         { childId ->
             onNavigateToComment(
                 CardDetailCommentArgs(
-                    parentId = args.cardId,
-                    cardId = childId
+                    cardId = childId,
+                    parentId = cardDetail.cardId
                 )
             )
         }
@@ -221,6 +232,12 @@ internal fun CommentCardDetailScreen(
             Unit // 명시적으로 Unit 반환
         }
     }
+    LaunchedEffect(uiState.error) {
+      if(uiState.error == CardDetailError.CARD_DELETE){
+          viewModel.setDeleteDialog()
+      }
+    }
+
     HandleBlockUser(
         blockSuccess = uiState.blockSuccess,
         nickName = cardDetail.nickname,
@@ -229,7 +246,7 @@ internal fun CommentCardDetailScreen(
         snackBarHostState = snackBarHostState
     )
     val errorType = uiState.error
-    if (errorType != null) {
+    if (errorType != null && errorType != CardDetailError.CARD_DELETE) {
         HandleError(
             errorType = errorType,
             snackBarHostState = snackBarHostState,
@@ -238,16 +255,28 @@ internal fun CommentCardDetailScreen(
     }
     val refreshState = rememberPullToRefreshState()
     val density = LocalDensity.current
+    val showDetailTopBar = cardDetail.previousCardId.isNullOrEmpty()
     Scaffold(
         topBar = {
-            TopLayout(
-                storyRemainingMillis = cardDetail.endTime,
-                onFeedPressed = onFeedPressed,
-                onBackPressed = onBackPressedLambda,
-                showBottomSheet = showBottomSheetLambda,
-                onExpire = onExpireLambda,
-                memberId = cardDetail.memberId
-            )
+            if (showDetailTopBar) {
+                CardDetailTopBar(
+                    remainingTimeMillis = cardDetail.endTime,
+                    onBackPressed = onBackPressedLambda,
+                    onMoreClick = showBottomSheetLambda
+                )
+            } else {
+                TopLayout(
+                    storyRemainingMillis = cardDetail.endTime,
+                    onFeedPressed = when (args.backTo) {
+                        "tag" -> onTagPressed
+                        else -> onFeedPressed
+                    },
+                    onBackPressed = onBackPressedLambda,
+                    showBottomSheet = showBottomSheetLambda,
+                    onExpire = onExpireLambda,
+                    memberId = cardDetail.memberId
+                )
+            }
         },
         snackbarHost = {
             DialogComponent.CustomAnimationSnackBarHost(hostState = snackBarHostState)
@@ -326,6 +355,12 @@ internal fun CommentCardDetailScreen(
                         deleteCard = deleteCardLambda
                     )
                 }
+                if (uiState.deleteErrorDialog) {
+                    DeleteDialog(onClick = {
+                        viewModel.clearError()
+                        onFeedPressed()
+                    })
+                }
             }
         }
     }
@@ -396,7 +431,6 @@ private fun CardView(
             .fillMaxSize()
             .background(color = NeutralColor.WHITE)
     ) {
-
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
@@ -611,7 +645,8 @@ private fun BottomSheetView(
                 showDeleteDialog = false
             },
             rightButtonBaseColor = Danger.M_RED,
-            rightButtonClickColor = Danger.D_RED
+            rightButtonClickColor = Danger.D_RED,
+            startButtonTextColor = NeutralColor.GRAY_600
         )
     }
 
@@ -629,7 +664,8 @@ private fun BottomSheetView(
                 showBlockDialog = false
                 onBlockMember()
             },
-            onDismiss = { showBlockDialog = false }
+            onDismiss = { showBlockDialog = false },
+            startButtonTextColor = NeutralColor.GRAY_600
         )
     }
 }
@@ -696,6 +732,7 @@ private fun HandleError(
         CardDetailError.COMMENTS_LOAD_FAILED -> stringResource(R.string.card_detail_error_comments)
         CardDetailError.CARD_LOAD_FAILED -> stringResource(R.string.card_detail_error_load_card)
         CardDetailError.NETWORK_ERROR -> stringResource(R.string.card_detail_error_load_card)
+        else -> ""
     }
     LaunchedEffect(errorType) {
         snackBarHostState.showSnackbar(
@@ -704,6 +741,16 @@ private fun HandleError(
         )
         onDismissError()
     }
+}
+
+@Composable
+private fun DeleteDialog(onClick: () -> Unit){
+    DialogComponent.NoDescriptionButtonOne(
+        title = stringResource(com.phew.presentation.detail.R.string.card_detail_dialog_delete_title),
+        buttonText = stringResource(com.phew.core_design.R.string.common_okay),
+        onClick = onClick,
+        onDismiss = onClick
+    )
 }
 
 private const val TAG = "CardCommentDetailScreen"

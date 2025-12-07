@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
 class ApplicationConvention : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
         val libs = extensions.getByType<VersionCatalogsExtension>().named("libs")
-
         pluginManager.apply("com.android.application")
         pluginManager.apply("org.jetbrains.kotlin.android")
         pluginManager.apply("com.google.dagger.hilt.android")
@@ -20,6 +19,7 @@ class ApplicationConvention : Plugin<Project> {
         pluginManager.apply("com.google.devtools.ksp")
         pluginManager.apply("com.google.gms.google-services")
         pluginManager.apply("sooum.android.lint.convention")
+        pluginManager.apply("com.google.firebase.crashlytics")
         extensions.getByType<ApplicationExtension>().apply {
             namespace = "com.phew.sooum"
             compileSdk = 36
@@ -31,12 +31,45 @@ class ApplicationConvention : Plugin<Project> {
                 versionName = "1.0.10"
                 testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
             }
-            buildTypes.getByName("release").apply {
-                isMinifyEnabled = false
-                proguardFiles(
-                    getDefaultProguardFile("proguard-android-optimize.txt"),
-                    "proguard-rules.pro"
-                )
+            signingConfigs {
+                create("release") {
+                    val keystorePropertiesFile = rootProject.file("keystore.properties")
+                    if (keystorePropertiesFile.exists()) {
+                        val properties = java.util.Properties()
+                        properties.load(java.io.FileInputStream(keystorePropertiesFile))
+                        storeFile = file(properties.getProperty("storeFile"))
+                        storePassword = properties.getProperty("storePassword")
+                        keyAlias = properties.getProperty("keyAlias")
+                        keyPassword = properties.getProperty("keyPassword")
+                    }
+                }
+            }
+            buildTypes {
+                getByName("debug") {
+                    isMinifyEnabled = false
+                    isDebuggable = true
+                    versionNameSuffix = "-debug"
+                }
+                getByName("release") {
+                    isMinifyEnabled = true
+                    isDebuggable = false
+                    signingConfig = signingConfigs.getByName("release")
+                    proguardFiles(
+                        getDefaultProguardFile("proguard-android-optimize.txt"),
+                        "proguard-rules.pro"
+                    )
+                }
+            }
+            flavorDimensions += "environment"
+            productFlavors {
+                create("dev") {
+                    dimension = "environment"
+                    versionNameSuffix = "-dev"
+                }
+                create("prod") {
+                    dimension = "environment"
+                    versionNameSuffix = "-prod"
+                }
             }
             compileOptions {
                 sourceCompatibility = JavaVersion.VERSION_21
@@ -81,6 +114,7 @@ class ApplicationConvention : Plugin<Project> {
             "implementation"(libs.findLibrary("compose-nav").get())
             //firebase
             "implementation"(libs.findLibrary("firebase-bom").get())
+            "implementation"(libs.findLibrary("firebase-crashlytics").get())
             //module
             add("implementation", project(":presentation"))
             add("implementation", project(":presentation:splash"))

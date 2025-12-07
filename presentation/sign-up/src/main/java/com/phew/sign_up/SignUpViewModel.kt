@@ -33,15 +33,38 @@ class SignUpViewModel @Inject constructor(
     private val getNickName: GetNickName,
     private val requestSignUp: RequestSignUp,
     private val checkNickName: CheckNickName,
-    private val restoreAccount : RestoreAccount
+    private val restoreAccount: RestoreAccount
 ) : ViewModel() {
 
     private var _uiState = MutableStateFlow(SignUp())
     val uiState: StateFlow<SignUp> = _uiState.asStateFlow()
 
-    init {
-        generateNickName()
-        checkRegister()
+    /**
+     * 동의 화면에서 뒤로가기 클릭시 데이터 초기화
+     */
+    fun initSignUp() {
+        _uiState.update { state ->
+            state.copy(
+                nickName = "",
+                agreementAll = false,
+                agreedToTermsOfService = false,
+                agreedToPrivacyPolicy = false,
+                agreedToLocationTerms = false,
+                profile = listOf(Uri.EMPTY),
+                checkSignUp = UiState.Loading,
+            )
+        }
+    }
+
+    /**
+     * 인증 코드 초기화 함수
+     */
+    fun initAuthCode(){
+        _uiState.update { state ->
+            state.copy(
+                authCode = ""
+            )
+        }
     }
 
     /**
@@ -76,7 +99,7 @@ class SignUpViewModel @Inject constructor(
                     agreedToPrivacyPolicy = _uiState.value.agreedToPrivacyPolicy,
                     agreedToTermsOfService = _uiState.value.agreedToTermsOfService,
                     nickName = _uiState.value.nickName,
-                    profileImage = _uiState.value.profile.toString()
+                    profileImage = uiState.value.profile.lastOrNull()?.toString() ?: Uri.EMPTY.toString()
                 )
             )) {
                 is DomainResult.Failure -> {
@@ -129,7 +152,8 @@ class SignUpViewModel @Inject constructor(
      */
     fun restoreAccount() {
         viewModelScope.launch(Dispatchers.IO) {
-            when (val result = restoreAccount(RestoreAccount.Param(_uiState.value.authCode.trim()))) {
+            when (val result =
+                restoreAccount(RestoreAccount.Param(_uiState.value.authCode.trim()))) {
                 is DomainResult.Failure -> {
                     _uiState.update { state ->
                         state.copy(restoreAccountResult = UiState.Fail(result.error))
@@ -195,7 +219,7 @@ class SignUpViewModel @Inject constructor(
     /**
      * 회원 가입 가능 여부 확인
      */
-    private fun checkRegister() {
+     fun checkRegister() {
         viewModelScope.launch(Dispatchers.IO) {
             when (val result = checkSignUp()) {
                 is DomainResult.Failure -> {
@@ -214,9 +238,10 @@ class SignUpViewModel @Inject constructor(
                                     time = result.data.second,
                                     result = result.data.first
                                 )
-                            ),
+                            )
                         )
                     }
+                    generateNickName()
                 }
             }
         }
@@ -245,16 +270,6 @@ class SignUpViewModel @Inject constructor(
         }
     }
 
-
-    /**
-     * 닉네임 중복 검사 여부 초기화
-     */
-    fun initNickName() {
-        _uiState.update { state ->
-            state.copy(checkNickName = UiState.Loading)
-        }
-    }
-
     /**
      * 닉네임
      */
@@ -270,7 +285,7 @@ class SignUpViewModel @Inject constructor(
      */
     private fun updateProfile(uri: Uri) {
         _uiState.update { state ->
-            state.copy(profile = uri)
+            state.copy(profile = state.profile + uri)
         }
     }
 
@@ -302,6 +317,15 @@ class SignUpViewModel @Inject constructor(
                     )
                 }
             }
+
+            CameraPickerAction.Default -> {
+                _uiState.update { state ->
+                    state.copy(
+                        profile = listOf(Uri.EMPTY),
+                        profileBottom = false
+                    )
+                }
+            }
         }
     }
 
@@ -323,7 +347,7 @@ class SignUpViewModel @Inject constructor(
         }
     }
 
-    fun onProfileCameraCaptureLaunched(request: CameraCaptureRequest) {
+    fun onProfileCameraCaptureLaunched() {
         _uiState.update { state ->
             state.copy(pendingProfileCameraCapture = null)
         }
@@ -376,11 +400,31 @@ class SignUpViewModel @Inject constructor(
 
                 is DomainResult.Success -> {
                     _uiState.update { state ->
-                        state.copy(profile = result.data)
+                        state.copy(profile = state.profile + data)
                     }
                 }
             }
         }
+    }
+
+    fun setImageDialog(result: Boolean) {
+        _uiState.update { state ->
+            state.copy(
+                imageDialog = result,
+                profile = if (!result) {
+                    if (state.profile.size > 1) {
+                        state.profile.dropLast(1)
+                    } else {
+                        listOf(Uri.EMPTY)
+                    }
+                } else state.profile,
+                signUp = if (!result) state.signUp else UiState.Loading
+            )
+        }
+    }
+
+    fun loadPolicyView(isStart: Boolean) {
+        _uiState.update { state -> state.copy(loadPolicyView = isStart) }
     }
 
 }
@@ -392,7 +436,7 @@ data class SignUp(
     val agreedToLocationTerms: Boolean = false,
     val agreedToPrivacyPolicy: Boolean = false,
     val nickName: String = "",
-    val profile: Uri = Uri.EMPTY,
+    val profile: List<Uri> = listOf(Uri.EMPTY),
     val profileBottom: Boolean = false,
     val shouldLaunchProfileAlbum: Boolean = false,
     val shouldRequestProfileCameraPermission: Boolean = false,
@@ -401,8 +445,10 @@ data class SignUp(
     val checkSignUp: UiState<SignUpResult> = UiState.Loading,
     val checkNickName: UiState<Boolean> = UiState.Loading,
     val login: UiState<Unit> = UiState.Loading,
-    val restoreAccountResult : UiState<Unit> = UiState.Loading,
+    val restoreAccountResult: UiState<Unit> = UiState.Loading,
     val signUp: UiState<Unit> = UiState.Loading,
+    val imageDialog : Boolean = false,
+    val loadPolicyView : Boolean = false
 )
 
 sealed interface UiState<out T> {

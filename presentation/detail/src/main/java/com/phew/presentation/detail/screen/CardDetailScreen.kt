@@ -3,7 +3,6 @@ package com.phew.presentation.detail.screen
 import android.annotation.SuppressLint
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -21,7 +20,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -86,23 +84,21 @@ import com.phew.core.ui.model.navigation.TagViewArgs
 import com.phew.domain.dto.CardDetailTag
 import com.phew.core_common.TimeUtils
 import com.phew.core_common.log.SooumLog
-import com.phew.core_design.AppBar.TextButtonAppBar
 import com.phew.core_design.BottomSheetComponent
 import com.phew.core_design.BottomSheetItem
 import com.phew.core_design.Danger
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.NeutralColor
-import com.phew.core_design.Primary
 import com.phew.core_design.R
 import com.phew.core_design.TextComponent
 import com.phew.core_design.UnKnowColor
 import com.phew.presentation.detail.R as DetailR
 import com.phew.core_design.component.card.CardDetail
 import com.phew.core_design.component.card.CardViewComment
-import com.phew.core_design.theme.GRAY_400
 import com.phew.domain.dto.CardComment
 import com.phew.presentation.detail.component.CardDetailBottom
 import com.phew.presentation.detail.component.CardDetailHeader
+import com.phew.presentation.detail.component.CardDetailTopBar
 import com.phew.presentation.detail.model.MoreAction
 import com.phew.presentation.detail.viewmodel.CardDetailError
 import com.phew.presentation.detail.viewmodel.CardDetailViewModel
@@ -186,16 +182,23 @@ internal fun CardDetailRoute(
 
     val context = LocalContext.current
     // 에러 처리
-    uiState.error?.let { errorType ->
-        val errorMessage = when (errorType) {
-            CardDetailError.COMMENTS_LOAD_FAILED -> stringResource(DetailR.string.card_detail_error_comments)
-            CardDetailError.CARD_LOAD_FAILED -> stringResource(DetailR.string.card_detail_error_load_card)
-            CardDetailError.NETWORK_ERROR -> stringResource(DetailR.string.card_detail_error_load_card)
-        }
-        
-        LaunchedEffect(errorType) {
-            Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
-            viewModel.clearError()
+    LaunchedEffect(uiState.error) {
+        when (uiState.error) {
+            CardDetailError.COMMENTS_LOAD_FAILED, CardDetailError.NETWORK_ERROR, CardDetailError.CARD_LOAD_FAILED , CardDetailError.FAIL -> {
+                val message = when(uiState.error){
+                    CardDetailError.COMMENTS_LOAD_FAILED -> context.getString(DetailR.string.card_detail_error_comments)
+                    CardDetailError.CARD_LOAD_FAILED -> context.getString(DetailR.string.card_detail_error_load_card)
+                    CardDetailError.NETWORK_ERROR -> context.getString(DetailR.string.card_detail_error_load_card)
+                    CardDetailError.FAIL -> context.getString(R.string.error_app)
+                    else -> ""
+                }
+                Toast.makeText(context , message , Toast.LENGTH_SHORT).show()
+                viewModel.clearError()
+            }
+            CardDetailError.CARD_DELETE -> {
+                viewModel.setDeleteDialog()
+            }
+            else -> Unit
         }
     }
 
@@ -340,7 +343,8 @@ internal fun CardDetailRoute(
         cardId = args.cardId,
         snackBarHostState = snackBarHostState,
         remainingTimeMillis = remainingTimeMillis,
-        isExpire = (cardDetail.storyExpirationTime != null && (cardDetail.endTime ?: 0L) <= 0L) || isDelete,
+        isExpire = (cardDetail.storyExpirationTime != null && (cardDetail.endTime
+            ?: 0L) <= 0L) || isDelete,
         isOwnCard = cardDetail.isOwnCard,
         deleteCard = { cardId ->
             viewModel.requestDeleteCard(cardId)
@@ -356,9 +360,14 @@ internal fun CardDetailRoute(
         density = density,
         onPreviousCardClick = onPreviousCardClick,
         profileClick = { id ->
-            if(!cardDetail.isOwnCard){
+            if (!cardDetail.isOwnCard) {
                 profileClick(id)
             }
+        },
+        deleteErrorDialog = uiState.deleteErrorDialog,
+        onClickDeleteErrorDialog = {
+            viewModel.clearError()
+            onBackPressed()
         }
     )
 }
@@ -413,44 +422,19 @@ private fun CardDetailScreen(
     refreshState: androidx.compose.material3.pulltorefresh.PullToRefreshState,
     density: androidx.compose.ui.unit.Density,
     onPreviousCardClick: () -> Unit = { },
-    profileClick : (Long) -> Unit
+    profileClick : (Long) -> Unit,
+    deleteErrorDialog : Boolean,
+    onClickDeleteErrorDialog : () -> Unit
 ) {
 
     Scaffold(
         modifier = modifier,
         topBar = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(NeutralColor.WHITE),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                TextButtonAppBar(
-                    startImage = R.drawable.ic_left,
-                    endImage = R.drawable.ic_more_stroke_circle,
-                    appBarText = stringResource(DetailR.string.card_title_comment),
-                    startClick = onBackPressed,
-                    endClick = { onShowBottomSheetChange(true) }
-                )
-                if (remainingTimeMillis.toString().trim() != "0") {
-                    Box(
-                        modifier = Modifier
-                            .width(53.dp)
-                            .height(23.dp)
-                            .background(NeutralColor.WHITE)
-                            .border(1.dp, NeutralColor.GRAY_200, RoundedCornerShape(100.dp)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = TimeUtils.formatMillisToTimer(remainingTimeMillis),
-                            color = Primary.DARK,
-                            style = TextComponent.CAPTION_3_M_10,
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                }
-            }
+            CardDetailTopBar(
+                remainingTimeMillis = remainingTimeMillis,
+                onBackPressed = onBackPressed,
+                onMoreClick = { onShowBottomSheetChange(true) }
+            )
         },
         snackbarHost = {
             DialogComponent.CustomAnimationSnackBarHost(hostState = snackBarHostState)
@@ -653,6 +637,14 @@ private fun CardDetailScreen(
                                     }
                                 }
                             }
+                            if (deleteErrorDialog) {
+                                DialogComponent.NoDescriptionButtonOne(
+                                    title = stringResource(com.phew.presentation.detail.R.string.card_detail_dialog_delete_title),
+                                    buttonText = stringResource(R.string.common_okay),
+                                    onClick = onClickDeleteErrorDialog,
+                                    onDismiss = onClickDeleteErrorDialog
+                                )
+                            }
                         }
                     }
                 }
@@ -729,7 +721,8 @@ private fun CardDetailScreen(
                 onShowDeleteDialogChange(false)
             },
             rightButtonBaseColor = Danger.M_RED,
-            rightButtonClickColor = Danger.D_RED
+            rightButtonClickColor = Danger.D_RED,
+            startButtonTextColor = NeutralColor.GRAY_600,
         )
     }
 
@@ -747,7 +740,8 @@ private fun CardDetailScreen(
                 onShowBlockDialogChange(false)
                 onBlockMember(memberId, nickName)
             },
-            onDismiss = { onShowBlockDialogChange(false) }
+            onDismiss = { onShowBlockDialogChange(false) },
+            startButtonTextColor = NeutralColor.GRAY_600
         )
     }
 }

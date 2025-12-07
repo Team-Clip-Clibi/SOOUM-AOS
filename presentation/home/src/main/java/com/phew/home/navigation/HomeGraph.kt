@@ -3,12 +3,15 @@ package com.phew.home.navigation
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
+import androidx.navigation.navOptions
 import androidx.navigation.navigation
 import com.phew.core.ui.component.back.SooumOnBackPressed
+import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.state.SooumAppState
 import com.phew.feed.navigation.FEED_GRAPH
 import com.phew.feed.navigation.feedGraph
 import com.phew.presentation.tag.navigation.tagGraph
+import com.phew.presentation.write.navigation.WRITE_GRAPH
 import com.phew.presentation.write.navigation.writeGraph
 import com.phew.reports.REPORT_GRAPH_ROUTE_PREFIX
 import com.phew.profile.profileGraph
@@ -34,7 +37,7 @@ fun NavGraphBuilder.homeGraph(
     finish: () -> Unit,
     onBackPressed: () -> Unit,
     webView: (String) -> Unit,
-    onWriteComplete: () -> Unit = {},
+    onWriteComplete: (CardDetailArgs) -> Unit = {},
     cardClick: (Long) -> Unit,
     onLogOut: () -> Unit,
     onWithdrawalComplete: () -> Unit,
@@ -44,8 +47,6 @@ fun NavGraphBuilder.homeGraph(
         feedGraph(
             appState = appState,
             navController = navController,
-            finish = finish,
-            onBackPressed = onBackPressed,
             webView = webView
         )
 
@@ -54,13 +55,21 @@ fun NavGraphBuilder.homeGraph(
             navController = navController,
             onBackPressed = onBackPressed,
             onWriteComplete = {
-                // Feed에서 Write 완료 시 Feed 데이터 갱신하고 이전 화면으로 돌아가기
-                onWriteComplete()
-                navController.popBackStack()
+                onWriteComplete(it)
             },
             onDetailWriteComplete = {
                 // Detail에서 Write 완료 시에는 Home에서 처리할 필요 없음 (Detail에서 직접 처리)
                 navController.popBackStack()
+            },
+            onHome = {
+                navController.navigateToHomeGraph(
+                    navOptions = navOptions {
+                        popUpTo(WRITE_GRAPH) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
+                )
             }
         )
         tagGraph(

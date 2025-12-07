@@ -197,7 +197,7 @@ internal fun OtherProfile(
                             .background(NeutralColor.WHITE)
                             .pullToRefreshOffset(
                                 state = refreshState,
-                                baseOffset = TOP_CONTENT_OFFSET
+                                baseOffset = 0.dp
                             )
                             .padding(
                                 top = paddingValues.calculateTopPadding(),
@@ -280,6 +280,8 @@ private fun ProfileContentView(
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
         modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(1.dp),
+        verticalArrangement = Arrangement.spacedBy(1.dp),
     ) {
         item(span = { GridItemSpan(maxLineSpan) }) {
             ProfileView(
@@ -330,14 +332,16 @@ private fun ProfileContentView(
                         ) { index ->
                             val item = cardData[index]
                             if (item != null) {
-                                CommentBodyContent(
-                                    contentText = item.cardContent,
-                                    imgUrl = item.cardImgUrl,
-                                    fontFamily = CustomFont.findFontValueByServerName(item.font).data.previewTypeface,
-                                    textMaxLines = 4,
-                                    cardId = item.cardId,
-                                    onClick = onClickCard
-                                )
+                                Box(modifier = Modifier.padding(bottom = 1.dp)) {
+                                    CommentBodyContent(
+                                        contentText = item.cardContent,
+                                        imgUrl = item.cardImgUrl,
+                                        fontFamily = CustomFont.findFontValueByServerName(item.font).data.previewTypeface,
+                                        textMaxLines = 4,
+                                        cardId = item.cardId,
+                                        onClick = onClickCard
+                                    )
+                                }
                             }
                         }
                     }
@@ -401,7 +405,7 @@ private fun ProfileView(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column {
-                Row {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = stringResource(R.string.profile_txt_visit_total),
                         style = TextComponent.CAPTION_2_M_12,
@@ -417,8 +421,7 @@ private fun ProfileView(
                     Image(
                         painter = painterResource(com.phew.core_design.R.drawable.ic_spot),
                         modifier = Modifier
-                            .size(3.dp)
-                            .padding(1.dp),
+                            .size(3.dp),
                         colorFilter = ColorFilter.tint(color = NeutralColor.GRAY_400),
                         contentDescription = stringResource(R.string.profile_txt_visit_total) + profile.totalVisitCnt.toString() + stringResource(
                             R.string.profile_txt_visit_today
@@ -455,7 +458,7 @@ private fun ProfileView(
                         shape = RoundedCornerShape(100.dp)
                     )
                     .clip(shape = RoundedCornerShape(size = 100.dp)),
-                contentScale = ContentScale.FillBounds
+                contentScale = ContentScale.Crop
             )
         }
         Row(

@@ -9,20 +9,23 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.navOptions
 import com.phew.core.ui.component.back.SooumOnBackPressed
+import com.phew.core.ui.component.home.HomeTabType
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.model.navigation.OnBoardingArgs
 import com.phew.core.ui.model.navigation.ProfileArgs
 import com.phew.core.ui.state.SooumAppState
-import com.phew.core.ui.state.rememberSooumAppState
 import com.phew.home.navigation.homeGraph
 import com.phew.home.navigation.navigateToHomeGraph
 import com.phew.home.navigation.navigateToReport
 import com.phew.presentation.detail.navigation.detailGraph
 import com.phew.core.ui.model.navigation.WriteArgs
+import com.phew.core_common.log.SooumLog
 import com.phew.domain.interceptor.GlobalEvent
+import com.phew.feed.navigation.navigateToFeedGraph
 import com.phew.presentation.MainViewModel
 import com.phew.presentation.detail.navigation.navigateToDetailGraph
 import com.phew.presentation.tag.navigation.navigateToViewTagsWithArgs
+import com.phew.presentation.write.navigation.WRITE_GRAPH
 import com.phew.presentation.write.navigation.navigateToWriteGraphWithArgs
 import com.phew.presentation.write.navigation.writeGraph
 import com.phew.profile.navigateToProfileGraphWithArgs
@@ -45,7 +48,6 @@ fun SooumNavHost(
     mainViewModel: MainViewModel = hiltViewModel(),
 ) {
     val navController = appState.navController
-    val homeAppState = rememberSooumAppState()
     LaunchedEffect(Unit) {
         mainViewModel.globalEvent.collect { event ->
             if (event == GlobalEvent.TeapotEvent) {
@@ -82,7 +84,7 @@ fun SooumNavHost(
             )
 
             homeGraph(
-                appState = homeAppState,
+                appState = appState,
                 navController = navController,
                 finish = finish,
                 onBackPressed = {
@@ -90,7 +92,8 @@ fun SooumNavHost(
                 },
                 webView = webView,
                 onWriteComplete = {
-
+                    navController.popBackStack()
+                    navController.navigateToDetailGraph(cardDetailArgs = it)
                 },
                 onLogOut = {
                     navController.navigateToSignUpGraph(
@@ -175,6 +178,24 @@ fun SooumNavHost(
                         }
                     )
                 },
+                onTagPressed = {
+                    navController.navigateToHomeGraph(
+                        navOptions = navOptions {
+                            popUpTo(SIGN_UP_GRAPH) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    )
+                    // TAG 탭으로 이동하는 로직 추가 - LaunchedEffect를 사용하여 다음 프레임에 실행
+                    navController.navigate(HomeTabType.TAG.graph) {
+                        launchSingleTop = true
+                        restoreState = true
+                        popUpTo(HomeTabType.FEED.route) {
+                            saveState = true
+                        }
+                    }
+                },
                 onProfileScreen = { profileId ->
                     navController.navigateToProfileGraphWithArgs(ProfileArgs(profileId))
                 }
@@ -188,9 +209,10 @@ fun SooumNavHost(
                     SooumOnBackPressed(appState = appState)
                 },
                 onWriteComplete = {
-                    navController.popBackStack()
+                    navController.navigateToDetailGraph(cardDetailArgs = it)
                 },
                 onDetailWriteComplete = {
+                    SooumLog.d(TAG, "onDetailWriteComplete")
                     navController.popBackStack()
                 }
             )

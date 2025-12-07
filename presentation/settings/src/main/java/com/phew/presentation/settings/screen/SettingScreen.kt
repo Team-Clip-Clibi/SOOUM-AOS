@@ -104,6 +104,13 @@ fun SettingRoute(
                         Toast.LENGTH_SHORT
                     ).show()
                 }
+                ToastEvent.ShowNotificationToggleErrorToast -> {
+                    Toast.makeText(
+                        context,
+                        "알림 설정 변경에 실패했습니다. 다시 시도해주세요.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
         }
     }
@@ -141,7 +148,7 @@ fun SettingRoute(
         activityRestrictionDate = uiState.activityRestrictionDate,
         latestVersion = uiState.latestVersion,
         onBackPressed = onBackPressed,
-        onNotificationToggle = viewModel::toggleNotification,
+        onNotificationToggle = viewModel::onNotificationToggle,
         onLoginOtherDeviceClick = viewModel::onLoginOtherDeviceClick,
         onLoadPreviousAccountClick = viewModel::onLoadPreviousAccountClick,
         onBlockedUsersClick = viewModel::onBlockedUsersClick,
@@ -298,7 +305,6 @@ private fun SettingScreen(
                     subtitle = getLocalizedSubtitle(item.id),
                     endText = getEndText(item.id)
                 )
-                HorizontalDivider(thickness = 1.dp, color = NeutralColor.GRAY_100)
                 SettingItemRow(
                     item = localizedItem,
                     onClick = onLoadPreviousAccountClick
@@ -356,7 +362,6 @@ private fun SettingScreen(
                     subtitle = getLocalizedSubtitle(item.id),
                     endText = getEndText(item.id)
                 )
-                HorizontalDivider(thickness = 1.dp, color = NeutralColor.GRAY_100)
                 SettingItemRow(
                     item = localizedItem,
                     onClick = onInquiryClick

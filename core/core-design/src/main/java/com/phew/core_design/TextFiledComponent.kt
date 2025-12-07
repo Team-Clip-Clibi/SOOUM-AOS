@@ -32,12 +32,10 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.phew.core_design.R
 
 object TextFiledComponent {
     @Composable
@@ -126,7 +124,7 @@ object TextFiledComponent {
                     .fillMaxWidth()
                     .height(54.dp)
                     .background(color = NeutralColor.GRAY_100, shape = RoundedCornerShape(10.dp))
-                    .padding(start = 24.dp, end = 20.dp),
+                    .padding(start = 8.dp, end = 20.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -180,7 +178,10 @@ object TextFiledComponent {
                         Icon(
                             painter = painterResource(R.drawable.ic_error_stoke),
                             contentDescription = "Error $helperText",
-                            tint = Danger.M_RED
+                            tint = Danger.M_RED,
+                            modifier = Modifier
+                                .size(16.dp)
+                                .padding(1.dp)
                         )
                     }
                     Text(
@@ -202,14 +203,18 @@ object TextFiledComponent {
         onDeleteClick: () -> Unit = {},
         onFieldClick: () -> Unit = {},
         onSearch: () -> Unit = {},
-        modifier: Modifier = Modifier
+        modifier: Modifier = Modifier,
+        focusRequester: FocusRequester? = null
     ) {
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
             modifier = modifier
                 .fillMaxWidth()
-                .height(44.dp),
+                .height(44.dp)
+                .let { baseModifier ->
+                    focusRequester?.let { baseModifier.focusRequester(it) } ?: baseModifier
+                },
             singleLine = true,
             readOnly = isReadOnly,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),

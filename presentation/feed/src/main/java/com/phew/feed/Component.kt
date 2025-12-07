@@ -1,9 +1,7 @@
 package com.phew.feed
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,10 +20,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
-import androidx.compose.material3.TabRowDefaults
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -45,7 +39,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.phew.core_common.TimeUtils
-import com.phew.core_common.log.SooumLog
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.NeutralColor.GRAY_400
 import com.phew.core_design.NeutralColor.GRAY_600
@@ -62,6 +55,8 @@ import com.phew.core_design.component.card.NotiCardData
 import com.phew.core_design.component.card.component.IndicatorDot
 import com.phew.core_design.component.tab.SooumTab
 import com.phew.core_design.component.tab.SooumTabRow
+import com.phew.core_design.label.LabelComponent
+import com.phew.core_design.theme.GRAY_100
 import com.phew.core_design.theme.MAIN
 import com.phew.core_design.theme.M_YELLOW
 import com.phew.domain.dto.FeedCardType
@@ -84,6 +79,7 @@ object FeedUi {
     internal fun FeedNoticeView(
         feedNotice: List<Notice>,
         feedNoticeClick: (String) -> Unit,
+        modifier : Modifier = Modifier
     ) {
         if (feedNotice.isEmpty()) return
         val pagerState = rememberPagerState(
@@ -94,11 +90,17 @@ object FeedUi {
             while (true) {
                 delay(5000L)
                 val nextPage = pagerState.currentPage + 1
-                pagerState.animateScrollToPage(nextPage)
+                pagerState.animateScrollToPage(
+                    page = nextPage,
+                    animationSpec = tween(
+                        durationMillis = 500,
+                        easing = LinearOutSlowInEasing
+                    )
+                )
             }
         }
         Box(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
         ) {
@@ -107,7 +109,7 @@ object FeedUi {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(71.dp)
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(20.dp))
             ) { page ->
                 val actualIndex = page % feedNotice.size
                 val currentNotice = feedNotice[actualIndex]
@@ -154,12 +156,11 @@ object FeedUi {
     }
 
     @Composable
-    internal fun AnimatedFeedTabLayout(
+    internal fun FeedTab(
         selectTabData: Int,
         recentClick: () -> Unit,
         popularClick: () -> Unit,
         nearClick: () -> Unit,
-        isTabsVisible: Boolean,
         onDistanceClick: (DistanceType) -> Unit,
         selectDistanceType: DistanceType,
     ) {
@@ -169,89 +170,75 @@ object FeedUi {
             stringResource(R.string.home_feed_tab_near_card)
         )
 
-        AnimatedVisibility(
-            visible = isTabsVisible,
-            enter = slideInVertically(
-                initialOffsetY = { -it },
-                animationSpec = tween(durationMillis = 150)
-            ),
-            exit = slideOutVertically(
-                targetOffsetY = { -it },
-                animationSpec = tween(durationMillis = 150)
-            )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(color = WHITE)
         ) {
-            Column(
+            SooumTabRow(
+                selectedTabIndex = selectTabData,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                tabItem.forEachIndexed { index, title ->
+                    SooumTab(
+                        selected = selectTabData == index,
+                        onClick = {
+                            when (index) {
+                                NAV_HOME_FEED_INDEX -> recentClick()
+                                NAV_HOME_POPULAR_INDEX -> popularClick()
+                                NAV_HOME_NEAR_INDEX -> nearClick()
+                            }
+                        },
+                        text = {
+                            Text(
+                                text = title,
+                                style = TextComponent.TITLE_2_SB_16,
+                                color = LocalContentColor.current
+                            )
+                        }
+                    )
+                }
+            }
+            HorizontalDivider(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .wrapContentHeight()
-                    .background(color = WHITE)
-            ) {
-                SooumTabRow(
-                    selectedTabIndex = selectTabData,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    tabItem.forEachIndexed { index, title ->
-                        SooumTab(
-                            selected = selectTabData == index,
-                            onClick = {
-                                when (index) {
-                                    NAV_HOME_FEED_INDEX -> recentClick()
-                                    NAV_HOME_POPULAR_INDEX -> popularClick()
-                                    NAV_HOME_NEAR_INDEX -> nearClick()
-                                }
-                            },
-                            text = {
-                                Text(
-                                    text = title,
-                                    style = TextComponent.TITLE_2_SB_16,
-                                    color = LocalContentColor.current
-                                )
-                            }
-                        )
-                    }
-                }
-                HorizontalDivider(
+                    .height(1.dp),
+                color = NeutralColor.GRAY_200
+            )
+            if (selectTabData == NAV_HOME_NEAR_INDEX) {
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(1.dp),
-                    color = NeutralColor.GRAY_200
-                )
-                if (selectTabData == NAV_HOME_NEAR_INDEX) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp)
-                            .background(color = WHITE)
-                            .padding(start = 16.dp, end = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.Start),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        DistanceText(
-                            distance = stringResource(R.string.home_feed_1km_distance),
-                            onClick = { onDistanceClick(DistanceType.KM_1) },
-                            isSelect = selectDistanceType == DistanceType.KM_1
-                        )
-                        DistanceText(
-                            distance = stringResource(R.string.home_feed_5km_distance),
-                            onClick = { onDistanceClick(DistanceType.KM_5) },
-                            isSelect = selectDistanceType == DistanceType.KM_5
-                        )
-                        DistanceText(
-                            distance = stringResource(R.string.home_feed_10km_distance),
-                            onClick = { onDistanceClick(DistanceType.KM_10) },
-                            isSelect = selectDistanceType == DistanceType.KM_10
-                        )
-                        DistanceText(
-                            distance = stringResource(R.string.home_feed_20km_distance),
-                            onClick = { onDistanceClick(DistanceType.KM_20) },
-                            isSelect = selectDistanceType == DistanceType.KM_20
-                        )
-                        DistanceText(
-                            distance = stringResource(R.string.home_feed_50km_distance),
-                            onClick = { onDistanceClick(DistanceType.KM_50) },
-                            isSelect = selectDistanceType == DistanceType.KM_50
-                        )
-                    }
+                        .background(color = WHITE)
+                        .padding(start = 16.dp, end = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.Start),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    DistanceText(
+                        distance = stringResource(R.string.home_feed_1km_distance),
+                        onClick = { onDistanceClick(DistanceType.KM_1) },
+                        isSelect = selectDistanceType == DistanceType.KM_1
+                    )
+                    DistanceText(
+                        distance = stringResource(R.string.home_feed_5km_distance),
+                        onClick = { onDistanceClick(DistanceType.KM_5) },
+                        isSelect = selectDistanceType == DistanceType.KM_5
+                    )
+                    DistanceText(
+                        distance = stringResource(R.string.home_feed_10km_distance),
+                        onClick = { onDistanceClick(DistanceType.KM_10) },
+                        isSelect = selectDistanceType == DistanceType.KM_10
+                    )
+                    DistanceText(
+                        distance = stringResource(R.string.home_feed_20km_distance),
+                        onClick = { onDistanceClick(DistanceType.KM_20) },
+                        isSelect = selectDistanceType == DistanceType.KM_20
+                    )
+                    DistanceText(
+                        distance = stringResource(R.string.home_feed_50km_distance),
+                        onClick = { onDistanceClick(DistanceType.KM_50) },
+                        isSelect = selectDistanceType == DistanceType.KM_50
+                    )
                 }
             }
         }
@@ -388,72 +375,30 @@ object FeedUi {
 object NotificationUi {
 
     @Composable
-    internal fun AnimatedNoticeTabLayout(
-        selectTabData: Int,
-        allClick: () -> Unit,
-        noticeClick: () -> Unit,
-        isTabsVisible: Boolean,
+    internal fun NotifyTabBar(
+        selectData: NotifyTab,
+        onClick: (NotifyTab) -> Unit,
     ) {
-        val tabItem = listOf(
-            stringResource(R.string.home_notice_activate),
-            stringResource(R.string.home_notice_notice)
-        )
-        AnimatedVisibility(
-            visible = isTabsVisible,
-            enter = slideInVertically(
-                initialOffsetY = { -it },
-                animationSpec = tween(durationMillis = 150)
-            ),
-            exit = slideOutVertically(
-                targetOffsetY = { -it },
-                animationSpec = tween(durationMillis = 150)
-            )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    bottom = 9.5.dp, start = 16.dp,
+                    end = 16.dp
+                ), horizontalArrangement = Arrangement.Start
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight()
-                    .background(color = WHITE)
-            ) {
-                TabRow(
-                    selectedTabIndex = selectTabData,
-                    modifier = Modifier
-                        .wrapContentWidth(align = Alignment.Start)
-                        .height(56.dp)
-                        .padding(start = 16.dp, end = 16.dp),
-                    containerColor = WHITE,
-                    contentColor = NeutralColor.BLACK,
-                    indicator = { tabPositions ->
-                        TabRowDefaults.SecondaryIndicator(
-                            Modifier
-                                .tabIndicatorOffset(tabPositions[selectTabData]),
-                            height = 2.dp,
-                            color = NeutralColor.BLACK
-                        )
-                    },
-                    divider = {}
-                ) {
-                    tabItem.forEachIndexed { index, title ->
-                        val isSelected = selectTabData == index
-                        Tab(
-                            selected = isSelected,
-                            onClick = {
-                                when (index) {
-                                    NAV_NOTICE_ACTIVATE -> allClick()
-                                    NAV_NOTICE_NOTIFY_INDEX -> noticeClick()
-                                }
-                            },
-                            text = {
-                                Text(
-                                    text = title,
-                                    style = TextComponent.BODY_1_M_14,
-                                    color = if (isSelected) GRAY_600 else GRAY_400,
-                                )
-                            },
-                        )
-                    }
-                }
-            }
+            LabelComponent.LabelView(
+                text = stringResource(R.string.home_notice_activate),
+                textColor = if (selectData == NotifyTab.NOTIFY_ACTIVATE) GRAY_600 else GRAY_400,
+                backgroundColor = if (selectData == NotifyTab.NOTIFY_ACTIVATE) GRAY_100 else WHITE,
+                onClick = { onClick(NotifyTab.NOTIFY_ACTIVATE) }
+            )
+            LabelComponent.LabelView(
+                text = stringResource(R.string.home_notice_notice),
+                textColor = if (selectData == NotifyTab.NOTIFY_SERVICE) GRAY_600 else GRAY_400,
+                backgroundColor = if (selectData == NotifyTab.NOTIFY_SERVICE) GRAY_100 else WHITE,
+                onClick = { onClick(NotifyTab.NOTIFY_SERVICE) }
+            )
         }
     }
 
@@ -463,7 +408,7 @@ object NotificationUi {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(102.dp)
+                .height(76.dp)
                 .background(color = WHITE)
                 .padding(start = 24.dp, top = 16.dp, end = 24.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Top),
@@ -508,13 +453,16 @@ object NotificationUi {
                 text = data.content,
                 style = TextComponent.SUBTITLE_1_M_16,
                 color = GRAY_600,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().padding(start = 24.dp)
             )
         }
     }
 
     @Composable
-    internal fun NotifyViewUnread(data: Notification) {
+    internal fun NotifyViewUnread(data: Notification, onItemExpose: (Long) -> Unit) {
+        LaunchedEffect(data.notificationId) {
+            onItemExpose(data.notificationId)
+        }
         Column(
             modifier = Modifier
                 .fillMaxWidth()

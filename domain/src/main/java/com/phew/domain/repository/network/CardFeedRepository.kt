@@ -2,6 +2,7 @@ package com.phew.domain.repository.network
 
 import com.phew.core_common.DataResult
 import com.phew.domain.dto.CardDefaultImagesResponse
+import com.phew.domain.dto.CardIdResponse
 import com.phew.domain.dto.CardImageDefault
 import com.phew.domain.dto.CheckedBaned
 import com.phew.domain.dto.DistanceCard
@@ -43,7 +44,7 @@ interface CardFeedRepository {
         imageName: String,
         isStory: Boolean,
         tag: List<String>,
-    ): Int
+    ): DataResult<CardIdResponse>
 
     suspend fun requestUploadCardAnswer(
         cardId: Long,
@@ -55,8 +56,9 @@ interface CardFeedRepository {
         imageType: String,
         imageName: String,
         tag: List<String>,
-    ): Int
+    ): DataResult<CardIdResponse>
 
     suspend fun requestUploadImage(data: RequestBody, url: String): DataResult<Unit>
     suspend fun requestCheckImage(imageName: String): DataResult<Boolean>
+    suspend fun requestCheckCardDelete(cardId: Long): DataResult<Boolean>
 }

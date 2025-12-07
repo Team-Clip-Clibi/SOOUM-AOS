@@ -12,12 +12,12 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
 import androidx.navigation.navigation
 import com.phew.core.ui.component.home.HomeTabType
-import com.phew.core.ui.state.SooumAppState
 import com.phew.core_design.slideComposable
 import com.phew.feed.feed.FeedView
 import com.phew.feed.notification.NotifyView
 import com.phew.feed.viewModel.FeedViewModel
 import com.phew.presentation.detail.navigation.navigateToDetailGraph
+import com.phew.core.ui.state.SooumAppState
 
 val FEED_GRAPH = HomeTabType.FEED.graph
 
@@ -47,8 +47,6 @@ private fun NavHostController.navigateToNotify(
 fun NavGraphBuilder.feedGraph(
     appState: SooumAppState,
     navController: NavHostController,
-    finish: () -> Unit,
-    onBackPressed: () -> Unit,
     webView: (String) -> Unit,
 ) {
     navigation(
@@ -72,10 +70,9 @@ fun NavGraphBuilder.feedGraph(
                 }
             }
             FeedView(
+                appState = appState,
                 viewModel = feedViewModel,
                 navController = navController,
-                appState = appState,
-                finish = onBackPressed,
                 requestPermission = {
                     feedViewModel.onPermissionRequest(
                         arrayOf(
@@ -97,13 +94,9 @@ fun NavGraphBuilder.feedGraph(
             val navBackStackEntry =
                 remember(nav) { navController.getBackStackEntry(FEED_GRAPH) }
             val feedViewModel: FeedViewModel = hiltViewModel(navBackStackEntry)
-            val snackBarHostState = remember { SnackbarHostState() }
-
             NotifyView(
                 viewModel = feedViewModel,
-                snackBarHostState = snackBarHostState,
                 backClick = { navController.popBackStack() },
-                logout = {}
             )
         }
     }

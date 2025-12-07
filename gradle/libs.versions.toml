@@ -33,6 +33,8 @@ paging-version = "3.3.6"
 play-services-location = "21.3.0"
 cropper = "4.5.0"
 foundation = "1.9.4"
+firebase-crash = "3.0.6"
+firebase-crash-libs = "20.0.3"
 
 [libraries]
 androidx-material3-windowSize = { group = "androidx.compose.material3", name = "material3-window-size-class" }
@@ -73,6 +75,7 @@ security-crypto = { group = "androidx.security", name = "security-crypto", versi
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase" }
 kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version = "await" }
 firebase-message = { group = "com.google.firebase", name = "firebase-messaging", version.ref = "firebase-messaging" }
+firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" , version.ref = "firebase-crash-libs"}
 lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", version = "6.1.0" }
 paging-runtime = { group = "androidx.paging", name = "paging-runtime", version.ref = "paging-version" }
 paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "paging-version" }
@@ -89,3 +92,5 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 google-gms = { id = "com.google.gms.google-services", version.ref = "gms" }
+firebase-crash = { id = "com.google.firebase.crashlytics" , version.ref = "firebase-crash"}
+

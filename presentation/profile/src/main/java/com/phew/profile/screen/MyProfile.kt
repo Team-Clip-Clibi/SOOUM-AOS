@@ -30,7 +30,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
@@ -58,15 +57,23 @@ import com.phew.profile.UiState
 import com.phew.core_design.component.card.CommentBodyContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.Alignment
 import androidx.paging.compose.LazyPagingItems
-import androidx.paging.compose.itemKey
+import com.phew.core_common.BOTTOM_NAVIGATION_HEIGHT
 import com.phew.core_design.CustomFont
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.LoadingAnimation
 import com.phew.core_design.component.refresh.RefreshBox
 import com.phew.domain.dto.ProfileCard
 import com.phew.profile.component.ProfileComponent
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.time.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -169,7 +176,8 @@ internal fun MyProfile(
                                 this.translationY = refreshState.distanceFraction * 72.dp.toPx()
                             }
                             .padding(top = paddingValues.calculateTopPadding()),
-                        paddingValues = paddingValues
+                        paddingValues = paddingValues,
+                        onCardClick = { selectIndex = TAB_MY_FEED_CARD },
                     )
                 }
             }
@@ -203,6 +211,7 @@ private fun MyProfileView(
     onFollowerClick: () -> Unit,
     onFollowingClick: () -> Unit,
     onEditProfileClick: () -> Unit,
+    onCardClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -214,13 +223,13 @@ private fun MyProfileView(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(84.dp)
+                .wrapContentHeight()
                 .padding(bottom = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column {
-                Row {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = stringResource(R.string.profile_txt_visit_total),
                         style = TextComponent.CAPTION_2_M_12,
@@ -257,6 +266,7 @@ private fun MyProfileView(
                         modifier = Modifier.padding(end = 6.dp)
                     )
                 }
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = profile.nickname,
                     style = TextComponent.HEAD_3_B_20,
@@ -274,7 +284,7 @@ private fun MyProfileView(
                         shape = RoundedCornerShape(100.dp)
                     )
                     .clip(shape = RoundedCornerShape(size = 100.dp)),
-                contentScale = ContentScale.FillBounds
+                contentScale = ContentScale.Crop
             )
         }
         // 카드 , 팔로워, 팔로잉 숫자
@@ -288,7 +298,11 @@ private fun MyProfileView(
             ProfileComponent.CardFollowerView(
                 title = stringResource(R.string.profile_txt_card),
                 data = profile.cardCnt.toString(),
-                onClick = { }
+                onClick = {
+                    if(profile.cardCnt != 0){
+                        onCardClick()
+                    }
+                }
             )
             ProfileComponent.CardFollowerView(
                 title = stringResource(R.string.profile_txt_follower),
@@ -351,18 +365,36 @@ private fun ProfileCardView(
     snackBarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
     paddingValues: PaddingValues,
+    onCardClick: () -> Unit
 ) {
+    val gridState = rememberLazyGridState()
+    val coroutineScope = rememberCoroutineScope()
+    val configuration = LocalConfiguration.current
+    val screenHeight = configuration.screenHeightDp.dp
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
         modifier = modifier,
-        contentPadding = PaddingValues(bottom = paddingValues.calculateBottomPadding() + 63.dp)
+        state = gridState,
+        horizontalArrangement = Arrangement.spacedBy(1.dp),
+        verticalArrangement = Arrangement.spacedBy(1.dp),
+        contentPadding = PaddingValues(
+            top = 0.dp,
+            bottom = paddingValues.calculateBottomPadding() + BOTTOM_NAVIGATION_HEIGHT.dp
+        )
     ) {
         item(span = { GridItemSpan(maxLineSpan) }) {
             MyProfileView(
                 profile = profile,
                 onEditProfileClick = onEditProfileClick,
                 onFollowingClick = onFollowingClick,
-                onFollowerClick = onFollowerClick
+                onFollowerClick = onFollowerClick,
+                onCardClick = {
+                    onCardClick()
+                    coroutineScope.launch {
+                        delay(100)
+                        gridState.animateScrollToItem(index = 1)
+                    }
+                }
             )
         }
         stickyHeader {
@@ -433,19 +465,29 @@ private fun ProfileCardView(
                         ) { index ->
                             val item = cardData[index]
                             if (item != null) {
-                                CommentBodyContent(
-                                    contentText = item.cardContent,
-                                    imgUrl = item.cardImgUrl,
-                                    fontFamily = CustomFont.findFontValueByServerName(item.font).data.previewTypeface,
-                                    textMaxLines = 4,
-                                    cardId = item.cardId,
-                                    onClick = onClickCard
-                                )
+                                Box(modifier = Modifier.padding(bottom = 1.dp)) {
+                                    CommentBodyContent(
+                                        contentText = item.cardContent,
+                                        imgUrl = item.cardImgUrl,
+                                        fontFamily = CustomFont.findFontValueByServerName(item.font).data.previewTypeface,
+                                        textMaxLines = 4,
+                                        cardId = item.cardId,
+                                        onClick = onClickCard
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
+        }
+        item(span = { GridItemSpan(maxLineSpan) }) {
+            Spacer(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(screenHeight)
+                    .background(NeutralColor.WHITE) // 배경색 맞춤
+            )
         }
     }
 }

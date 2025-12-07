@@ -33,8 +33,7 @@ object AvatarComponent {
     ) {
         Box(
             modifier = Modifier
-                .width(120.dp)
-                .height(120.dp)
+                .size(120.dp)
                 .clickable { onClick() }
         ) {
             AsyncImage(
@@ -48,7 +47,7 @@ object AvatarComponent {
                         shape = RoundedCornerShape(100.dp)
                     )
                     .clip(shape = RoundedCornerShape(size = 100.dp)),
-                contentScale = ContentScale.FillBounds
+                contentScale = ContentScale.Crop
             )
             Row(
                 modifier = Modifier

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -37,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.focus.FocusRequester
@@ -50,6 +52,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.flowWithLifecycle
+import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
@@ -57,6 +60,7 @@ import com.phew.core_common.log.SooumLog
 import com.phew.core_design.AppBar.SearchAppBar
 import com.phew.core_design.CustomFont
 import com.phew.core_design.DialogComponent
+import com.phew.core_design.LoadingAnimation
 import com.phew.core_design.MediumButton.IconPrimary
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.R as DesignR
@@ -122,8 +126,8 @@ internal fun SearchRoute(
     }
 
     // cardDataItems에서 첫 번째 아이템의 isFavorite 상태를 ViewModel에 업데이트
-    LaunchedEffect(cardDataItems.itemCount, uiState.searchPerformed) {
-        if (uiState.searchPerformed) {
+    LaunchedEffect(cardDataItems.itemCount, uiState.searchPerformed, uiState.isSearchLoading) {
+        if (uiState.searchPerformed && !uiState.isSearchLoading) {
             if (cardDataItems.itemCount > 0) {
                 try {
                     val firstItem = cardDataItems[0]
@@ -134,10 +138,9 @@ internal fun SearchRoute(
                 } catch (e: Exception) {
                     SooumLog.e("SearchRoute", "Error accessing first item: ${e.message}")
                 }
-            } else {
-                // 검색했지만 결과가 없으면 searchPerformed를 false로 설정
-                viewModel.resetSearchPerformed()
             }
+            // 로딩이 완료되고 여전히 결과가 없으면 빈 결과 상태로 유지
+            // searchPerformed를 false로 변경하지 않음
         }
     }
 
@@ -146,6 +149,7 @@ internal fun SearchRoute(
         searchValue = uiState.searchValue,
         recommendedTags = uiState.recommendedTags,
         searchPerformed = uiState.searchPerformed,
+        isSearchLoading = uiState.isSearchLoading,
         cardDataItems = cardDataItems,
         listState = listState,
         gridState = gridState,
@@ -157,7 +161,8 @@ internal fun SearchRoute(
         onBackPressed = onBackPressed,
         isFavorite = uiState.currentTagFavoriteState,
         onFavoriteToggle = viewModel::toggleCurrentSearchedTagFavorite,
-        snackbarHostState = snackbarHostState
+        snackbarHostState = snackbarHostState,
+        autoFocus = true
     )
 }
 
@@ -167,6 +172,7 @@ private fun SearchScreen(
     searchValue: String,
     recommendedTags: List<TagInfo>,
     searchPerformed: Boolean,
+    isSearchLoading: Boolean,
     cardDataItems: LazyPagingItems<TagCardContent>,
     listState: LazyListState,
     gridState: LazyGridState,
@@ -178,11 +184,21 @@ private fun SearchScreen(
     onBackPressed: () -> Unit,
     isFavorite: Boolean,
     onFavoriteToggle: () -> Unit,
-    snackbarHostState: SnackbarHostState
+    snackbarHostState: SnackbarHostState,
+    autoFocus: Boolean = false
 ) {
     SooumLog.d("SearchScreen", "recommendedTags=$recommendedTags")
     val focusManager = LocalFocusManager.current
     var isSearchFieldFocused by remember { mutableStateOf(false) }
+    val focusRequester = remember { FocusRequester() }
+    
+    // Auto focus on search field when autoFocus is true
+    LaunchedEffect(autoFocus) {
+        if (autoFocus) {
+            focusRequester.requestFocus()
+            isSearchFieldFocused = true
+        }
+    }
     
     // 스크롤 감지를 위한 상태 (list와 grid 모두)
     val isListScrolling by remember {
@@ -232,7 +248,8 @@ private fun SearchScreen(
                         onClick = onFavoriteToggle
                     )
                 },
-                isIcon = searchPerformed
+                isIcon = searchPerformed,
+                focusRequester = focusRequester
             )
         }
     ) { innerPadding ->
@@ -250,61 +267,82 @@ private fun SearchScreen(
         ) {
             Spacer(Modifier.padding(top = 8.dp))
 
-            if (searchPerformed && cardDataItems.itemCount == 0) {
-                EmptySearchCard()
-            } else if (searchPerformed && cardDataItems.itemCount > 0) {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(3),
-                    state = gridState,
-                    modifier = modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = innerPadding.calculateBottomPadding() + 63.dp),
-                    verticalArrangement = Arrangement.spacedBy(1.dp),
-                    horizontalArrangement = Arrangement.spacedBy(1.dp)
-                ) {
-                    items(
-                        count = cardDataItems.itemCount,
-                        key = cardDataItems.itemKey { data -> data.cardId }
-                    ) { index ->
-                        val item = cardDataItems[index]
-                        if (item != null) {
-                            CommentBodyContent(
-                                contentText = item.cardContent,
-                                imgUrl = item.cardImgUrl,
-                                fontFamily = CustomFont.findFontValueByServerName(item.font).data.previewTypeface,
-                                textMaxLines = 4,
-                                cardId = item.cardId,
-                                onClick = { cardId ->
+            // PagingData 로딩 상태 체크
+            val isPagingLoading = cardDataItems.loadState.refresh is LoadState.Loading
+            
+            when {
+                // 1. 로딩 중
+                isSearchLoading || (searchPerformed && isPagingLoading) -> {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        LoadingAnimation.LoadingView()
+                    }
+                }
+                // 2. 검색 수행 후 카드가 있음
+                searchPerformed && cardDataItems.itemCount > 0 -> {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(3),
+                        state = gridState,
+                        modifier = modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(bottom = innerPadding.calculateBottomPadding() + 63.dp),
+                        verticalArrangement = Arrangement.spacedBy(1.dp),
+                        horizontalArrangement = Arrangement.spacedBy(1.dp)
+                    ) {
+                        items(
+                            count = cardDataItems.itemCount,
+                            key = cardDataItems.itemKey { data -> data.cardId }
+                        ) { index ->
+                            val item = cardDataItems[index]
+                            if (item != null) {
+                                CommentBodyContent(
+                                    contentText = item.cardContent,
+                                    imgUrl = item.cardImgUrl,
+                                    fontFamily = CustomFont.findFontValueByServerName(item.font).data.previewTypeface,
+                                    textMaxLines = 4,
+                                    cardId = item.cardId,
+                                    onClick = { cardId ->
+                                        focusManager.clearFocus()
+                                        isSearchFieldFocused = false
+                                        onClickCard(cardId)
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+                // 3. 검색 수행 후 카드가 없음
+                searchPerformed && cardDataItems.itemCount == 0 -> {
+                    EmptySearchCard()
+                }
+                // 4. 추천 태그가 있음 (아직 검색 수행 안함)
+                recommendedTags.isNotEmpty() -> {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.fillMaxHeight()
+                    ) {
+                        itemsIndexed(
+                            items = recommendedTags,
+                            key = { _, item -> item.id }
+                        ) { _, item ->
+                            SearchListItem(
+                                title = item.name,
+                                content = "${item.usageCnt}",
+                                onClick = { 
                                     focusManager.clearFocus()
                                     isSearchFieldFocused = false
-                                    onClickCard(cardId)
+                                    onItemClick(item.name)
                                 }
                             )
                         }
                     }
                 }
-            } else if (recommendedTags.isNotEmpty()) {
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier.height(144.dp)
-                ) {
-                    itemsIndexed(
-                        items = recommendedTags,
-                        key = { _, item -> item.id }
-                    ) { _, item ->
-                        SearchListItem(
-                            title = item.name,
-                            content = "${item.usageCnt}",
-                            onClick = { 
-                                focusManager.clearFocus()
-                                isSearchFieldFocused = false
-                                onItemClick(item.name)
-                            }
-                        )
-                    }
+                // 5. 검색어는 있지만 추천 태그가 없고 검색도 안함
+                searchValue.isNotBlank() && recommendedTags.isEmpty() && !searchPerformed && !isSearchFieldFocused -> {
+                    EmptyCardList()
                 }
-            } else if (searchValue.isNotBlank() && recommendedTags.isEmpty() && !isSearchFieldFocused) {
-                // 검색어가 있지만 추천 태그 결과가 없고 포커싱 중이 아닐 때
-                EmptyCardList()
             }
         }
     }
@@ -341,6 +379,7 @@ private fun EmptyCardList() {
         Image(
             painter = painterResource(com.phew.core_design.R.drawable.ic_deleted_card),
             contentDescription = "no notify",
+            contentScale = ContentScale.Fit,
             modifier = Modifier
                 .height(130.dp)
                 .width(220.dp)

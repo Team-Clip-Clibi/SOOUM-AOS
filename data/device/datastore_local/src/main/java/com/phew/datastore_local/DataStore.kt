@@ -3,6 +3,7 @@ package com.phew.datastore_local
 import com.phew.datastore_local.dto.ProfileInfoDTO
 import com.phew.datastore_local.dto.TokenDTO
 import com.phew.datastore_local.dto.UserInfoDTO
+import kotlinx.coroutines.flow.Flow
 
 interface DataStore {
     suspend fun insertToken(key: String, data: Pair<String, String>): Boolean
@@ -15,11 +16,11 @@ interface DataStore {
     suspend fun saveUserInfo(key: String, data: UserInfoDTO): Boolean
     suspend fun getUserInfo(key: String): UserInfoDTO?
     suspend fun clearAllData(): Boolean
-    suspend fun saveProfileInfo(
+    suspend fun saveNickName(
         profileKey : String,
         data : ProfileInfoDTO
     ): Boolean
-    suspend fun getProfileInfo(
+    suspend fun getNickName(
         profileKey : String
     ) : ProfileInfoDTO?
 }

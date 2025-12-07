@@ -8,6 +8,7 @@ import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.domain.dto.FeedData
 import com.phew.core_common.DataResult
 import com.phew.core_common.DomainResult
+import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.log.SooumLog
 import com.phew.domain.dto.DistanceCard
 import com.phew.domain.dto.FeedCardType
@@ -20,14 +21,19 @@ import com.phew.domain.dto.Notify
 import com.phew.domain.dto.Popular
 import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.network.CardFeedRepository
+import com.phew.domain.usecase.CheckCardAlreadyDelete
 import com.phew.domain.usecase.CheckLocationPermission
 import com.phew.domain.usecase.GetFeedNotification
 import com.phew.domain.usecase.GetLatestFeed
 import com.phew.domain.usecase.GetNotification
 import com.phew.domain.usecase.GetReadNotification
 import com.phew.domain.usecase.GetUnReadNotification
+import com.phew.domain.usecase.SetReadActivateNotify
+import com.phew.domain.usecase.SetReadActivateNotify.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,9 +45,13 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
-
+import kotlin.collections.emptyList
 
 @HiltViewModel
 class FeedViewModel @Inject constructor(
@@ -53,6 +63,8 @@ class FeedViewModel @Inject constructor(
     private val cardFeedRepository: CardFeedRepository,
     private val deviceRepository: DeviceRepository,
     private val notification: GetFeedNotification,
+    private val readNotify: SetReadActivateNotify,
+    private val checkCardDelete: CheckCardAlreadyDelete,
 ) :
     ViewModel() {
     private val _uiState = MutableStateFlow(Home())
@@ -61,6 +73,10 @@ class FeedViewModel @Inject constructor(
     // Navigation side effects
     private val _navigationEvent = MutableSharedFlow<NavigationEvent>()
     val navigationEvent = _navigationEvent.asSharedFlow()
+
+    // 알람 읽음 처리를 위해
+    private val mutex = Mutex()
+    private val unreadIdBuffer = mutableSetOf<Long>()
 
     /**
      * 공지사항(notice)
@@ -119,13 +135,14 @@ class FeedViewModel @Inject constructor(
     }
 
     val notice: Flow<PagingData<Notice>> = getNotificationPage(NoticeSource.NOTIFICATION).cachedIn(viewModelScope)
-    val unReadNotification: Flow<PagingData<Notification>> =
+    val unReadActivateAlarm: Flow<PagingData<Notification>> =
         getUnReadNotification().cachedIn(viewModelScope)
-    val readNotification: Flow<PagingData<Notification>> =
+    val readActivateAlarm: Flow<PagingData<Notification>> =
         getReadNotification().cachedIn(viewModelScope)
 
     // Latest Feed Paging
     private val _latestFeedLocation = MutableStateFlow<Pair<Double?, Double?>>(null to null)
+    @OptIn(ExperimentalCoroutinesApi::class)
     val latestFeedPaging: Flow<PagingData<Latest>> = _latestFeedLocation
         .flatMapLatest { (latitude, longitude) ->
             getLatestFeed(latitude, longitude)
@@ -428,6 +445,44 @@ class FeedViewModel @Inject constructor(
         }
     }
 
+    fun addItemAsRead(notifyId: Long) {
+        viewModelScope.launch {
+            mutex.withLock {
+                unreadIdBuffer.add(notifyId)
+            }
+        }
+    }
+
+    suspend fun readActivateNotify() {
+        withContext(Dispatchers.IO) {
+            while (isActive) {
+                delay(2000L)
+                val notify = mutex.withLock {
+                    if (unreadIdBuffer.isEmpty()) return@withLock emptyList()
+                    val ids = unreadIdBuffer.toList()
+                    unreadIdBuffer.clear()
+                    ids
+                }
+                if(notify.isNotEmpty()){
+                    when (val result =
+                        readNotify.invoke(Param(notifyId = notify))) {
+                        is DomainResult.Failure -> {
+                            _uiState.update { state ->
+                                state.copy(setReadNotify = UiState.Fail(result.error))
+                            }
+                        }
+
+                        is DomainResult.Success -> {
+                            _uiState.update { state ->
+                                state.copy(setReadNotify = UiState.Success(Unit))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     fun refreshCurrentTab() {
         when (_uiState.value.currentTab) {
             FeedType.Latest -> {
@@ -626,12 +681,42 @@ class FeedViewModel @Inject constructor(
     }
 
     fun navigateToDetail(cardId: String) {
+        if (_uiState.value.checkCardDelete is UiState.Loading) return
+        val cardIdLong = cardId.toLongOrNull()
+        if (cardIdLong == null) {
+            _uiState.update { state ->
+                state.copy(
+                    checkCardDelete = UiState.Fail(ERROR_FAIL_JOB)
+                )
+            }
+            return
+        }
         viewModelScope.launch {
-            val cardIdLong = cardId.toLongOrNull()
-            if (cardIdLong != null) {
-                _navigationEvent.emit(NavigationEvent.NavigateToDetail(CardDetailArgs(cardIdLong)))
+            _uiState.update { state -> state.copy(checkCardDelete = UiState.Loading) }
+            when (val result = checkCardDelete(CheckCardAlreadyDelete.Param(cardId = cardIdLong))) {
+                is DomainResult.Failure -> {
+                    _uiState.update { state ->
+                        state.copy(checkCardDelete = UiState.Fail(result.error))
+                    }
+                }
+
+                is DomainResult.Success -> {
+                    _uiState.update { state -> state.copy(checkCardDelete = UiState.Success(result.data)) }
+                    if (!result.data) _navigationEvent.emit(
+                        NavigationEvent.NavigateToDetail(
+                            CardDetailArgs(cardIdLong)
+                        )
+                    )
+                }
             }
         }
+    }
+
+    fun initCheckCardDelete() {
+        _uiState.update { state ->
+            state.copy(checkCardDelete = UiState.None)
+        }
+        refreshCurrentTab()
     }
 
 }
@@ -652,6 +737,8 @@ data class Home(
     val location: Location = Location.EMPTY,
     val shouldShowPermissionRationale: Boolean = false,
     val feedNotification: UiState<List<Notice>> = UiState.Loading,
+    val setReadNotify: UiState<Unit> = UiState.Loading,
+    val checkCardDelete: UiState<Boolean> = UiState.None,
 ) {
     val currentPagingState: FeedPagingState
         get() = when (currentTab) {
@@ -669,15 +756,8 @@ enum class DistanceType(val value: Double) {
     KM_1(1.0),
     KM_5(5.0),
     KM_10(10.0),
-    KM_15(15.0),
     KM_20(20.0),
     KM_50(50.0);
-
-    companion object {
-        fun fromValue(value: Double): DistanceType {
-            return entries.find { distanceType -> distanceType.value == value } ?: KM_1
-        }
-    }
 }
 
 sealed interface UiState<out T> {

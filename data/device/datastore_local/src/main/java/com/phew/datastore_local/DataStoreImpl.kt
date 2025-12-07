@@ -1,8 +1,8 @@
 package com.phew.datastore_local
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.core.content.edit
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.google.gson.Gson
@@ -14,10 +14,14 @@ import com.phew.datastore_local.dto.TokenDTO
 import com.phew.datastore_local.dto.UserInfoDTO
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class DataStoreImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val fileName: String,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : DataStore {
     private val gson = Gson()
     private val sharedPreferences: SharedPreferences by lazy {
@@ -48,173 +52,188 @@ class DataStoreImpl @Inject constructor(
 
     @Volatile
     private var userInfo: UserInfoDTO? = null
+
     @Volatile
     private var profileInfoDTO: ProfileInfoDTO? = null
 
-    override suspend fun insertToken(key: String, data: Pair<String, String>): Boolean {
-        try {
+    @SuppressLint("UseKtx")
+    private fun SharedPreferences.commit(block: SharedPreferences.Editor.() -> Unit): Boolean {
+        val editor = edit()
+        block(editor)
+        return editor.commit()
+    }
+
+    override suspend fun insertToken(key: String, data: Pair<String, String>): Boolean = withContext(ioDispatcher) {
+        runCatching {
             val token = TokenDTO(data.first, data.second)
             val jsonString = gson.toJson(token)
-            sharedPreferences.edit(commit = true) { putString(key, jsonString) }
-            cachedToken = token
-            return true
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return false
+            val success = sharedPreferences.commit { putString(key, jsonString) }
+            if (success) {
+                cachedToken = token
+            }
+            success
+        }.getOrElse {
+            it.printStackTrace()
+            false
         }
     }
 
-    override suspend fun getToken(key: String): TokenDTO {
-        try {
+    override suspend fun getToken(key: String): TokenDTO = withContext(ioDispatcher) {
+        runCatching {
             cachedToken?.let { token ->
-                return TokenDTO(token.refreshToken, token.accessToken)
+                return@withContext TokenDTO(token.refreshToken, token.accessToken)
             }
             val jsonString = sharedPreferences.getString(key, ERROR_NO_DATA)
             if (jsonString == ERROR_NO_DATA) {
-                return TokenDTO(ERROR_NO_DATA, ERROR_NO_DATA)
+                return@withContext TokenDTO(ERROR_NO_DATA, ERROR_NO_DATA)
             }
             val token = gson.fromJson(jsonString, TokenDTO::class.java)
             cachedToken = token
-            return TokenDTO(token.refreshToken, token.accessToken)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return TokenDTO(ERROR_FAIL_JOB, ERROR_FAIL_JOB)
+            TokenDTO(token.refreshToken, token.accessToken)
+        }.getOrElse {
+            it.printStackTrace()
+            TokenDTO(ERROR_FAIL_JOB, ERROR_FAIL_JOB)
         }
     }
 
-    override suspend fun remove(key: String): Boolean {
-        try {
-            sharedPreferences.edit { remove(key) }
-            return true
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return false
+    override suspend fun remove(key: String): Boolean = withContext(ioDispatcher) {
+        runCatching {
+            val success = sharedPreferences.commit { remove(key) }
+            if (success) {
+                cachedToken = null
+                userInfo = null
+                profileInfoDTO = null
+            }
+            success
+        }.getOrElse {
+            it.printStackTrace()
+            false
         }
     }
 
-    override suspend fun insertFirebaseToken(key: String, data: String): Boolean {
-        try {
-            sharedPreferences.edit(commit = true) { putString(key, data) }
-            return true
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return false
+    override suspend fun insertFirebaseToken(key: String, data: String): Boolean = withContext(ioDispatcher) {
+        runCatching {
+            sharedPreferences.commit { putString(key, data) }
+        }.getOrElse {
+            it.printStackTrace()
+            false
         }
     }
 
-    override suspend fun getFirebaseToken(key: String): String {
-        try {
-            val token = sharedPreferences.getString(key, "") ?: return ERROR_NO_DATA
-            return token
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return ERROR
+    override suspend fun getFirebaseToken(key: String): String = withContext(ioDispatcher) {
+        runCatching {
+            sharedPreferences.getString(key, "") ?: ERROR_NO_DATA
+        }.getOrElse {
+            it.printStackTrace()
+            ERROR
         }
     }
 
-    override suspend fun insertNotifyAgree(key: String, data: Boolean): Boolean {
-        try {
-            sharedPreferences.edit(commit = true) { putBoolean(key, data) }
-            return true
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return false
+    override suspend fun insertNotifyAgree(key: String, data: Boolean): Boolean = withContext(ioDispatcher) {
+        runCatching {
+            sharedPreferences.commit { putBoolean(key, data) }
+        }.getOrElse {
+            it.printStackTrace()
+            false
         }
     }
 
-    override suspend fun getNotifyAgree(key: String): Boolean {
-        try {
-            val isAgree = sharedPreferences.getBoolean(key, false)
-            return isAgree
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return false
+    override suspend fun getNotifyAgree(key: String): Boolean = withContext(ioDispatcher) {
+        runCatching {
+            sharedPreferences.getBoolean(key, false)
+        }.getOrElse {
+            it.printStackTrace()
+            false
         }
     }
 
-    override suspend fun saveUserInfo(key: String, data: UserInfoDTO): Boolean {
-        try {
+    override suspend fun saveUserInfo(key: String, data: UserInfoDTO): Boolean = withContext(ioDispatcher) {
+        runCatching {
             val jsonString = gson.toJson(data)
-            sharedPreferences.edit(commit = true) { putString(key, jsonString) }
-            userInfo = data
-            return true
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return false
+            val success = sharedPreferences.commit { putString(key, jsonString) }
+            if (success) {
+                userInfo = data
+            }
+            success
+        }.getOrElse {
+            it.printStackTrace()
+            false
         }
     }
 
-    override suspend fun saveProfileInfo(
+    override suspend fun saveNickName(
         profileKey: String,
         data: ProfileInfoDTO,
-    ): Boolean {
-        try {
-            if (profileInfoDTO != null && profileInfoDTO?.equals(data) == true) {
-                return true
+    ): Boolean = withContext(ioDispatcher) {
+        runCatching {
+            if (profileInfoDTO != null && profileInfoDTO == data) {
+                return@withContext true
             }
-            when (val beforeData = sharedPreferences.getString(profileKey, null)) {
+            val success = when (val beforeData = sharedPreferences.getString(profileKey, null)) {
                 null -> {
                     val jsonString = gson.toJson(data)
-                    sharedPreferences.edit(commit = true) { putString(profileKey, jsonString) }
-                    profileInfoDTO = data
-                    return true
+                    sharedPreferences.commit { putString(profileKey, jsonString) }
                 }
 
                 else -> {
                     val beforeProfileInfoDTO = gson.fromJson(beforeData, ProfileInfoDTO::class.java)
-                    if (beforeProfileInfoDTO.equals(data)) return true
+                    if (beforeProfileInfoDTO == data) return@withContext true
                     val jsonString = gson.toJson(data)
-                    sharedPreferences.edit(commit = true) { putString(profileKey, jsonString) }
-                    profileInfoDTO = data
-                    return true
+                    sharedPreferences.commit { putString(profileKey, jsonString) }
                 }
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return false
+            if (success) {
+                profileInfoDTO = data
+            }
+            success
+        }.getOrElse {
+            it.printStackTrace()
+            false
         }
     }
 
-    override suspend fun getProfileInfo(profileKey: String): ProfileInfoDTO? {
-        try {
+    override suspend fun getNickName(profileKey: String): ProfileInfoDTO? = withContext(ioDispatcher) {
+        runCatching {
             profileInfoDTO?.let { data ->
-                return data
+                return@withContext data
             }
-            val jsonString = sharedPreferences.getString(profileKey, null) ?: return null
+            val jsonString = sharedPreferences.getString(profileKey, null) ?: return@withContext null
             val profileInfoDTO = gson.fromJson(jsonString, ProfileInfoDTO::class.java)
-            this.profileInfoDTO = profileInfoDTO
-            return profileInfoDTO
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return null
+            this@DataStoreImpl.profileInfoDTO = profileInfoDTO
+            profileInfoDTO
+        }.getOrElse {
+            it.printStackTrace()
+            null
         }
     }
 
-    override suspend fun getUserInfo(key: String): UserInfoDTO? {
-        try {
+    override suspend fun getUserInfo(key: String): UserInfoDTO? = withContext(ioDispatcher) {
+        runCatching {
             userInfo?.let { data ->
-                return data
+                return@withContext data
             }
-            val jsonString = sharedPreferences.getString(key, null) ?: return null
+            val jsonString = sharedPreferences.getString(key, null) ?: return@withContext null
             val userInfoDTO = gson.fromJson(jsonString, UserInfoDTO::class.java)
-            this.userInfo = userInfoDTO
-            return userInfoDTO
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return null
+            this@DataStoreImpl.userInfo = userInfoDTO
+            userInfoDTO
+        }.getOrElse {
+            it.printStackTrace()
+            null
         }
     }
 
-    override suspend fun clearAllData(): Boolean {
-        try {
-            sharedPreferences.edit(commit = true) { clear() }
-            cachedToken = null
-            userInfo = null
-            profileInfoDTO = null
-            return true
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return false
+    override suspend fun clearAllData(): Boolean = withContext(ioDispatcher) {
+        runCatching {
+            val success = sharedPreferences.commit { clear() }
+            if (success) {
+                cachedToken = null
+                userInfo = null
+                profileInfoDTO = null
+            }
+            success
+        }.getOrElse {
+            it.printStackTrace()
+            false
         }
     }
 }

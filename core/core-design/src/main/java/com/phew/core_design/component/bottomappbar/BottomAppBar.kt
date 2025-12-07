@@ -122,14 +122,6 @@ private fun RowScope.NavigationBarItemLayout(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
 ) {
     val haptic = LocalHapticFeedback.current
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val sizeScale by with(NavigationDefaults) {
-        animateFloatAsState(
-            if (isPressed) SCALE_TO else SCALE_FROM, animationSpec = spring(
-                stiffness = STIFFNESS
-            )
-        )
-    }
 
     val styledLabel: @Composable () -> Unit = label.let {
         @Composable {
@@ -155,10 +147,6 @@ private fun RowScope.NavigationBarItemLayout(
                 interactionSource = interactionSource,
                 indication = null,
             )
-            .graphicsLayer {
-                scaleX = sizeScale
-                scaleY = sizeScale
-            }
             .weight(1f),
         contentAlignment = Alignment.TopCenter
     ) {

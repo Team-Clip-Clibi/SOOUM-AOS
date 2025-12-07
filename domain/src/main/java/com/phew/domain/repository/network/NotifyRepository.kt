@@ -12,4 +12,5 @@ interface NotifyRepository {
     suspend fun requestNotificationUnReadPatch(lastId: Long): DataResult<Pair<Int, List<Notification>>>
     suspend fun requestNotificationRead(): DataResult<Pair<Int, List<Notification>>>
     suspend fun requestNotificationReadPatch(lastId: Long): DataResult<Pair<Int, List<Notification>>>
+    suspend fun requestReadNotify(notifyId : Long) : Int
 }

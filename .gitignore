@@ -14,3 +14,6 @@
 .cxx
 local.properties
 .idea/
+
+# Keystore properties (contains sensitive information)
+keystore.properties

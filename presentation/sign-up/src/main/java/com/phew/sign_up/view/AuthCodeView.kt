@@ -1,4 +1,4 @@
-package com.phew.sign_up
+package com.phew.sign_up.view
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -38,12 +38,21 @@ import com.phew.core_design.NeutralColor
 import com.phew.core_design.Primary
 import com.phew.core_design.TextComponent
 import com.phew.core_design.TextFiledComponent
+import com.phew.sign_up.R
+import com.phew.sign_up.SignUp
+import com.phew.sign_up.SignUpViewModel
+import com.phew.sign_up.UiState
 
 @Composable
-fun AuthCodeView(viewModel: SignUpViewModel, onBack: () -> Unit, onRestoreSuccess: () -> Unit) {
+fun AuthCodeView(
+    viewModel: SignUpViewModel,
+    onBack: () -> Unit,
+    onRestoreSuccess: () -> Unit,
+) {
     val uiState by viewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
     BackHandler {
+        viewModel.initAuthCode()
         onBack()
     }
     HandleAuthCode(
@@ -55,6 +64,7 @@ fun AuthCodeView(viewModel: SignUpViewModel, onBack: () -> Unit, onRestoreSucces
         topBar = {
             AppBar.IconLeftAppBar(
                 onClick = {
+                    viewModel.initAuthCode()
                     onBack()
                 },
                 appBarText = stringResource(R.string.authCode_top_bar)
@@ -112,9 +122,7 @@ fun AuthCodeView(viewModel: SignUpViewModel, onBack: () -> Unit, onRestoreSucces
                     viewModel.authCode(input)
                 },
                 placeHolder = stringResource(R.string.authCode_hint_title),
-                useHelper = true,
-                helperText = stringResource(R.string.authCode_txt_code_content),
-                helperTextColor = NeutralColor.GRAY_500
+                useHelper = false
             )
         }
     }
@@ -169,7 +177,7 @@ private fun HandleAuthCode(
     snackBarHostState: SnackbarHostState,
 ) {
     val context = LocalContext.current
-    LaunchedEffect(uiState) {
+    LaunchedEffect(uiState.restoreAccountResult) {
         when (val result = uiState.restoreAccountResult) {
             is UiState.Fail -> {
                 when (result.errorMessage) {
@@ -179,12 +187,14 @@ private fun HandleAuthCode(
                             duration = SnackbarDuration.Short
                         )
                     }
+
                     ERROR_TRANSFER_CODE_INVALID -> {
                         snackBarHostState.showSnackbar(
                             message = context.getString(com.phew.core_design.R.string.error_auth_code_invalid),
                             duration = SnackbarDuration.Short
                         )
                     }
+
                     else -> {
                         snackBarHostState.showSnackbar(
                             message = context.getString(com.phew.core_design.R.string.error_app),

@@ -13,3 +13,8 @@ const val NOTIFY_CARD = "card"
 const val NOTIFY_LIMIT = "limit"
 const val NOTIFY_FOLLOW = "follow"
 const val NOTIFY_FEED_LIKE = "FEED_LIKE"
+
+enum class NotifyTab {
+    NOTIFY_ACTIVATE,
+    NOTIFY_SERVICE;
+}

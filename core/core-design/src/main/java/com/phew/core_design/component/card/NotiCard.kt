@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -92,6 +94,7 @@ fun NotiCard(
                         style = TextComponent.CAPTION_2_M_12,
                         color = NeutralColor.GRAY_400
                     )
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = data.description,
                         style = TextComponent.SUBTITLE_3_SB_14,

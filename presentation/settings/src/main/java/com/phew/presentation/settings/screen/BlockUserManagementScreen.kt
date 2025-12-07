@@ -22,7 +22,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -53,6 +53,8 @@ import com.phew.core_design.DialogComponent
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.SmallButton
 import com.phew.core_design.TextComponent
+import com.phew.core_design.component.refresh.RefreshBox
+import com.phew.core_design.component.refresh.pullToRefreshOffset
 import com.phew.domain.model.BlockMember
 import com.phew.presentation.settings.R
 import com.phew.presentation.settings.viewmodel.BlockUserManagementUiEffect
@@ -110,7 +112,8 @@ internal fun BlockUserManagementRoute(
         onRefresh = { blockUsers.refresh() },
         onUnblockClick = viewModel::showUnblockDialog,
         onUnblockConfirm = viewModel::unblockUser,
-        onUnblockCancel = viewModel::hideUnblockDialog
+        onUnblockCancel = viewModel::hideUnblockDialog,
+        onRefreshComplete = viewModel::onRefreshComplete
     )
 }
 
@@ -124,8 +127,25 @@ private fun BlockUserManagementScreen(
     onRefresh: () -> Unit,
     onUnblockClick: (BlockMember) -> Unit,
     onUnblockConfirm: () -> Unit,
-    onUnblockCancel: () -> Unit
+    onUnblockCancel: () -> Unit,
+    onRefreshComplete: () -> Unit
 ) {
+    var isUserRefreshing by remember { mutableStateOf(false) }
+    val refreshState = blockMembers.loadState.refresh
+    val pullToRefreshState = rememberPullToRefreshState()
+
+    LaunchedEffect(refreshState) {
+        if (isUserRefreshing && refreshState !is LoadState.Loading) {
+            isUserRefreshing = false
+        }
+    }
+
+    LaunchedEffect(refreshState, uiState.removedBlockMemberIds) {
+        if (refreshState is LoadState.NotLoading && uiState.removedBlockMemberIds.isNotEmpty()) {
+            onRefreshComplete()
+        }
+    }
+
     Scaffold(
         modifier = modifier.background(NeutralColor.WHITE),
         topBar = {
@@ -142,54 +162,75 @@ private fun BlockUserManagementScreen(
             }
         }
     ) { innerPadding ->
-        PullToRefreshBox(
-            isRefreshing = blockMembers.loadState.refresh is LoadState.Loading,
-            onRefresh = onRefresh,
-            modifier = Modifier.padding(innerPadding)
+        val isInitialLoading =
+            refreshState is LoadState.Loading && blockMembers.itemCount == 0
+        val hasVisibleItems = blockMembers.itemSnapshotList.items.any { item ->
+            item?.blockMemberId !in uiState.removedBlockMemberIds
+        }
+        RefreshBox(
+            isRefresh = isUserRefreshing,
+            onRefresh = {
+                if (!isUserRefreshing) {
+                    isUserRefreshing = true
+                    onRefresh()
+                }
+            },
+            state = pullToRefreshState,
+            paddingValues = innerPadding
         ) {
-            when {
-                blockMembers.loadState.refresh is LoadState.Loading && blockMembers.itemCount == 0 -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .pullToRefreshOffset(state = pullToRefreshState, baseOffset = 0.dp)
+                    .background(NeutralColor.WHITE)
+            ) {
+                when {
+                    isInitialLoading -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
                     }
-                }
 
-                blockMembers.loadState.refresh !is LoadState.Loading && blockMembers.itemCount == 0 -> {
-                    EmptyBlockListContent()
-                }
+                    blockMembers.loadState.refresh !is LoadState.Loading &&
+                        (blockMembers.itemCount == 0 || !hasVisibleItems) -> {
+                        EmptyBlockListContent()
+                    }
 
-                else -> {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(NeutralColor.WHITE),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        items(blockMembers.itemCount) { index ->
+                    else -> {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(blockMembers.itemCount) { index ->
                             val blockMember = blockMembers[index]
-                            if (blockMember != null) {
+                            if (blockMember != null &&
+                                blockMember.blockMemberId !in uiState.removedBlockMemberIds
+                            ) {
                                 BlockUserItem(
                                     blockMember = blockMember,
                                     onUnblockClick = { onUnblockClick(blockMember) }
                                 )
                             }
-                        }
+                            }
 
-                        if (blockMembers.loadState.append is LoadState.Loading) {
-                            item {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(24.dp)
-                                    )
+                            if (blockMembers.loadState.append is LoadState.Loading) {
+                                item {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -209,7 +250,8 @@ private fun BlockUserManagementScreen(
             buttonTextEnd = stringResource(R.string.block_user_dialog_disable),
             onClick = onUnblockConfirm,
             onDismiss = onUnblockCancel,
-            rightButtonBaseColor = Danger.M_RED
+            rightButtonBaseColor = Danger.M_RED,
+            startButtonTextColor = NeutralColor.GRAY_600
         )
     }
 }
@@ -221,14 +263,13 @@ private fun BlockUserItem(
 ) {
     Row(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+            .fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(2f)
         ) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
@@ -257,7 +298,7 @@ private fun BlockUserItem(
         SmallButton.NoIconPrimary(
             buttonText = stringResource(R.string.block_user_diable),
             onClick = onUnblockClick,
-            modifier = Modifier
+            modifier = Modifier.weight(0.5f)
         )
     }
 }

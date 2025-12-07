@@ -8,6 +8,7 @@ import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.getByType
 import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
+import java.util.Properties
 
 class PresentationConvention : Plugin<Project> {
     override fun apply(project: Project) = with(project) {
@@ -25,6 +26,18 @@ class PresentationConvention : Plugin<Project> {
                 minSdk = 31
                 testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
                 consumerProguardFiles("consumer-rules.pro")
+                val properties = Properties()
+                val localPropsFile = rootProject.file("local.properties")
+                if (localPropsFile.exists()) {
+                    localPropsFile.inputStream().use { properties.load(it) }
+                }
+                val appServicePolicy = properties.getProperty("sooum_service_policy", "")
+                val appLocationPolicy = properties.getProperty("sooum_location_policy", "")
+                val appPrivatePolicy = properties.getProperty("sooum_private_policy", "")
+
+                buildConfigField("String", "URL_APP_SERVICE_POLICY", appServicePolicy)
+                buildConfigField("String", "URL_APP_LOCATION_POLICY", appLocationPolicy)
+                buildConfigField("String", "URL_APP_PRIVATE_POLICY", appPrivatePolicy)
             }
             buildFeatures.buildConfig = true
             buildFeatures.compose = true
