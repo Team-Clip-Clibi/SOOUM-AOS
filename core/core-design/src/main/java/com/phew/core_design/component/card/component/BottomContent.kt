@@ -115,9 +115,8 @@ internal fun LocationAndWriteTimeLabel(
             }
         }
         if (!writeTime.isNullOrEmpty()) {
-            val relativeTime = remember(writeTime) {
-                TimeUtils.getRelativeTimeString(writeTime)
-            }
+            val relativeTime = TimeUtils.getRelativeTimeString(writeTime)
+            SooumLog.d(TAG, "LocationAndWriteTimeLabel writeTime=$writeTime -> relative=$relativeTime")
             Text(
                 text = relativeTime,
                 style = TextComponent.CAPTION_2_M_12.copy(color = NeutralColor.GRAY_500),
