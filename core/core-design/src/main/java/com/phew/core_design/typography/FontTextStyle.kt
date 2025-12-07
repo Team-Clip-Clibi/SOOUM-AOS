@@ -56,7 +56,7 @@ object FontTextStyle {
             lineHeight = 19.5.sp, // 13 * 150%
             fontFamily = RidibatangFamily,
             fontWeight = FontWeight.Normal,
-            color = NeutralColor.BLACK,
+            color = NeutralColor.WHITE,
             letterSpacing = (-0.325).sp // -2.5%
         )
     
@@ -89,7 +89,7 @@ object FontTextStyle {
             lineHeight = 19.8.sp, // 18 * 110%
             fontFamily = YoonFamily,
             fontWeight = FontWeight.Normal,
-            color = NeutralColor.BLACK,
+            color =NeutralColor.WHITE,
             letterSpacing = 0.sp // 0%
         )
     
@@ -122,7 +122,7 @@ object FontTextStyle {
             lineHeight = 19.6.sp, // 14 * 140%
             fontFamily = KkokkoFamily,
             fontWeight = FontWeight.Normal,
-            color = NeutralColor.BLACK,
+            color = NeutralColor.WHITE,
             letterSpacing = 0.sp // 0%
         )
     

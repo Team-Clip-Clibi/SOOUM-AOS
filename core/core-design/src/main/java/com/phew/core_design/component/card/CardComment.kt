@@ -114,7 +114,7 @@ private fun CardViewCommentImpl(
                 modifier = Modifier.weight(1f),
                 contentText = contentText,
                 imgUrl = thumbnailUri,
-                fontFamily = resolveFontFamily(font = font),
+                font = font,
                 textMaxLines = 4,
                 useFixedHeight = false
             )

@@ -23,6 +23,11 @@ import com.phew.repository.mapper.toDomain
 import okhttp3.RequestBody
 import javax.inject.Inject
 
+import com.phew.domain.dto.CardIdResponse // Added import for CardIdResponse
+import com.phew.network.dto.response.feed.CardIdResponseDto // Added import for CardIdResponseDto
+
+fun CardIdResponseDto.toDomain(): CardIdResponse = CardIdResponse(cardId = this.cardId)
+
 class CardFeedRepositoryImpl @Inject constructor(
     private val feedHttp: FeedHttp,
 ) : CardFeedRepository {
@@ -200,8 +205,8 @@ class CardFeedRepositoryImpl @Inject constructor(
         imageName: String,
         isStory: Boolean,
         tag: List<String>
-    ): Int {
-        try {
+    ): DataResult<CardIdResponse> {
+        return try {
             val request = feedHttp.requestUploadCard(
                 RequestUploadCardDTO(
                     isDistanceShared = isDistanceShared,
@@ -215,13 +220,23 @@ class CardFeedRepositoryImpl @Inject constructor(
                     tags = tag
                 )
             )
-            if (!request.isSuccessful || request.code() != 200) {
-                return HTTP_NOT_FOUND
+            if (request.isSuccessful && request.code() == 200) {
+                request.body()?.let {
+                    DataResult.Success(it.toDomain())
+                } ?: DataResult.Fail(code = request.code(), message = "Response body is null")
+            } else {
+                DataResult.Fail(
+                    code = request.code(),
+                    message = request.message()
+                )
             }
-            return HTTP_SUCCESS
         } catch (e: Exception) {
             e.printStackTrace()
-            return APP_ERROR_CODE
+            DataResult.Fail(
+                throwable = e,
+                message = e.message,
+                code = APP_ERROR_CODE
+            )
         }
     }
 
@@ -235,8 +250,8 @@ class CardFeedRepositoryImpl @Inject constructor(
         imageType: String,
         imageName: String,
         tag: List<String>
-    ): Int {
-        try {
+    ): DataResult<CardIdResponse> {
+        return try {
             val request = feedHttp.requestUploadAnswerCard(
                 cardId = cardId,
                 request = RequestUploadCardAnswerDTO(
@@ -250,13 +265,23 @@ class CardFeedRepositoryImpl @Inject constructor(
                     tags = tag
                 )
             )
-            if (!request.isSuccessful || request.code() != 200) {
-                return HTTP_NOT_FOUND
+            if (request.isSuccessful && request.code() == 200) {
+                request.body()?.let {
+                    DataResult.Success(it.toDomain())
+                } ?: DataResult.Fail(code = request.code(), message = "Response body is null")
+            } else {
+                DataResult.Fail(
+                    code = request.code(),
+                    message = request.message()
+                )
             }
-            return HTTP_SUCCESS
         } catch (e: Exception) {
             e.printStackTrace()
-            return APP_ERROR_CODE
+            DataResult.Fail(
+                throwable = e,
+                message = e.message,
+                code = APP_ERROR_CODE
+            )
         }
     }
 

@@ -71,7 +71,8 @@ enum class HomeTabType(
         }
         fun isFeedHome(value: String?): Boolean {
             SooumLog.d("HomeTabType", "FEED.route: ${FEED.route}")
-            return FEED.route == value
+            if (value.isNullOrEmpty()) return false
+            return value == FEED.route || value.startsWith(FEED.graph)
         }
     }
 }

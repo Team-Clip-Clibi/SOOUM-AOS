@@ -33,7 +33,9 @@ import com.phew.core_design.TextComponent
 import com.phew.core_design.UnKnowColor
 import com.phew.core_design.R
 import com.phew.core_design.typography.FontType
+import com.phew.core_design.typography.FontTextStyle
 import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.TextStyle
 import com.phew.core_design.component.card.component.BottomContent
 import com.phew.core_design.component.card.component.FeedCardType
 
@@ -225,7 +227,7 @@ private fun FeedCardImpl(
             BodyContent(
                 contentText = contentText,
                 imgUrl = imgUrl,
-                fontFamily = resolveFontFamily(font = font),
+                font = font,
                 textMaxLines = 4
             )
 
@@ -274,7 +276,7 @@ private fun FeedAdminCardImpl(
             BodyContent(
                 contentText = contentText,
                 imgUrl = imgUrl,
-                fontFamily = resolveFontFamily(font = font),
+                font = font,
                 textMaxLines = 4
             )
 
@@ -294,7 +296,7 @@ internal fun BodyContent(
     modifier: Modifier = Modifier,
     contentText: String = "",
     imgUrl: String = "",
-    fontFamily: FontFamily,
+    font: String = "",
     textMaxLines: Int,
     useFixedHeight: Boolean = true
 ) {
@@ -331,9 +333,7 @@ internal fun BodyContent(
             Text(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 20.dp), // 패딩 조정
                 text = contentText,
-                style = TextComponent.BODY_1_M_14,
-                color = NeutralColor.WHITE,
-                fontFamily = fontFamily,
+                style = resolveCardTextStyle(font = font).copy(color = NeutralColor.WHITE),
                 textAlign = TextAlign.Center,
                 maxLines = textMaxLines,
                 overflow = TextOverflow.Ellipsis
@@ -392,13 +392,15 @@ private fun Preview_FeedCard() {
     }
 }
 
-internal fun resolveFontFamily(font: String): FontFamily {
+
+@Composable
+internal fun resolveCardTextStyle(font: String): TextStyle {
     val fontType = FontType.fromServerName(font)
     return when (fontType) {
-        FontType.RIDIBATANG -> FontFamily(Font(R.font.ridibatang))
-        FontType.YOON -> FontFamily(Font(R.font.yoon))
-        FontType.KKOKKO -> FontFamily(Font(R.font.kkokko))
-        FontType.PRETENDARD -> FontFamily(Font(R.font.regular))
-        null -> FontFamily.Default
+        FontType.RIDIBATANG -> FontTextStyle.RIDIBATANG_CARD
+        FontType.YOON -> FontTextStyle.YOON_CARD
+        FontType.KKOKKO -> FontTextStyle.KKOKKO_CARD
+        FontType.PRETENDARD -> TextComponent.BODY_1_M_14 // PRETENDARD는 기본 스타일 사용
+        null -> TextComponent.BODY_1_M_14 // 기본 스타일
     }
 }
