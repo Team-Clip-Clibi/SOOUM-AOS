@@ -6,6 +6,7 @@ import com.phew.datastore_local.DataStore
 import com.phew.device_info.DeviceInfo
 import com.phew.domain.model.RejoinableDate
 import com.phew.domain.model.TransferCode
+import com.phew.network.dto.request.NotifyToggleRequestDTO
 import com.phew.domain.repository.network.MembersRepository
 import com.phew.network.dto.request.account.TransferAccountRequestDTO
 import com.phew.network.dto.request.account.WithdrawalRequestDTO
@@ -134,6 +135,25 @@ class MembersRepositoryImpl @Inject constructor(
             is DataResult.Fail -> Result.failure(
                 result.throwable ?: Exception("Failed to get rejoinable date: ${result.message}")
             )
+        }
+    }
+    
+    override suspend fun toggleNotification(isAllowNotify: Boolean): Result<Unit> {
+        SooumLog.d(TAG, "toggleNotification - isAllowNotify: $isAllowNotify")
+        
+        return try {
+            val request = NotifyToggleRequestDTO(isAllowNotify = isAllowNotify)
+            when (val result = apiCall(
+                apiCall = { membersHttp.toggleNotification(request) },
+                mapper = { Unit }
+            )) {
+                is DataResult.Success -> Result.success(Unit)
+                is DataResult.Fail -> Result.failure(
+                    result.throwable ?: Exception("Failed to toggle notification: ${result.message}")
+                )
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 }

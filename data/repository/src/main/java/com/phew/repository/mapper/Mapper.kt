@@ -53,6 +53,7 @@ import com.phew.network.dto.response.BlockMemberResponseDTO
 import com.phew.network.dto.response.FavoriteTagItemDTO
 import com.phew.network.dto.response.FavoriteTagsResponseDTO
 import com.phew.network.dto.response.RejoinableDateResponseDTO
+import com.phew.network.dto.response.NotifyToggleResponseDTO
 import com.phew.network.dto.request.feed.CheckBanedDTO
 import com.phew.network.dto.request.feed.ImageInfoDTO
 import com.phew.network.dto.request.feed.TagInfoDTO
@@ -481,5 +482,4 @@ internal fun FavoriteTagItemDTO.toDomain(): FavoriteTag {
         name = this.name
     )
 }
-
 

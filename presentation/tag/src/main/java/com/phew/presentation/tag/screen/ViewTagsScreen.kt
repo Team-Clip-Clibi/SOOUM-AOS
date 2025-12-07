@@ -147,8 +147,8 @@ internal fun ViewTagsRoute(
         isRefreshing = uiState.isRefreshing,
         onClickCard = onClickCard,
         onBackPressed = onBackPressed,
-        isFavorite = uiState.currentTagFavoriteState,
-        onFavoriteToggle = viewModel::toggleCurrentSearchedTagFavorite,
+        isFavorite = uiState.favoriteTags.any { it.id == tagId },
+        onFavoriteToggle = { viewModel.toggleTagFavorite(tagId, tagName) },
         onRefresh = { viewModel.refreshViewTags(tagName, tagId) },
         snackbarHostState = snackbarHostState
     )
