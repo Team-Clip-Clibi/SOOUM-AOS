@@ -132,7 +132,7 @@ internal fun EditProfileScreen(viewModel: ProfileViewModel, onBackPress: () -> U
             is UiState.Success -> {
                 ChangeProfileView(
                     paddingValues = paddingValues,
-                    imageUrl =uiState.newProfileImageUri.last().toString(),
+                    imageUrl =uiState.newProfileImageUri.lastOrNull()?.toString() ?: "",
                     nickName = uiState.changeNickName ?: result.data.nickname,
                     onAvatarClick = { bottomSheetView = true },
                     onValueChange = remember(viewModel::changeNickName) {

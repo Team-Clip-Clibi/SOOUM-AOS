@@ -5,7 +5,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.phew.core_common.DomainResult
-import com.phew.core_common.log.SooumLog
+import com.phew.core_common.ERROR_ALREADY_CARD_DELETE
+import com.phew.core_common.ERROR_NETWORK
 import com.phew.domain.dto.CardComment
 import com.phew.domain.dto.CardDetail
 import com.phew.domain.usecase.BlockMember
@@ -33,12 +34,14 @@ import javax.inject.Inject
 enum class CardDetailError {
     COMMENTS_LOAD_FAILED,
     CARD_LOAD_FAILED,
-    NETWORK_ERROR
+    NETWORK_ERROR,
+    CARD_DELETE,
+    FAIL
 }
 
 data class CardDetailUiState(
     val isLoading: Boolean = false,
-    val isRefresh : Boolean = false,
+    val isRefresh: Boolean = false,
     val cardDetail: CardDetail? = null,
     val comments: List<CardComment> = emptyList(),
     val error: CardDetailError? = null,
@@ -48,6 +51,7 @@ data class CardDetailUiState(
     val blockedMemberId: Long? = null,
     val blockedNickname: String? = null,
     val deleteSuccess: Boolean = false,
+    val deleteErrorDialog: Boolean = false,
 )
 
 @HiltViewModel
@@ -196,7 +200,11 @@ class CardDetailViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             isLikeLoading = false,
-                            error = CardDetailError.NETWORK_ERROR
+                            error = when (result.error) {
+                                ERROR_NETWORK -> CardDetailError.NETWORK_ERROR
+                                ERROR_ALREADY_CARD_DELETE -> CardDetailError.CARD_DELETE
+                                else -> CardDetailError.FAIL
+                            }
                         )
                     }
                 }
@@ -288,8 +296,12 @@ class CardDetailViewModel @Inject constructor(
 
     fun clearError() {
         _uiState.update {
-            it.copy(error = null)
+            it.copy(error = null, deleteErrorDialog = false)
         }
+    }
+
+    fun setDeleteDialog() {
+        _uiState.update { state -> state.copy(deleteErrorDialog = true) }
     }
 
     fun clearBlockSuccess() {

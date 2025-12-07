@@ -94,8 +94,12 @@ class NetworkConvention : Plugin<Project> {
                 val transferCode: String = properties.getProperty("api_url_transfer_code", "")
                 val refreshTransferCode: String = properties.getProperty("api_url_refresh_transfer_code", "")
                 val transferAccount: String = properties.getProperty("api_url_transfer_account", "")
-                val withdrawalAccount: String = properties.getProperty("api_url_withdrawal_account", "")
+                val withdrawalAccount: String =
+                    properties.getProperty("api_url_withdrawal_account", "")
                 val rejoinableDate: String = properties.getProperty("api_url_rejoinable_date", "")
+                val readActivateAlarm: String = properties.getProperty("api_url_activate_read", "")
+                val checkCardDelete: String =
+                    properties.getProperty("api_url_check_card_delete", "")
 
                 buildConfigField("String", "BASE_URL", baseUrl)
                 buildConfigField("String", "API_URL", apiUrl)
@@ -158,6 +162,9 @@ class NetworkConvention : Plugin<Project> {
                 buildConfigField("String", "API_URL_TRANSFER_ACCOUNT", transferAccount)
                 buildConfigField("String", "API_URL_WITHDRAWAL_ACCOUNT", withdrawalAccount)
                 buildConfigField("String", "API_URL_REJOINABLE_DATE", rejoinableDate)
+                buildConfigField("String", "API_URL_READ_ACTIVATE", readActivateAlarm)
+                buildConfigField("String", "API_URL_CHECK_CARD_DELETE", checkCardDelete)
+
             }
             buildFeatures.buildConfig = true
             compileOptions {
@@ -178,6 +185,8 @@ class NetworkConvention : Plugin<Project> {
             "implementation"(libs.findLibrary("squareup-okhttp3-logging-interceptor").get())
             "implementation"(libs.findLibrary("jetbrains-kotlinx-serialization-json").get())
             "implementation"(libs.findLibrary("google-gson").get())
+            "implementation"(project(":core:core-common"))
+            "implementation"(project(":domain"))
         }
     }
 }

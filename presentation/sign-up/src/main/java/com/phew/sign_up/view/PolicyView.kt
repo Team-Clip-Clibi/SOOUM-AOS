@@ -22,7 +22,7 @@ import com.phew.core_design.LoadingAnimation
 import com.phew.sign_up.SignUpViewModel
 
 @Composable
-fun PolicyView(uri: String, viewModel: SignUpViewModel = hiltViewModel(), onBack: () -> Unit) {
+fun PolicyView(uri: String, viewModel: SignUpViewModel, onBack: () -> Unit) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     BackHandler(enabled = true) {
         onBack()

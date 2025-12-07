@@ -197,7 +197,7 @@ internal fun OtherProfile(
                             .background(NeutralColor.WHITE)
                             .pullToRefreshOffset(
                                 state = refreshState,
-                                baseOffset = TOP_CONTENT_OFFSET
+                                baseOffset = 0.dp
                             )
                             .padding(
                                 top = paddingValues.calculateTopPadding(),

@@ -167,7 +167,6 @@ private fun InPutNickNameView(
                 onValueChange(input)
             }
         },
-        placeHolder = stringResource(R.string.signUp_nickName_hint_debug),
         helperUse = true,
         helperText = hint,
         showError = showError

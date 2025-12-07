@@ -57,8 +57,12 @@ import com.phew.profile.UiState
 import com.phew.core_design.component.card.CommentBodyContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.paging.compose.LazyPagingItems
 import com.phew.core_common.BOTTOM_NAVIGATION_HEIGHT
 import com.phew.core_design.CustomFont
@@ -67,6 +71,8 @@ import com.phew.core_design.LoadingAnimation
 import com.phew.core_design.component.refresh.RefreshBox
 import com.phew.domain.dto.ProfileCard
 import com.phew.profile.component.ProfileComponent
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -169,7 +175,8 @@ internal fun MyProfile(
                                 this.translationY = refreshState.distanceFraction * 72.dp.toPx()
                             }
                             .padding(top = paddingValues.calculateTopPadding()),
-                        paddingValues = paddingValues
+                        paddingValues = paddingValues,
+                        onCardClick = { selectIndex = TAB_MY_FEED_CARD },
                     )
                 }
             }
@@ -203,6 +210,7 @@ private fun MyProfileView(
     onFollowerClick: () -> Unit,
     onFollowingClick: () -> Unit,
     onEditProfileClick: () -> Unit,
+    onCardClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -214,7 +222,7 @@ private fun MyProfileView(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(84.dp)
+                .wrapContentHeight()
                 .padding(bottom = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
@@ -256,6 +264,7 @@ private fun MyProfileView(
                         modifier = Modifier.padding(end = 6.dp)
                     )
                 }
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = profile.nickname,
                     style = TextComponent.HEAD_3_B_20,
@@ -287,7 +296,11 @@ private fun MyProfileView(
             ProfileComponent.CardFollowerView(
                 title = stringResource(R.string.profile_txt_card),
                 data = profile.cardCnt.toString(),
-                onClick = { }
+                onClick = {
+                    if(profile.cardCnt != 0){
+                        onCardClick()
+                    }
+                }
             )
             ProfileComponent.CardFollowerView(
                 title = stringResource(R.string.profile_txt_follower),
@@ -350,20 +363,37 @@ private fun ProfileCardView(
     snackBarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
     paddingValues: PaddingValues,
+    onCardClick: () -> Unit
 ) {
+    val gridState = rememberLazyGridState()
+    val coroutineScope = rememberCoroutineScope()
+    val configuration = LocalConfiguration.current
+    val screenHeight = configuration.screenHeightDp.dp
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
         modifier = modifier,
+        state = gridState,
         horizontalArrangement = Arrangement.spacedBy(1.dp),
         verticalArrangement = Arrangement.spacedBy(0.dp),
-        contentPadding = PaddingValues(bottom = paddingValues.calculateBottomPadding() + BOTTOM_NAVIGATION_HEIGHT.dp)
-    ) {
+        contentPadding = PaddingValues(
+            top = 0.dp,
+            bottom = paddingValues.calculateBottomPadding() + BOTTOM_NAVIGATION_HEIGHT.dp
+        )
+    )
+     {
         item(span = { GridItemSpan(maxLineSpan) }) {
             MyProfileView(
                 profile = profile,
                 onEditProfileClick = onEditProfileClick,
                 onFollowingClick = onFollowingClick,
-                onFollowerClick = onFollowerClick
+                onFollowerClick = onFollowerClick,
+                onCardClick = {
+                    onCardClick()
+                    coroutineScope.launch {
+                        delay(100)
+                        gridState.animateScrollToItem(index = 1)
+                    }
+                }
             )
         }
         stickyHeader {
@@ -449,6 +479,14 @@ private fun ProfileCardView(
                     }
                 }
             }
+        }
+        item(span = { GridItemSpan(maxLineSpan) }) {
+            Spacer(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(screenHeight)
+                    .background(NeutralColor.WHITE) // 배경색 맞춤
+            )
         }
     }
 }

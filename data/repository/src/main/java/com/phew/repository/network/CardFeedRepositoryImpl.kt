@@ -2,10 +2,7 @@ package com.phew.repository.network
 
 import com.phew.core_common.APP_ERROR_CODE
 import com.phew.core_common.DataResult
-import com.phew.core_common.HTTP_NOT_FOUND
-import com.phew.core_common.HTTP_SUCCESS
 import com.phew.core_common.HTTP_NO_MORE_CONTENT
-import com.phew.core_common.log.SooumLog
 import com.phew.domain.dto.CardDefaultImagesResponse
 import com.phew.domain.dto.CardImageDefault
 import com.phew.domain.dto.CheckedBaned
@@ -23,6 +20,11 @@ import com.phew.repository.mapper.apiCall
 import com.phew.repository.mapper.toDomain
 import okhttp3.RequestBody
 import javax.inject.Inject
+
+import com.phew.domain.dto.CardIdResponse // Added import for CardIdResponse
+import com.phew.network.dto.response.feed.CardIdResponseDto // Added import for CardIdResponseDto
+
+fun CardIdResponseDto.toDomain(): CardIdResponse = CardIdResponse(cardId = this.cardId)
 
 class CardFeedRepositoryImpl @Inject constructor(
     private val feedHttp: FeedHttp,
@@ -201,8 +203,8 @@ class CardFeedRepositoryImpl @Inject constructor(
         imageName: String,
         isStory: Boolean,
         tag: List<String>
-    ): Int {
-        try {
+    ): DataResult<CardIdResponse> {
+        return try {
             val request = feedHttp.requestUploadCard(
                 RequestUploadCardDTO(
                     isDistanceShared = isDistanceShared,
@@ -216,13 +218,23 @@ class CardFeedRepositoryImpl @Inject constructor(
                     tags = tag
                 )
             )
-            if (!request.isSuccessful || request.code() != 200) {
-                return HTTP_NOT_FOUND
+            if (request.isSuccessful && request.code() == 200) {
+                request.body()?.let {
+                    DataResult.Success(it.toDomain())
+                } ?: DataResult.Fail(code = request.code(), message = "Response body is null")
+            } else {
+                DataResult.Fail(
+                    code = request.code(),
+                    message = request.message()
+                )
             }
-            return HTTP_SUCCESS
         } catch (e: Exception) {
             e.printStackTrace()
-            return APP_ERROR_CODE
+            DataResult.Fail(
+                throwable = e,
+                message = e.message,
+                code = APP_ERROR_CODE
+            )
         }
     }
 
@@ -236,8 +248,8 @@ class CardFeedRepositoryImpl @Inject constructor(
         imageType: String,
         imageName: String,
         tag: List<String>
-    ): Int {
-        try {
+    ): DataResult<CardIdResponse> {
+        return try {
             val request = feedHttp.requestUploadAnswerCard(
                 cardId = cardId,
                 request = RequestUploadCardAnswerDTO(
@@ -251,13 +263,23 @@ class CardFeedRepositoryImpl @Inject constructor(
                     tags = tag
                 )
             )
-            if (!request.isSuccessful || request.code() != 200) {
-                return HTTP_NOT_FOUND
+            if (request.isSuccessful && request.code() == 200) {
+                request.body()?.let {
+                    DataResult.Success(it.toDomain())
+                } ?: DataResult.Fail(code = request.code(), message = "Response body is null")
+            } else {
+                DataResult.Fail(
+                    code = request.code(),
+                    message = request.message()
+                )
             }
-            return HTTP_SUCCESS
         } catch (e: Exception) {
             e.printStackTrace()
-            return APP_ERROR_CODE
+            DataResult.Fail(
+                throwable = e,
+                message = e.message,
+                code = APP_ERROR_CODE
+            )
         }
     }
 
@@ -275,6 +297,13 @@ class CardFeedRepositoryImpl @Inject constructor(
         return apiCall(
             apiCall = { feedHttp.requestCheckBackgroundImage(imgName = imageName) },
             mapper = { result -> result.isAvailableImg }
+        )
+    }
+
+    override suspend fun requestCheckCardDelete(cardId: Long): DataResult<Boolean> {
+        return apiCall(
+            apiCall = { feedHttp.requestCheckCardDelete(cardId = cardId) },
+            mapper = { data -> data.isDeleted }
         )
     }
 }

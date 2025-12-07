@@ -225,8 +225,6 @@ class ProfileViewModel @Inject constructor(
                         !_uiState.value.useAlbum && !_uiState.value.useCamera && _uiState.value.newProfileImageUri.size == 2 -> (_uiState.value.profileInfo as UiState.Success).data.profileImgName
                         else -> ""
                     },
-//                    profileImage = if (_uiState.value.newProfileImageUri.size == 2) null else _uiState.value.newProfileImageUri.last()
-//                        .toString(),
                     profileImage = if(_uiState.value.newProfileImageUri.last() == Uri.EMPTY) null else _uiState.value.newProfileImageUri.last().toString(),
                     isImageChange = _uiState.value.imageChange
                 )
@@ -424,7 +422,7 @@ data class Profile(
     val useAlbum: Boolean = false,
     val useCamera: Boolean = false,
     var changeNickName: String? = null,
-    var newProfileImageUri: List<Uri> = listOf(Uri.EMPTY),
+    val newProfileImageUri: List<Uri> = listOf(Uri.EMPTY),
     val errorMessage: String = "",
     val changeProfile: Boolean = false,
     val imageChange: Boolean = false,
