@@ -261,7 +261,7 @@ private fun DialogView(data: SignUpResult, onclick: () -> Unit) {
         SIGN_UP_BANNED -> {
             DialogComponent.DefaultButtonOne(
                 title = stringResource(R.string.onBoarding_dialog_banned_title),
-                description = stringResource(R.string.onBoarding_dialog_banned_content, data.time),
+                description = stringResource(R.string.onBoarding_dialog_banned_content, data.reFormTime),
                 onClick = onclick,
                 onDismiss = onclick,
                 buttonText = stringResource(com.phew.core_design.R.string.common_okay)
@@ -271,7 +271,7 @@ private fun DialogView(data: SignUpResult, onclick: () -> Unit) {
         SIGN_UP_WITHDRAWN -> {
             DialogComponent.DefaultButtonOne(
                 title = stringResource(R.string.onBoarding_dialog_withdraw_title),
-                description = stringResource(R.string.onBoarding_dialog_withdraw_content, data.time),
+                description = stringResource(R.string.onBoarding_dialog_withdraw_content, data.reFormTime),
                 onClick = onclick,
                 onDismiss = onclick,
                 buttonText = stringResource(com.phew.core_design.R.string.common_okay)
@@ -290,4 +290,3 @@ private fun WithdrawalCompleteDialog(onDismiss: () -> Unit) {
         buttonText = stringResource(com.phew.core_design.R.string.common_okay)
     )
 }
-

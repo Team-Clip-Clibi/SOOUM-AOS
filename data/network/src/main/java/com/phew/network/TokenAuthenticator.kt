@@ -1,6 +1,5 @@
 package com.phew.network
 
-
 import com.phew.domain.interceptor.InterceptorManger
 import kotlinx.coroutines.runBlocking
 import okhttp3.Authenticator

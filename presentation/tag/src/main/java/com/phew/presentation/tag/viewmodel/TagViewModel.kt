@@ -14,6 +14,7 @@ import com.phew.domain.model.TagInfo
 import com.phew.domain.model.TagInfoList
 import com.phew.domain.usecase.AddFavoriteTag
 import com.phew.domain.usecase.GetFavoriteTags
+import com.phew.domain.usecase.GetProfileInfo
 import com.phew.domain.usecase.GetRelatedTags
 import com.phew.domain.usecase.GetTagCardsPaging
 import com.phew.domain.usecase.GetTagRank
@@ -65,6 +66,7 @@ class TagViewModel @Inject constructor(
     private val getTagCardsPaging: GetTagCardsPaging,
     private val getRelatedTags: GetRelatedTags,
     private val getUserInfo: GetUserInfo,
+    private val getProfileInfo: GetProfileInfo,
     private val getFavoriteTags: GetFavoriteTags,
     private val addFavoriteTag: AddFavoriteTag,
     private val removeFavoriteTag: RemoveFavoriteTag,
@@ -110,11 +112,13 @@ class TagViewModel @Inject constructor(
     private fun loadUserInfo() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
+                val profileNickName = getProfileInfo(BuildConfig.PROFILE_KEY)
                 val userInfo = getUserInfo(GetUserInfo.Param(key = BuildConfig.USER_INFO_KEY))
+                val resolvedNickName = profileNickName ?: userInfo?.nickName.orEmpty()
                 _uiState.update {
-                    it.copy(nickName = userInfo?.nickName ?: "")
+                    it.copy(nickName = resolvedNickName)
                 }
-                SooumLog.d(TAG, "Success to load user info: ${userInfo?.nickName}")
+                SooumLog.d(TAG, "Success to load nickname: $resolvedNickName")
             } catch (e: Exception) {
                 SooumLog.e(TAG, "Failed to load user info: ${e.message}")
             }
@@ -392,15 +396,33 @@ class TagViewModel @Inject constructor(
         }
     }
 
+    // 특정 태그의 즐겨찾기 토글 (tagId와 tagName을 직접 받아서 처리)
+    fun toggleTagFavorite(tagId: Long, tagName: String) {
+        val currentFavoriteState = _uiState.value.favoriteTags.any { it.id == tagId }
+
+        SooumLog.d(
+            TAG,
+            "toggleTagFavorite: currentFavoriteState=$currentFavoriteState, tagId=$tagId, tagName=$tagName"
+        )
+
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                if (currentFavoriteState) {
+                    removeFavoriteTagAction(tagId, tagName)
+                } else {
+                    addFavoriteTagAction(tagId, tagName)
+                }
+            } catch (e: Exception) {
+                SooumLog.e(TAG, "Failed to toggle favorite: ${e.message}")
+            }
+        }
+    }
+
     fun updateCurrentTagFavoriteState(isFavorite: Boolean) {
         SooumLog.d(TAG, "updateCurrentTagFavoriteState: isFavorite=$isFavorite")
         _uiState.update { it.copy(currentTagFavoriteState = isFavorite) }
     }
-    
-    fun resetSearchPerformed() {
-        SooumLog.d(TAG, "resetSearchPerformed: No search results found")
-        _uiState.update { it.copy(searchPerformed = false) }
-    }
+
 
     fun refreshTagScreenData() {
         SooumLog.d(TAG, "refreshTagScreenData")

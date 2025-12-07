@@ -7,6 +7,7 @@ import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import com.phew.core.ui.navigation.createNavType
 import com.phew.core.ui.navigation.getNavArg
+import com.phew.core.ui.component.home.HomeTabType
 import com.phew.core_design.slideComposable
 import com.phew.core.ui.model.navigation.WebViewUrlArgs
 import com.phew.core.ui.navigation.NavArgKey
@@ -139,6 +140,11 @@ fun NavGraphBuilder.settingGraph(
             LoadPreviousAccountRoute(
                 onBackPressed = {
                     navController.popBackStack()
+                },
+                onNavigateToFeed = {
+                    navController.navigate(HomeTabType.FEED.graph) {
+                        popUpTo(0) // 모든 이전 화면 스택 정리
+                    }
                 }
             )
         }

@@ -17,6 +17,7 @@ import com.phew.feed.feed.FeedView
 import com.phew.feed.notification.NotifyView
 import com.phew.feed.viewModel.FeedViewModel
 import com.phew.presentation.detail.navigation.navigateToDetailGraph
+import com.phew.core.ui.state.SooumAppState
 
 val FEED_GRAPH = HomeTabType.FEED.graph
 
@@ -44,9 +45,8 @@ private fun NavHostController.navigateToNotify(
 
 
 fun NavGraphBuilder.feedGraph(
+    appState: SooumAppState,
     navController: NavHostController,
-    finish: () -> Unit,
-    onBackPressed: () -> Unit,
     webView: (String) -> Unit,
 ) {
     navigation(
@@ -70,9 +70,9 @@ fun NavGraphBuilder.feedGraph(
                 }
             }
             FeedView(
+                appState = appState,
                 viewModel = feedViewModel,
                 navController = navController,
-                finish = onBackPressed,
                 requestPermission = {
                     feedViewModel.onPermissionRequest(
                         arrayOf(

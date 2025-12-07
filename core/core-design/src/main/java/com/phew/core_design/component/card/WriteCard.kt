@@ -2,6 +2,7 @@ package com.phew.core_design.component.card
 
 import android.annotation.SuppressLint
 import android.net.Uri
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -315,7 +316,8 @@ private fun WriteCard(
             .aspectRatio(1f),
         shape = RoundedCornerShape(CardDesignTokens.CardRadius),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = BorderStroke(1.dp, NeutralColor.GRAY_100)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             val backgroundModifier = Modifier
@@ -495,6 +497,7 @@ private fun ReplyCard(
                 }
 
                 // 하단 태그 영역
+                //  TODO : 스크롤 시 Type 상태라면, Input 타입으로 변경
                 if (data.tags.isNotEmpty()) {
                     Box(
                         modifier = Modifier

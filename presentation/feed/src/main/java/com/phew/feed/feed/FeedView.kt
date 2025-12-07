@@ -80,7 +80,6 @@ import com.phew.core.ui.state.SooumAppState
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.launch
 import kotlin.text.append
 import com.phew.core.ui.R as CoreUiR
 
@@ -609,5 +608,4 @@ private fun classifyLatestFeedType(item: Latest): FeedCardType {
             likeValue = item.likeCount.toString()
         )
     }
-
 }

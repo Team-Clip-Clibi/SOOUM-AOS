@@ -92,7 +92,7 @@ object TagDesignTokens {
     val ColorfulIconTint = Primary.MAIN
 
     // 아이콘 색상
-    val IconTint = NeutralColor.GRAY_400
+    val IconTint = NeutralColor.GRAY_300
 
     // 사이즈
     val TagRadius = 8.dp
@@ -144,7 +144,8 @@ fun Tag(
     requestFocusKey: Int = 0,
     showRemoveIcon: Boolean = false,
     onInputFocusChanged: (Boolean) -> Unit = {},
-    fontFamily: FontFamily = FontFamily.Default
+    fontFamily: FontFamily = FontFamily.Default,
+    hideKeyboardOnFocusLost: Boolean = true
 ) {
     when (state) {
         TagState.AddNew -> TagAddNew(onClick = onClick, modifier = modifier)
@@ -159,7 +160,8 @@ fun Tag(
             modifier = modifier,
             requestFocusKey = requestFocusKey,
             onFocusChanged = onInputFocusChanged,
-            fontFamily = fontFamily
+            fontFamily = fontFamily,
+            hideKeyboardOnFocusLost = hideKeyboardOnFocusLost
         )
 
         TagState.Default -> TagDefault(
@@ -295,14 +297,18 @@ internal fun TagRow(
                 onInputFocusChanged = { focused ->
                     if (!focused) {
                         if (!awaitingFocus) {
-                            input = ""
-                            state = TagState.AddNew
+                            state = if (input.isBlank()) {
+                                TagState.AddNew
+                            } else {
+                                TagState.Input
+                            }
                         }
                     } else {
                         awaitingFocus = false
                     }
                 },
-                fontFamily = fontFamily
+                fontFamily = fontFamily,
+                hideKeyboardOnFocusLost = !awaitingFocus
             )
         }
     }
@@ -410,7 +416,8 @@ private fun TagInputField(
     modifier: Modifier = Modifier,
     requestFocusKey: Int = 0,
     onFocusChanged: (Boolean) -> Unit = {},
-    fontFamily: FontFamily = FontFamily.Default
+    fontFamily: FontFamily = FontFamily.Default,
+    hideKeyboardOnFocusLost: Boolean = true
 ) {
     var isFocused by remember { mutableStateOf(false) }
     var isCompleted by remember { mutableStateOf(false) }
@@ -525,8 +532,9 @@ private fun TagInputField(
                 if (it.isFocused) {
                     isCompleted = false
                 } else {
-                    // 포커스가 해제되면 키보드를 숨김
-                    keyboardController?.hide()
+                    if (hideKeyboardOnFocusLost) {
+                        keyboardController?.hide()
+                    }
                     if (text.isNotEmpty()) {
                         isCompleted = true
                     }

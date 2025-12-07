@@ -3,10 +3,11 @@ package com.phew.domain.usecase
 import com.phew.core_common.APP_ERROR_CODE
 import com.phew.core_common.DataResult
 import com.phew.core_common.DomainResult
+import com.phew.core_common.ERROR_ACCOUNT_SUSPENDED
+import com.phew.core_common.ERROR_ALREADY_CARD_DELETE
 import com.phew.core_common.ERROR_FAIL_JOB
-import com.phew.core_common.ERROR_LOGOUT
-import com.phew.core_common.ERROR_NETWORK
-import com.phew.core_common.HTTP_INVALID_TOKEN
+import com.phew.core_common.HTTP_BAD_REQUEST
+import com.phew.core_common.HTTP_CARD_ALREADY_DELETE
 import com.phew.domain.dto.CardReplyRequest
 import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.network.CardDetailRepository
@@ -26,7 +27,7 @@ class PostCardReply @Inject constructor(
         val isDistanceShared: Boolean
     )
 
-    suspend operator fun invoke(param: Param): DomainResult<Unit, String> {
+    suspend operator fun invoke(param: Param): DomainResult<Long, String> {
         val locationPermissionCheck = deviceRepository.getLocationPermission()
         val (latitude, longitude) = if (locationPermissionCheck && param.isDistanceShared) {
             val location = deviceRepository.requestLocation()
@@ -47,16 +48,17 @@ class PostCardReply @Inject constructor(
         )
 
         return when (val result = repository.postCardReply(param.cardId, request)) {
-            is DataResult.Success -> DomainResult.Success(Unit)
+            is DataResult.Success -> DomainResult.Success(result.data.cardId)
             is DataResult.Fail -> mapFailure(result)
         }
     }
 
     private fun mapFailure(result: DataResult.Fail): DomainResult.Failure<String> {
         return when (result.code) {
-            HTTP_INVALID_TOKEN -> DomainResult.Failure(ERROR_LOGOUT)
             APP_ERROR_CODE -> DomainResult.Failure(result.message ?: ERROR_FAIL_JOB)
-            else -> DomainResult.Failure(ERROR_NETWORK)
+            HTTP_BAD_REQUEST -> DomainResult.Failure(ERROR_ACCOUNT_SUSPENDED)
+            HTTP_CARD_ALREADY_DELETE -> DomainResult.Failure(ERROR_ALREADY_CARD_DELETE)
+            else -> DomainResult.Failure(ERROR_FAIL_JOB)
         }
     }
 }

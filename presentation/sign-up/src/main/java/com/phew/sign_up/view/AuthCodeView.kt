@@ -177,7 +177,7 @@ private fun HandleAuthCode(
     snackBarHostState: SnackbarHostState,
 ) {
     val context = LocalContext.current
-    LaunchedEffect(uiState) {
+    LaunchedEffect(uiState.restoreAccountResult) {
         when (val result = uiState.restoreAccountResult) {
             is UiState.Fail -> {
                 when (result.errorMessage) {

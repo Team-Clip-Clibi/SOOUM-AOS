@@ -1,6 +1,5 @@
 package com.phew.repository.di
 
-import com.phew.core_common.IsDebug
 import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.network.AppVersionRepository
 import com.phew.domain.repository.network.BlockRepository

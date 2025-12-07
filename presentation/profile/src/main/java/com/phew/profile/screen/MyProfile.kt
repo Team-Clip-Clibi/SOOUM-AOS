@@ -59,10 +59,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.ui.Alignment
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.Alignment
 import androidx.paging.compose.LazyPagingItems
 import com.phew.core_common.BOTTOM_NAVIGATION_HEIGHT
 import com.phew.core_design.CustomFont
@@ -73,6 +73,7 @@ import com.phew.domain.dto.ProfileCard
 import com.phew.profile.component.ProfileComponent
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.time.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -244,7 +245,8 @@ private fun MyProfileView(
                     Image(
                         painter = painterResource(com.phew.core_design.R.drawable.ic_spot),
                         modifier = Modifier
-                            .size(3.dp),
+                            .size(3.dp)
+                            .padding(1.dp),
                         colorFilter = ColorFilter.tint(color = NeutralColor.GRAY_400),
                         contentDescription = stringResource(R.string.profile_txt_visit_total) + profile.totalVisitCnt.toString() + stringResource(
                             R.string.profile_txt_visit_today
@@ -374,13 +376,12 @@ private fun ProfileCardView(
         modifier = modifier,
         state = gridState,
         horizontalArrangement = Arrangement.spacedBy(1.dp),
-        verticalArrangement = Arrangement.spacedBy(0.dp),
+        verticalArrangement = Arrangement.spacedBy(1.dp),
         contentPadding = PaddingValues(
             top = 0.dp,
             bottom = paddingValues.calculateBottomPadding() + BOTTOM_NAVIGATION_HEIGHT.dp
         )
-    )
-     {
+    ) {
         item(span = { GridItemSpan(maxLineSpan) }) {
             MyProfileView(
                 profile = profile,
