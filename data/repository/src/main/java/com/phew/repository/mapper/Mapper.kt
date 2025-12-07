@@ -5,7 +5,6 @@ import com.phew.core_common.DataResult
 import com.phew.core_common.ERROR_ACCOUNT_SUSPENDED
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.HTTP_NO_MORE_CONTENT
-import com.phew.core_common.TimeUtils
 import com.phew.core_common.WITHDRAWAL_USER
 import com.phew.domain.dto.CardComment
 import com.phew.domain.dto.CardDetail
@@ -147,7 +146,7 @@ internal fun PopularDto.toDomain(): Popular {
         cardContent = this.cardContent,
         font = this.font,
         distance = this.distance,
-        createAt = TimeUtils.getRelativeTimeString(this.createAt),
+        createAt = this.createAt,
         storyExpirationTime = this.storyExpirationTime,
         isAdminCard = this.isAdminCard
     )
@@ -173,7 +172,7 @@ internal fun LatestDto.toDomain(): Latest {
         cardContent = this.cardContent,
         font = this.font,
         distance = this.distance,
-        createAt = TimeUtils.getRelativeTimeString(this.createAt),
+        createAt = this.createAt,
         storyExpirationTime = this.storyExpirationTime,
         isAdminCard = this.isAdminCard
     )
@@ -189,7 +188,7 @@ internal fun DistanceDTO.toDomain(): DistanceCard {
         cardContent = this.cardContent,
         font = this.font,
         distance = this.distance,
-        createAt = TimeUtils.getRelativeTimeString(this.createAt),
+        createAt = this.createAt,
         storyExpirationTime = this.storyExpirationTime,
         isAdminCard = this.isAdminCard
     )
@@ -482,4 +481,3 @@ internal fun FavoriteTagItemDTO.toDomain(): FavoriteTag {
         name = this.name
     )
 }
-
