@@ -26,6 +26,25 @@
     },
     {
       "client_info": {
+        "mobilesdk_app_id": "1:639050523815:android:89cf06426365e852cf2782",
+        "android_client_info": {
+          "package_name": "com.phew.sooum.dev"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBmMn8QKvrCbyFJUS6f5iTq6i5fGZaam8o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:639050523815:android:9170fb4fd7d7bacfcf2782",
         "android_client_info": {
           "package_name": "com.sooum.android"

@@ -64,6 +64,7 @@ class ApplicationConvention : Plugin<Project> {
             productFlavors {
                 create("dev") {
                     dimension = "environment"
+                    applicationIdSuffix = ".dev"
                     versionNameSuffix = "-dev"
                 }
                 create("prod") {
