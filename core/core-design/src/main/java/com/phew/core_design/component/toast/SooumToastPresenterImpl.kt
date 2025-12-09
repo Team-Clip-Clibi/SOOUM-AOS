@@ -89,7 +89,7 @@ internal class SooumToastPresenterImpl(private val text: CharSequence): SooumToa
         }
 
         private fun getView(context: Context, text: CharSequence): View {
-            val view = LayoutInflater.from(context).inflate(R.layout.view_aphrodite_toast, null)
+            val view = LayoutInflater.from(context).inflate(R.layout.view_sooum_toast, null)
             val textView : TextView = view.findViewById(R.id.tv_toast)
             textView.text = text
             textView.textAlignment = View.TEXT_ALIGNMENT_TEXT_START
