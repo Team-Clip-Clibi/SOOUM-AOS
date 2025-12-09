@@ -14,6 +14,7 @@ class ClarityInitializer @Inject constructor(
     fun init() {
         if (BuildConfig.DEBUG) {
             Log.e(this.javaClass.packageName, "Clarity is not support debug mode")
+            return
         }
         if (BuildConfig.CLARITY_PROJECT_ID.trim().isEmpty()) {
             Log.e(this.javaClass.packageName, "Error Clarity id is null")
