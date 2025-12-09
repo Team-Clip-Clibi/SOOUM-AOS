@@ -20,7 +20,7 @@ class CheckAppVersion @Inject constructor(private val repository: SplashReposito
 
         val result = repository.requestAppVersion(
             type = BuildConfig.APP_TYPE,
-            appVersion = data.appVersion
+            appVersion = data.appVersion.substringBefore("-")
         )
         when (result) {
             is DataResult.Fail -> {
