@@ -749,35 +749,6 @@ private fun CardDetailScreen(
     }
 }
 
-@Composable
-private fun TrackCardInteraction(
-    cardDetail: CardDetail?,
-    onCardChanged: () -> Unit
-) {
-    var lastSnapshot by remember { mutableStateOf<CardInteractionSnapshot?>(null) }
-    LaunchedEffect(cardDetail?.cardId, cardDetail?.likeCount, cardDetail?.commentCardCount) {
-        if (cardDetail == null) return@LaunchedEffect
-        val snapshot = CardInteractionSnapshot(
-            cardId = cardDetail.cardId,
-            likeCount = cardDetail.likeCount,
-            commentCount = cardDetail.commentCardCount
-        )
-        val previous = lastSnapshot
-        if (previous == null || previous.cardId != snapshot.cardId) {
-            lastSnapshot = snapshot
-        } else if (previous != snapshot) {
-            lastSnapshot = snapshot
-            onCardChanged()
-        }
-    }
-}
-
-private data class CardInteractionSnapshot(
-    val cardId: Long,
-    val likeCount: Int,
-    val commentCount: Int
-)
-
 @Preview
 @Composable
 private fun CardDetailPreview() {
