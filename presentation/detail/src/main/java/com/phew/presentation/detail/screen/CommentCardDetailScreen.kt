@@ -106,12 +106,14 @@ internal fun CommentCardDetailScreen(
     onBackPressed: (Long) -> Unit,
     onFeedPressed: () -> Unit,
     onTagPressed: () -> Unit,
-    onProfileClick: (Long) -> Unit
+    onProfileClick: (Long) -> Unit,
+    onCardChanged: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val comments: LazyPagingItems<CardComment> = viewModel.commentsPagingData
         .collectAsLazyPagingItems()
     val cardDetail = uiState.cardDetail
+    TrackCommentCardInteraction(cardDetail = cardDetail, onCardChanged = onCardChanged)
     LaunchedEffect(args.cardId) {
         SooumLog.d(TAG, "CardId : ${args.cardId}")
         viewModel.loadCardDetail(args.cardId)
@@ -669,6 +671,35 @@ private fun BottomSheetView(
         )
     }
 }
+
+@Composable
+private fun TrackCommentCardInteraction(
+    cardDetail: CardDetail?,
+    onCardChanged: () -> Unit
+) {
+    var lastSnapshot by remember { mutableStateOf<CommentCardSnapshot?>(null) }
+    LaunchedEffect(cardDetail?.cardId, cardDetail?.likeCount, cardDetail?.commentCardCount) {
+        if (cardDetail == null) return@LaunchedEffect
+        val snapshot = CommentCardSnapshot(
+            cardId = cardDetail.cardId,
+            likeCount = cardDetail.likeCount,
+            commentCount = cardDetail.commentCardCount
+        )
+        val previous = lastSnapshot
+        if (previous == null || previous.cardId != snapshot.cardId) {
+            lastSnapshot = snapshot
+        } else if (previous != snapshot) {
+            lastSnapshot = snapshot
+            onCardChanged()
+        }
+    }
+}
+
+private data class CommentCardSnapshot(
+    val cardId: Long,
+    val likeCount: Int,
+    val commentCount: Int
+)
 
 @Composable
 private fun PlusButton(modifier: Modifier, onWriteClick: () -> Unit, paddingValues: PaddingValues) {

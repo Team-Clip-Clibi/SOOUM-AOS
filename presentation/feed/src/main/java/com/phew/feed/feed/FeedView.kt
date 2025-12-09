@@ -30,8 +30,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -101,7 +99,6 @@ fun FeedView(
     val feedNoticeState = uiState.feedNotification
     val latestFeedItems = viewModel.latestFeedPaging.collectAsLazyPagingItems()
     val lazyGridState = rememberLazyGridState()
-    val coroutineScope = rememberCoroutineScope()
     var hasScrolledToTop by rememberSaveable { mutableStateOf(false) }
     var previousHomeTab by rememberSaveable { mutableStateOf<HomeTabType?>(null) }
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -109,7 +106,17 @@ fun FeedView(
         HomeTabType.findHome(navBackStackEntry?.destination?.route)
     }
     val currentPagingState = uiState.currentPagingState
-    val pagingStateForEffect by rememberUpdatedState(currentPagingState)
+
+    val refreshCurrentFeed: () -> Unit = {
+        when (uiState.currentTab) {
+            FeedType.Latest -> {
+                latestFeedItems.refresh()
+                viewModel.refreshFeedNotice()
+            }
+            FeedType.Popular,
+            FeedType.Distance -> viewModel.refreshCurrentTab()
+        }
+    }
 
     // Navigation event handling
     LaunchedEffect(viewModel) {
@@ -121,14 +128,14 @@ fun FeedView(
             }
         }
     }
-    // Refresh handling after writing a card
+    // Refresh handling after returning from other screens
     LaunchedEffect(navBackStackEntry) {
         navBackStackEntry?.savedStateHandle?.let { savedStateHandle ->
-            if (savedStateHandle.remove<Boolean>(NavigationKeys.CARD_ADDED) == true) {
-                when (uiState.currentTab) {
-                    FeedType.Latest -> latestFeedItems.refresh()
-                    FeedType.Popular, FeedType.Distance -> viewModel.refreshCurrentTab()
-                }
+            val cardAdded = savedStateHandle.remove<Boolean>(NavigationKeys.CARD_ADDED) == true
+            val cardUpdated = savedStateHandle.remove<Boolean>(NavigationKeys.CARD_UPDATED) == true
+            val cardDeleted = savedStateHandle.remove<Boolean>(NavigationKeys.CARD_DELETED) == true
+            if (cardAdded || cardUpdated || cardDeleted) {
+                refreshCurrentFeed()
             }
         }
     }
@@ -186,7 +193,7 @@ fun FeedView(
         }
     }
     val isRefreshing = when (uiState.currentTab) {
-        FeedType.Latest -> uiState.latestPagingState is FeedPagingState.Loading
+        FeedType.Latest -> latestFeedItems.loadState.refresh is LoadState.Loading
         else -> currentPagingState is FeedPagingState.Loading
     }
     val snackBarHostState = remember { SnackbarHostState() }
@@ -202,7 +209,7 @@ fun FeedView(
     ) { paddingValues ->
         RefreshBox(
             isRefresh = isRefreshing,
-            onRefresh = viewModel::refreshCurrentTab,
+            onRefresh = refreshCurrentFeed,
             state = refreshState,
             paddingValues = paddingValues,
             indicatorTopPadding = 60.dp
@@ -221,6 +228,7 @@ fun FeedView(
                         .fillMaxSize()
                         .graphicsLayer { clip = false },
                     lazyGridState = lazyGridState,
+                    isRefreshing = isRefreshing,
                     recentClick = {
                         viewModel.switchTab(FeedType.Latest)
                     },
@@ -240,7 +248,7 @@ fun FeedView(
                     onRemoveCard = viewModel::removeFeedCard,
                     currentPagingState = uiState.currentPagingState,
                     pullOffsetPx = pullOffsetPx,
-                    onRefresh = viewModel::refreshCurrentTab
+                    onRefresh = refreshCurrentFeed
                 )
                 if (uiState.shouldShowPermissionRationale) {
                     DialogComponent.DefaultButtonTwo(
@@ -296,6 +304,7 @@ private fun TopView(
 private fun FeedContentView(
     modifier: Modifier,
     lazyGridState: LazyGridState,
+    isRefreshing: Boolean,
     recentClick: () -> Unit,
     popularClick: () -> Unit,
     nearClick: () -> Unit,
@@ -364,12 +373,16 @@ private fun FeedContentView(
                     }
 
                     LoadState.Loading -> {
-                        item(span = { GridItemSpan(maxLineSpan) }) {
-                            LoadingAnimation.LoadingView(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 100.dp)
-                            )
+                        val shouldShowInitialLoading =
+                            latestFeedItems.itemCount == 0 || !isRefreshing
+                        if (shouldShowInitialLoading) {
+                            item(span = { GridItemSpan(maxLineSpan) }) {
+                                LoadingAnimation.LoadingView(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 100.dp)
+                                )
+                            }
                         }
                     }
 
