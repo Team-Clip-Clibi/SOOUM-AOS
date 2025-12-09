@@ -73,7 +73,7 @@ class SooumToast(private val presenter: SooumToastPresenter) {
 
 
     companion object {
-        private const val TAG = "AphroditeToast"
+        private const val TAG = "SooumToast"
 
         /**
          * 토스트 표시 시간: LONG (5초)
@@ -102,12 +102,12 @@ class SooumToast(private val presenter: SooumToastPresenter) {
             if (SooumToastConstants.DEBUG_ENABLED) Log.v(TAG, "makeToast() $resId, $duration")
 
             val text = context.getString(resId)
-            return makeAphroditeToast(text, duration)
+            return makeSooumToast(text, duration)
         }
 
         fun makeToast(context: Context, message: String, duration: Int): SooumToast {
             if (SooumToastConstants.DEBUG_ENABLED) Log.v(TAG, "makeToast() $message, $duration")
-            return makeAphroditeToast(message, duration)
+            return makeSooumToast(message, duration)
         }
 
         /**
@@ -117,7 +117,7 @@ class SooumToast(private val presenter: SooumToastPresenter) {
         fun makeToast(text: CharSequence, duration: Int): SooumToast {
             if (SooumToastConstants.DEBUG_ENABLED) Log.v(TAG, "makeToast() $text, $duration")
 
-            return makeAphroditeToast(text, duration)
+            return makeSooumToast(text, duration)
         }
 
         /**
@@ -129,7 +129,7 @@ class SooumToast(private val presenter: SooumToastPresenter) {
             SooumToastThreadImpl.Companion.getThread()?.cancelAll()
         }
 
-        private fun makeAphroditeToast(text: CharSequence, duration: Int): SooumToast {
+        private fun makeSooumToast(text: CharSequence, duration: Int): SooumToast {
             return SooumToast(SooumToastPresenterImpl.Companion.getInstance(text))
                 .apply {
                     this.duration = duration

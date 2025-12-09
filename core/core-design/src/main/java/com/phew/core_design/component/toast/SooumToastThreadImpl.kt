@@ -226,7 +226,7 @@ internal class SooumToastThreadImpl(
         }
     }
     companion object {
-        private const val TAG = "AphroditeToastThread"
+        private const val TAG = "SooumToastThread"
 
         private const val MAX_LIMIT = 5
 
