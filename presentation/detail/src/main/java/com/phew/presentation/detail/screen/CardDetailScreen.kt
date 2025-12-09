@@ -81,6 +81,7 @@ import com.airbnb.lottie.compose.rememberLottieComposition
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.model.navigation.CardDetailCommentArgs
 import com.phew.core.ui.model.navigation.TagViewArgs
+import com.phew.domain.dto.CardDetail
 import com.phew.domain.dto.CardDetailTag
 import com.phew.core_common.TimeUtils
 import com.phew.core_common.log.SooumLog
@@ -119,7 +120,8 @@ internal fun CardDetailRoute(
     onNavigateToViewTags: (TagViewArgs) -> Unit,
     onBackPressed: () -> Unit,
     onPreviousCardClick: () -> Unit = { },
-    profileClick: (Long) -> Unit
+    profileClick: (Long) -> Unit,
+    onCardChanged: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackBarHostState = remember { SnackbarHostState() }
@@ -252,6 +254,7 @@ internal fun CardDetailRoute(
 
     // cardDetail이 없으면 빈 화면 또는 에러 표시
     val cardDetail = uiState.cardDetail
+    TrackCardInteraction(cardDetail = cardDetail, onCardChanged = onCardChanged)
     if (cardDetail == null) {
         Box(
             modifier = Modifier
@@ -745,7 +748,6 @@ private fun CardDetailScreen(
         )
     }
 }
-
 
 @Preview
 @Composable

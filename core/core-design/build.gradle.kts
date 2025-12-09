@@ -8,4 +8,5 @@ android {
 
 dependencies {
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.constraintlayout)
 }

@@ -106,12 +106,14 @@ internal fun CommentCardDetailScreen(
     onBackPressed: (Long) -> Unit,
     onFeedPressed: () -> Unit,
     onTagPressed: () -> Unit,
-    onProfileClick: (Long) -> Unit
+    onProfileClick: (Long) -> Unit,
+    onCardChanged: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val comments: LazyPagingItems<CardComment> = viewModel.commentsPagingData
         .collectAsLazyPagingItems()
     val cardDetail = uiState.cardDetail
+    TrackCardInteraction(cardDetail = cardDetail, onCardChanged = onCardChanged)
     LaunchedEffect(args.cardId) {
         SooumLog.d(TAG, "CardId : ${args.cardId}")
         viewModel.loadCardDetail(args.cardId)

@@ -45,6 +45,7 @@ import com.phew.core_design.DialogComponent
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.R
 import com.phew.core_design.TextComponent
+import com.phew.core_design.component.toast.SooumToast
 import com.phew.presentation.settings.component.setting.SettingItemRow
 import com.phew.presentation.settings.component.setting.SettingToggleRow
 import com.phew.presentation.settings.model.setting.SettingItem
@@ -98,17 +99,17 @@ fun SettingRoute(
         viewModel.toastEvent.collectLatest { event ->
             when (event) {
                 ToastEvent.ShowCurrentVersionToast -> {
-                    Toast.makeText(
+                    SooumToast.makeToast(
                         context,
                         context.getString(SettingsR.string.setting_current_new_version),
-                        Toast.LENGTH_SHORT
+                        SooumToast.LENGTH_SHORT
                     ).show()
                 }
                 ToastEvent.ShowNotificationToggleErrorToast -> {
-                    Toast.makeText(
+                    SooumToast.makeToast(
                         context,
-                        "알림 설정 변경에 실패했습니다. 다시 시도해주세요.",
-                        Toast.LENGTH_SHORT
+                        context.getString(SettingsR.string.setting_alarm_failed),
+                        SooumToast.LENGTH_SHORT
                     ).show()
                 }
             }

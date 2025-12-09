@@ -67,6 +67,7 @@ import com.phew.core_design.R as DesignR
 import com.phew.core_design.TextComponent
 import com.phew.core_design.Warning
 import com.phew.core_design.component.card.CommentBodyContent
+import com.phew.core_design.component.toast.SooumToast
 import com.phew.domain.dto.TagCardContent
 import com.phew.domain.model.TagInfo
 import com.phew.presentation.tag.R
@@ -98,12 +99,12 @@ internal fun SearchRoute(
                     when (it) {
                         is TagUiEffect.ShowAddFavoriteTagToast -> {
                             val message = context.getString(R.string.tag_favorite_add, it.tagName)
-                            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                            SooumToast.makeToast(context, message, SooumToast.LENGTH_SHORT).show()
                             viewModel.clearSearchScreenUiEffect()
                         }
                         is TagUiEffect.ShowRemoveFavoriteTagToast -> {
                             val message = context.getString(R.string.tag_favorite_delete, it.tagName)
-                            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                            SooumToast.makeToast(context, message, SooumToast.LENGTH_SHORT).show()
                             viewModel.clearSearchScreenUiEffect()
                         }
                         is TagUiEffect.ShowNetworkErrorSnackbar -> {

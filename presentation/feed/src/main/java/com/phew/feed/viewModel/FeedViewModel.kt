@@ -505,6 +505,10 @@ class FeedViewModel @Inject constructor(
                 loadDistanceFeeds(isInitial = true)
             }
         }
+        refreshFeedNotice()
+    }
+
+    fun refreshFeedNotice() {
         _uiState.update { state -> state.copy(feedNotification = UiState.Loading) }
         getFeedNotice()
     }
