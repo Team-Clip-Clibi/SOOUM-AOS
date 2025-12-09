@@ -52,7 +52,7 @@ class ApplicationConvention : Plugin<Project> {
                     isMinifyEnabled = false
                     isDebuggable = true
                     versionNameSuffix = "-debug"
-                    buildConfigField("String", "CLARITY_PROJECT_ID", "")
+                    buildConfigField("String", "CLARITY_PROJECT_ID", "\"\"")
                 }
                 getByName("release") {
                     isMinifyEnabled = true
