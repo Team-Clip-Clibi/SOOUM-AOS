@@ -8,6 +8,7 @@ import com.android.build.api.dsl.ApplicationExtension
 import org.gradle.api.JavaVersion
 import org.gradle.kotlin.dsl.dependencies
 import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
+import java.util.Properties
 
 class ApplicationConvention : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
@@ -23,6 +24,11 @@ class ApplicationConvention : Plugin<Project> {
         extensions.getByType<ApplicationExtension>().apply {
             namespace = "com.phew.sooum"
             compileSdk = 36
+            val properties = Properties()
+            val localPropsFile = rootProject.file("keystore.properties")
+            if (localPropsFile.exists()) {
+                localPropsFile.inputStream().use { properties.load(it) }
+            }
             defaultConfig.apply {
                 applicationId = "com.phew.sooum"
                 minSdk = 31
@@ -33,10 +39,7 @@ class ApplicationConvention : Plugin<Project> {
             }
             signingConfigs {
                 create("release") {
-                    val keystorePropertiesFile = rootProject.file("keystore.properties")
-                    if (keystorePropertiesFile.exists()) {
-                        val properties = java.util.Properties()
-                        properties.load(java.io.FileInputStream(keystorePropertiesFile))
+                    if (localPropsFile.exists()) {
                         storeFile = file(properties.getProperty("storeFile"))
                         storePassword = properties.getProperty("storePassword")
                         keyAlias = properties.getProperty("keyAlias")
@@ -49,6 +52,7 @@ class ApplicationConvention : Plugin<Project> {
                     isMinifyEnabled = false
                     isDebuggable = true
                     versionNameSuffix = "-debug"
+                    buildConfigField("String", "CLARITY_PROJECT_ID", "")
                 }
                 getByName("release") {
                     isMinifyEnabled = true
@@ -58,12 +62,15 @@ class ApplicationConvention : Plugin<Project> {
                         getDefaultProguardFile("proguard-android-optimize.txt"),
                         "proguard-rules.pro"
                     )
+                    val clarityKey = properties.getProperty("clarityKey", "")
+                    buildConfigField("String", "CLARITY_PROJECT_ID", clarityKey)
                 }
             }
             flavorDimensions += "environment"
             productFlavors {
                 create("dev") {
                     dimension = "environment"
+                    applicationIdSuffix = ".dev"
                     versionNameSuffix = "-dev"
                 }
                 create("prod") {
@@ -115,6 +122,8 @@ class ApplicationConvention : Plugin<Project> {
             //firebase
             "implementation"(libs.findLibrary("firebase-bom").get())
             "implementation"(libs.findLibrary("firebase-crashlytics").get())
+            //Microsoft Clarity
+            "implementation"(libs.findLibrary("mircrosoft-clarity").get())
             //module
             add("implementation", project(":presentation"))
             add("implementation", project(":presentation:splash"))
