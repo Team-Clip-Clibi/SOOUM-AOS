@@ -37,7 +37,7 @@ private fun fixFontSize(
 
 object FontTextStyle {
     
-    // 기본 폰트 패밀리 (Default - medium.otf)
+    // 기본 폰트 패밀리 (Default - regular.otf)
     private val DefaultFamily = FontFamily(Font(R.font.regular))
     
     val DEFAULT_BUTTON

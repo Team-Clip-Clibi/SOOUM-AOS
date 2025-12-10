@@ -52,6 +52,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
+import com.phew.core_design.typography.FontType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -177,7 +178,7 @@ internal fun WriteRoute(
         selectedBackgroundFilter = uiState.selectedBackgroundFilter,
         selectedGridImageName = uiState.selectedGridImageName,
         selectedFont = uiState.selectedFont,
-        selectedFontFamily = uiState.selectedFontFamily,
+        selectedFontType = uiState.selectedFontType,
         selectedOptionIds = uiState.selectedOptionIds,
         hasLocationPermission = uiState.hasLocationPermission,
         showLocationPermissionDialog = uiState.showLocationPermissionDialog,
@@ -274,7 +275,7 @@ private fun WriteScreen(
     selectedBackgroundFilter: BackgroundFilterType,
     selectedGridImageName: String?,
     selectedFont: String,
-    selectedFontFamily: FontFamily?,
+    selectedFontType: FontType?,
     selectedOptionIds: List<String>,
     hasLocationPermission: Boolean,
     showLocationPermissionDialog: Boolean,
@@ -503,7 +504,7 @@ private fun WriteScreen(
                             tags = tags,
                             backgroundResId = activeBackgroundImageResId,
                             backgroundUri = activeBackgroundUri,
-                            fontFamily = selectedFontFamily,
+                            fontType = selectedFontType,
                             placeholder = stringResource(WriteR.string.write_card_content_default_placeholder),
                             onContentChange = onContentChange,
                             onContentClick = {

@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.compose.ui.text.font.FontFamily
 import com.phew.core.ui.model.CameraCaptureRequest
 import com.phew.core_design.CustomFont
+import com.phew.core_design.typography.FontType
 import com.phew.domain.dto.CardImageDefault
 import com.phew.domain.dto.TagInfo
 import com.phew.presentation.write.component.NumberTagItem
@@ -29,7 +30,7 @@ data class WriteUiState(
     val shouldRequestBackgroundCameraPermission: Boolean = false,
     val pendingBackgroundCameraCapture: CameraCaptureRequest? = null,
     val selectedFont: String = CustomFont.PRETENDARD_FONT.data.name,
-    val selectedFontFamily: FontFamily? = CustomFont.PRETENDARD_FONT.data.previewTypeface,
+    val selectedFontType: FontType? = FontType.PRETENDARD,
     val selectedOptionIds: List<String> = listOf(WriteOptions.defaultOption.id),
     val hasLocationPermission: Boolean = false,
     val showLocationPermissionDialog: Boolean = false,
