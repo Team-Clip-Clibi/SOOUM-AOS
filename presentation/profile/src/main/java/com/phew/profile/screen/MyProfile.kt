@@ -375,7 +375,6 @@ private fun ProfileCardView(
             modifier = Modifier.fillMaxSize(),
             state = gridState,
             horizontalArrangement = Arrangement.spacedBy(1.dp),
-            verticalArrangement = Arrangement.spacedBy(1.dp),
             contentPadding = PaddingValues(
                 top = 0.dp,
                 bottom = paddingValues.calculateBottomPadding() + BOTTOM_NAVIGATION_HEIGHT.dp
