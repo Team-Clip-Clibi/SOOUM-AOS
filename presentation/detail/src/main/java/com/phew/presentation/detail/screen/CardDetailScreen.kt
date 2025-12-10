@@ -687,12 +687,19 @@ private fun CommentPreviewSection(
 ) {
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+    val landscapeMinHeightRatio = 0.45f
+    val portraitMinHeightRatio = 0.3f
+    val landscapeMaxHeight = 280.dp
+    val portraitMaxHeight = 340.dp
+    val commentCardHeight = 180.dp
+
     val minHeight = if (isLandscape) {
-        (configuration.screenWidthDp * 0.45f).dp
+        (configuration.screenWidthDp * landscapeMinHeightRatio).dp
     } else {
-        (configuration.screenHeightDp * 0.3f).dp
+        (configuration.screenHeightDp * portraitMinHeightRatio).dp
     }
-    val maxHeight = if (isLandscape) 280.dp else 340.dp
+    val maxHeight = if (isLandscape) landscapeMaxHeight else portraitMaxHeight
 
     Box(
         modifier = Modifier
@@ -729,7 +736,7 @@ private fun CommentPreviewSection(
                         if (comment != null) {
                             CardViewComment(
                                 modifier = Modifier
-                                    .height(180.dp)
+                                    .height(commentCardHeight)
                                     .aspectRatio(1f),
                                 contentText = comment.cardContent,
                                 thumbnailUri = comment.cardImgUrl,
@@ -746,7 +753,7 @@ private fun CommentPreviewSection(
                         item {
                             Box(
                                 modifier = Modifier
-                                    .height(180.dp)
+                                    .height(commentCardHeight)
                                     .padding(horizontal = 16.dp),
                                 contentAlignment = Alignment.Center
                             ) {
