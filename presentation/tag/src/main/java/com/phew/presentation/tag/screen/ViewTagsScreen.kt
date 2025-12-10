@@ -24,7 +24,9 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -75,6 +77,8 @@ internal fun ViewTagsRoute(
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
 
+    var hasRequestedTagCards by remember(tagId, tagName) { mutableStateOf(false) }
+
     // favoriteTags 로드를 먼저 확인
     LaunchedEffect(tagName, tagId) {
         if (uiState.favoriteTags.isEmpty()) {
@@ -83,10 +87,11 @@ internal fun ViewTagsRoute(
     }
 
     // favoriteTags가 로드된 후 tagCards 로드 (즐겨찾기 상태 포함)
-    LaunchedEffect(tagName, tagId, uiState.favoriteTags) {
-        if (uiState.favoriteTags.isNotEmpty() || uiState.nickName.isNotEmpty()) {
+    LaunchedEffect(tagName, tagId, uiState.favoriteTags, uiState.nickName) {
+        if (!hasRequestedTagCards && (uiState.favoriteTags.isNotEmpty() || uiState.nickName.isNotEmpty())) {
             val currentFavoriteState = viewModel.getTagFavoriteState(tagId)
             viewModel.loadTagCards(tagName, tagId, currentFavoriteState)
+            hasRequestedTagCards = true
         }
     }
 

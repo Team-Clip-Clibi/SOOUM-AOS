@@ -133,8 +133,26 @@ class TagViewModel @Inject constructor(
                     is DataResult.Success -> {
                         // 최대 9개만 표시
                         val limitedTags = result.data.favoriteTags.take(9)
-                        _uiState.update {
-                            it.copy(favoriteTags = limitedTags)
+                        _uiState.update { currentState ->
+                            val favoriteTagIds = limitedTags.map { it.id }.toSet()
+                            val updatedLocalStates = currentState.localFavoriteStates.toMutableMap()
+                            
+                            // 서버에서 받은 태그들의 즐겨찾기 상태를 localFavoriteStates에 동기화
+                            limitedTags.forEach { favoriteTag ->
+                                updatedLocalStates[favoriteTag.id] = true
+                            }
+                            
+                            // 현재 localFavoriteStates에 있지만 서버 응답에는 없는 태그들을 false로 설정
+                            updatedLocalStates.keys.forEach { tagId ->
+                                if (tagId !in favoriteTagIds) {
+                                    updatedLocalStates[tagId] = false
+                                }
+                            }
+                            
+                            currentState.copy(
+                                favoriteTags = limitedTags,
+                                localFavoriteStates = updatedLocalStates
+                            )
                         }
                         SooumLog.d(TAG, "Favorite tags loaded: ${limitedTags.size}")
                     }
@@ -296,8 +314,9 @@ class TagViewModel @Inject constructor(
     fun toggleFavoriteTag(tagId: Long, tagName: String) {
         viewModelScope.launch(Dispatchers.IO) {
             val currentState = _uiState.value
-            // FavoriteTagsList에서 사용하므로 기본값을 true로 설정 (이미 즐겨찾기된 태그들)
-            val currentFavoriteState = currentState.localFavoriteStates[tagId] ?: true
+            // localFavoriteStates에 있으면 그 값을 사용, 없으면 favoriteTags 리스트에 있는지 확인
+            val currentFavoriteState = currentState.localFavoriteStates[tagId] 
+                ?: currentState.favoriteTags.any { it.id == tagId }
 
             if (currentFavoriteState) {
                 removeFavoriteTagAction(tagId, tagName, removeFromList = false) // TagScreen에서는 리스트에서 제거하지 않음
