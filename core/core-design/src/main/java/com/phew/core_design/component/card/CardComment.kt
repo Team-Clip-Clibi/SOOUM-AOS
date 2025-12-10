@@ -165,14 +165,14 @@ fun CommentBodyContent(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(NeutralColor.GRAY_300)
+                        .background(NeutralColor.WHITE)
                 )
             },
             error = {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(NeutralColor.GRAY_300)
+                        .background(NeutralColor.WHITE)
                 )
             }
         )
