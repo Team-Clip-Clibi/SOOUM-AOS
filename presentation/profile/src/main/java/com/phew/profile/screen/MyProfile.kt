@@ -56,12 +56,12 @@ import com.phew.profile.TAB_MY_FEED_CARD
 import com.phew.profile.UiState
 import com.phew.core_design.component.card.CommentBodyContent
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.Alignment
 import androidx.paging.compose.LazyPagingItems
 import com.phew.core_common.BOTTOM_NAVIGATION_HEIGHT
@@ -73,7 +73,6 @@ import com.phew.domain.dto.ProfileCard
 import com.phew.profile.component.ProfileComponent
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.time.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -211,7 +210,7 @@ private fun MyProfileView(
     onFollowerClick: () -> Unit,
     onFollowingClick: () -> Unit,
     onEditProfileClick: () -> Unit,
-    onCardClick: () -> Unit
+    onCardClick: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -299,7 +298,7 @@ private fun MyProfileView(
                 title = stringResource(R.string.profile_txt_card),
                 data = profile.cardCnt.toString(),
                 onClick = {
-                    if(profile.cardCnt != 0){
+                    if (profile.cardCnt != 0) {
                         onCardClick()
                     }
                 }
@@ -365,129 +364,145 @@ private fun ProfileCardView(
     snackBarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
     paddingValues: PaddingValues,
-    onCardClick: () -> Unit
+    onCardClick: () -> Unit,
 ) {
     val gridState = rememberLazyGridState()
     val coroutineScope = rememberCoroutineScope()
-    val configuration = LocalConfiguration.current
-    val screenHeight = configuration.screenHeightDp.dp
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(3),
-        modifier = modifier,
-        state = gridState,
-        horizontalArrangement = Arrangement.spacedBy(1.dp),
-        verticalArrangement = Arrangement.spacedBy(1.dp),
-        contentPadding = PaddingValues(
-            top = 0.dp,
-            bottom = paddingValues.calculateBottomPadding() + BOTTOM_NAVIGATION_HEIGHT.dp
-        )
-    ) {
-        item(span = { GridItemSpan(maxLineSpan) }) {
-            MyProfileView(
-                profile = profile,
-                onEditProfileClick = onEditProfileClick,
-                onFollowingClick = onFollowingClick,
-                onFollowerClick = onFollowerClick,
-                onCardClick = {
-                    onCardClick()
-                    coroutineScope.launch {
-                        delay(100)
-                        gridState.animateScrollToItem(index = 1)
-                    }
-                }
+    BoxWithConstraints(modifier = modifier) {
+        val cardWidth = (maxWidth - 2.dp) / 3
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(3),
+            modifier = Modifier.fillMaxSize(),
+            state = gridState,
+            horizontalArrangement = Arrangement.spacedBy(1.dp),
+            verticalArrangement = Arrangement.spacedBy(1.dp),
+            contentPadding = PaddingValues(
+                top = 0.dp,
+                bottom = paddingValues.calculateBottomPadding() + BOTTOM_NAVIGATION_HEIGHT.dp
             )
-        }
-        stickyHeader {
-            ProfileComponent.CardTabView(
-                onCommentCardClick = onCommentCardClick,
-                onFeedCardClick = onFeedCardClick,
-                selectIndex = selectIndex
-            )
-        }
-        when (cardData.loadState.refresh) {
-            LoadState.Loading -> {
-                item(span = { GridItemSpan(maxLineSpan) }) {
-                    LoadingAnimation.LoadingView(modifier = Modifier.padding(top = 80.dp))
-                }
-            }
-
-            is LoadState.Error -> {
-                item(span = { GridItemSpan(maxLineSpan) }) {
-                    val networkErrorMsg =
-                        stringResource(com.phew.core_design.R.string.error_network)
-                    val appErrorMsg =
-                        stringResource(com.phew.core_design.R.string.error_app)
-                    val error =
-                        (cardData.loadState.refresh as LoadState.Error).error
-                    when (error.message) {
-                        ERROR_NETWORK -> {
-                            LaunchedEffect(error.message) {
-                                snackBarHostState.showSnackbar(
-                                    message = networkErrorMsg,
-                                    withDismissAction = true
-                                )
-                            }
-                        }
-
-                        ERROR_LOGOUT -> onLogout()
-                        else -> {
-                            LaunchedEffect(error.message) {
-                                snackBarHostState.showSnackbar(
-                                    message = appErrorMsg,
-                                    withDismissAction = true
-                                )
-                            }
+        ) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                MyProfileView(
+                    profile = profile,
+                    onEditProfileClick = onEditProfileClick,
+                    onFollowingClick = onFollowingClick,
+                    onFollowerClick = onFollowerClick,
+                    onCardClick = {
+                        onCardClick()
+                        coroutineScope.launch {
+                            delay(100)
+                            gridState.animateScrollToItem(index = 1)
                         }
                     }
-                }
+                )
             }
-
-            else -> {
-                when (cardData.itemCount) {
-                    0 -> {
-                        item(span = { GridItemSpan(maxLineSpan) }) {
-                            EmptyCardView(
-                                selectIndex = selectIndex,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .heightIn(min = 318.dp)
-                            )
-                        }
+            stickyHeader {
+                ProfileComponent.CardTabView(
+                    onCommentCardClick = onCommentCardClick,
+                    onFeedCardClick = onFeedCardClick,
+                    selectIndex = selectIndex
+                )
+            }
+            when (cardData.loadState.refresh) {
+                LoadState.Loading -> {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        LoadingAnimation.LoadingView(modifier = Modifier.padding(top = 80.dp))
                     }
+                }
 
-                    else -> {
-                        items(
-                            count = cardData.itemCount,
-                            key = { index ->
-                                val id = cardData.peek(index)?.cardId ?: "loading"
-                                "${id}_$index"
+                is LoadState.Error -> {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        val networkErrorMsg =
+                            stringResource(com.phew.core_design.R.string.error_network)
+                        val appErrorMsg =
+                            stringResource(com.phew.core_design.R.string.error_app)
+                        val error =
+                            (cardData.loadState.refresh as LoadState.Error).error
+                        when (error.message) {
+                            ERROR_NETWORK -> {
+                                LaunchedEffect(error.message) {
+                                    snackBarHostState.showSnackbar(
+                                        message = networkErrorMsg,
+                                        withDismissAction = true
+                                    )
+                                }
                             }
-                        ) { index ->
-                            val item = cardData[index]
-                            if (item != null) {
-                                Box(modifier = Modifier.padding(bottom = 1.dp)) {
-                                    CommentBodyContent(
-                                        contentText = item.cardContent,
-                                        imgUrl = item.cardImgUrl,
-                                        fontFamily = CustomFont.findFontValueByServerName(item.font).data.previewTypeface,
-                                        textMaxLines = 4,
-                                        cardId = item.cardId,
-                                        onClick = onClickCard
+
+                            ERROR_LOGOUT -> onLogout()
+                            else -> {
+                                LaunchedEffect(error.message) {
+                                    snackBarHostState.showSnackbar(
+                                        message = appErrorMsg,
+                                        withDismissAction = true
                                     )
                                 }
                             }
                         }
                     }
                 }
+
+                else -> {
+                    when (cardData.itemCount) {
+                        0 -> {
+                            item(span = { GridItemSpan(maxLineSpan) }) {
+                                EmptyCardView(
+                                    selectIndex = selectIndex,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .heightIn(min = 318.dp)
+                                )
+                            }
+                        }
+
+                        else -> {
+                            items(
+                                count = cardData.itemCount,
+                                key = { index ->
+                                    val id = cardData.peek(index)?.cardId ?: "loading"
+                                    "${id}_$index"
+                                }
+                            ) { index ->
+                                val item = cardData[index]
+                                if (item != null) {
+                                    Box(modifier = Modifier.padding(bottom = 1.dp)) {
+                                        CommentBodyContent(
+                                            contentText = item.cardContent,
+                                            imgUrl = item.cardImgUrl,
+                                            fontFamily = CustomFont.findFontValueByServerName(item.font).data.previewTypeface,
+                                            textMaxLines = 4,
+                                            cardId = item.cardId,
+                                            onClick = onClickCard
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
-        }
-        item(span = { GridItemSpan(maxLineSpan) }) {
-            Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(screenHeight)
-                    .background(NeutralColor.WHITE) // 배경색 맞춤
-            )
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                val bottomPadding =
+                    paddingValues.calculateBottomPadding() + BOTTOM_NAVIGATION_HEIGHT.dp
+                val spaceHeight = if (cardData.itemCount > 0) {
+                    val rows = (cardData.itemCount + 2) / 3
+                    val cardSpacingHeight = ((rows - 1).coerceAtLeast(0) * 1).dp
+                    val contentBelowProfileHeight =
+                        64.dp + (cardWidth * rows) + cardSpacingHeight
+                    if (contentBelowProfileHeight < maxHeight) {
+                        maxHeight - contentBelowProfileHeight - bottomPadding
+                    } else {
+                        0.dp
+                    }
+                } else {
+                    100.dp
+                }
+                Spacer(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(spaceHeight)
+                        .background(NeutralColor.WHITE)
+                )
+            }
         }
     }
 }
