@@ -58,8 +58,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.isFinite
-import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.OpacityColor
@@ -67,6 +65,17 @@ import com.phew.core_design.Primary
 import com.phew.core_design.R
 import com.phew.core_design.TextComponent
 import com.phew.core_design.component.tag.TagRow
+import com.phew.core_design.typography.FontTextStyle
+
+// fontFamily를 FontTextStyle TAG 타입으로 매핑하는 함수
+@Composable
+private fun getTagStyleFromFontFamily(fontFamily: FontFamily?): FontFamily = when (fontFamily) {
+    null -> FontTextStyle.DEFAULT_TAG.fontFamily ?: FontFamily.Default
+    FontTextStyle.RIDIBATANG_BUTTON.fontFamily -> FontTextStyle.RIDIBATANG_TAG.fontFamily ?: FontFamily.Default
+    FontTextStyle.YOON_BUTTON.fontFamily -> FontTextStyle.YOON_TAG.fontFamily ?: FontFamily.Default
+    FontTextStyle.KKOKKO_BUTTON.fontFamily -> FontTextStyle.KKOKKO_TAG.fontFamily ?: FontFamily.Default
+    else -> FontTextStyle.DEFAULT_TAG.fontFamily ?: FontFamily.Default
+}
 
 // ===== 디자인 토큰 =====
 object CardDesignTokens {
@@ -390,7 +399,7 @@ private fun WriteCard(
                             onFocusHandled = data.onTagFocusHandled,
                             currentInput = data.currentTagInput,
                             onInputChange = data.onTagInputChange,
-                            fontFamily = data.fontFamily ?: FontFamily.Default
+                            fontFamily = getTagStyleFromFontFamily(data.fontFamily)
                         )
                     }
                 }
@@ -515,7 +524,7 @@ private fun ReplyCard(
                             onFocusHandled = { },
                             currentInput = "",
                             onInputChange = { },
-                            fontFamily = data.fontFamily ?: FontFamily.Default,
+                            fontFamily = getTagStyleFromFontFamily(data.fontFamily),
                             onTagClick = data.onTagClick
                         )
                     }

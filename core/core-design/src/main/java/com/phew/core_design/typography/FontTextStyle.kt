@@ -37,6 +37,49 @@ private fun fixFontSize(
 
 object FontTextStyle {
     
+    // 기본 폰트 패밀리 (Default - medium.otf)
+    private val DefaultFamily = FontFamily(Font(R.font.regular))
+    
+    val DEFAULT_BUTTON
+        @Composable get() = fixFontSize(
+            fontSize = 16.sp,
+            lineHeight = 24.sp, // 16 * 150%
+            fontFamily = DefaultFamily,
+            fontWeight = FontWeight.Medium,
+            color = NeutralColor.BLACK,
+            letterSpacing = (-0.4).sp // -2.5%
+        )
+    
+    val DEFAULT_CARD
+        @Composable get() = fixFontSize(
+            fontSize = 14.sp,
+            lineHeight = 21.sp, // 14 * 150%
+            fontFamily = DefaultFamily,
+            fontWeight = FontWeight.Medium,
+            color = NeutralColor.WHITE,
+            letterSpacing = (-0.35).sp // -2.5%
+        )
+    
+    val DEFAULT_TAG
+        @Composable get() = fixFontSize(
+            fontSize = 12.sp,
+            lineHeight = 18.sp, // 12 * 150%
+            fontFamily = DefaultFamily,
+            fontWeight = FontWeight.Medium,
+            color = NeutralColor.BLACK,
+            letterSpacing = (-0.3).sp // -2.5%
+        )
+    
+    val DEFAULT_PROFILE
+        @Composable get() = fixFontSize(
+            fontSize = 5.sp,
+            lineHeight = 7.5.sp, // 5 * 150%
+            fontFamily = DefaultFamily,
+            fontWeight = FontWeight.Medium,
+            color = NeutralColor.BLACK,
+            letterSpacing = (-0.125).sp // -2.5%
+        )
+    
     // 리디바탕 (RIDIBang - ridibatang.otf)
     private val RidibatangFamily = FontFamily(Font(R.font.ridibatang))
     
