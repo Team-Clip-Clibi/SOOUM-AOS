@@ -741,10 +741,11 @@ private fun BackgroundSelect(
         ) {
             SooumFilter(
                 modifier = Modifier.fillMaxWidth(),
-                filters = BackgroundConfig.filterNames.map { it.displayName },
-                selectedFilter = selectedBackgroundFilter.displayName,
-                onFilterSelected = { displayName ->
-                    BackgroundFilterType.fromDisplayName(displayName)?.let { onFilterChange(it) }
+                selectedFilter = selectedBackgroundFilter,
+                filters = BackgroundConfig.filterTypes,
+                onFilterSelected = onFilterChange,
+                labelProvider = { filterType ->
+                    stringResource(filterType.getStringRes())
                 }
             )
 
