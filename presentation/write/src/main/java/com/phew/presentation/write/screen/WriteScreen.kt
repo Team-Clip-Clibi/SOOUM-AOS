@@ -52,6 +52,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
+import com.phew.core_design.typography.FontType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -177,7 +178,7 @@ internal fun WriteRoute(
         selectedBackgroundFilter = uiState.selectedBackgroundFilter,
         selectedGridImageName = uiState.selectedGridImageName,
         selectedFont = uiState.selectedFont,
-        selectedFontFamily = uiState.selectedFontFamily,
+        selectedFontType = uiState.selectedFontType,
         selectedOptionIds = uiState.selectedOptionIds,
         hasLocationPermission = uiState.hasLocationPermission,
         showLocationPermissionDialog = uiState.showLocationPermissionDialog,
@@ -274,7 +275,7 @@ private fun WriteScreen(
     selectedBackgroundFilter: BackgroundFilterType,
     selectedGridImageName: String?,
     selectedFont: String,
-    selectedFontFamily: FontFamily?,
+    selectedFontType: FontType?,
     selectedOptionIds: List<String>,
     hasLocationPermission: Boolean,
     showLocationPermissionDialog: Boolean,
@@ -439,7 +440,14 @@ private fun WriteScreen(
             AppBar.TextButtonAppBarText(
                 appBarText = stringResource(titleRes),
                 buttonText = stringResource(WriteR.string.write_screen_complete),
-                onButtonClick = onWriteComplete,
+                onButtonClick = {
+                    // 입력 중인 태그가 있으면 먼저 추가
+                    if (currentTagInput.isNotBlank()) {
+                        onAddTag(currentTagInput)
+                        onResetTagInput()
+                    }
+                    onWriteComplete()
+                },
                 onClick = onBackPressed,
                 buttonTextColor = if (isWriteCompleted) NeutralColor.BLACK else NeutralColor.GRAY_300
             )
@@ -503,7 +511,7 @@ private fun WriteScreen(
                             tags = tags,
                             backgroundResId = activeBackgroundImageResId,
                             backgroundUri = activeBackgroundUri,
-                            fontFamily = selectedFontFamily,
+                            fontType = selectedFontType,
                             placeholder = stringResource(WriteR.string.write_card_content_default_placeholder),
                             onContentChange = onContentChange,
                             onContentClick = {
@@ -741,10 +749,11 @@ private fun BackgroundSelect(
         ) {
             SooumFilter(
                 modifier = Modifier.fillMaxWidth(),
-                filters = BackgroundConfig.filterNames.map { it.displayName },
-                selectedFilter = selectedBackgroundFilter.displayName,
-                onFilterSelected = { displayName ->
-                    BackgroundFilterType.fromDisplayName(displayName)?.let { onFilterChange(it) }
+                selectedFilter = selectedBackgroundFilter,
+                filters = BackgroundConfig.filterTypes,
+                onFilterSelected = onFilterChange,
+                labelProvider = { filterType ->
+                    stringResource(filterType.getStringRes())
                 }
             )
 

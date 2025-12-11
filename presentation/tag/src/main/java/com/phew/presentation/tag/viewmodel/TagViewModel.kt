@@ -53,6 +53,7 @@ data class TagUiState(
     val currentTagFavoriteState: Boolean = false, // 현재 검색한 태그의 즐겨찾기 상태
     val tagRank: UiState<List<TagInfo>> = UiState.Loading,
     val isRefreshing: Boolean = false,
+    val requestedTagCards: Set<String> = emptySet() // 요청한 태그 카드 목록 (tagId:tagName 형태)
 )
 
 sealed interface UiState<out T> {
@@ -133,8 +134,15 @@ class TagViewModel @Inject constructor(
                     is DataResult.Success -> {
                         // 최대 9개만 표시
                         val limitedTags = result.data.favoriteTags.take(9)
-                        _uiState.update {
-                            it.copy(favoriteTags = limitedTags)
+                        _uiState.update { currentState ->
+                            val favoriteTagIds = limitedTags.map { it.id }.toSet()
+                            val allTagIds = currentState.localFavoriteStates.keys + favoriteTagIds
+                            val updatedLocalStates = allTagIds.associateWith { it in favoriteTagIds }
+
+                            currentState.copy(
+                                favoriteTags = limitedTags,
+                                localFavoriteStates = updatedLocalStates
+                            )
                         }
                         SooumLog.d(TAG, "Favorite tags loaded: ${limitedTags.size}")
                     }
@@ -296,8 +304,9 @@ class TagViewModel @Inject constructor(
     fun toggleFavoriteTag(tagId: Long, tagName: String) {
         viewModelScope.launch(Dispatchers.IO) {
             val currentState = _uiState.value
-            // FavoriteTagsList에서 사용하므로 기본값을 true로 설정 (이미 즐겨찾기된 태그들)
-            val currentFavoriteState = currentState.localFavoriteStates[tagId] ?: true
+            // localFavoriteStates에 있으면 그 값을 사용, 없으면 favoriteTags 리스트에 있는지 확인
+            val currentFavoriteState = currentState.localFavoriteStates[tagId] 
+                ?: currentState.favoriteTags.any { it.id == tagId }
 
             if (currentFavoriteState) {
                 removeFavoriteTagAction(tagId, tagName, removeFromList = false) // TagScreen에서는 리스트에서 제거하지 않음
@@ -464,7 +473,18 @@ class TagViewModel @Inject constructor(
     }
     
     fun loadTagCards(tagName: String, tagId: Long, initialFavoriteState: Boolean = false) {
+        val tagKey = "$tagId:$tagName"
+        
+        // 이미 요청한 태그인지 확인
+        if (_uiState.value.requestedTagCards.contains(tagKey)) {
+            SooumLog.d(TAG, "loadTagCards already requested for $tagKey, skipping")
+            return
+        }
+        
         SooumLog.d(TAG, "loadTagCards tagName=$tagName, tagId=$tagId, initialFavoriteState=$initialFavoriteState")
+        
+        // 요청 상태 업데이트
+        _uiState.update { it.copy(requestedTagCards = it.requestedTagCards + tagKey) }
         
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -482,6 +502,8 @@ class TagViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 SooumLog.e(TAG, "Failed to load tag cards: ${e.message}")
+                // 실패시 요청 상태에서 제거
+                _uiState.update { it.copy(requestedTagCards = it.requestedTagCards - tagKey) }
                 emitViewTagsScreenEffect(TagUiEffect.ShowNetworkErrorSnackbar { loadTagCards(tagName, tagId) })
             }
         }

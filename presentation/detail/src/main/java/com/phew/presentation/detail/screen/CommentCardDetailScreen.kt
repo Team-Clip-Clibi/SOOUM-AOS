@@ -92,7 +92,9 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import kotlinx.coroutines.launch
 import com.airbnb.lottie.compose.LottieConstants
+import com.phew.core.ui.model.navigation.TagViewArgs
 import com.phew.core_design.LoadingAnimation
+import com.phew.core_design.typography.FontType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -449,11 +451,11 @@ private fun CardView(
                     cardTags = cardDetail.tags.map { data -> data.name },
                     isDeleted = isExpire,
                     backgroundImageUrl = cardDetail.cardImgUrl.toUri(),
-                    fontFamily = CustomFont.findFontValueByServerName(cardDetail.font).data.previewTypeface,
+                    fontType = FontType.fromServerName(cardDetail.font),
                     onTagClick = { tagName ->
                         val tag = cardDetail.tags.find { it.name == tagName }
                         if (tag != null) {
-                            onNavigateToViewTags(com.phew.core.ui.model.navigation.TagViewArgs(tagName = tag.name, tagId = tag.tagId))
+                            onNavigateToViewTags(TagViewArgs(tagName = tag.name, tagId = tag.tagId))
                         }
                     },
                     header = {
@@ -522,26 +524,23 @@ private fun CardView(
                                             key = comments.itemKey { it.cardId }
                                         ) { index ->
                                             val comment = comments[index] ?: return@items
-                                            Box(
+                                            CardViewComment(
                                                 modifier = Modifier
                                                     .fillParentMaxHeight()
-                                                    .aspectRatio(1f)
-                                            ) {
-                                                CardViewComment(
-                                                    contentText = comment.cardContent,
-                                                    thumbnailUri = comment.cardImgUrl,
-                                                    distance = comment.distance ?: "",
-                                                    createAt = TimeUtils.getRelativeTimeString(
-                                                        comment.createdAt
-                                                    ),
-                                                    likeCnt = comment.likeCount.toString(),
-                                                    commentCnt = comment.commentCardCount.toString(),
-                                                    font = comment.font,
-                                                    onClick = {
-                                                        onCommentClick(comment.cardId)
-                                                    }
-                                                )
-                                            }
+                                                    .aspectRatio(1f),
+                                                contentText = comment.cardContent,
+                                                thumbnailUri = comment.cardImgUrl,
+                                                distance = comment.distance ?: "",
+                                                createAt = TimeUtils.getRelativeTimeString(
+                                                    comment.createdAt
+                                                ),
+                                                likeCnt = comment.likeCount.toString(),
+                                                commentCnt = comment.commentCardCount.toString(),
+                                                font = comment.font,
+                                                onClick = {
+                                                    onCommentClick(comment.cardId)
+                                                }
+                                            )
                                         }
                                         if (loadState.append is LoadState.Loading) {
                                             item {

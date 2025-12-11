@@ -58,8 +58,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.isFinite
-import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.OpacityColor
@@ -67,6 +65,13 @@ import com.phew.core_design.Primary
 import com.phew.core_design.R
 import com.phew.core_design.TextComponent
 import com.phew.core_design.component.tag.TagRow
+import com.phew.core_design.typography.FontTextStyle
+import com.phew.core_design.typography.FontType
+
+// FontType을 TAG FontFamily로 매핑하는 함수
+@Composable
+private fun getTagFontFamilyFromType(fontType: FontType?): FontFamily = 
+    fontType?.getTagStyle()?.fontFamily ?: FontTextStyle.DEFAULT_TAG.fontFamily ?: FontFamily.Default
 
 // ===== 디자인 토큰 =====
 object CardDesignTokens {
@@ -94,7 +99,7 @@ sealed class BaseCardData(open val id: String, open val type: CardType) {
         val tags: List<String> = emptyList(),
         val backgroundResId: Int? = null,
         val backgroundUri: Uri? = null,
-        val fontFamily: FontFamily? = null,
+        val fontType: FontType? = null,
         val placeholder: String = "",
         val showAddButton: Boolean = true,
         val onContentChange: (String) -> Unit = {},
@@ -117,7 +122,7 @@ sealed class BaseCardData(open val id: String, open val type: CardType) {
         val thumbnailUri: String = "",
         override val id: String = "",
         val backgroundImage: Uri? = null,
-        val fontFamily: FontFamily? = null,
+        val fontType: FontType? = null,
         val onTagClick: (String) -> Unit = { }
     ) : BaseCardData(id, CardType.REPLY)
 
@@ -176,7 +181,7 @@ private fun EditableWriteContentBox(
     placeholder: String = "",
     onContentChange: (String) -> Unit,
     onContentClick: () -> Unit,
-    fontFamily: FontFamily?,
+    fontType: FontType?,
     isEditable: Boolean
 ) {
     BoxWithConstraints(
@@ -204,8 +209,7 @@ private fun EditableWriteContentBox(
             }
         }
 
-        val baseStyle = TextComponent.BODY_1_M_14
-        val textStyle = fontFamily?.let { baseStyle.copy(fontFamily = it) } ?: baseStyle
+        val textStyle = fontType?.getCardStyle() ?: TextComponent.BODY_1_M_14
 
         val maxHeight = with(androidx.compose.ui.platform.LocalDensity.current) {
             val verticalPadding = 40.dp // 20dp top + 20dp bottom
@@ -263,7 +267,7 @@ private fun EditableWriteContentBox(
 private fun ReadOnlyContentBox(
     content: String,
     modifier: Modifier = Modifier,
-    fontFamily: FontFamily? = null
+    fontType: FontType? = null
 ) {
     BoxWithConstraints(
         modifier = modifier
@@ -277,9 +281,8 @@ private fun ReadOnlyContentBox(
     ) {
         val scrollState = rememberScrollState()
 
-        val baseStyle = TextComponent.BODY_1_M_14
-        val textStyle = fontFamily?.let { baseStyle.copy(color = CardDesignTokens.TextPrimary, fontFamily = it) } 
-            ?: baseStyle.copy(color = CardDesignTokens.TextPrimary)
+        val textStyle = fontType?.getCardStyle()?.copy(color = CardDesignTokens.TextPrimary) 
+            ?: TextComponent.BODY_1_M_14.copy(color = CardDesignTokens.TextPrimary)
 
         val maxHeight = with(androidx.compose.ui.platform.LocalDensity.current) {
             val verticalPadding = 40.dp // 20dp top + 20dp bottom
@@ -367,7 +370,7 @@ private fun WriteCard(
                         placeholder = data.placeholder,
                         onContentChange = data.onContentChange,
                         onContentClick = data.onContentClick,
-                        fontFamily = data.fontFamily,
+                        fontType = data.fontType,
                         isEditable = data.isEditable
                     )
                 }
@@ -390,7 +393,7 @@ private fun WriteCard(
                             onFocusHandled = data.onTagFocusHandled,
                             currentInput = data.currentTagInput,
                             onInputChange = data.onTagInputChange,
-                            fontFamily = data.fontFamily ?: FontFamily.Default
+                            fontFamily = getTagFontFamilyFromType(data.fontType)
                         )
                     }
                 }
@@ -493,11 +496,10 @@ private fun ReplyCard(
                     ReadOnlyContentBox(
                         modifier = Modifier.fillMaxWidth(),
                         content = data.content,
-                        fontFamily = data.fontFamily)
+                        fontType = data.fontType)
                 }
 
                 // 하단 태그 영역
-                //  TODO : 스크롤 시 Type 상태라면, Input 타입으로 변경
                 if (data.tags.isNotEmpty()) {
                     Box(
                         modifier = Modifier
@@ -515,7 +517,7 @@ private fun ReplyCard(
                             onFocusHandled = { },
                             currentInput = "",
                             onInputChange = { },
-                            fontFamily = data.fontFamily ?: FontFamily.Default,
+                            fontFamily = getTagFontFamilyFromType(data.fontType),
                             onTagClick = data.onTagClick
                         )
                     }

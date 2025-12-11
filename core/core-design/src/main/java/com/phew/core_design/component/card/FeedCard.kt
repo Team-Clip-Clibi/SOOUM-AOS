@@ -400,7 +400,7 @@ internal fun resolveCardTextStyle(font: String): TextStyle {
         FontType.RIDIBATANG -> FontTextStyle.RIDIBATANG_CARD
         FontType.YOON -> FontTextStyle.YOON_CARD
         FontType.KKOKKO -> FontTextStyle.KKOKKO_CARD
-        FontType.PRETENDARD -> TextComponent.BODY_1_M_14 // PRETENDARD는 기본 스타일 사용
+        FontType.PRETENDARD -> FontTextStyle.DEFAULT_CARD
         null -> TextComponent.BODY_1_M_14 // 기본 스타일
     }
 }
