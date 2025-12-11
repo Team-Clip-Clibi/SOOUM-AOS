@@ -7,10 +7,12 @@ import androidx.navigation.NavOptions
 import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
 import androidx.navigation.navOptions
+import com.phew.core.ui.component.home.HomeTabType
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.model.navigation.CardDetailCommentArgs
 import com.phew.core.ui.model.navigation.TagViewArgs
 import com.phew.core.ui.navigation.NavArgKey
+import com.phew.core.ui.navigation.NavigationKeys
 import com.phew.core.ui.navigation.asNavArg
 import com.phew.core.ui.navigation.asNavParam
 import com.phew.core.ui.navigation.createNavType
@@ -93,7 +95,8 @@ fun NavGraphBuilder.detailGraph(
                     onNavigateToReport = onNavigateToReport,
                     onNavigateToViewTags = onNavigateToViewTags,
                     onBackPressed = onBackPressed,
-                    profileClick = onProfileScreen
+                    profileClick = onProfileScreen,
+                    onCardChanged = { navController.markFeedCardUpdated() }
                 )
             }
         }
@@ -155,7 +158,8 @@ fun NavGraphBuilder.detailGraph(
                     },
                     onNavigateToReport = onNavigateToReport,
                     onNavigateToViewTags = onNavigateToViewTags,
-                    onProfileClick = onProfileScreen
+                    onProfileClick = onProfileScreen,
+                    onCardChanged = { navController.markFeedCardUpdated() }
                 )
             }
         }
@@ -163,3 +167,10 @@ fun NavGraphBuilder.detailGraph(
 }
 
 private const val TAG = "CardDetailNavigation"
+
+private fun NavController.markFeedCardUpdated() {
+    val feedEntry = runCatching { getBackStackEntry(HomeTabType.FEED.route) }
+        .getOrNull()
+        ?: previousBackStackEntry
+    feedEntry?.savedStateHandle?.set(NavigationKeys.CARD_UPDATED, true)
+}

@@ -1,13 +1,11 @@
 package com.phew.core_design.component.control
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.TweenSpec
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.indication
-import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -25,7 +23,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -95,7 +92,7 @@ internal fun SooumSwitchImpl(
 ) {
     val thumbPaddingStart = 4.dp
     val minBound = with(LocalDensity.current) { thumbPaddingStart.toPx() }
-    val maxBound = with(LocalDensity.current) { ThumbPathLength.toPx() - 4.dp.toPx() }
+    val maxBound = with(LocalDensity.current) { ThumbPathLength.toPx() }
     val valueToOffset = remember<(Boolean) -> Float>(minBound, maxBound) {
         { value -> if (value) maxBound else minBound }
     }
@@ -126,6 +123,8 @@ internal fun SooumSwitchImpl(
                 onClick = onCheckedChange,
                 enabled = enabled,
                 role = Role.Switch,
+                indication = null,
+                interactionSource = interactionSource
             )
         } else {
             Modifier
@@ -156,7 +155,6 @@ internal fun SooumSwitchImpl(
                 enabled = enabled,
                 colors = colors,
                 thumbValue = offset.asState(),
-                interactionSource = interactionSource,
                 thumbShape = SwitchTokens.HandleShape,
                 thumbContent = thumbContent,
             )
@@ -172,25 +170,12 @@ private fun BoxScope.SwitchImpl(
     colors: SwitchColors,
     thumbValue: State<Float>,
     thumbContent: (@Composable () -> Unit)?,
-    interactionSource: InteractionSource,
     thumbShape: Shape,
 ) {
     val trackColor by colors.trackColor(enabled, checked)
-    val isPressed by interactionSource.collectIsPressedAsState()
-
     val thumbSizeDp = 24.dp
 
-    val thumbOffset = if (isPressed) {
-        with(LocalDensity.current) {
-            if (checked) {
-                ThumbPathLength - SwitchTokens.TrackOutlineWidth
-            } else {
-                SwitchTokens.TrackOutlineWidth
-            }.toPx()
-        }
-    } else {
-        thumbValue.value
-    }
+    val thumbOffset = thumbValue.value
 
     val trackShape = SwitchTokens.TrackShape
     val modifier = Modifier
@@ -211,10 +196,6 @@ private fun BoxScope.SwitchImpl(
             modifier = Modifier
                 .align(Alignment.CenterStart)
                 .offset { IntOffset(thumbOffset.roundToInt(), 0) }
-                .indication(
-                    interactionSource = interactionSource,
-                    indication = ripple(bounded = false, radius = SwitchTokens.StateLayerSize / 2)
-                )
                 .requiredSize(thumbSizeDp)
                 .background(resolvedThumbColor, thumbShape),
             contentAlignment = Alignment.Center
@@ -375,12 +356,19 @@ class SwitchColors internal constructor(
      */
     @Composable
     internal fun trackColor(enabled: Boolean, checked: Boolean): State<Color> {
-        return rememberUpdatedState(
-            if (enabled) {
-                if (checked) checkedTrackColor else uncheckedTrackColor
-            } else {
-                if (checked) disabledCheckedTrackColor else disabledUncheckedTrackColor
-            }
+        val targetColor = if (enabled) {
+            if (checked) checkedTrackColor else uncheckedTrackColor
+        } else {
+            if (checked) disabledCheckedTrackColor else disabledUncheckedTrackColor
+        }
+        
+        return animateColorAsState(
+            targetValue = targetColor,
+            animationSpec = androidx.compose.animation.core.tween(
+                durationMillis = 200,
+                easing = androidx.compose.animation.core.FastOutSlowInEasing
+            ),
+            label = "SwitchTrackColor"
         )
     }
 
@@ -495,8 +483,7 @@ internal object SwitchTokens {
     val SelectedPressedHandleColor = Color.Black // 안 쓰는중.
     val SelectedPressedIconColor = Color.Black // 안 쓰는중.
     val SelectedPressedTrackColor = Color.Black // 안 쓰는중.
-    val SelectedTrackColor
-        @Composable get() = Primary.MAIN // (활성화, 선택됨) 일 때 배경 색상
+    val SelectedTrackColor = Primary.MAIN // (활성화, 선택됨) 일 때 배경 색상
     val StateLayerSize = 52.0.dp
     val TrackHeight = 32.0.dp
     val TrackOutlineWidth = 1.0.dp

@@ -26,13 +26,11 @@ import com.airbnb.lottie.compose.rememberLottieComposition
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.R
 
-val TOP_CONTENT_OFFSET = 72.dp
-
 @OptIn(ExperimentalMaterial3Api::class)
 fun Modifier.pullToRefreshOffset(
     state: PullToRefreshState,
     baseOffset: Dp,
-    pullThreshold: Dp = 100.dp
+    pullThreshold: Dp = 100.dp,
 ): Modifier = this.graphicsLayer {
     val pullDistancePx = state.distanceFraction * pullThreshold.toPx()
     translationY = pullDistancePx + baseOffset.toPx()
@@ -41,14 +39,14 @@ fun Modifier.pullToRefreshOffset(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RefreshBox(
-    isRefresh : Boolean,
+    isRefresh: Boolean,
     backgroundColor: Color = NeutralColor.WHITE,
-    onRefresh : () -> Unit,
-    state : PullToRefreshState,
+    onRefresh: () -> Unit,
+    state: PullToRefreshState,
     paddingValues: PaddingValues,
     indicatorTopPadding: Dp = 0.dp,
-    content : @Composable (() -> Unit)
-){
+    content: @Composable (() -> Unit),
+) {
     val composition by rememberLottieComposition(
         LottieCompositionSpec.RawRes(R.raw.ic_refresh)
     )
@@ -60,7 +58,8 @@ fun RefreshBox(
     PullToRefreshBox(
         isRefreshing = isRefresh,
         onRefresh = onRefresh,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
             .background(backgroundColor),
         state = state,
         indicator = {
@@ -76,7 +75,12 @@ fun RefreshBox(
                     LottieAnimation(
                         composition = composition,
                         progress = { progress },
-                        modifier = Modifier.size(44.dp)
+                        modifier = Modifier
+                            .size(44.dp)
+                            .graphicsLayer {
+                                alpha =
+                                    if (isRefresh) 1f else state.distanceFraction.coerceIn(0f, 1f)
+                            }
                     )
                 }
             }

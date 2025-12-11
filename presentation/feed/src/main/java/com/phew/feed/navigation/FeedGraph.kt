@@ -97,6 +97,9 @@ fun NavGraphBuilder.feedGraph(
             NotifyView(
                 viewModel = feedViewModel,
                 backClick = { navController.popBackStack() },
+                navigateToDetail = { cardDetailArgs ->
+                    navController.navigateToDetailGraph(cardDetailArgs)
+                },
             )
         }
     }

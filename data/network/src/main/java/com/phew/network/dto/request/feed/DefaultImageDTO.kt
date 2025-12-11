@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class DefaultImageDTO(
     @SerialName("defaultImages")
-    val defaultImages: Map<String, List<ImageInfoDTO>>
+    val defaultImages: Map<String, List<ImageInfoDTO>?>
 )
 
 @Serializable

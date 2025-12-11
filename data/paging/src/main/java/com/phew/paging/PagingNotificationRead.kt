@@ -6,6 +6,7 @@ import com.phew.core_common.DataResult
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.domain.dto.Notification
 import com.phew.domain.repository.network.NotifyRepository
+import kotlinx.coroutines.delay
 import java.io.IOException
 import javax.inject.Inject
 
@@ -34,6 +35,7 @@ class PagingNotificationRead @Inject constructor(
                     } else {
                         readData
                     }
+                    delay(2000L)
                     if (read.isEmpty()) return LoadResult.Page(
                         data = emptyList(),
                         prevKey = null,

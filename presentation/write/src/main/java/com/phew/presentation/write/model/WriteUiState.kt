@@ -4,16 +4,14 @@ import android.net.Uri
 import androidx.compose.ui.text.font.FontFamily
 import com.phew.core.ui.model.CameraCaptureRequest
 import com.phew.core_design.CustomFont
+import com.phew.core_design.typography.FontType
 import com.phew.domain.dto.CardImageDefault
 import com.phew.domain.dto.TagInfo
 import com.phew.presentation.write.component.NumberTagItem
-import com.phew.presentation.write.model.BackgroundConfig.imagesByFilter
 import com.phew.presentation.write.utils.WriteErrorCase
 import com.phew.presentation.write.viewmodel.UiState
 
-private val DefaultFilter: BackgroundFilterType =
-    BackgroundConfig.filterNames.firstOrNull() ?: BackgroundFilterType.COLOR
-private val DefaultFilterSelection: Int? = imagesByFilter[DefaultFilter]?.firstOrNull()
+private val DefaultFilter: BackgroundFilterType = BackgroundFilterType.COLOR
 
 data class WriteUiState(
     val content: String = "",
@@ -22,14 +20,14 @@ data class WriteUiState(
     val relatedTags: List<TagInfo> = emptyList(),
     val isLoadingRelatedTags: Boolean = false,
     val selectedBackgroundFilter: BackgroundFilterType = DefaultFilter,
-    val activeBackgroundResId: Int? = DefaultFilterSelection,
+    val activeBackgroundResId: Int? = null,
     val activeBackgroundUri: Uri? = null,
     val showBackgroundPickerSheet: Boolean = false,
     val shouldLaunchBackgroundAlbum: Boolean = false,
     val shouldRequestBackgroundCameraPermission: Boolean = false,
     val pendingBackgroundCameraCapture: CameraCaptureRequest? = null,
     val selectedFont: String = CustomFont.PRETENDARD_FONT.data.name,
-    val selectedFontFamily: FontFamily? = CustomFont.PRETENDARD_FONT.data.previewTypeface,
+    val selectedFontType: FontType? = FontType.PRETENDARD,
     val selectedOptionIds: List<String> = listOf(WriteOptions.defaultOption.id),
     val hasLocationPermission: Boolean = false,
     val showLocationPermissionDialog: Boolean = false,
@@ -51,11 +49,7 @@ data class WriteUiState(
         get() = content.isNotBlank()
 
     val selectedGridImageResId: Int?
-        get() {
-            val active = activeBackgroundResId ?: return null
-            val images = imagesByFilter[selectedBackgroundFilter].orEmpty()
-            return if (images.contains(active)) active else null
-        }
+        get() = activeBackgroundResId
 
     val selectedGridImageName: String?
         get() = selectedDefaultImageName

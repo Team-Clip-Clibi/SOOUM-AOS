@@ -41,6 +41,7 @@ import com.phew.core_common.ERROR_ACCOUNT_SUSPENDED
 import com.phew.core_common.ERROR_ALREADY_CARD_DELETE
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_design.CustomFont
+import com.phew.core_design.typography.FontType
 import com.phew.domain.usecase.GetActivityRestrictionDate
 
 import com.phew.presentation.write.model.BackgroundFilterType
@@ -64,13 +65,11 @@ class WriteViewModel @Inject constructor(
     )
 
     private val distanceOptionId = WriteOptions.DISTANCE_OPTION_ID
-    private val initialFilter: BackgroundFilterType = BackgroundConfig.filterNames.firstOrNull() ?: BackgroundFilterType.COLOR
-    private val initialImage: Int? = BackgroundConfig.imagesByFilter[initialFilter]?.firstOrNull()
+    private val initialFilter: BackgroundFilterType = BackgroundFilterType.COLOR
 
     private val _uiState = MutableStateFlow(
         WriteUiState(
-            selectedBackgroundFilter = initialFilter,
-            activeBackgroundResId = initialImage
+            selectedBackgroundFilter = initialFilter
         )
     )
     val uiState: StateFlow<WriteUiState> = _uiState.asStateFlow()
@@ -384,7 +383,7 @@ class WriteViewModel @Inject constructor(
             _uiState.update { state ->
                 state.copy(
                     selectedFont = font.data.name,
-                    selectedFontFamily = font.data.previewTypeface
+                    selectedFontType = FontType.fromServerName(font.data.serverName)
                 )
             }
         }

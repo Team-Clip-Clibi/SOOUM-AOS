@@ -32,6 +32,7 @@ import com.phew.domain.dto.UserCommentLike
 import com.phew.domain.dto.UserCommentWrite
 import com.phew.domain.dto.UserDeleteNotification
 import com.phew.domain.dto.TagCardContent
+import com.phew.domain.dto.CardIdResponse
 import com.phew.domain.model.AppVersionStatus
 import com.phew.domain.model.AppVersionStatusType
 import com.phew.domain.model.BlockMember
@@ -52,7 +53,6 @@ import com.phew.network.dto.response.BlockMemberResponseDTO
 import com.phew.network.dto.response.FavoriteTagItemDTO
 import com.phew.network.dto.response.FavoriteTagsResponseDTO
 import com.phew.network.dto.response.RejoinableDateResponseDTO
-import com.phew.network.dto.response.NotifyToggleResponseDTO
 import com.phew.network.dto.request.feed.CheckBanedDTO
 import com.phew.network.dto.request.feed.ImageInfoDTO
 import com.phew.network.dto.request.feed.TagInfoDTO
@@ -68,6 +68,7 @@ import com.phew.network.dto.response.card.CardDetailResponseDTO
 import com.phew.network.dto.response.card.CardDetailTagDTO
 import com.phew.network.dto.response.profile.FollowDataDTO
 import com.phew.network.dto.response.profile.ProfileDTO
+import com.phew.network.dto.response.feed.CardIdResponseDto
 import com.phew.repository.TYPE_BLOCK
 import com.phew.repository.TYPE_COMMENT_LIKE
 import com.phew.repository.TYPE_COMMENT_WRITE
@@ -83,7 +84,7 @@ internal fun NotificationDTO.toDomain(): Notification {
                 createTime = this.createTime,
                 notificationId = this.notificationId,
                 nickName = this.nickName ?: "error_nickName",
-                targetCardId = this.targetCardId ?: -1,
+                targetCardId = this.targetCardId ?: -1L,
                 userId = this.userId ?: -1
             )
         }
@@ -102,7 +103,7 @@ internal fun NotificationDTO.toDomain(): Notification {
                 notificationId = this.notificationId,
                 createTime = this.createTime,
                 nickName = this.nickName ?: "error_nickname",
-                targetCardId = this.targetCardId ?: -1,
+                targetCardId = this.targetCardId ?: -1L,
                 userId = this.userId ?: -1
             )
         }
@@ -111,7 +112,7 @@ internal fun NotificationDTO.toDomain(): Notification {
             UserCommentWrite(
                 notificationId = this.notificationId,
                 createTime = this.createTime,
-                targetCardId = this.targetCardId ?: -1,
+                targetCardId = this.targetCardId ?: -1L,
                 userId = this.userId ?: -1,
                 nickName = nickName ?: "error_nickname"
             )
@@ -480,4 +481,8 @@ internal fun FavoriteTagItemDTO.toDomain(): FavoriteTag {
         id = this.id,
         name = this.name
     )
+}
+
+internal fun CardIdResponseDto.toDomain(): CardIdResponse {
+    return CardIdResponse(cardId = this.cardId)
 }

@@ -53,6 +53,7 @@ import com.phew.core_design.component.card.component.BottomContent
 
 @Composable
 fun CardViewComment(
+    modifier: Modifier = Modifier,
     contentText: String,
     thumbnailUri: String,
     distance: String,
@@ -63,6 +64,7 @@ fun CardViewComment(
     onClick: () -> Unit
 ) {
     CardViewCommentImpl(
+        modifier = modifier,
         contentText = contentText,
         thumbnailUri = thumbnailUri,
         distance = distance,
@@ -76,6 +78,7 @@ fun CardViewComment(
 
 @Composable
 private fun CardViewCommentImpl(
+    modifier: Modifier,
     contentText: String,
     thumbnailUri: String,
     distance: String,
@@ -87,7 +90,7 @@ private fun CardViewCommentImpl(
 ) {
 
     Surface(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .border(
                 width = 1.dp,
@@ -165,14 +168,14 @@ fun CommentBodyContent(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(NeutralColor.GRAY_300)
+                        .background(NeutralColor.WHITE)
                 )
             },
             error = {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(NeutralColor.GRAY_300)
+                        .background(NeutralColor.WHITE)
                 )
             }
         )

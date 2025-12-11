@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
+import com.phew.core_design.typography.FontType
 import androidx.compose.ui.unit.dp
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.R
@@ -25,7 +26,7 @@ fun CardDetail(
     cardContent: String,
     cardThumbnailUri: String,
     cardTags: List<String>,
-    fontFamily: FontFamily = FontFamily.Default,
+    fontType: FontType? = null,
     header: @Composable () -> Unit,
     bottom: @Composable () -> Unit?,
     onPreviousCardClick: () -> Unit = { },
@@ -63,7 +64,7 @@ fun CardDetail(
                         hasPreviousCommentThumbnail = !previousCommentThumbnailUri.isNullOrEmpty(),
                         thumbnailUri = cardThumbnailUri,
                         backgroundImage = backgroundImageUrl,
-                        fontFamily = fontFamily,
+                        fontType = fontType,
                         onTagClick = onTagClick
                     ),
                     onPreviousCardClick = onPreviousCardClick

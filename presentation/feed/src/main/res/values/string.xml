@@ -12,7 +12,7 @@
     <string name="home_feed_load_error">카드를 불러오지 못했어요. 다시 시도해주세요.</string>
     <string name="home_notice_top_bar">알림</string>
     <string name="home_notice_activate">활동</string>
-    <string name="home_notice_notice">서비스 점검</string>
+    <string name="home_notice_notice">공지사항</string>
     <string name="home_notice_news">숨 새소식</string>
     <string name="home_notice_last_title">지난 알림</string>
     <string name="home_notice_service">서비스 안내</string>

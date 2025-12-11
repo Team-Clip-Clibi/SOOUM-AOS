@@ -2,6 +2,9 @@ package com.phew.sooum.di
 
 import android.content.ContentResolver
 import android.content.Context
+import com.microsoft.clarity.ClarityConfig
+import com.microsoft.clarity.models.ApplicationFramework
+import com.microsoft.clarity.models.LogLevel
 import com.phew.sooum.BuildConfig
 import com.phew.core_common.AppVersion
 import com.phew.core_common.IsDebug
@@ -37,10 +40,21 @@ object AppModule {
     fun provideContentResolver(@ApplicationContext context: Context): ContentResolver {
         return context.contentResolver
     }
+
     @Provides
     @Singleton
     @ApplicationScope
     fun provideApplicationScope(): CoroutineScope {
         return CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    }
+
+    @Provides
+    @Singleton
+    fun provideClarityConfig(): ClarityConfig {
+        return ClarityConfig(
+            projectId = BuildConfig.CLARITY_PROJECT_ID,
+            logLevel = LogLevel.None,
+            applicationFramework = ApplicationFramework.Native
+        )
     }
 }

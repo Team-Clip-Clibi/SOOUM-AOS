@@ -5,6 +5,7 @@ import com.phew.core_common.DataResult
 import com.phew.core_common.HTTP_NO_MORE_CONTENT
 import com.phew.domain.dto.CardDefaultImagesResponse
 import com.phew.domain.dto.CardImageDefault
+import com.phew.domain.dto.CardIdResponse
 import com.phew.domain.dto.CheckedBaned
 import com.phew.domain.dto.DistanceCard
 import com.phew.domain.dto.Latest
@@ -20,11 +21,6 @@ import com.phew.repository.mapper.apiCall
 import com.phew.repository.mapper.toDomain
 import okhttp3.RequestBody
 import javax.inject.Inject
-
-import com.phew.domain.dto.CardIdResponse // Added import for CardIdResponse
-import com.phew.network.dto.response.feed.CardIdResponseDto // Added import for CardIdResponseDto
-
-fun CardIdResponseDto.toDomain(): CardIdResponse = CardIdResponse(cardId = this.cardId)
 
 class CardFeedRepositoryImpl @Inject constructor(
     private val feedHttp: FeedHttp,
@@ -167,9 +163,11 @@ class CardFeedRepositoryImpl @Inject constructor(
             },
             mapper = { result ->
                 CardDefaultImagesResponse(
-                    defaultImages = result.defaultImages.mapValues { (_, imageInfoList) ->
-                        imageInfoList.map { it.toDomain() }
-                    }
+                    defaultImages = result.defaultImages.mapNotNull { (key, imageInfoList) ->
+                        imageInfoList?.let { list ->
+                            key to list.map { it.toDomain() }
+                        }
+                    }.toMap()
                 )
             }
         )

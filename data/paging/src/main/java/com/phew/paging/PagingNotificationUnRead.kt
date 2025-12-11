@@ -6,6 +6,7 @@ import com.phew.core_common.DataResult
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.domain.dto.Notification
 import com.phew.domain.repository.network.NotifyRepository
+import kotlinx.coroutines.delay
 import java.io.IOException
 import javax.inject.Inject
 
@@ -28,6 +29,7 @@ class PagingNotificationUnRead @Inject constructor(
             when (result) {
                 is DataResult.Fail -> return LoadResult.Error(IOException(ERROR_NETWORK))
                 is DataResult.Success -> {
+                    delay(2000L)
                     val unReadData = result.data.second
                     val currentKey = params.key ?: -1L
                     val unRead = if(currentKey != -1L){
