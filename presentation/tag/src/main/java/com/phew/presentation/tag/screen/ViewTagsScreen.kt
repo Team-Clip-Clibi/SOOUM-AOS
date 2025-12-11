@@ -83,7 +83,7 @@ internal fun ViewTagsRoute(
     }
 
     // favoriteTags가 로드된 후 tagCards 로드 (즐겨찾기 상태 포함)
-    LaunchedEffect(tagName, tagId, uiState.favoriteTags) {
+    LaunchedEffect(tagName, tagId, uiState.favoriteTags, uiState.nickName) {
         if (uiState.favoriteTags.isNotEmpty() || uiState.nickName.isNotEmpty()) {
             val currentFavoriteState = viewModel.getTagFavoriteState(tagId)
             viewModel.loadTagCards(tagName, tagId, currentFavoriteState)
