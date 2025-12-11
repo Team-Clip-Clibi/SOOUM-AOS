@@ -13,6 +13,7 @@ import java.io.IOException
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.delay
 
 class PagingNotify @AssistedInject constructor(
     private val notifyRepository: NotifyRepository,
@@ -50,6 +51,7 @@ class PagingNotify @AssistedInject constructor(
                             nextKey = null
                         )
                     }
+                    delay(2000L)
                     LoadResult.Page(
                         data = result.data.second,
                         prevKey = null,
