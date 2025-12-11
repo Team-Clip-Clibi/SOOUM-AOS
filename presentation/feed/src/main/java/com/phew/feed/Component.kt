@@ -453,7 +453,9 @@ object NotificationUi {
                 text = data.content,
                 style = TextComponent.SUBTITLE_1_M_16,
                 color = GRAY_600,
-                modifier = Modifier.fillMaxWidth().padding(start = 24.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 24.dp)
             )
         }
     }
@@ -552,7 +554,7 @@ object NotificationUi {
                 color = GRAY_600,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 4.dp)
+                    .padding(top = 4.dp, start = 24.dp)
             )
         }
     }
@@ -648,7 +650,7 @@ object NotificationUi {
                 color = GRAY_600,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 4.dp)
+                    .padding(top = 4.dp, start = 24.dp)
             )
         }
     }

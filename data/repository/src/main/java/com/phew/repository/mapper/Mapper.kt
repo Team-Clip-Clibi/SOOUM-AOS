@@ -53,7 +53,6 @@ import com.phew.network.dto.response.BlockMemberResponseDTO
 import com.phew.network.dto.response.FavoriteTagItemDTO
 import com.phew.network.dto.response.FavoriteTagsResponseDTO
 import com.phew.network.dto.response.RejoinableDateResponseDTO
-import com.phew.network.dto.response.NotifyToggleResponseDTO
 import com.phew.network.dto.request.feed.CheckBanedDTO
 import com.phew.network.dto.request.feed.ImageInfoDTO
 import com.phew.network.dto.request.feed.TagInfoDTO
@@ -85,7 +84,7 @@ internal fun NotificationDTO.toDomain(): Notification {
                 createTime = this.createTime,
                 notificationId = this.notificationId,
                 nickName = this.nickName ?: "error_nickName",
-                targetCardId = this.targetCardId ?: -1,
+                targetCardId = this.targetCardId ?: -1L,
                 userId = this.userId ?: -1
             )
         }
@@ -104,7 +103,7 @@ internal fun NotificationDTO.toDomain(): Notification {
                 notificationId = this.notificationId,
                 createTime = this.createTime,
                 nickName = this.nickName ?: "error_nickname",
-                targetCardId = this.targetCardId ?: -1,
+                targetCardId = this.targetCardId ?: -1L,
                 userId = this.userId ?: -1
             )
         }
@@ -113,7 +112,7 @@ internal fun NotificationDTO.toDomain(): Notification {
             UserCommentWrite(
                 notificationId = this.notificationId,
                 createTime = this.createTime,
-                targetCardId = this.targetCardId ?: -1,
+                targetCardId = this.targetCardId ?: -1L,
                 userId = this.userId ?: -1,
                 nickName = nickName ?: "error_nickname"
             )

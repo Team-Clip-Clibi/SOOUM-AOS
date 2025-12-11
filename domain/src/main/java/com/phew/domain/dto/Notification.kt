@@ -20,7 +20,7 @@ data class FeedLikeNotification(
     override val notificationId: Long,
     override val createTime: String,
     val nickName: String,
-    val targetCardId: Int,
+    val targetCardId: Long,
     val userId: Long
 ) : Notification() {
     val viewTime = createTime.toRelativeTime()
@@ -208,7 +208,7 @@ data class UserCommentLike(
     override val notificationId: Long,
     override val createTime: String,
     val nickName: String,
-    val targetCardId: Int,
+    val targetCardId: Long,
     val userId: Long
 ) : Notification() {
     val viewTime = createTime.toRelativeTime()
@@ -252,7 +252,7 @@ data class UserCommentLike(
 data class UserCommentWrite(
     override val notificationId: Long,
     override val createTime: String,
-    val targetCardId: Int,
+    val targetCardId: Long,
     val userId: Long,
     val nickName: String,
 ) : Notification() {
