@@ -53,6 +53,7 @@ data class TagUiState(
     val currentTagFavoriteState: Boolean = false, // 현재 검색한 태그의 즐겨찾기 상태
     val tagRank: UiState<List<TagInfo>> = UiState.Loading,
     val isRefreshing: Boolean = false,
+    val requestedTagCards: Set<String> = emptySet() // 요청한 태그 카드 목록 (tagId:tagName 형태)
 )
 
 sealed interface UiState<out T> {
@@ -135,20 +136,9 @@ class TagViewModel @Inject constructor(
                         val limitedTags = result.data.favoriteTags.take(9)
                         _uiState.update { currentState ->
                             val favoriteTagIds = limitedTags.map { it.id }.toSet()
-                            val updatedLocalStates = currentState.localFavoriteStates.toMutableMap()
-                            
-                            // 서버에서 받은 태그들의 즐겨찾기 상태를 localFavoriteStates에 동기화
-                            limitedTags.forEach { favoriteTag ->
-                                updatedLocalStates[favoriteTag.id] = true
-                            }
-                            
-                            // 현재 localFavoriteStates에 있지만 서버 응답에는 없는 태그들을 false로 설정
-                            updatedLocalStates.keys.forEach { tagId ->
-                                if (tagId !in favoriteTagIds) {
-                                    updatedLocalStates[tagId] = false
-                                }
-                            }
-                            
+                            val allTagIds = currentState.localFavoriteStates.keys + favoriteTagIds
+                            val updatedLocalStates = allTagIds.associateWith { it in favoriteTagIds }
+
                             currentState.copy(
                                 favoriteTags = limitedTags,
                                 localFavoriteStates = updatedLocalStates
@@ -483,7 +473,18 @@ class TagViewModel @Inject constructor(
     }
     
     fun loadTagCards(tagName: String, tagId: Long, initialFavoriteState: Boolean = false) {
+        val tagKey = "$tagId:$tagName"
+        
+        // 이미 요청한 태그인지 확인
+        if (_uiState.value.requestedTagCards.contains(tagKey)) {
+            SooumLog.d(TAG, "loadTagCards already requested for $tagKey, skipping")
+            return
+        }
+        
         SooumLog.d(TAG, "loadTagCards tagName=$tagName, tagId=$tagId, initialFavoriteState=$initialFavoriteState")
+        
+        // 요청 상태 업데이트
+        _uiState.update { it.copy(requestedTagCards = it.requestedTagCards + tagKey) }
         
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -501,6 +502,8 @@ class TagViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 SooumLog.e(TAG, "Failed to load tag cards: ${e.message}")
+                // 실패시 요청 상태에서 제거
+                _uiState.update { it.copy(requestedTagCards = it.requestedTagCards - tagKey) }
                 emitViewTagsScreenEffect(TagUiEffect.ShowNetworkErrorSnackbar { loadTagCards(tagName, tagId) })
             }
         }
