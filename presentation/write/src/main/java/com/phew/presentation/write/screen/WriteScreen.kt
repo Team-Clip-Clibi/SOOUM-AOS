@@ -439,7 +439,14 @@ private fun WriteScreen(
             AppBar.TextButtonAppBarText(
                 appBarText = stringResource(titleRes),
                 buttonText = stringResource(WriteR.string.write_screen_complete),
-                onButtonClick = onWriteComplete,
+                onButtonClick = {
+                    // 입력 중인 태그가 있으면 먼저 추가
+                    if (currentTagInput.isNotBlank()) {
+                        onAddTag(currentTagInput)
+                        onResetTagInput()
+                    }
+                    onWriteComplete()
+                },
                 onClick = onBackPressed,
                 buttonTextColor = if (isWriteCompleted) NeutralColor.BLACK else NeutralColor.GRAY_300
             )
