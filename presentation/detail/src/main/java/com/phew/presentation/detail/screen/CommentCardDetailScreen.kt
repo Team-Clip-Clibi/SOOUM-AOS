@@ -524,26 +524,23 @@ private fun CardView(
                                             key = comments.itemKey { it.cardId }
                                         ) { index ->
                                             val comment = comments[index] ?: return@items
-                                            Box(
+                                            CardViewComment(
                                                 modifier = Modifier
                                                     .fillParentMaxHeight()
-                                                    .aspectRatio(1f)
-                                            ) {
-                                                CardViewComment(
-                                                    contentText = comment.cardContent,
-                                                    thumbnailUri = comment.cardImgUrl,
-                                                    distance = comment.distance ?: "",
-                                                    createAt = TimeUtils.getRelativeTimeString(
-                                                        comment.createdAt
-                                                    ),
-                                                    likeCnt = comment.likeCount.toString(),
-                                                    commentCnt = comment.commentCardCount.toString(),
-                                                    font = comment.font,
-                                                    onClick = {
-                                                        onCommentClick(comment.cardId)
-                                                    }
-                                                )
-                                            }
+                                                    .aspectRatio(1f),
+                                                contentText = comment.cardContent,
+                                                thumbnailUri = comment.cardImgUrl,
+                                                distance = comment.distance ?: "",
+                                                createAt = TimeUtils.getRelativeTimeString(
+                                                    comment.createdAt
+                                                ),
+                                                likeCnt = comment.likeCount.toString(),
+                                                commentCnt = comment.commentCardCount.toString(),
+                                                font = comment.font,
+                                                onClick = {
+                                                    onCommentClick(comment.cardId)
+                                                }
+                                            )
                                         }
                                         if (loadState.append is LoadState.Loading) {
                                             item {

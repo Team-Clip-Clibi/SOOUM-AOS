@@ -163,9 +163,11 @@ class CardFeedRepositoryImpl @Inject constructor(
             },
             mapper = { result ->
                 CardDefaultImagesResponse(
-                    defaultImages = result.defaultImages.mapValues { (_, imageInfoList) ->
-                        imageInfoList.map { it.toDomain() }
-                    }
+                    defaultImages = result.defaultImages.mapNotNull { (key, imageInfoList) ->
+                        imageInfoList?.let { list ->
+                            key to list.map { it.toDomain() }
+                        }
+                    }.toMap()
                 )
             }
         )

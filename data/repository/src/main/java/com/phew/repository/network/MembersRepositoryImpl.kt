@@ -135,7 +135,7 @@ class MembersRepositoryImpl @Inject constructor(
         }
     }
     
-    override suspend fun toggleNotification(isAllowNotify: Boolean): Result<Unit> {
+    override suspend fun toggleNotification(isAllowNotify: Boolean): DataResult<Unit> {
         SooumLog.d(TAG, "toggleNotification - isAllowNotify: $isAllowNotify")
         
         return try {
@@ -144,13 +144,11 @@ class MembersRepositoryImpl @Inject constructor(
                 apiCall = { membersHttp.toggleNotification(request) },
                 mapper = { Unit }
             )) {
-                is DataResult.Success -> Result.success(Unit)
-                is DataResult.Fail -> Result.failure(
-                    result.throwable ?: Exception("Failed to toggle notification: ${result.message}")
-                )
+                is DataResult.Success -> DataResult.Success(Unit)
+                is DataResult.Fail -> result
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            DataResult.Fail(throwable = e)
         }
     }
 }

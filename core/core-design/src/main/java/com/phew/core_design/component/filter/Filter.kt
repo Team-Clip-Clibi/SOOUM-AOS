@@ -5,12 +5,17 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -27,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.phew.core_design.Danger
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
 
@@ -55,13 +61,40 @@ fun SooumFilter(
     }
 }
 
+@Composable
+fun <T : Enum<T>> SooumFilter(
+    modifier: Modifier,
+    selectedFilter: T,
+    filters: List<T>,
+    onFilterSelected: (T) -> Unit,
+    labelProvider: @Composable (T) -> String
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(FilterDesignTokens.BackgroundDefault)
+            .padding(vertical = FilterDesignTokens.VerticalPadding),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        filters.forEach { filterType ->
+            FilterItem(
+                label = labelProvider(filterType),
+                selected = filterType == selectedFilter,
+                onClick = { onFilterSelected(filterType) },
+                enumType = filterType
+            )
+        }
+    }
+}
+
 // ===== FilterItem.kt =====
 @Composable
 private fun FilterItem(
     label: String,
     selected: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    enumType: Enum<*>? = null
 ) {
     val backgroundColor by animateColorAsState(
         if (selected) FilterDesignTokens.BackgroundSelectedColor else FilterDesignTokens.BackgroundDefault,
@@ -72,6 +105,9 @@ private fun FilterItem(
         if (selected) FilterDesignTokens.TextSelectedColor else FilterDesignTokens.TextDefaultColor,
         label = "textAnim"
     )
+
+    // EVENT enum 타입인지 확인하는 함수
+    val isEventType = enumType?.name == FilterDesignTokens.badgeType
 
     Surface(
         modifier = modifier
@@ -84,18 +120,41 @@ private fun FilterItem(
         color = backgroundColor,
         shape = RoundedCornerShape(FilterDesignTokens.BorderRadius)
     ) {
-        Text(
-            text = label,
-            color = textColor,
-            style = TextComponent.SUBTITLE_3_SB_14,
-            modifier = Modifier.padding(
-                horizontal = FilterDesignTokens.PaddingHorizontal,
-                vertical = FilterDesignTokens.PaddingVertical
-            ),
-            textAlign = TextAlign.Center
-        )
+        Row(
+            modifier = Modifier
+                .padding(
+                    horizontal = FilterDesignTokens.PaddingHorizontal,
+                    vertical = FilterDesignTokens.PaddingVertical
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Box {
+                Text(
+                    text = label,
+                    color = textColor,
+                    style = TextComponent.SUBTITLE_3_SB_14,
+                    textAlign = TextAlign.Center
+                )
+
+                // Event일 때 빨간 점 표시
+                if (isEventType) {
+                    Spacer(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .offset(x = 5.dp , y = (-2).dp)
+                            .size(5.dp)
+                            .background(
+                                color = Danger.M_RED,
+                                shape = CircleShape
+                            )
+                    )
+                }
+            }
+        }
     }
 }
+
 
 @Preview(showBackground = true)
 @Composable
@@ -127,10 +186,25 @@ fun FilterPreview() {
 
         SooumFilter (
             modifier = Modifier,
-            filters = listOf("컬러", "자연", "감성", "푸드", "추상", "메모"),
+            filters = listOf("컬러", "자연", "감성", "푸드", "추상", "메모", "이벤트"),
             selectedFilter = selected,
             onFilterSelected = { selected = it }
         )
+
+        Text("Event Filter", fontWeight = FontWeight.Bold, color = Color(0xFF0284C7))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("Event Normal", color = Color.Gray)
+                Spacer(Modifier.height(8.dp))
+                FilterItem("이벤트", selected = false, onClick = {})
+            }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("Event Selected", color = Color.Gray)
+                Spacer(Modifier.height(8.dp))
+                FilterItem("이벤트", selected = true, onClick = {})
+            }
+        }
     }
 }
 
@@ -150,4 +224,6 @@ object FilterDesignTokens {
 
     val PaddingHorizontal = 10.dp
     val PaddingVertical = 8.dp
+
+    val badgeType = "EVENT"
 }

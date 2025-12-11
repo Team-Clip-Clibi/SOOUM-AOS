@@ -440,7 +440,14 @@ private fun WriteScreen(
             AppBar.TextButtonAppBarText(
                 appBarText = stringResource(titleRes),
                 buttonText = stringResource(WriteR.string.write_screen_complete),
-                onButtonClick = onWriteComplete,
+                onButtonClick = {
+                    // 입력 중인 태그가 있으면 먼저 추가
+                    if (currentTagInput.isNotBlank()) {
+                        onAddTag(currentTagInput)
+                        onResetTagInput()
+                    }
+                    onWriteComplete()
+                },
                 onClick = onBackPressed,
                 buttonTextColor = if (isWriteCompleted) NeutralColor.BLACK else NeutralColor.GRAY_300
             )
@@ -742,10 +749,11 @@ private fun BackgroundSelect(
         ) {
             SooumFilter(
                 modifier = Modifier.fillMaxWidth(),
-                filters = BackgroundConfig.filterNames.map { it.displayName },
-                selectedFilter = selectedBackgroundFilter.displayName,
-                onFilterSelected = { displayName ->
-                    BackgroundFilterType.fromDisplayName(displayName)?.let { onFilterChange(it) }
+                selectedFilter = selectedBackgroundFilter,
+                filters = BackgroundConfig.filterTypes,
+                onFilterSelected = onFilterChange,
+                labelProvider = { filterType ->
+                    stringResource(filterType.getStringRes())
                 }
             )
 

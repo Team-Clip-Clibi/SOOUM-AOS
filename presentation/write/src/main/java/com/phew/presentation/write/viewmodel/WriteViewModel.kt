@@ -65,13 +65,11 @@ class WriteViewModel @Inject constructor(
     )
 
     private val distanceOptionId = WriteOptions.DISTANCE_OPTION_ID
-    private val initialFilter: BackgroundFilterType = BackgroundConfig.filterNames.firstOrNull() ?: BackgroundFilterType.COLOR
-    private val initialImage: Int? = BackgroundConfig.imagesByFilter[initialFilter]?.firstOrNull()
+    private val initialFilter: BackgroundFilterType = BackgroundFilterType.COLOR
 
     private val _uiState = MutableStateFlow(
         WriteUiState(
-            selectedBackgroundFilter = initialFilter,
-            activeBackgroundResId = initialImage
+            selectedBackgroundFilter = initialFilter
         )
     )
     val uiState: StateFlow<WriteUiState> = _uiState.asStateFlow()
