@@ -106,6 +106,7 @@ import com.phew.presentation.detail.viewmodel.CardDetailError
 import com.phew.presentation.detail.viewmodel.CardDetailViewModel
 import com.phew.core_design.CustomFont
 import com.phew.core_design.NeutralColor.GRAY_200
+import com.phew.core_design.typography.FontType
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -526,7 +527,7 @@ private fun CardDetailScreen(
                         cardContent = cardContent,
                         cardThumbnailUri = cardThumbnailUri,
                         cardTags = cardTags.map { it.name },
-                        fontFamily = CustomFont.findFontValueByServerName(cardFont).data.previewTypeface,
+                        fontType = FontType.fromServerName(cardFont),
                         isDeleted = isExpire,
                         onTagClick = { tagName ->
                             val tag = cardTags.find { it.name == tagName }
