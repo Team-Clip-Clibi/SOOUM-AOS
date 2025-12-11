@@ -58,7 +58,6 @@ import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
 import com.phew.core_design.component.card.CommentBodyContent
 import com.phew.core_design.component.refresh.RefreshBox
-import com.phew.core_design.component.refresh.TOP_CONTENT_OFFSET
 import com.phew.core_design.component.refresh.pullToRefreshOffset
 import com.phew.domain.dto.ProfileCard
 import com.phew.domain.dto.ProfileInfo
