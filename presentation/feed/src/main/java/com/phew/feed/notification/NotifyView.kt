@@ -48,6 +48,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core_design.AppBar
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.LoadingAnimation
@@ -67,6 +68,7 @@ import com.phew.presentation.feed.R
 fun NotifyView(
     viewModel: FeedViewModel,
     backClick: () -> Unit,
+    navigateToDetail: (CardDetailArgs) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val notices = viewModel.notice.collectAsLazyPagingItems()
@@ -144,7 +146,10 @@ fun NotifyView(
                         readAlarm = read,
                         snackBarHostState = snackBarHostState,
                         onItemExpose = viewModel::addItemAsRead,
-                        context = context
+                        context = context,
+                        onCardClick = { cardId ->
+                            navigateToDetail(CardDetailArgs(cardId))
+                        }
                     )
 
                     NotifyTab.NOTIFY_SERVICE -> NotifyViewContent(
@@ -254,7 +259,8 @@ private fun ActivateAlarm(
     readAlarm: LazyPagingItems<Notification>,
     snackBarHostState: SnackbarHostState,
     onItemExpose: (Long) -> Unit,
-    context: Context
+    context: Context,
+    onCardClick: (Long) -> Unit,
 ) {
     if (unReadAlarm.itemCount == 0 && readAlarm.itemCount == 0) {
         EmptyNotifyView()
@@ -267,7 +273,8 @@ private fun ActivateAlarm(
                 lazyListState = rememberLazyListState(),
                 snackBarHostState = snackBarHostState,
                 onItemExpose = onItemExpose,
-                context = context
+                context = context,
+                onCardClick = onCardClick
             )
         }
 
@@ -276,7 +283,8 @@ private fun ActivateAlarm(
                 readAlarm = readAlarm,
                 lazyListState = rememberLazyListState(),
                 snackBarHostState = snackBarHostState,
-                context = context
+                context = context,
+                onCardClick = onCardClick
             )
         }
 
@@ -284,7 +292,8 @@ private fun ActivateAlarm(
             HandleActivateAlarm(
                 readAlarm = readAlarm,
                 unReadAlarm = unReadAlarm,
-                onItemExpose = onItemExpose
+                onItemExpose = onItemExpose,
+                onCardClick = onCardClick
             )
         }
     }
@@ -297,7 +306,8 @@ private fun HandleUnReadAlarm(
     lazyListState: LazyListState,
     snackBarHostState: SnackbarHostState,
     onItemExpose: (Long) -> Unit,
-    context: Context
+    context: Context,
+    onCardClick: (Long) -> Unit
 ) {
     val nestedScrollConnection = remember { object : NestedScrollConnection {} }
     val refreshState = rememberPullToRefreshState()
@@ -334,7 +344,11 @@ private fun HandleUnReadAlarm(
                     count = unReadAlarm.itemCount,
                 ) { index ->
                     val item = unReadAlarm[index] ?: return@items
-                    NotificationUi.NotifyViewUnread(data = item, onItemExpose = onItemExpose)
+                    NotificationUi.NotifyViewUnread(
+                        data = item,
+                        onItemExpose = onItemExpose,
+                        onCardClick = onCardClick
+                    )
                 }
             }
         }
@@ -347,7 +361,8 @@ private fun HandleReadAlarm(
     readAlarm: LazyPagingItems<Notification>,
     lazyListState: LazyListState,
     snackBarHostState: SnackbarHostState,
-    context: Context
+    context: Context,
+    onCardClick: (Long) -> Unit
 ) {
     val nestedScrollConnection = remember { object : NestedScrollConnection {} }
     val refreshState = rememberPullToRefreshState()
@@ -393,7 +408,7 @@ private fun HandleReadAlarm(
                         count = readAlarm.itemCount,
                     ) { index ->
                         val item = readAlarm[index] ?: return@items
-                        NotificationUi.NotifyViewRead(data = item)
+                        NotificationUi.NotifyViewRead(data = item, onCardClick = onCardClick)
                     }
                 }
             }
@@ -405,7 +420,8 @@ private fun HandleReadAlarm(
 private fun HandleActivateAlarm(
     readAlarm: LazyPagingItems<Notification>,
     unReadAlarm: LazyPagingItems<Notification>,
-    onItemExpose: (Long) -> Unit
+    onItemExpose: (Long) -> Unit,
+    onCardClick: (Long) -> Unit
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(1),
@@ -428,7 +444,11 @@ private fun HandleActivateAlarm(
                 ) { index ->
                     val item = unReadAlarm[index]
                     if (item != null) {
-                        NotificationUi.NotifyViewUnread(data = item, onItemExpose = onItemExpose)
+                        NotificationUi.NotifyViewUnread(
+                            data = item,
+                            onItemExpose = onItemExpose,
+                            onCardClick = onCardClick
+                        )
                     }
                 }
             }
@@ -462,7 +482,7 @@ private fun HandleActivateAlarm(
                 ) { index ->
                     val item = readAlarm[index]
                     if (item != null) {
-                        NotificationUi.NotifyViewRead(item)
+                        NotificationUi.NotifyViewRead(data = item, onCardClick = onCardClick)
                     }
                 }
             }

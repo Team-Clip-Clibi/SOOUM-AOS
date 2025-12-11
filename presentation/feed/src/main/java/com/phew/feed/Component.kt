@@ -461,7 +461,11 @@ object NotificationUi {
     }
 
     @Composable
-    internal fun NotifyViewUnread(data: Notification, onItemExpose: (Long) -> Unit) {
+    internal fun NotifyViewUnread(
+        data: Notification,
+        onItemExpose: (Long) -> Unit,
+        onCardClick: (cardId: Long) -> Unit,
+    ) {
         LaunchedEffect(data.notificationId) {
             onItemExpose(data.notificationId)
         }
@@ -471,6 +475,19 @@ object NotificationUi {
                 .height(102.dp)
                 .background(color = Primary.LIGHT_1)
                 .padding(horizontal = 24.dp, vertical = 18.dp)
+                .then(
+                    if (data is UserCommentWrite) {
+                        Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = {
+                                onCardClick(data.targetCardId)
+                            }
+                        )
+                    } else {
+                        Modifier
+                    }
+                )
         ) {
             Row(
                 modifier = Modifier
@@ -560,13 +577,26 @@ object NotificationUi {
     }
 
     @Composable
-    internal fun NotifyViewRead(data: Notification) {
+    internal fun NotifyViewRead(data: Notification , onCardClick: (cardId: Long) -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(102.dp)
                 .background(color = WHITE)
                 .padding(horizontal = 24.dp, vertical = 18.dp)
+                .then(
+                    if (data is UserCommentWrite) {
+                        Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = {
+                                onCardClick(data.targetCardId)
+                            }
+                        )
+                    } else {
+                        Modifier
+                    }
+                )
         ) {
             Row(
                 modifier = Modifier
