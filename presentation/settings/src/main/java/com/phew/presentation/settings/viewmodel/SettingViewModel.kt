@@ -2,8 +2,8 @@ package com.phew.presentation.settings.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.phew.core_common.DomainResult
 import com.phew.core_common.DataResult
+import com.phew.core_common.DomainResult
 import com.phew.core_common.TimeUtils
 import com.phew.domain.model.AppVersionStatusType
 import com.phew.domain.usecase.CheckAppVersionNew
@@ -107,7 +107,7 @@ class SettingViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true) }
 
             when (val result = toggleNotification(enabled)) {
-                is DataResult.Success -> {
+                is DomainResult.Success -> {
                     _uiState.update {
                         it.copy(
                             isLoading = false,
@@ -115,7 +115,7 @@ class SettingViewModel @Inject constructor(
                         )
                     }
                 }
-                is DataResult.Fail -> {
+                is DomainResult.Failure -> {
                     _uiState.update { it.copy(isLoading = false) }
                     _toastEvent.emit(ToastEvent.ShowNotificationToggleErrorToast)
                 }
@@ -270,10 +270,10 @@ class SettingViewModel @Inject constructor(
     private fun loadNotificationState() {
         viewModelScope.launch {
             when (val result = toggleNotification()) {
-                is DataResult.Success -> {
+                is DomainResult.Success -> {
                     _uiState.update { it.copy(notificationEnabled = result.data) }
                 }
-                is DataResult.Fail -> {
+                is DomainResult.Failure -> {
                     // Failed to load cached notify state, keep default
                 }
             }

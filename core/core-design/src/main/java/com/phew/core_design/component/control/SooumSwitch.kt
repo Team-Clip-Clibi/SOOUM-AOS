@@ -123,6 +123,8 @@ internal fun SooumSwitchImpl(
                 onClick = onCheckedChange,
                 enabled = enabled,
                 role = Role.Switch,
+                indication = null,
+                interactionSource = interactionSource
             )
         } else {
             Modifier
