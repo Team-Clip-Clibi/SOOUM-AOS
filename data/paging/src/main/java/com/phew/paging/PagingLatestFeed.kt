@@ -8,6 +8,7 @@ import com.phew.core_common.HTTP_INVALID_TOKEN
 import com.phew.core_common.log.SooumLog
 import com.phew.domain.dto.Latest
 import com.phew.domain.repository.network.CardFeedRepository
+import kotlinx.coroutines.delay
 import java.io.IOException
 import javax.inject.Inject
 
@@ -32,6 +33,7 @@ class PagingLatestFeed @Inject constructor(
                 lastId = lastId
             )) {
                 is DataResult.Success -> {
+                    delay(2000L)
                     val feeds = result.data
                     val nextKey = feeds.asReversed()
                         .firstOrNull { it.cardId.toLongOrNull() != null }

@@ -257,6 +257,7 @@ class FeedViewModel @Inject constructor(
                         val newFeedCards = mapLatestToFeedCards(result.data)
                         val isDuplicate = newFeedCards.isNotEmpty() && newFeedCards == existingCards.takeLast(newFeedCards.size)
                         SooumLog.d(TAG, "Latest feed duplicate check: $isDuplicate (new=${newFeedCards.size}, existing=${existingCards.size})")
+                        delay(2000L)
                         _uiState.update { state ->
                             state.copy(
                                 location = location,
@@ -317,7 +318,7 @@ class FeedViewModel @Inject constructor(
                         val existingCards = if (isInitial) emptyList() else {
                             (currentState as? FeedPagingState.Success)?.feedCards ?: emptyList()
                         }
-
+                        delay(1000L)
                         _uiState.update { state ->
                             state.copy(
                                 location = location,
@@ -400,6 +401,7 @@ class FeedViewModel @Inject constructor(
                         val existingCards = if (isInitial) emptyList() else {
                             (currentState as? FeedPagingState.Success)?.feedCards ?: emptyList()
                         }
+                        delay(1000L)
                         _uiState.update { state ->
                             val newStates = state.distancePagingStates.toMutableMap()
                             newStates[currentDistanceTab] = FeedPagingState.Success(

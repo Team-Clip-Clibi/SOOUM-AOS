@@ -11,5 +11,5 @@ data class NotificationDTO(
     val blockExpirationDateTime: String? = null,
     val nickName: String? = null,
     val userId: Long? = null,
-    val targetCardId: Int? = null
+    val targetCardId: Long? = null
 )
