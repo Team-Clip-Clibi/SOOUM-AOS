@@ -96,7 +96,9 @@ class ProfileViewModel @Inject constructor(
                             isRefreshing = false,
                             nickname = "",
                             userId = 0L,
-                            newProfileImageUri = listOf(Uri.EMPTY) + request.data.profileImageUrl.toUri()
+                            newProfileImageUri = if (request.data.profileImgName.trim()
+                                    .isEmpty()
+                            ) listOf(Uri.EMPTY) else listOf(Uri.EMPTY) + request.data.profileImageUrl.toUri()
                         )
                     }
                 }

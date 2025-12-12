@@ -64,6 +64,9 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.paging.compose.LazyPagingItems
+import coil3.compose.SubcomposeAsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import com.phew.core_common.BOTTOM_NAVIGATION_HEIGHT
 import com.phew.core_design.CustomFont
 import com.phew.core_design.DialogComponent
@@ -244,8 +247,7 @@ private fun MyProfileView(
                     Image(
                         painter = painterResource(com.phew.core_design.R.drawable.ic_spot),
                         modifier = Modifier
-                            .size(3.dp)
-                            .padding(1.dp),
+                            .size(3.dp),
                         colorFilter = ColorFilter.tint(color = NeutralColor.GRAY_400),
                         contentDescription = stringResource(R.string.profile_txt_visit_total) + profile.totalVisitCnt.toString() + stringResource(
                             R.string.profile_txt_visit_today
@@ -272,9 +274,18 @@ private fun MyProfileView(
                     color = NeutralColor.BLACK
                 )
             }
-            AsyncImage(
-                model = if (profile.profileImgName.isEmpty() || profile.profileImageUrl.isEmpty()) com.phew.core_design.R.drawable.ic_profile else profile.profileImageUrl,
-                contentDescription = "profile image",
+            SubcomposeAsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(
+                        if (profile.profileImgName.isEmpty() || profile.profileImageUrl.isEmpty()) {
+                            com.phew.core_design.R.drawable.ic_profile
+                        } else {
+                            profile.profileImageUrl
+                        }
+                    )
+                    .crossfade(true)
+                    .build(),
+                contentDescription = profile.nickname,
                 modifier = Modifier
                     .size(60.dp)
                     .border(
@@ -283,7 +294,22 @@ private fun MyProfileView(
                         shape = RoundedCornerShape(100.dp)
                     )
                     .clip(shape = RoundedCornerShape(size = 100.dp)),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Crop,
+                loading = {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(NeutralColor.WHITE)
+                    )
+                },
+                error = {
+                    Image(
+                        painter = painterResource(com.phew.core_design.R.drawable.ic_profile),
+                        contentDescription = profile.nickname,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
             )
         }
         // 카드 , 팔로워, 팔로잉 숫자
