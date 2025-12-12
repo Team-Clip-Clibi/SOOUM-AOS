@@ -209,7 +209,11 @@ private fun ChangeProfileView(
         TextFiledComponent.RightIcon(
             rightImageClick = remember(onValueChange) { { onValueChange("") } },
             value = nickName,
-            onValueChange = remember(onValueChange) { { input -> onValueChange(input) } },
+            onValueChange = { input ->
+                if (nickName.length < 9) {
+                    onValueChange(input)
+                }
+            },
             helperUse = true,
             helperText = hint,
             showError = showError
