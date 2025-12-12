@@ -45,7 +45,9 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import coil3.compose.AsyncImage
+import coil3.compose.SubcomposeAsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import com.phew.core_common.ERROR_LOGOUT
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_design.AppBar
@@ -446,9 +448,18 @@ private fun ProfileView(
                     color = NeutralColor.BLACK
                 )
             }
-            AsyncImage(
-                model = profile.profileImageUrl.ifEmpty { com.phew.core_design.R.drawable.ic_profile },
-                contentDescription = "profile image",
+            SubcomposeAsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(
+                        if (profile.profileImgName.isEmpty() || profile.profileImageUrl.isEmpty()) {
+                            com.phew.core_design.R.drawable.ic_profile
+                        } else {
+                            profile.profileImageUrl
+                        }
+                    )
+                    .crossfade(true)
+                    .build(),
+                contentDescription = profile.nickname,
                 modifier = Modifier
                     .size(60.dp)
                     .border(
@@ -457,7 +468,22 @@ private fun ProfileView(
                         shape = RoundedCornerShape(100.dp)
                     )
                     .clip(shape = RoundedCornerShape(size = 100.dp)),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Crop,
+                loading = {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(NeutralColor.WHITE)
+                    )
+                },
+                error = {
+                    Image(
+                        painter = painterResource(com.phew.core_design.R.drawable.ic_profile),
+                        contentDescription = profile.nickname,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
             )
         }
         Row(
