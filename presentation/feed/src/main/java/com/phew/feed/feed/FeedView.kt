@@ -78,7 +78,6 @@ import com.phew.core.ui.state.SooumAppState
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
-import kotlin.text.append
 import com.phew.core.ui.R as CoreUiR
 
 
@@ -113,8 +112,10 @@ fun FeedView(
                 latestFeedItems.refresh()
                 viewModel.refreshFeedNotice()
             }
+
             FeedType.Popular,
-            FeedType.Distance -> viewModel.refreshCurrentTab()
+            FeedType.Distance,
+                -> viewModel.refreshCurrentTab()
         }
     }
 
@@ -228,7 +229,6 @@ fun FeedView(
                         .fillMaxSize()
                         .graphicsLayer { clip = false },
                     lazyGridState = lazyGridState,
-                    isRefreshing = isRefreshing,
                     recentClick = {
                         viewModel.switchTab(FeedType.Latest)
                     },
@@ -304,7 +304,6 @@ private fun TopView(
 private fun FeedContentView(
     modifier: Modifier,
     lazyGridState: LazyGridState,
-    isRefreshing: Boolean,
     recentClick: () -> Unit,
     popularClick: () -> Unit,
     nearClick: () -> Unit,
@@ -318,7 +317,7 @@ private fun FeedContentView(
     onRemoveCard: (String) -> Unit,
     currentPagingState: FeedPagingState,
     pullOffsetPx: Float,
-    onRefresh : () -> Unit
+    onRefresh: () -> Unit,
 ) {
     val selectIndex = when (currentTab) {
         FeedType.Latest -> NAV_HOME_FEED_INDEX
@@ -372,20 +371,6 @@ private fun FeedContentView(
                         }
                     }
 
-                    LoadState.Loading -> {
-                        val shouldShowInitialLoading =
-                            latestFeedItems.itemCount == 0 || !isRefreshing
-                        if (shouldShowInitialLoading) {
-                            item(span = { GridItemSpan(maxLineSpan) }) {
-                                LoadingAnimation.LoadingView(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 100.dp)
-                                )
-                            }
-                        }
-                    }
-
                     is LoadState.NotLoading -> {
                         if (latestFeedItems.itemCount == 0) {
                             item(span = { GridItemSpan(maxLineSpan) }) {
@@ -415,7 +400,7 @@ private fun FeedContentView(
                                 }
                             }
                         }
-                        when(val appendState = latestFeedItems.loadState.append){
+                        when (val appendState = latestFeedItems.loadState.append) {
                             is LoadState.Error -> {
                                 item(span = { GridItemSpan(maxLineSpan) }) {
                                     ErrorView(
@@ -427,6 +412,7 @@ private fun FeedContentView(
                                     )
                                 }
                             }
+
                             is LoadState.Loading -> {
                                 item(span = { GridItemSpan(maxLineSpan) }) {
                                     Box(
@@ -441,11 +427,14 @@ private fun FeedContentView(
                                     }
                                 }
                             }
+
                             is LoadState.NotLoading -> {
                                 // No-op
                             }
                         }
                     }
+
+                    else -> Unit
                 }
             }
 
@@ -459,6 +448,7 @@ private fun FeedContentView(
                             )
                         }
                     }
+
                     is FeedPagingState.LoadingMore -> {
                         if (currentPagingState.existingData.isEmpty()) {
                             item(span = { GridItemSpan(maxLineSpan) }) {
@@ -491,6 +481,7 @@ private fun FeedContentView(
                             }
                         }
                     }
+
                     is FeedPagingState.Success -> {
                         if (currentPagingState.feedCards.isEmpty()) {
                             item(span = { GridItemSpan(maxLineSpan) }) {
@@ -560,7 +551,7 @@ private fun EmptyFeedView() {
 @Composable
 private fun ErrorView(
     message: String,
-    onRetry: () -> Unit
+    onRetry: () -> Unit,
 ) {
     Column(
         modifier = Modifier.fillMaxSize(),
