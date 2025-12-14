@@ -31,6 +31,6 @@ const val HTTP_SUCCESS = 200
 const val BANNER_NEWS = "news"
 const val BANNER_SERVICE = "service"
 //bottom navigation height
-const val BOTTOM_NAVIGATION_HEIGHT = 63
+const val BOTTOM_NAVIGATION_HEIGHT = 62
 //profile Image Update
 const val CONTAIN_DEFAULT_IMAGE = 2
