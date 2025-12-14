@@ -151,6 +151,7 @@ internal fun SearchRoute(
         recommendedTags = uiState.recommendedTags,
         searchPerformed = uiState.searchPerformed,
         isSearchLoading = uiState.isSearchLoading,
+        searchDataLoaded = uiState.searchDataLoaded,
         cardDataItems = cardDataItems,
         listState = listState,
         gridState = gridState,
@@ -174,6 +175,7 @@ private fun SearchScreen(
     recommendedTags: List<TagInfo>,
     searchPerformed: Boolean,
     isSearchLoading: Boolean,
+    searchDataLoaded: Boolean,
     cardDataItems: LazyPagingItems<TagCardContent>,
     listState: LazyListState,
     gridState: LazyGridState,
@@ -315,7 +317,7 @@ private fun SearchScreen(
                     }
                 }
                 // 3. 검색 수행 후 카드가 없음
-                searchPerformed && cardDataItems.itemCount == 0 -> {
+                searchPerformed && searchDataLoaded && cardDataItems.itemCount == 0 -> {
                     EmptySearchCard()
                 }
                 // 4. 추천 태그가 있음 (아직 검색 수행 안함)

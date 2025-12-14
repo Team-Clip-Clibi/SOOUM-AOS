@@ -146,6 +146,7 @@ internal fun ViewTagsRoute(
         cardDataItems = cardDataItems,
         gridState = gridState,
         isRefreshing = uiState.isRefreshing,
+        viewTagsDataLoaded = uiState.viewTagsDataLoaded,
         onClickCard = onClickCard,
         onBackPressed = onBackPressed,
         isFavorite = uiState.favoriteTags.any { it.id == tagId },
@@ -163,6 +164,7 @@ private fun ViewTagsScreen(
     cardDataItems: LazyPagingItems<TagCardContent>,
     isFavorite: Boolean,
     isRefreshing: Boolean,
+    viewTagsDataLoaded: Boolean,
     gridState: LazyGridState,
     onRefresh: () -> Unit,
     onFavoriteToggle: () -> Unit,
@@ -201,7 +203,7 @@ private fun ViewTagsScreen(
             state = refreshState,
             paddingValues = innerPadding
         ) {
-            if (cardDataItems.itemCount == 0) {
+            if (viewTagsDataLoaded && cardDataItems.itemCount == 0) {
                 EmptyViewTags()
             } else {
                 LazyVerticalGrid(

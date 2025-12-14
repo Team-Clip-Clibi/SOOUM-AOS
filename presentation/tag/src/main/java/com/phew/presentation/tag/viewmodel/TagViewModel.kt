@@ -53,7 +53,9 @@ data class TagUiState(
     val currentTagFavoriteState: Boolean = false, // 현재 검색한 태그의 즐겨찾기 상태
     val tagRank: UiState<List<TagInfo>> = UiState.Loading,
     val isRefreshing: Boolean = false,
-    val requestedTagCards: Set<String> = emptySet() // 요청한 태그 카드 목록 (tagId:tagName 형태)
+    val requestedTagCards: Set<String> = emptySet(), // 요청한 태그 카드 목록 (tagId:tagName 형태)
+    val viewTagsDataLoaded: Boolean = false,
+    val searchDataLoaded: Boolean = false
 )
 
 sealed interface UiState<out T> {
@@ -240,12 +242,13 @@ class TagViewModel @Inject constructor(
                         searchValue = tag,
                         cardDataItems = cardsPagingFlow,
                         currentSearchedTag = selectedTag,
-                        currentTagFavoriteState = false // 초기값, 실제 값은 paging data에서 업데이트됨
+                        currentTagFavoriteState = false, // 초기값, 실제 값은 paging data에서 업데이트됨
+                        searchDataLoaded = true // 데이터 로드 완료
                     )
                 }
             } catch (e: Exception) {
                 SooumLog.e(TAG, "Failed to perform search: ${e.message}")
-                _uiState.update { it.copy(isSearchLoading = false) }
+                _uiState.update { it.copy(isSearchLoading = false, searchDataLoaded = true) } // 실패 시에도 로드 완료로 처리
                 emitSearchScreenEffect(TagUiEffect.ShowNetworkErrorSnackbar { performSearch(tag) })
             }
         }
@@ -497,13 +500,14 @@ class TagViewModel @Inject constructor(
                         recommendedTags = emptyList(),
                         cardDataItems = cardsPagingFlow,
                         currentSearchedTag = TagInfo(id = tagId, name = tagName, usageCnt = 0),
-                        currentTagFavoriteState = initialFavoriteState
+                        currentTagFavoriteState = initialFavoriteState,
+                        viewTagsDataLoaded = true // 데이터 로드 완료
                     )
                 }
             } catch (e: Exception) {
                 SooumLog.e(TAG, "Failed to load tag cards: ${e.message}")
                 // 실패시 요청 상태에서 제거
-                _uiState.update { it.copy(requestedTagCards = it.requestedTagCards - tagKey) }
+                _uiState.update { it.copy(requestedTagCards = it.requestedTagCards - tagKey, viewTagsDataLoaded = true) } // 실패 시에도 로드 완료로 처리
                 emitViewTagsScreenEffect(TagUiEffect.ShowNetworkErrorSnackbar { loadTagCards(tagName, tagId) })
             }
         }
@@ -522,7 +526,7 @@ class TagViewModel @Inject constructor(
                 
                 // 약간의 지연 후 새로고침 상태 해제 (Paging 데이터 로드 시간 고려)
                 kotlinx.coroutines.delay(500)
-                _uiState.update { it.copy(isRefreshing = false) }
+                _uiState.update { it.copy(isRefreshing = false, viewTagsDataLoaded = true) }
                 
                 SooumLog.d(TAG, "Successfully refreshed tag cards for $tagName")
             } catch (e: Exception) {
