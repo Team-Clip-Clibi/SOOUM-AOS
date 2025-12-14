@@ -1,6 +1,5 @@
 package com.phew.presentation.tag.screen
 
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -15,8 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -24,7 +23,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
@@ -37,13 +35,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -63,7 +59,6 @@ import com.phew.core_design.DialogComponent
 import com.phew.core_design.LoadingAnimation
 import com.phew.core_design.MediumButton.IconPrimary
 import com.phew.core_design.NeutralColor
-import com.phew.core_design.R as DesignR
 import com.phew.core_design.TextComponent
 import com.phew.core_design.Warning
 import com.phew.core_design.component.card.CommentBodyContent
@@ -74,6 +69,7 @@ import com.phew.presentation.tag.R
 import com.phew.presentation.tag.component.SearchListItem
 import com.phew.presentation.tag.viewmodel.TagUiEffect
 import com.phew.presentation.tag.viewmodel.TagViewModel
+import com.phew.core_design.R as DesignR
 
 @Composable
 internal fun SearchRoute(
@@ -89,6 +85,7 @@ internal fun SearchRoute(
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
+    val yOffset = 8.dp.value.toInt()
 
     // Toast 처리 및 Snackbar 처리
     LaunchedEffect(Unit) {
@@ -99,14 +96,27 @@ internal fun SearchRoute(
                     when (it) {
                         is TagUiEffect.ShowAddFavoriteTagToast -> {
                             val message = context.getString(R.string.tag_favorite_add, it.tagName)
-                            SooumToast.makeToast(context, message, SooumToast.LENGTH_SHORT).show()
+                            SooumToast.makeToast(
+                                context,
+                                message,
+                                SooumToast.LENGTH_SHORT,
+                                yOffset = yOffset
+                            ).show()
                             viewModel.clearSearchScreenUiEffect()
                         }
+
                         is TagUiEffect.ShowRemoveFavoriteTagToast -> {
-                            val message = context.getString(R.string.tag_favorite_delete, it.tagName)
-                            SooumToast.makeToast(context, message, SooumToast.LENGTH_SHORT).show()
+                            val message =
+                                context.getString(R.string.tag_favorite_delete, it.tagName)
+                            SooumToast.makeToast(
+                                context,
+                                message,
+                                SooumToast.LENGTH_SHORT,
+                                yOffset = yOffset
+                            ).show()
                             viewModel.clearSearchScreenUiEffect()
                         }
+
                         is TagUiEffect.ShowNetworkErrorSnackbar -> {
                             val result = snackbarHostState.showSnackbar(
                                 message = context.getString(R.string.tag_network_error_message),
@@ -118,6 +128,7 @@ internal fun SearchRoute(
                             }
                             viewModel.clearSearchScreenUiEffect()
                         }
+
                         else -> {
                             viewModel.clearSearchScreenUiEffect()
                         }
@@ -133,7 +144,10 @@ internal fun SearchRoute(
                 try {
                     val firstItem = cardDataItems[0]
                     if (firstItem != null) {
-                        SooumLog.d("SearchRoute", "Updating favorite state: ${firstItem.isFavorite}")
+                        SooumLog.d(
+                            "SearchRoute",
+                            "Updating favorite state: ${firstItem.isFavorite}"
+                        )
                         viewModel.updateCurrentTagFavoriteState(firstItem.isFavorite)
                     }
                 } catch (e: Exception) {
@@ -194,7 +208,7 @@ private fun SearchScreen(
     val focusManager = LocalFocusManager.current
     var isSearchFieldFocused by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
-    
+
     // Auto focus on search field when autoFocus is true
     LaunchedEffect(autoFocus) {
         if (autoFocus) {
@@ -202,20 +216,20 @@ private fun SearchScreen(
             isSearchFieldFocused = true
         }
     }
-    
+
     // 스크롤 감지를 위한 상태 (list와 grid 모두)
     val isListScrolling by remember {
         derivedStateOf {
             listState.isScrollInProgress
         }
     }
-    
+
     val isGridScrolling by remember {
         derivedStateOf {
             gridState.isScrollInProgress
         }
     }
-    
+
     // 스크롤 시 키보드 숨기기 및 포커스 상태 해제
     LaunchedEffect(isListScrolling, isGridScrolling) {
         if (isListScrolling || isGridScrolling) {
@@ -223,7 +237,7 @@ private fun SearchScreen(
             isSearchFieldFocused = false
         }
     }
-    
+
     Scaffold(
         modifier = modifier
             .fillMaxSize(),
@@ -272,7 +286,7 @@ private fun SearchScreen(
 
             // PagingData 로딩 상태 체크
             val isPagingLoading = cardDataItems.loadState.refresh is LoadState.Loading
-            
+
             when {
                 // 1. 로딩 중
                 isSearchLoading || (searchPerformed && isPagingLoading) -> {
@@ -333,7 +347,7 @@ private fun SearchScreen(
                             SearchListItem(
                                 title = item.name,
                                 content = "${item.usageCnt}",
-                                onClick = { 
+                                onClick = {
                                     focusManager.clearFocus()
                                     isSearchFieldFocused = false
                                     onItemClick(item.name)
@@ -359,7 +373,7 @@ private fun EmptySearchCard() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
-            painter = painterResource(com.phew.core_design.R.drawable.ic_noti_no_data),
+            painter = painterResource(R.drawable.ic_noti_no_data),
             contentDescription = "no notify"
         )
         Text(
@@ -380,7 +394,7 @@ private fun EmptyCardList() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
-            painter = painterResource(com.phew.core_design.R.drawable.ic_deleted_card),
+            painter = painterResource(R.drawable.ic_deleted_card),
             contentDescription = "no notify",
             contentScale = ContentScale.Fit,
             modifier = Modifier

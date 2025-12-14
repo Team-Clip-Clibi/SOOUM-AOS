@@ -6,7 +6,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -19,15 +18,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -74,6 +72,7 @@ internal fun ViewTagsRoute(
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
+    val yOffset = 8.dp.value.toInt()
 
     // favoriteTags 로드를 먼저 확인
     LaunchedEffect(tagName, tagId) {
@@ -99,14 +98,27 @@ internal fun ViewTagsRoute(
                     when (it) {
                         is TagUiEffect.ShowAddFavoriteTagToast -> {
                             val message = context.getString(R.string.tag_favorite_add, it.tagName)
-                            SooumToast.makeToast(context, message, Toast.LENGTH_SHORT).show()
+                            SooumToast.makeToast(
+                                context,
+                                message,
+                                Toast.LENGTH_SHORT,
+                                yOffset = yOffset
+                            ).show()
                             viewModel.clearViewTagsScreenUiEffect()
                         }
+
                         is TagUiEffect.ShowRemoveFavoriteTagToast -> {
-                            val message = context.getString(R.string.tag_favorite_delete, it.tagName)
-                            SooumToast.makeToast(context, message, Toast.LENGTH_SHORT).show()
+                            val message =
+                                context.getString(R.string.tag_favorite_delete, it.tagName)
+                            SooumToast.makeToast(
+                                context,
+                                message,
+                                Toast.LENGTH_SHORT,
+                                yOffset = yOffset
+                            ).show()
                             viewModel.clearViewTagsScreenUiEffect()
                         }
+
                         is TagUiEffect.ShowNetworkErrorSnackbar -> {
                             val result = snackbarHostState.showSnackbar(
                                 message = context.getString(R.string.tag_network_error_message),
@@ -118,6 +130,7 @@ internal fun ViewTagsRoute(
                             }
                             viewModel.clearViewTagsScreenUiEffect()
                         }
+
                         else -> {
                             viewModel.clearViewTagsScreenUiEffect()
                         }
