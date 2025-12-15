@@ -373,7 +373,7 @@ private fun EmptySearchCard() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
-            painter = painterResource(R.drawable.ic_noti_no_data),
+            painter = painterResource(DesignR.drawable.ic_noti_no_data),
             contentDescription = "no notify"
         )
         Text(
@@ -394,7 +394,7 @@ private fun EmptyCardList() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
-            painter = painterResource(R.drawable.ic_deleted_card),
+            painter = painterResource(DesignR.drawable.ic_deleted_card),
             contentDescription = "no notify",
             contentScale = ContentScale.Fit,
             modifier = Modifier

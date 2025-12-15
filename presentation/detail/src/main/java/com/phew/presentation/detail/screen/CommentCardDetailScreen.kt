@@ -104,7 +104,7 @@ internal fun CommentCardDetailScreen(
     onNavigateToComment: (CardDetailCommentArgs) -> Unit,
     onNavigateToWrite: (Long) -> Unit,
     onNavigateToReport: (Long) -> Unit,
-    onNavigateToViewTags: (com.phew.core.ui.model.navigation.TagViewArgs) -> Unit,
+    onNavigateToViewTags: (TagViewArgs) -> Unit,
     onBackPressed: (Long) -> Unit,
     onFeedPressed: () -> Unit,
     onTagPressed: () -> Unit,
