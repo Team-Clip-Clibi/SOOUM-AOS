@@ -30,8 +30,7 @@ fun SooumApp(
         contentAlignment = Alignment.BottomCenter
     ) {
         SooumNavHost(
-            modifier = Modifier
-                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Vertical)),
+            modifier = Modifier.fillMaxSize(),
             appState = appState,
             appVersionUpdate = appVersionUpdate,
             finish = finish,

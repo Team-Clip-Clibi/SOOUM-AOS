@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -78,7 +79,6 @@ import com.phew.presentation.detail.component.CardDetailHeader
 import com.phew.presentation.detail.model.MoreAction
 import com.phew.presentation.detail.viewmodel.CardDetailError
 import com.phew.presentation.detail.viewmodel.CardDetailViewModel
-import com.phew.core_design.CustomFont
 import com.phew.presentation.detail.component.CardDetailTopBar
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.rememberScrollState
@@ -104,7 +104,7 @@ internal fun CommentCardDetailScreen(
     onNavigateToComment: (CardDetailCommentArgs) -> Unit,
     onNavigateToWrite: (Long) -> Unit,
     onNavigateToReport: (Long) -> Unit,
-    onNavigateToViewTags: (com.phew.core.ui.model.navigation.TagViewArgs) -> Unit,
+    onNavigateToViewTags: (TagViewArgs) -> Unit,
     onBackPressed: (Long) -> Unit,
     onFeedPressed: () -> Unit,
     onTagPressed: () -> Unit,
@@ -394,6 +394,7 @@ private fun TopLayout(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .statusBarsPadding()
     ) {
         AppBar.IconBothAppBar(
             topAppBarText = stringResource(R.string.card_detail_comment_app_bar_title),
@@ -428,7 +429,7 @@ private fun CardView(
     onPreviousCardClick: () -> Unit,
     playProgression: @Composable () -> Unit,
     onProfileClick : (Long) -> Unit,
-    onNavigateToViewTags: (com.phew.core.ui.model.navigation.TagViewArgs) -> Unit
+    onNavigateToViewTags: (TagViewArgs) -> Unit
 ) {
     BoxWithConstraints(
         modifier = modifier
@@ -747,7 +748,7 @@ private fun HandleError(
 @Composable
 private fun DeleteDialog(onClick: () -> Unit){
     DialogComponent.NoDescriptionButtonOne(
-        title = stringResource(com.phew.presentation.detail.R.string.card_detail_dialog_delete_title),
+        title = stringResource(R.string.card_detail_dialog_delete_title),
         buttonText = stringResource(com.phew.core_design.R.string.common_okay),
         onClick = onClick,
         onDismiss = onClick
