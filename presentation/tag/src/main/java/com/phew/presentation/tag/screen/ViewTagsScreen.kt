@@ -28,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -266,6 +267,7 @@ private fun EmptyViewTags() {
         Image(
             painter = painterResource(DesignR.drawable.ic_deleted_card),
             contentDescription = "no data",
+            contentScale = ContentScale.Fit,
             modifier = Modifier
                 .height(130.dp)
                 .width(220.dp)

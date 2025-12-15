@@ -233,7 +233,8 @@ private fun TagView(
                 isReadOnly = true,
                 placeHolder = stringResource(R.string.tag_search_tag_placeholder),
                 onFieldClick = onSearchView,
-                focusRequester = null
+                focusRequester = null,
+                showDeleteIcon = false
             )
         }
 

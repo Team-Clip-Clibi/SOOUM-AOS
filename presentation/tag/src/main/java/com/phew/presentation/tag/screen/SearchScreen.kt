@@ -238,6 +238,9 @@ private fun SearchScreen(
         }
     }
 
+    // PagingData 로딩 상태 체크
+    val isPagingLoading = cardDataItems.loadState.refresh is LoadState.Loading
+
     Scaffold(
         modifier = modifier
             .fillMaxSize(),
@@ -252,7 +255,11 @@ private fun SearchScreen(
                 },
                 onDeleteClick = onDeleteClick,
                 onBackClick = onBackPressed,
-                onSearch = onSearch,
+                onSearch = {
+                    focusManager.clearFocus()
+                    isSearchFieldFocused = false
+                    onSearch()
+                },
                 icon = {
                     IconPrimary(
                         icon = {
@@ -265,8 +272,9 @@ private fun SearchScreen(
                         onClick = onFavoriteToggle
                     )
                 },
-                isIcon = searchPerformed,
-                focusRequester = focusRequester
+                isIcon = searchPerformed && cardDataItems.itemCount > 0,
+                focusRequester = focusRequester,
+                showDeleteIcon = isSearchFieldFocused
             )
         }
     ) { innerPadding ->
@@ -283,9 +291,6 @@ private fun SearchScreen(
                 }
         ) {
             Spacer(Modifier.padding(top = 8.dp))
-
-            // PagingData 로딩 상태 체크
-            val isPagingLoading = cardDataItems.loadState.refresh is LoadState.Loading
 
             when {
                 // 1. 로딩 중
@@ -330,9 +335,18 @@ private fun SearchScreen(
                         }
                     }
                 }
-                // 3. 검색 수행 후 카드가 없음
-                searchPerformed && searchDataLoaded && cardDataItems.itemCount == 0 -> {
-                    EmptySearchCard()
+                // 3. 검색 수행 후 카드가 없음 (더 정확한 LoadState 확인)
+                searchPerformed && searchDataLoaded && !isSearchLoading && !isPagingLoading && cardDataItems.itemCount == 0 -> {
+                    // 추천 태그 클릭으로 검색한 경우 vs 직접 입력한 검색어로 검색한 경우 구분
+                    // 현재 검색값이 원래 추천 태그 목록에 있었는지 확인하기 위해 searchValue 사용
+                    val isFromRecommendedTag = recommendedTags.any { it.name == searchValue } || 
+                                             (recommendedTags.isEmpty() && searchValue.isNotBlank())
+                    
+                    if (isFromRecommendedTag) {
+                        EmptyCardList() // 추천 태그를 클릭했지만 해당 태그에 카드가 없는 경우
+                    } else {
+                        EmptySearchCard() // 검색어를 입력하고 완료를 눌렀지만 관련 검색 결과가 없는 경우
+                    }
                 }
                 // 4. 추천 태그가 있음 (아직 검색 수행 안함)
                 recommendedTags.isNotEmpty() -> {

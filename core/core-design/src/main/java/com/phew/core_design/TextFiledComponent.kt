@@ -204,7 +204,8 @@ object TextFiledComponent {
         onFieldClick: () -> Unit = {},
         onSearch: () -> Unit = {},
         modifier: Modifier = Modifier,
-        focusRequester: FocusRequester? = null
+        focusRequester: FocusRequester? = null,
+        showDeleteIcon: Boolean = true
     ) {
         BasicTextField(
             value = value,
@@ -263,7 +264,7 @@ object TextFiledComponent {
                         }
                         innerTextField()
                     }
-                    if (value.isNotEmpty()) {
+                    if (value.isNotEmpty() && showDeleteIcon) {
                         Spacer(modifier = Modifier.width(10.dp))
                         Icon(
                             painter = painterResource(R.drawable.ic_delete),
