@@ -210,7 +210,7 @@ private fun ChangeProfileView(
             rightImageClick = remember(onValueChange) { { onValueChange("") } },
             value = nickName,
             onValueChange = { input ->
-                if (nickName.length < 9) {
+                if (input.length <= 8) {
                     onValueChange(input)
                 }
             },
