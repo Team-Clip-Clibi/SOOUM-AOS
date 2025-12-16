@@ -17,7 +17,7 @@ fun SooumApp(
     appVersionUpdate: () -> Unit,
     finish: () -> Unit,
     appState: SooumAppState = rememberSooumAppState(),
-    webView: (String) -> Unit,
+    // 요기 수정 -> webView 삭제
     isExpend: Boolean,
 ) {
     Box(
@@ -29,7 +29,7 @@ fun SooumApp(
             appState = appState,
             appVersionUpdate = appVersionUpdate,
             finish = finish,
-            webView = webView
+            // 요기 수정 -> webView 삭제
         )
 
         SooumBottomBar(

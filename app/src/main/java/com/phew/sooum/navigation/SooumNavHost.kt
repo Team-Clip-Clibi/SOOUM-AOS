@@ -44,7 +44,7 @@ fun SooumNavHost(
     modifier: Modifier = Modifier,
     appVersionUpdate: () -> Unit,
     finish: () -> Unit,
-    webView: (String) -> Unit,
+    // 요기 수정 -> webView 삭제
     mainViewModel: MainViewModel = hiltViewModel(),
 ) {
     val navController = appState.navController
@@ -90,7 +90,7 @@ fun SooumNavHost(
                 onBackPressed = {
                     SooumOnBackPressed(appState = appState)
                 },
-                webView = webView,
+                // 요기 수정 -> webView 삭제
                 onWriteComplete = {
                     // Feed로 돌아가면서 새 카드가 보이도록 처리
                     navController.navigateToFeedGraph(

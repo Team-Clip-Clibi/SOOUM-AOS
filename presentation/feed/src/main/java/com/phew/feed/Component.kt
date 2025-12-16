@@ -78,7 +78,7 @@ object FeedUi {
     @Composable
     internal fun FeedNoticeView(
         feedNotice: List<Notice>,
-        feedNoticeClick: (String) -> Unit,
+        feedNoticeClick: () -> Unit,
         modifier : Modifier = Modifier
     ) {
         if (feedNotice.isEmpty()) return
@@ -135,7 +135,7 @@ object FeedUi {
                 )
                 NotiCard(
                     data = cardData,
-                    onClick = { feedNoticeClick(currentNotice.url) },
+                    onClick = feedNoticeClick,
                     modifier = Modifier
                         .fillMaxWidth()
                         .shadow(

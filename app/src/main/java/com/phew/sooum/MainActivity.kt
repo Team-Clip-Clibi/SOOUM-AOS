@@ -103,7 +103,7 @@ class MainActivity : ComponentActivity() {
                         appState = appState,
                         finish = ::finish,
                         appVersionUpdate = ::playStore,
-                        webView = ::openWebPage,
+                        // 요기 수정 -> webView 삭제
                         isExpend = isExpandedScreen
                     )
                 }
@@ -126,16 +126,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun openWebPage(url: String) {
-        if (url.trim().isEmpty()) return
-        try {
-            val intent = Intent(Intent.ACTION_VIEW, url.toUri())
-            startActivity(intent)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-    
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
