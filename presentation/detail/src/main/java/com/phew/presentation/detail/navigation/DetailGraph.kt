@@ -89,6 +89,7 @@ fun NavGraphBuilder.detailGraph(
                     onNavigateToComment = { commentArgs ->
                         navController.navigate(COMMENT_ROUTE.asNavArg(commentArgs))
                     },
+                    onNavigateToHome = navToHome,
                     onNavigateToWrite = { cardId ->
                         onNavigateToWrite(cardId)
                     },

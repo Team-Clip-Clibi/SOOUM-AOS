@@ -474,6 +474,7 @@ private fun ReplyCard(
                             Box(
                                 modifier = Modifier
                                     .size(24.dp)
+                                    .clip(RoundedCornerShape(CardDesignTokens.CardRadius))
                                     .background(Color.Black.copy(alpha = 0.3f)),
                                 contentAlignment = Alignment.Center
                             ) {

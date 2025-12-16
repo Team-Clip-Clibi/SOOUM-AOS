@@ -26,6 +26,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
@@ -68,6 +70,9 @@ class CardDetailViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(CardDetailUiState())
     val uiState: StateFlow<CardDetailUiState> = _uiState.asStateFlow()
+
+    private val _uiEffect = MutableSharedFlow<CardDetailUiEffect>()
+    val uiEffect: Flow<CardDetailUiEffect> = _uiEffect.asSharedFlow()
 
     private val _pagingRequest = MutableStateFlow<PagingRequest>(PagingRequest.None)
 
@@ -284,10 +289,15 @@ class CardDetailViewModel @Inject constructor(
                 }
 
                 is DomainResult.Success -> {
-                    _uiState.update { state ->
-                        state.copy(
-                            deleteSuccess = true
-                        )
+                    if (_uiState.value.cardDetail?.commentCardCount == 0) {
+                        //  상세 카드에서 댓글이 없을 경우 Home으로 이동
+                        _uiEffect.emit(CardDetailUiEffect.NavigationHome)
+                    } else {
+                        _uiState.update { state ->
+                            state.copy(
+                                deleteSuccess = true
+                            )
+                        }
                     }
                 }
             }
@@ -314,6 +324,10 @@ class CardDetailViewModel @Inject constructor(
 sealed class PagingRequest {
     data object None : PagingRequest()
     class Ready(val param: GetCardCommentsPaging.Param) : PagingRequest()
+}
+
+sealed class CardDetailUiEffect {
+    data object NavigationHome : CardDetailUiEffect()
 }
 
 private const val TAG = "CardDetailViewModel"
