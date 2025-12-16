@@ -535,7 +535,7 @@ private fun DeletedCard(
 ) {
     BaseCard(
         modifier = modifier
-            .height(439.dp),
+            .aspectRatio(1f),
         elevation = 0.dp,
         backgroundColor = CardDesignTokens.CardBackgroundGray
     ) {
@@ -549,8 +549,6 @@ private fun DeletedCard(
         ) {
             Box(
                 modifier = Modifier
-                    .height(130.dp)
-                    .width(220.dp)
                     .background(NeutralColor.GRAY_100)
             ) {
                 Image(

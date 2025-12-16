@@ -1,6 +1,5 @@
 package com.phew.presentation.detail.screen
 
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -82,7 +81,6 @@ import com.airbnb.lottie.compose.rememberLottieComposition
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.model.navigation.CardDetailCommentArgs
 import com.phew.core.ui.model.navigation.TagViewArgs
-import com.phew.domain.dto.CardDetail
 import com.phew.domain.dto.CardDetailTag
 import com.phew.core_common.TimeUtils
 import com.phew.core_common.log.SooumLog
@@ -104,8 +102,8 @@ import com.phew.presentation.detail.component.CardDetailTopBar
 import com.phew.presentation.detail.model.MoreAction
 import com.phew.presentation.detail.viewmodel.CardDetailError
 import com.phew.presentation.detail.viewmodel.CardDetailViewModel
-import com.phew.core_design.CustomFont
 import com.phew.core_design.NeutralColor.GRAY_200
+import com.phew.core_design.component.toast.SooumToast
 import com.phew.core_design.typography.FontType
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -196,7 +194,7 @@ internal fun CardDetailRoute(
                     CardDetailError.FAIL -> context.getString(R.string.error_app)
                     else -> ""
                 }
-                Toast.makeText(context , message , Toast.LENGTH_SHORT).show()
+                SooumToast.makeToast(context , message , SooumToast.LENGTH_SHORT).show()
                 viewModel.clearError()
             }
             CardDetailError.CARD_DELETE -> {
@@ -224,7 +222,13 @@ internal fun CardDetailRoute(
             viewModel.clearBlockSuccess()
         }
     }
-    if(uiState.deleteSuccess){
+    if(uiState.deleteSuccess) {
+        uiState.cardDetail?.commentCardCount?.let {
+            if (it == 0) {
+                onBackPressed()
+            }
+        }
+
         isDelete = true
     }
 
