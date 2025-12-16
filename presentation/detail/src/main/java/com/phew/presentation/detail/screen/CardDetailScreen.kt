@@ -82,7 +82,6 @@ import com.airbnb.lottie.compose.rememberLottieComposition
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.model.navigation.CardDetailCommentArgs
 import com.phew.core.ui.model.navigation.TagViewArgs
-import com.phew.domain.dto.CardDetail
 import com.phew.domain.dto.CardDetailTag
 import com.phew.core_common.TimeUtils
 import com.phew.core_common.log.SooumLog
@@ -104,7 +103,6 @@ import com.phew.presentation.detail.component.CardDetailTopBar
 import com.phew.presentation.detail.model.MoreAction
 import com.phew.presentation.detail.viewmodel.CardDetailError
 import com.phew.presentation.detail.viewmodel.CardDetailViewModel
-import com.phew.core_design.CustomFont
 import com.phew.core_design.NeutralColor.GRAY_200
 import com.phew.core_design.typography.FontType
 import kotlinx.coroutines.delay

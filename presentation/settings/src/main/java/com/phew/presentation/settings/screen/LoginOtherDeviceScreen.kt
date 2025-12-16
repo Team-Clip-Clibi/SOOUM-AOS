@@ -1,27 +1,18 @@
 package com.phew.presentation.settings.screen
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -98,7 +89,9 @@ private fun LoginOtherDeviceScreen(
         },
         bottomBar = {
             Box(
-                modifier.padding(bottom = 16.dp, start = 16.dp, end = 16.dp)
+                modifier = modifier
+                    .navigationBarsPadding()
+                    .padding(bottom = 16.dp, start = 16.dp, end = 16.dp)
             ) {
                 LargeButton.NoIconPrimary(
                     buttonText = stringResource(R.string.other_device_retry_code),
@@ -128,7 +121,8 @@ private fun LoginOtherDeviceScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             Row(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .height(54.dp)
                     .background(
                         color = NeutralColor.GRAY_100,
@@ -145,7 +139,8 @@ private fun LoginOtherDeviceScreen(
                         textAlign = TextAlign.Start
                     ),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                    modifier = Modifier.weight(2.5f)
+                    modifier = Modifier
+                        .weight(2.5f)
                         .padding(start = 24.dp, end = 10.dp)
                 ) { innerTextField ->
                     innerTextField()
@@ -156,7 +151,8 @@ private fun LoginOtherDeviceScreen(
                     text = remainingTimeText,
                     style = TextComponent.BODY_2_R_14,
                     color = Primary.DARK,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
                         .padding(end = 24.dp),
                     textAlign = TextAlign.End
                 )

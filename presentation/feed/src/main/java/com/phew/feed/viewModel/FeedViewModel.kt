@@ -265,7 +265,8 @@ class FeedViewModel @Inject constructor(
                                     feedCards = existingCards + newFeedCards,
                                     hasNextPage = result.data.isNotEmpty(),
                                     lastId = result.data.lastOrNull()?.cardId?.toLongOrNull()
-                                )
+                                ),
+                                refresh = false //요기 수정
                             )
                         }
                     }
@@ -275,7 +276,8 @@ class FeedViewModel @Inject constructor(
                             it.copy(
                                 latestPagingState = FeedPagingState.Error(
                                     result.message ?: "최신 피드 로딩 실패"
-                                )
+                                ),
+                                refresh = false //요기 수정
                             )
                         }
                     }
@@ -326,7 +328,8 @@ class FeedViewModel @Inject constructor(
                                     feedCards = existingCards + newFeedCards,
                                     hasNextPage = false, // Popular는 페이징이 없음
                                     lastId = null // Popular는 페이징이 없으므로 null
-                                )
+                                ),
+                                refresh = false //요기 수정
                             )
                         }
                     }
@@ -336,7 +339,8 @@ class FeedViewModel @Inject constructor(
                             it.copy(
                                 popularPagingState = FeedPagingState.Error(
                                     result.message ?: "인기 피드 로딩 실패"
-                                )
+                                ),
+                                refresh = false //요기 수정
                             )
                         }
                     }
@@ -392,7 +396,7 @@ class FeedViewModel @Inject constructor(
                             val newStates = state.distancePagingStates.toMutableMap()
                             newStates[currentDistanceTab] =
                                 FeedPagingState.Error(message = result.message ?: "거리 피드 로딩 실패")
-                            state.copy(distancePagingStates = newStates)
+                            state.copy(distancePagingStates = newStates, refresh = false)//요기 수정
                         }
                     }
 
@@ -411,7 +415,8 @@ class FeedViewModel @Inject constructor(
                             )
                             state.copy(
                                 location = location,
-                                distancePagingStates = newStates
+                                distancePagingStates = newStates,
+                                refresh = false //요기 수정
                             )
                         }
                     }
@@ -484,8 +489,13 @@ class FeedViewModel @Inject constructor(
             }
         }
     }
-
+    // 요기 수정 -> 새로운 함수 생성 기존 refreshCurrentTab 명칭 사용
     fun refreshCurrentTab() {
+        _uiState.update { state -> state.copy(refresh = true) }
+        currentTab()
+    }
+    // 요기 수정 -> refreshCurrentTab -> currentTab으로 명칭 변경
+    private fun currentTab() {
         when (_uiState.value.currentTab) {
             FeedType.Latest -> {
                 _uiState.update { it.copy(latestPagingState = FeedPagingState.Loading) }
@@ -722,7 +732,7 @@ class FeedViewModel @Inject constructor(
         _uiState.update { state ->
             state.copy(checkCardDelete = UiState.None)
         }
-        refreshCurrentTab()
+        currentTab() // 요기 수정 함수 이름 명칭 변경
     }
 
 }
@@ -737,7 +747,7 @@ data class Home(
     val latestPagingState: FeedPagingState = FeedPagingState.None,
     val popularPagingState: FeedPagingState = FeedPagingState.None,
     val distancePagingStates: Map<DistanceType, FeedPagingState> = emptyMap(),
-    val refresh: UiState<Boolean> = UiState.None,
+    val refresh: Boolean = false, //요기 수정 변수 사용
     val feedItem: List<FeedData> = emptyList(),
     val notifyItem: List<Notify> = emptyList(),
     val location: Location = Location.EMPTY,
