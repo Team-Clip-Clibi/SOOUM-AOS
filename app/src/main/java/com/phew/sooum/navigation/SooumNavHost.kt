@@ -95,8 +95,8 @@ fun SooumNavHost(
                 },
                 webView = webView,
                 onWriteComplete = {
-                    // Feed로 돌아가면서 새 카드가 보이도록 처리
-                    navController.navigateToFeedGraph(
+                    navController.navigateToDetailGraph(
+                        cardDetailArgs = it,
                         navOptions = navOptions {
                             popUpTo(WRITE_GRAPH) {
                                 inclusive = true
