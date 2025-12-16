@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.phew.core_common.INPUT_NICK_NAME
 import com.phew.core_design.AppBar
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.LargeButton
@@ -119,6 +120,7 @@ fun NickNameView(viewModel: SignUpViewModel, onBack: () -> Unit, nextPage: () ->
                             stringResource(R.string.signUp_nickName_helper)
                         }
                     }
+
                     else -> stringResource(R.string.signUp_nickName_helper)
                 }
             )
@@ -163,7 +165,7 @@ private fun InPutNickNameView(
         },
         value = nickName,
         onValueChange = { input ->
-            if (input.length <= 8) {
+            if (input.length <= INPUT_NICK_NAME) {
                 onValueChange(input)
             }
         },

@@ -19,7 +19,7 @@ class GetCardDetail @Inject constructor(
     private val deviceRepository: DeviceRepository,
 ) {
     data class Param(
-        val cardId: Long,
+        val cardId: Long
     )
 
     suspend operator fun invoke(param: Param): DomainResult<CardDetail, String> {
