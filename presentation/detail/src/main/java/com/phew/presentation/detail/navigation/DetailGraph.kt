@@ -33,12 +33,13 @@ fun NavHostController.navigateToDetailGraph(
     navOptions: NavOptions? = null,
 ) {
     SooumLog.i(TAG, "navigateToDetailGraph() $cardDetailArgs")
-    this.navigate(DETAIL_GRAPH.asNavArg(cardDetailArgs), navOptions {
+    val resolvedOptions = navOptions ?: navOptions {
         popUpTo(DETAIL_GRAPH) {
             inclusive = true
         }
         launchSingleTop = true
-    })
+    }
+    this.navigate(DETAIL_GRAPH.asNavArg(cardDetailArgs), resolvedOptions)
 }
 
 private fun NavHostController.navigateToDetailRoute(
@@ -89,6 +90,7 @@ fun NavGraphBuilder.detailGraph(
                     onNavigateToComment = { commentArgs ->
                         navController.navigate(COMMENT_ROUTE.asNavArg(commentArgs))
                     },
+                    onNavigateToHome = navToHome,
                     onNavigateToWrite = { cardId ->
                         onNavigateToWrite(cardId)
                     },

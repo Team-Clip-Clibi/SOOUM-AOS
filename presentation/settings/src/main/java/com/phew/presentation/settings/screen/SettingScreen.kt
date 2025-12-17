@@ -1,24 +1,18 @@
 package com.phew.presentation.settings.screen
 
-import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -72,6 +66,7 @@ fun SettingRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val context = LocalContext.current
+    val yOffset = 8.dp.value.toInt()
 
     LaunchedEffect(viewModel) {
         viewModel.navigationEvent.collectLatest { event ->
@@ -85,6 +80,7 @@ fun SettingRoute(
                 SettingNavigationEvent.NavigateToAppStore -> {
                     openAppStore(context)
                 }
+
                 is SettingNavigationEvent.SendInquiryMail -> {
                     InquiryUtils.openInquiryMail(
                         context = context,
@@ -102,14 +98,17 @@ fun SettingRoute(
                     SooumToast.makeToast(
                         context,
                         context.getString(SettingsR.string.setting_current_new_version),
-                        SooumToast.LENGTH_SHORT
+                        SooumToast.LENGTH_SHORT,
+                        yOffset = yOffset
                     ).show()
                 }
+
                 ToastEvent.ShowNotificationToggleErrorToast -> {
                     SooumToast.makeToast(
                         context,
                         context.getString(SettingsR.string.setting_alarm_failed),
-                        SooumToast.LENGTH_SHORT
+                        SooumToast.LENGTH_SHORT,
+                        yOffset = yOffset
                     ).show()
                 }
             }
@@ -159,17 +158,19 @@ fun SettingRoute(
         onAccountDeletionClick = viewModel::onAccountDeletionClick,
         onAppUpdateClick = viewModel::onAppUpdateClick
     )
-    
+
     // 탈퇴 확인 다이얼로그
     if (uiState.showWithdrawalDialog) {
         val rejoinableDate = uiState.rejoinableDate
         val dialogMessage = if (rejoinableDate?.isActivityRestricted == true) {
-            stringResource(SettingsR.string.setting_withdrawal_dialog_rejoin_date, 
-                TimeUtils.formatToWithdrawalDate(rejoinableDate.rejoinableDate))
+            stringResource(
+                SettingsR.string.setting_withdrawal_dialog_rejoin_date,
+                TimeUtils.formatToWithdrawalDate(rejoinableDate.rejoinableDate)
+            )
         } else {
             stringResource(SettingsR.string.setting_withdrawal_dialog_rejoin_seven_date)
         }
-        
+
         DialogComponent.DefaultButtonTwo(
             title = stringResource(SettingsR.string.setting_withdrawal_dialog_title),
             description = dialogMessage,

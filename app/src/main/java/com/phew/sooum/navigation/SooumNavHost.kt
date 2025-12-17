@@ -11,6 +11,7 @@ import androidx.navigation.navOptions
 import com.phew.core.ui.component.back.SooumOnBackPressed
 import com.phew.core.ui.component.home.HomeTabType
 import com.phew.core.ui.model.navigation.CardDetailArgs
+import com.phew.core.ui.model.navigation.CardDetailCommentArgs
 import com.phew.core.ui.model.navigation.OnBoardingArgs
 import com.phew.core.ui.model.navigation.ProfileArgs
 import com.phew.core.ui.state.SooumAppState
@@ -20,9 +21,11 @@ import com.phew.home.navigation.navigateToReport
 import com.phew.presentation.detail.navigation.detailGraph
 import com.phew.core.ui.model.navigation.WriteArgs
 import com.phew.core_common.log.SooumLog
+import com.phew.core_design.component.card.CardViewComment
 import com.phew.domain.interceptor.GlobalEvent
 import com.phew.feed.navigation.navigateToFeedGraph
 import com.phew.presentation.MainViewModel
+import com.phew.presentation.detail.navigation.navigateToDetailCommentDirect
 import com.phew.presentation.detail.navigation.navigateToDetailGraph
 import com.phew.presentation.tag.navigation.navigateToViewTagsWithArgs
 import com.phew.presentation.write.navigation.WRITE_GRAPH
@@ -92,12 +95,13 @@ fun SooumNavHost(
                 },
                 // 요기 수정 -> webView 삭제
                 onWriteComplete = {
-                    // Feed로 돌아가면서 새 카드가 보이도록 처리
-                    navController.navigateToFeedGraph(
+                    navController.navigateToDetailGraph(
+                        cardDetailArgs = it,
                         navOptions = navOptions {
                             popUpTo(WRITE_GRAPH) {
                                 inclusive = true
                             }
+                            launchSingleTop = true
                         }
                     )
                 },
@@ -123,7 +127,12 @@ fun SooumNavHost(
                     )
                 },
                 cardClick = { id ->
-                    navController.navigateToDetailGraph(cardDetailArgs = CardDetailArgs(cardId = id))
+                    navController.navigateToDetailCommentDirect(
+                        cardDetailCommentArgs = CardDetailCommentArgs(
+                            cardId = id,
+                            parentId = 0
+                        )
+                    )
                 }
             )
 
