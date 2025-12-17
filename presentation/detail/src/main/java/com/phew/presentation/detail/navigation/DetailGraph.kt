@@ -123,9 +123,12 @@ fun NavGraphBuilder.detailGraph(
                     },
                     onBackPressed = { parentId ->
                         val previousRoute = navController.previousBackStackEntry?.destination?.route
-                        val hasDetailInStack = previousRoute?.contains("detail", ignoreCase = true) == true
-                        val hasCommentInStack = previousRoute?.startsWith(COMMENT_ROUTE_BASE) == true
-                        val shouldNavigateToParent = parentId > 0L && !hasDetailInStack && !hasCommentInStack
+                        val hasDetailInStack =
+                            previousRoute?.contains("detail", ignoreCase = true) == true
+                        val hasCommentInStack =
+                            previousRoute?.startsWith(COMMENT_ROUTE_BASE) == true
+                        val shouldNavigateToParent =
+                            parentId > 0L && !hasDetailInStack && !hasCommentInStack
 
                         SooumLog.d(
                             TAG,
@@ -148,7 +151,10 @@ fun NavGraphBuilder.detailGraph(
                         } else {
                             val popped = navController.popBackStack()
                             if (!popped) {
-                                SooumLog.w(TAG, "Fail to popBackStack from comment route, navigating home")
+                                SooumLog.w(
+                                    TAG,
+                                    "Fail to popBackStack from comment route, navigating home"
+                                )
                                 navToHome()
                             }
                         }

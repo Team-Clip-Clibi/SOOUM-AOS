@@ -440,24 +440,24 @@ private fun ReplyCard(
 
             Box(modifier = Modifier.fillMaxSize()) {
                 // 이전 댓글 썸네일 영역 (상단)
-                if (data.hasPreviousCommentThumbnail) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp)
+                        .align(Alignment.TopStart)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = onPreviewCard
+                        ),
+                    contentAlignment = Alignment.TopStart
+                ) {
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(10.dp)
-                            .align(Alignment.TopStart)
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                                onClick = onPreviewCard
-                            ),
-                        contentAlignment = Alignment.TopStart
+                            .size(32.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
+                        if (data.hasPreviousCommentThumbnail) {
                             Surface(
                                 modifier = Modifier.matchParentSize(),
                                 shape = RoundedCornerShape(CardDesignTokens.CardRadius)
@@ -471,19 +471,19 @@ private fun ReplyCard(
                                         .clip(RoundedCornerShape(CardDesignTokens.CardRadius))
                                 )
                             }
-                            Box(
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .clip(RoundedCornerShape(CardDesignTokens.CardRadius))
-                                    .background(Color.Black.copy(alpha = 0.3f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_back_thumbnail),
-                                    contentDescription = "이전 댓글 썸네일",
-                                    tint = CardDesignTokens.TextPrimary
-                                )
-                            }
+                        }
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(RoundedCornerShape(CardDesignTokens.CardRadius))
+                                .background(Color.Black.copy(alpha = 0.3f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_back_thumbnail),
+                                contentDescription = "이전 댓글 썸네일",
+                                tint = CardDesignTokens.TextPrimary
+                            )
                         }
                     }
                 }
