@@ -59,9 +59,10 @@ object AppBar {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp)
                 .background(color = NeutralColor.WHITE)
                 .zIndex(1f)
+                .statusBarsPadding()
+                .height(48.dp)
                 .padding(start = 16.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
@@ -98,9 +99,10 @@ object AppBar {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp)
                 .background(color = NeutralColor.WHITE)
                 .zIndex(1f)
+                .statusBarsPadding()
+                .height(48.dp)
                 .padding(start = 16.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween

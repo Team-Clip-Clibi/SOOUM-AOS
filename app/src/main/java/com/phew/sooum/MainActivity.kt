@@ -1,8 +1,10 @@
 package com.phew.sooum
 
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatDelegate
@@ -46,7 +48,11 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        enableEdgeToEdge(
+            navigationBarStyle = SystemBarStyle.dark(
+                Color.TRANSPARENT
+            )
+        )
         WindowCompat.setDecorFitsSystemWindows(window, false)
         val controller = WindowInsetsControllerCompat(window, window.decorView)
         controller.isAppearanceLightStatusBars = true
@@ -97,7 +103,7 @@ class MainActivity : ComponentActivity() {
                         appState = appState,
                         finish = ::finish,
                         appVersionUpdate = ::playStore,
-                        webView = ::openWebPage,
+                        // 요기 수정 -> webView 삭제
                         isExpend = isExpandedScreen
                     )
                 }
@@ -120,16 +126,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun openWebPage(url: String) {
-        if (url.trim().isEmpty()) return
-        try {
-            val intent = Intent(Intent.ACTION_VIEW, url.toUri())
-            startActivity(intent)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-    
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)

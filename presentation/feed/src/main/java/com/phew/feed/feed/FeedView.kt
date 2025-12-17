@@ -80,7 +80,6 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import com.phew.core.ui.R as CoreUiR
 
-
 @OptIn(FlowPreview::class, ExperimentalMaterial3Api::class)
 @Composable
 fun FeedView(
@@ -91,7 +90,6 @@ fun FeedView(
     closeDialog: () -> Unit,
     noticeClick: () -> Unit,
     navigateToDetail: (CardDetailArgs) -> Unit,
-    webViewClick: (String) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val unRead = viewModel.unReadActivateAlarm.collectAsLazyPagingItems()
@@ -105,19 +103,8 @@ fun FeedView(
         HomeTabType.findHome(navBackStackEntry?.destination?.route)
     }
     val currentPagingState = uiState.currentPagingState
-
-    val refreshCurrentFeed: () -> Unit = {
-        when (uiState.currentTab) {
-            FeedType.Latest -> {
-                latestFeedItems.refresh()
-                viewModel.refreshFeedNotice()
-            }
-
-            FeedType.Popular,
-            FeedType.Distance,
-                -> viewModel.refreshCurrentTab()
-        }
-    }
+    // 요기 수정
+    val refreshCurrentFeed: () -> Unit = viewModel::refreshCurrentTab
 
     // Navigation event handling
     LaunchedEffect(viewModel) {
@@ -193,7 +180,7 @@ fun FeedView(
                 }
         }
     }
-    val isRefreshing = when (uiState.currentTab) {
+    val noticeShow = when (uiState.currentTab) {// 요기 수정
         FeedType.Latest -> latestFeedItems.loadState.refresh is LoadState.Loading
         else -> currentPagingState is FeedPagingState.Loading
     }
@@ -209,7 +196,7 @@ fun FeedView(
         snackBarHostState = snackBarHostState
     ) { paddingValues ->
         RefreshBox(
-            isRefresh = isRefreshing,
+            isRefresh = uiState.refresh,// 요기 수정
             onRefresh = refreshCurrentFeed,
             state = refreshState,
             paddingValues = paddingValues,
@@ -240,15 +227,14 @@ fun FeedView(
                     selectDistance = uiState.distanceTab,
                     currentTab = uiState.currentTab,
                     feedNotice = if (feedNoticeState is UiState.Success) feedNoticeState.data else emptyList(),
-                    feedNoticeClick = { url ->
-                        webViewClick(url)
-                    },
+                    feedNoticeClick = noticeClick,// 요기 수정
                     latestFeedItems = latestFeedItems,
                     onClick = viewModel::navigateToDetail,
                     onRemoveCard = viewModel::removeFeedCard,
                     currentPagingState = uiState.currentPagingState,
                     pullOffsetPx = pullOffsetPx,
-                    onRefresh = refreshCurrentFeed
+                    onRefresh = refreshCurrentFeed,// 요기 수정
+                    isNoticeShow = noticeShow // 요기 수정
                 )
                 if (uiState.shouldShowPermissionRationale) {
                     DialogComponent.DefaultButtonTwo(
@@ -311,13 +297,14 @@ private fun FeedContentView(
     selectDistance: DistanceType,
     currentTab: FeedType,
     feedNotice: List<Notice>,
-    feedNoticeClick: (String) -> Unit,
+    feedNoticeClick: () -> Unit, // // 요기 수정 -> 알림 VIEW로 이동으로 변경
     latestFeedItems: LazyPagingItems<Latest>,
     onClick: (String) -> Unit,
     onRemoveCard: (String) -> Unit,
     currentPagingState: FeedPagingState,
     pullOffsetPx: Float,
     onRefresh: () -> Unit,
+    isNoticeShow: Boolean, // 요기 수정
 ) {
     val selectIndex = when (currentTab) {
         FeedType.Latest -> NAV_HOME_FEED_INDEX
@@ -347,15 +334,16 @@ private fun FeedContentView(
             }
             Spacer(modifier = Modifier.height(6.dp))
         }
-
-        item(span = { GridItemSpan(maxLineSpan) }) {
-            FeedUi.FeedNoticeView(
-                feedNotice = feedNotice,
-                feedNoticeClick = feedNoticeClick,
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .graphicsLayer { translationY = pullOffsetPx }
-            )
+        if (!isNoticeShow) { // 요기 수정
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                FeedUi.FeedNoticeView(
+                    feedNotice = feedNotice,
+                    feedNoticeClick = feedNoticeClick,
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .graphicsLayer { translationY = pullOffsetPx }
+                )
+            }
         }
         when (currentTab) {
             FeedType.Latest -> {

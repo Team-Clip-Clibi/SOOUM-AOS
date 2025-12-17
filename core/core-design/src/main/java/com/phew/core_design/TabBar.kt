@@ -37,7 +37,7 @@ object TabBar {
                         modifier = Modifier
                             .tabIndicatorOffset(tabPositions[selectTabData])
                             .padding(horizontal = 16.dp),
-                        height = 3.dp,
+                        height = 2.dp,
                         color = NeutralColor.BLACK
                     )
                 },

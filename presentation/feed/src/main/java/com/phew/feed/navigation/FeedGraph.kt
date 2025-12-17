@@ -47,7 +47,7 @@ private fun NavHostController.navigateToNotify(
 fun NavGraphBuilder.feedGraph(
     appState: SooumAppState,
     navController: NavHostController,
-    webView: (String) -> Unit,
+    // 요기 수정 -> webView 삭제
 ) {
     navigation(
         route = FEED_GRAPH,
@@ -85,8 +85,7 @@ fun NavGraphBuilder.feedGraph(
                 noticeClick = navController::navigateToNotify,
                 navigateToDetail = { cardDetailArgs ->
                     navController.navigateToDetailGraph(cardDetailArgs)
-                },
-                webViewClick = webView,
+                }
             )
         }
 

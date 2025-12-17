@@ -175,9 +175,11 @@ private fun NoticeViewTopBar(
             DialogComponent.CustomAnimationSnackBarHost(hostState = snackBarHostState)
         },
         topBar = {
-            Column(modifier = Modifier
-                .fillMaxWidth()
-                .background(color = NeutralColor.WHITE)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(color = NeutralColor.WHITE)
+            ) {
                 AppBar.IconLeftAppBar(
                     onClick = onBackClick,
                     appBarText = stringResource(R.string.home_notice_top_bar)
@@ -221,9 +223,7 @@ private fun NotifyViewContent(
                     .background(color = NeutralColor.WHITE),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                LoadingAnimation.LoadingView()
-            }
+            ) {}
         }
 
         is LoadState.NotLoading -> {
@@ -428,12 +428,6 @@ private fun HandleActivateAlarm(
         modifier = Modifier.fillMaxSize()
     ) {
         when (unReadAlarm.loadState.refresh) {
-            LoadState.Loading -> {
-                item(span = { GridItemSpan(maxLineSpan) }) {
-                    LoadingAnimation.LoadingView()
-                }
-            }
-
             is LoadState.NotLoading -> {
                 items(
                     count = unReadAlarm.itemCount,
@@ -466,12 +460,6 @@ private fun HandleActivateAlarm(
             )
         }
         when (readAlarm.loadState.refresh) {
-            LoadState.Loading -> {
-                item(span = { GridItemSpan(maxLineSpan) }) {
-                    LoadingAnimation.LoadingView()
-                }
-            }
-
             is LoadState.NotLoading -> {
                 items(
                     count = readAlarm.itemCount,

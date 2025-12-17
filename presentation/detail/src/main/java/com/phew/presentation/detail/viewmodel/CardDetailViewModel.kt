@@ -136,7 +136,7 @@ class CardDetailViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
-                                error = CardDetailError.CARD_LOAD_FAILED,
+                                error = if (cardDetailResult.error == ERROR_ALREADY_CARD_DELETE) CardDetailError.CARD_DELETE else CardDetailError.CARD_LOAD_FAILED,
                                 isRefresh = false
                             )
                         }

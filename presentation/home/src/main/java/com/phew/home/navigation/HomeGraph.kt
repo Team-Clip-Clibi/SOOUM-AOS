@@ -36,7 +36,7 @@ fun NavGraphBuilder.homeGraph(
     navController: NavHostController,
     finish: () -> Unit,
     onBackPressed: () -> Unit,
-    webView: (String) -> Unit,
+    // 요기 수정 -> webView 삭제
     onWriteComplete: (CardDetailArgs) -> Unit = {},
     cardClick: (Long) -> Unit,
     onLogOut: () -> Unit,
@@ -47,7 +47,7 @@ fun NavGraphBuilder.homeGraph(
         feedGraph(
             appState = appState,
             navController = navController,
-            webView = webView
+            // 요기 수정 -> webView 삭제
         )
 
         writeGraph(
