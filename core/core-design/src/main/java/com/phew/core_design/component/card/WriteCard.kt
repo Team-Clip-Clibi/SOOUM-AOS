@@ -85,7 +85,7 @@ object CardDesignTokens {
     val TextDelete = NeutralColor.GRAY_400
 
     // 크기
-    val CardRadius = 16.dp
+    val CardRadius = 8.dp
 }
 
 enum class CardType {
@@ -473,7 +473,9 @@ private fun ReplyCard(
                             }
                             Box(
                                 modifier = Modifier
-                                    .size(24.dp),
+                                    .size(24.dp)
+                                    .clip(RoundedCornerShape(CardDesignTokens.CardRadius))
+                                    .background(Color.Black.copy(alpha = 0.3f)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
@@ -534,7 +536,7 @@ private fun DeletedCard(
 ) {
     BaseCard(
         modifier = modifier
-            .height(439.dp),
+            .aspectRatio(1f),
         elevation = 0.dp,
         backgroundColor = CardDesignTokens.CardBackgroundGray
     ) {
@@ -548,8 +550,6 @@ private fun DeletedCard(
         ) {
             Box(
                 modifier = Modifier
-                    .height(130.dp)
-                    .width(220.dp)
                     .background(NeutralColor.GRAY_100)
             ) {
                 Image(

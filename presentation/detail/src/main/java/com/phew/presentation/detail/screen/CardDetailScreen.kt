@@ -1,6 +1,7 @@
 package com.phew.presentation.detail.screen
 
-import android.widget.Toast
+import android.annotation.SuppressLint
+import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,6 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.foundation.lazy.LazyColumn
@@ -49,12 +52,12 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import android.content.res.Configuration
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -62,12 +65,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.flowWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -104,7 +110,9 @@ import com.phew.presentation.detail.model.MoreAction
 import com.phew.presentation.detail.viewmodel.CardDetailError
 import com.phew.presentation.detail.viewmodel.CardDetailViewModel
 import com.phew.core_design.NeutralColor.GRAY_200
+import com.phew.core_design.component.toast.SooumToast
 import com.phew.core_design.typography.FontType
+import com.phew.presentation.detail.viewmodel.CardDetailUiEffect
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -114,6 +122,7 @@ internal fun CardDetailRoute(
     modifier: Modifier = Modifier,
     args: CardDetailArgs,
     viewModel: CardDetailViewModel = hiltViewModel(),
+    onNavigateToHome: () -> Unit,
     onNavigateToComment: (CardDetailCommentArgs) -> Unit,
     onNavigateToWrite: (Long) -> Unit,
     onNavigateToReport: (Long) -> Unit,
@@ -182,6 +191,16 @@ internal fun CardDetailRoute(
     }
     var isDelete by remember { mutableStateOf(false) }
 
+    LaunchedEffect(Unit) {
+        viewModel.uiEffect
+            .flowWithLifecycle(lifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+            .collect { effect ->
+                when (effect) {
+                    is CardDetailUiEffect.NavigationHome -> onNavigateToHome()
+                }
+            }
+    }
+
     val context = LocalContext.current
     // 에러 처리
     LaunchedEffect(uiState.error) {
@@ -194,7 +213,7 @@ internal fun CardDetailRoute(
                     CardDetailError.FAIL -> context.getString(R.string.error_app)
                     else -> ""
                 }
-                Toast.makeText(context , message , Toast.LENGTH_SHORT).show()
+                SooumToast.makeToast(context , message , SooumToast.LENGTH_SHORT).show()
                 viewModel.clearError()
             }
             CardDetailError.CARD_DELETE -> {
@@ -222,7 +241,7 @@ internal fun CardDetailRoute(
             viewModel.clearBlockSuccess()
         }
     }
-    if(uiState.deleteSuccess){
+    if(uiState.deleteSuccess) {
         isDelete = true
     }
 
@@ -376,6 +395,7 @@ internal fun CardDetailRoute(
 }
 
 
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CardDetailScreen(
@@ -420,8 +440,8 @@ private fun CardDetailScreen(
     onShowBlockDialogChange: (Boolean) -> Unit,
     showDeleteDialog: Boolean,
     onShowDeleteDialogChange: (Boolean) -> Unit,
-    refreshingOffset: androidx.compose.ui.unit.Dp,
-    refreshState: androidx.compose.material3.pulltorefresh.PullToRefreshState,
+    refreshingOffset: Dp,
+    refreshState: PullToRefreshState,
     density: androidx.compose.ui.unit.Density,
     onPreviousCardClick: () -> Unit = { },
     profileClick : (Long) -> Unit,

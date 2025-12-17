@@ -208,7 +208,7 @@ fun FeedView(
                     .background(color = NeutralColor.GRAY_100)
                     .padding(
                         top = paddingValues.calculateTopPadding(),
-                        bottom = paddingValues.calculateBottomPadding() + BOTTOM_NAVIGATION_HEIGHT.dp
+                        bottom = paddingValues.calculateBottomPadding()
                     )
             ) {
                 FeedContentView(
@@ -315,7 +315,8 @@ private fun FeedContentView(
         columns = GridCells.Fixed(1),
         state = lazyGridState,
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+        contentPadding = PaddingValues(bottom = BOTTOM_NAVIGATION_HEIGHT.dp)
     ) {
         item(span = { GridItemSpan(maxLineSpan) }) {
             Box(

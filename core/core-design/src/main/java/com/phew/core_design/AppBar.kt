@@ -381,7 +381,8 @@ object AppBar {
         onValueChange: (String) -> Unit,
         onDeleteClick: () -> Unit,
         onSearch: () -> Unit,
-        focusRequester: androidx.compose.ui.focus.FocusRequester? = null
+        focusRequester: androidx.compose.ui.focus.FocusRequester? = null,
+        showDeleteIcon: Boolean = true
     ) {
         val interactionSource = remember { MutableInteractionSource() }
         Row(
@@ -421,7 +422,8 @@ object AppBar {
                 onValueChange = onValueChange,
                 onDeleteClick = onDeleteClick,
                 onSearch = onSearch,
-                focusRequester = focusRequester
+                focusRequester = focusRequester,
+                showDeleteIcon = showDeleteIcon
             )
             if (isIcon) {
                 Box(

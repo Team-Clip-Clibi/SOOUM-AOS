@@ -98,26 +98,26 @@ class SooumToast(private val presenter: SooumToastPresenter) {
         /**
          * 리소스 ID [resId] 에 해당하는 텍스트를 가져와 토스트를 생성한다.
          */
-        fun makeToast(context: Context, @StringRes resId: Int, duration: Int): SooumToast {
-            if (SooumToastConstants.DEBUG_ENABLED) Log.v(TAG, "makeToast() $resId, $duration")
+        fun makeToast(context: Context, @StringRes resId: Int, duration: Int, yOffset: Int? = null): SooumToast {
+            if (SooumToastConstants.DEBUG_ENABLED) Log.v(TAG, "makeToast() $resId, $duration, yOffset=$yOffset")
 
             val text = context.getString(resId)
-            return makeSooumToast(text, duration)
+            return makeSooumToast(text, duration, yOffset)
         }
 
-        fun makeToast(context: Context, message: String, duration: Int): SooumToast {
-            if (SooumToastConstants.DEBUG_ENABLED) Log.v(TAG, "makeToast() $message, $duration")
-            return makeSooumToast(message, duration)
+        fun makeToast(context: Context, message: String, duration: Int, yOffset: Int? = null): SooumToast {
+            if (SooumToastConstants.DEBUG_ENABLED) Log.v(TAG, "makeToast() $message, $duration, yOffset=$yOffset")
+            return makeSooumToast(message, duration, yOffset)
         }
 
         /**
          * 특정 텍스트 [text] 에 해당하는 토스트를 생성한다.
          * + [duration] 은 [LENGTH_LONG],[LENGTH_SHORT] 값을 지정할 수 있다.
          */
-        fun makeToast(text: CharSequence, duration: Int): SooumToast {
-            if (SooumToastConstants.DEBUG_ENABLED) Log.v(TAG, "makeToast() $text, $duration")
+        fun makeToast(text: CharSequence, duration: Int, yOffset: Int? = null): SooumToast {
+            if (SooumToastConstants.DEBUG_ENABLED) Log.v(TAG, "makeToast() $text, $duration, yOffset=$yOffset")
 
-            return makeSooumToast(text, duration)
+            return makeSooumToast(text, duration, yOffset)
         }
 
         /**
@@ -129,11 +129,14 @@ class SooumToast(private val presenter: SooumToastPresenter) {
             SooumToastThreadImpl.Companion.getThread()?.cancelAll()
         }
 
-        private fun makeSooumToast(text: CharSequence, duration: Int): SooumToast {
-            return SooumToast(SooumToastPresenterImpl.Companion.getInstance(text))
-                .apply {
-                    this.duration = duration
-                }
+        private fun makeSooumToast(text: CharSequence, duration: Int, yOffset: Int? = null): SooumToast {
+            val toast = SooumToast(SooumToastPresenterImpl.getInstance(text)).apply {
+                this.duration = duration
+            }
+            yOffset?.let {
+                toast.setGravity(Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL, 0, it)
+            }
+            return toast
         }
     }
 }

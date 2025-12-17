@@ -475,7 +475,7 @@ private fun WriteScreen(
         ) {
             Column(
                 modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .padding(horizontal = 16.dp)
                     .pointerInput(isImeVisible) {
                         awaitPointerEventScope {
                             while (true) {
@@ -500,6 +500,8 @@ private fun WriteScreen(
                     .weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Spacer(Modifier.height(8.dp))
+
                 Box(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center
@@ -550,7 +552,6 @@ private fun WriteScreen(
             val density = LocalDensity.current
             LaunchedEffect(showRelatedTags) {
                 if (showRelatedTags) {
-                    //   TODO 고정 값이 아닌 다른 방안이 필요
                     val shift = with(density) { 30.dp.toPx() }
                     scrollState.animateScrollBy(shift)
                 }
@@ -779,7 +780,7 @@ private fun FontSelect(
     selectedFont: String,
     onFontSelected: (FontFamily) -> Unit,
 ) {
-    Column(modifier = Modifier.padding(top = 24.dp)) {
+    Column(modifier = Modifier.padding(top = 24.dp, bottom = 8.dp)) {
         Text(
             text = stringResource(com.phew.presentation.write.R.string.write_screen_font_section),
             style = TextComponent.CAPTION_1_SB_12.copy(color = Primary.DARK),
@@ -808,13 +809,14 @@ private fun OptionButtons(
             .background(NeutralColor.WHITE)
     ) {
         Spacer(modifier = Modifier
+            .fillMaxWidth()
             .height(1.dp)
             .background(NeutralColor.GRAY_200))
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
