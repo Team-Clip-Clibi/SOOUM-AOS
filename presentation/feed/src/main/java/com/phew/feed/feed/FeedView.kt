@@ -181,7 +181,8 @@ fun FeedView(
         }
     }
     val noticeShow = when (uiState.currentTab) {// 요기 수정
-        FeedType.Latest -> latestFeedItems.loadState.refresh is LoadState.Loading
+        FeedType.Latest -> latestFeedItems.loadState.refresh is LoadState.Loading &&
+            latestFeedItems.itemCount == 0
         else -> currentPagingState is FeedPagingState.Loading
     }
     val snackBarHostState = remember { SnackbarHostState() }
@@ -345,13 +346,15 @@ private fun FeedContentView(
                 )
             }
         }
+        // LoadState.Loading 상태에서도 기존 목록을 유지하기 위해 로딩/노트로딩을 함께 처리한다.
+        // 단, 최초 로딩(아이템이 없는 상태)일 때만 별도 로딩뷰를 노출.
         when (currentTab) {
             FeedType.Latest -> {
-                when (latestFeedItems.loadState.refresh) {
+                when (val refreshState = latestFeedItems.loadState.refresh) {
                     is LoadState.Error -> {
                         item(span = { GridItemSpan(maxLineSpan) }) {
                             ErrorView(
-                                message = (latestFeedItems.loadState.refresh as LoadState.Error).error.message
+                                message = refreshState.error.message
                                     ?: stringResource(R.string.home_feed_load_error),
                                 onRetry = {
                                     latestFeedItems.retry()
@@ -360,70 +363,88 @@ private fun FeedContentView(
                         }
                     }
 
+                    is LoadState.Loading,
                     is LoadState.NotLoading -> {
-                        if (latestFeedItems.itemCount == 0) {
+                        val isInitialLoading =
+                            refreshState is LoadState.Loading && latestFeedItems.itemCount == 0
+
+                        if (isInitialLoading) {
                             item(span = { GridItemSpan(maxLineSpan) }) {
-                                EmptyFeedView()
-                            }
-                        } else {
-                            items(
-                                count = latestFeedItems.itemCount,
-                                key = latestFeedItems.itemKey { it.cardId },
-                                contentType = latestFeedItems.itemContentType { "LatestFeed" }
-                            ) { index ->
-                                latestFeedItems[index]?.let { latest ->
-                                    val feedCardType = classifyLatestFeedType(latest)
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .wrapContentHeight()
-                                            .padding(horizontal = 16.dp)
-                                            .graphicsLayer { translationY = pullOffsetPx }
-                                    ) {
-                                        FeedUi.TypedFeedCardView(
-                                            feedCard = feedCardType,
-                                            onClick = onClick,
-                                            onRemoveCard = onRemoveCard,
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                        when (val appendState = latestFeedItems.loadState.append) {
-                            is LoadState.Error -> {
-                                item(span = { GridItemSpan(maxLineSpan) }) {
-                                    ErrorView(
-                                        message = appendState.error.message
-                                            ?: stringResource(R.string.home_feed_load_error),
-                                        onRetry = {
-                                            latestFeedItems.retry()
-                                        }
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 20.dp)
+                                        .graphicsLayer { translationY = pullOffsetPx }
+                                ) {
+                                    LoadingAnimation.LoadingView(
+                                        modifier = Modifier.fillMaxWidth()
                                     )
                                 }
                             }
-
-                            is LoadState.Loading -> {
+                        } else {
+                            if (latestFeedItems.itemCount == 0) {
                                 item(span = { GridItemSpan(maxLineSpan) }) {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 20.dp)
-                                            .graphicsLayer { translationY = pullOffsetPx }
-                                    ) {
-                                        LoadingAnimation.LoadingView(
-                                            modifier = Modifier.fillMaxWidth()
-                                        )
+                                    EmptyFeedView()
+                                }
+                            } else {
+                                items(
+                                    count = latestFeedItems.itemCount,
+                                    key = latestFeedItems.itemKey { it.cardId },
+                                    contentType = latestFeedItems.itemContentType { "LatestFeed" }
+                                ) { index ->
+                                    latestFeedItems[index]?.let { latest ->
+                                        val feedCardType = classifyLatestFeedType(latest)
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .wrapContentHeight()
+                                                .padding(horizontal = 16.dp)
+                                                .graphicsLayer { translationY = pullOffsetPx }
+                                        ) {
+                                            FeedUi.TypedFeedCardView(
+                                                feedCard = feedCardType,
+                                                onClick = onClick,
+                                                onRemoveCard = onRemoveCard,
+                                            )
+                                        }
                                     }
                                 }
                             }
 
-                            is LoadState.NotLoading -> {
-                                // No-op
+                            when (val appendState = latestFeedItems.loadState.append) {
+                                is LoadState.Error -> {
+                                    item(span = { GridItemSpan(maxLineSpan) }) {
+                                        ErrorView(
+                                            message = appendState.error.message
+                                                ?: stringResource(R.string.home_feed_load_error),
+                                            onRetry = {
+                                                latestFeedItems.retry()
+                                            }
+                                        )
+                                    }
+                                }
+
+                                is LoadState.Loading -> {
+                                    item(span = { GridItemSpan(maxLineSpan) }) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 20.dp)
+                                                .graphicsLayer { translationY = pullOffsetPx }
+                                        ) {
+                                            LoadingAnimation.LoadingView(
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                        }
+                                    }
+                                }
+
+                                is LoadState.NotLoading -> {
+                                    // No-op
+                                }
                             }
                         }
                     }
-
-                    else -> Unit
                 }
             }
 

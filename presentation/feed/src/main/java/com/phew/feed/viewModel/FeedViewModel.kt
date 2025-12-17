@@ -130,7 +130,10 @@ class FeedViewModel @Inject constructor(
         viewModelScope.launch {
             // Location 초기 설정
             val location = getLocationSafely()
-            _latestFeedLocation.value = location.latitude.takeIf { it != 0.0 } to location.longitude.takeIf { it != 0.0 }
+            _latestFeedLocation.value = LatestFeedQuery(
+                latitude = location.latitude.takeIf { it != 0.0 },
+                longitude = location.longitude.takeIf { it != 0.0 }
+            )
         }
     }
 
@@ -141,11 +144,28 @@ class FeedViewModel @Inject constructor(
         getReadNotification().cachedIn(viewModelScope)
 
     // Latest Feed Paging
-    private val _latestFeedLocation = MutableStateFlow<Pair<Double?, Double?>>(null to null)
+    /**
+     * 최신 피드 페이징은 위치가 동일해도 새로고침 시 스트림을 다시 구독해야 하므로
+     * refreshToken을 함께 사용해 강제로 플로우를 재시작한다.
+     */
+    private data class LatestFeedQuery(
+        val latitude: Double?,
+        val longitude: Double?,
+        val refreshToken: Long = 0L,
+    )
+
+    private val _latestFeedLocation =
+        MutableStateFlow(LatestFeedQuery(latitude = null, longitude = null))
+
+    private fun triggerLatestFeedRefresh() {
+        _latestFeedLocation.update { current ->
+            current.copy(refreshToken = current.refreshToken + 1)
+        }
+    }
     @OptIn(ExperimentalCoroutinesApi::class)
     val latestFeedPaging: Flow<PagingData<Latest>> = _latestFeedLocation
-        .flatMapLatest { (latitude, longitude) ->
-            getLatestFeed(latitude, longitude)
+        .flatMapLatest { query ->
+            getLatestFeed(query.latitude, query.longitude)
         }
         .cachedIn(viewModelScope)
 
@@ -183,7 +203,10 @@ class FeedViewModel @Inject constructor(
                 state.copy(location = location, currentTab = FeedType.Distance)
             }
             // Latest feed location도 업데이트
-            _latestFeedLocation.value = location.latitude.takeIf { it != 0.0 } to location.longitude.takeIf { it != 0.0 }
+            _latestFeedLocation.value = LatestFeedQuery(
+                latitude = location.latitude.takeIf { it != 0.0 },
+                longitude = location.longitude.takeIf { it != 0.0 }
+            )
         }
     }
 
@@ -257,7 +280,7 @@ class FeedViewModel @Inject constructor(
                         val newFeedCards = mapLatestToFeedCards(result.data)
                         val isDuplicate = newFeedCards.isNotEmpty() && newFeedCards == existingCards.takeLast(newFeedCards.size)
                         SooumLog.d(TAG, "Latest feed duplicate check: $isDuplicate (new=${newFeedCards.size}, existing=${existingCards.size})")
-                        delay(2000L)
+                        delay(1000L)
                         _uiState.update { state ->
                             state.copy(
                                 location = location,
@@ -499,6 +522,7 @@ class FeedViewModel @Inject constructor(
         when (_uiState.value.currentTab) {
             FeedType.Latest -> {
                 _uiState.update { it.copy(latestPagingState = FeedPagingState.Loading) }
+                triggerLatestFeedRefresh()
                 loadLatestFeeds(isInitial = true)
             }
 

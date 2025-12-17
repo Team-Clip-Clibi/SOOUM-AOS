@@ -101,6 +101,7 @@ fun SooumNavHost(
                             popUpTo(WRITE_GRAPH) {
                                 inclusive = true
                             }
+                            launchSingleTop = true
                         }
                     )
                 },
