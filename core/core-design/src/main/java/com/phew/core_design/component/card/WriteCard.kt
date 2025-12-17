@@ -444,17 +444,17 @@ private fun ReplyCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(10.dp)
-                        .align(Alignment.TopStart)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = onPreviewCard
-                        ),
+                        .align(Alignment.TopStart),
                     contentAlignment = Alignment.TopStart
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(32.dp),
+                            .size(32.dp)
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = onPreviewCard
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
                         if (data.hasPreviousCommentThumbnail) {
