@@ -27,6 +27,7 @@ val DETAIL_GRAPH = "detail_graph".asNavParam()
 private val DETAIL_ROUTE = "detail_route".asNavParam()
 private const val COMMENT_ROUTE_BASE = "comment_route"
 private val COMMENT_ROUTE = COMMENT_ROUTE_BASE.asNavParam()
+private const val PREVIOUS_DETAIL = "detail"
 
 fun NavHostController.navigateToDetailGraph(
     cardDetailArgs: CardDetailArgs,
@@ -124,7 +125,7 @@ fun NavGraphBuilder.detailGraph(
                     onBackPressed = { parentId ->
                         val previousRoute = navController.previousBackStackEntry?.destination?.route
                         val hasDetailInStack =
-                            previousRoute?.contains("detail", ignoreCase = true) == true
+                            previousRoute?.contains(PREVIOUS_DETAIL, ignoreCase = true) == true
                         val hasCommentInStack =
                             previousRoute?.startsWith(COMMENT_ROUTE_BASE) == true
                         val shouldNavigateToParent =
