@@ -181,7 +181,8 @@ fun FeedView(
         }
     }
     val noticeShow = when (uiState.currentTab) {// 요기 수정
-        FeedType.Latest -> latestFeedItems.loadState.refresh is LoadState.Loading
+        FeedType.Latest -> latestFeedItems.loadState.refresh is LoadState.Loading &&
+            latestFeedItems.itemCount == 0
         else -> currentPagingState is FeedPagingState.Loading
     }
     val snackBarHostState = remember { SnackbarHostState() }
@@ -360,7 +361,8 @@ private fun FeedContentView(
                         }
                     }
 
-                    is LoadState.NotLoading -> {
+                    is LoadState.NotLoading,
+                    is LoadState.Loading -> {
                         if (latestFeedItems.itemCount == 0) {
                             item(span = { GridItemSpan(maxLineSpan) }) {
                                 EmptyFeedView()
@@ -389,6 +391,7 @@ private fun FeedContentView(
                                 }
                             }
                         }
+
                         when (val appendState = latestFeedItems.loadState.append) {
                             is LoadState.Error -> {
                                 item(span = { GridItemSpan(maxLineSpan) }) {
@@ -422,8 +425,6 @@ private fun FeedContentView(
                             }
                         }
                     }
-
-                    else -> Unit
                 }
             }
 
