@@ -34,15 +34,20 @@ import com.phew.sooum.session.TransferSuccessHandler
 import com.phew.sooum.ui.SooumApp
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
+import com.phew.core_common.clarity.ClarityInterface
+import com.phew.core.ui.clarity.LocalSessionRecorder
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var lifecycleAwareComposables: LifecycleAwareComposables
+
     @Inject
     lateinit var deepLinkHandler: DeepLinkHandler
 
+    @Inject
+    lateinit var clarityInterface: ClarityInterface
     private var pendingDeepLink by mutableStateOf<String?>(null)
 
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
@@ -58,16 +63,16 @@ class MainActivity : ComponentActivity() {
         controller.isAppearanceLightStatusBars = true
         controller.isAppearanceLightNavigationBars = true
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-        
+
         // 딥링크 처리
         handleIntent(intent)
-        
+
         setContent {
             val windowSize = calculateWindowSizeClass(this)
             val isExpandedScreen = windowSize.widthSizeClass != WindowWidthSizeClass.Compact
             val appState = rememberSooumAppState()
             val coroutineScope = rememberCoroutineScope()
-            
+
             // FCM 토큰 로깅 (디버그용)
             LaunchedEffect(Unit) {
                 coroutineScope.launch {
@@ -82,7 +87,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
-            
+
             // 딥링크 처리
             LaunchedEffect(pendingDeepLink) {
                 pendingDeepLink?.let { deepLink ->
@@ -94,9 +99,10 @@ class MainActivity : ComponentActivity() {
                     pendingDeepLink = null
                 }
             }
-            
+
             CompositionLocalProvider(
-                LocalLifecycleAwareComposables provides lifecycleAwareComposables
+                LocalLifecycleAwareComposables provides lifecycleAwareComposables,
+                LocalSessionRecorder provides clarityInterface
             ) {
                 SooumTheme {
                     SooumApp(
@@ -131,12 +137,12 @@ class MainActivity : ComponentActivity() {
         setIntent(intent)
         handleIntent(intent)
     }
-    
+
     private fun handleIntent(intent: Intent?) {
         if (intent == null) return
-        
+
         SooumLog.d(TAG, "Intent 처리 시작: ${intent.action}")
-        
+
         when (intent.action) {
             Intent.ACTION_VIEW -> {
                 // 딥링크 스키마 처리 (sooum://...)
@@ -147,6 +153,7 @@ class MainActivity : ComponentActivity() {
                     pendingDeepLink = deepLink
                 }
             }
+
             Intent.ACTION_MAIN -> {
                 // FCM 알림에서 전달된 딥링크 처리
                 val deepLink = intent.getStringExtra("deep_link")
@@ -160,19 +167,23 @@ class MainActivity : ComponentActivity() {
                         SooumLog.d(TAG, "FCM 알림 클릭 감지, 알림 타입: $notificationType")
                         // 알림 타입에 따른 기본 딥링크 생성
                         pendingDeepLink = when (notificationType) {
-                            NotificationType.FEED_LIKE.value  -> {
+                            NotificationType.FEED_LIKE.value -> {
                                 val cardId = intent.getStringExtra("targetCardId")
                                 if (cardId != null) "sooum://card/$cardId?backTo=feed&view=detail" else "sooum://feed"
                             }
+
                             NotificationType.COMMENT_LIKE.value,
-                            NotificationType.COMMENT_WRITE.value -> {
+                            NotificationType.COMMENT_WRITE.value,
+                                -> {
                                 val cardId = intent.getStringExtra("targetCardId")
                                 if (cardId != null) "sooum://card/$cardId?backTo=feed&view=comment" else "sooum://feed"
                             }
+
                             NotificationType.TAG_USAGE.value -> {
                                 val cardId = intent.getStringExtra("targetCardId")
                                 if (cardId != null) "sooum://card/$cardId?backTo=tag" else "sooum://feed"
                             }
+
                             NotificationType.FOLLOW.value -> "sooum://follow?tab=follower"
                             NotificationType.TRANSFER_SUCCESS.value -> TransferSuccessHandler.TRANSFER_SUCCESS_DEEP_LINK
                             else -> "sooum://feed"
@@ -182,7 +193,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-        
+
         // 추가 데이터 로깅
         intent.extras?.let { extras ->
             for (key in extras.keySet()) {
@@ -191,7 +202,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-    
+
     companion object {
         private const val TAG = "MainActivity"
     }

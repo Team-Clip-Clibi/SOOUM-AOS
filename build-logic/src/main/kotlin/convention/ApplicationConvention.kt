@@ -52,7 +52,8 @@ class ApplicationConvention : Plugin<Project> {
                     isMinifyEnabled = false
                     isDebuggable = true
                     versionNameSuffix = "-debug"
-                    buildConfigField("String", "CLARITY_PROJECT_ID", "\"\"")
+                    val clarityKeyDebug = properties.getProperty("clarityKey_dev", "")
+                    buildConfigField("String", "CLARITY_PROJECT_ID", clarityKeyDebug)
                 }
                 getByName("release") {
                     isMinifyEnabled = true
@@ -62,8 +63,8 @@ class ApplicationConvention : Plugin<Project> {
                         getDefaultProguardFile("proguard-android-optimize.txt"),
                         "proguard-rules.pro"
                     )
-                    val clarityKey = properties.getProperty("clarityKey", "")
-                    buildConfigField("String", "CLARITY_PROJECT_ID", clarityKey)
+                    val clarityKeyProd = properties.getProperty("clarityKey_prod", "")
+                    buildConfigField("String", "CLARITY_PROJECT_ID", clarityKeyProd)
                 }
             }
             flavorDimensions += "environment"
