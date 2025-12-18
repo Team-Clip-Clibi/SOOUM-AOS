@@ -31,11 +31,6 @@ class EventRepositoryImpl @Inject constructor(private val appEventLog: AppEventL
         appEventLog.logEvent(LOG_FEED_MOVE_TOP_HOME)
     }
 
-    //bottom navigation 을 통해 카드 작성 view 로 이동
-    override suspend fun logFeedBottomAddCard() {
-        appEventLog.logEvent(LOG_FEED_BOTTOM_ADD_CARD_CLICK)
-    }
-
     //Feed view -> card detail view 이동
     override suspend fun logFeedMoveToDetail() {
         appEventLog.logEvent(LOG_FEED_CLICK_CARD_DETAIL)
@@ -44,6 +39,11 @@ class EventRepositoryImpl @Inject constructor(private val appEventLog: AppEventL
     //Feed view -> card detail view 이동 when event background 일때만
     override suspend fun logFeedClickEventCard() {
         appEventLog.logEvent(LOG_FEED_CLICK_EVENT_CARD)
+    }
+
+    //bottom navigation 을 통해 카드 작성 view 로 이동
+    override suspend fun logWriteBottomAddCard() {
+        appEventLog.logEvent(LOG_FEED_BOTTOM_ADD_CARD_CLICK)
     }
 
     //태그 작성 후 Enter 선택 시
@@ -66,14 +66,14 @@ class EventRepositoryImpl @Inject constructor(private val appEventLog: AppEventL
         appEventLog.logEvent(LOG_WRITE_CARD_DISTANCE_OFF)
     }
 
-    //댓글 카드 작성 시 배경 이미지 Category 변경 기록
-    override suspend fun logWriteCommentCardBackgroundChange() {
-        appEventLog.logEvent(LOG_WRITE_COMMENT_CARD_BACKGROUND_CHANGE)
-    }
-
     //피드 카드 작성 중 뒤로 가기 선택
     override suspend fun logWriteBackToFeedCard() {
         appEventLog.logEvent(LOG_WRITE_BACK_BUTTON_WRITE_FEED_CARD)
+    }
+
+    //댓글 카드 작성 시 배경 이미지 Category 변경 기록
+    override suspend fun logWriteCommentCardBackgroundChange() {
+        appEventLog.logEvent(LOG_WRITE_COMMENT_CARD_BACKGROUND_CHANGE)
     }
 
     //댓글 카드 작성 중 뒤로 가기 기록

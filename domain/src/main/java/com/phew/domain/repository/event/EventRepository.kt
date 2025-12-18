@@ -3,7 +3,7 @@ package com.phew.domain.repository.event
 interface EventRepository {
     //feedViewEvent
     suspend fun logFeedMoveToTop()
-    suspend fun logFeedBottomAddCard()
+    suspend fun logWriteBottomAddCard()
     suspend fun logFeedMoveToDetail()
     suspend fun logFeedClickEventCard()
 
