@@ -75,9 +75,7 @@ import com.phew.feed.viewModel.NavigationEvent
 import com.phew.feed.viewModel.UiState
 import com.phew.presentation.feed.R
 import com.phew.core.ui.state.SooumAppState
-import com.phew.core_common.CheckEventCard.isEventCard
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import com.phew.core.ui.R as CoreUiR
@@ -113,7 +111,7 @@ fun FeedView(
         viewModel.navigationEvent.collect { event ->
             when (event) {
                 is NavigationEvent.NavigateToDetail -> {
-                    viewModel
+                    viewModel.logMoveCardDetail()
                     navigateToDetail(event.args)
                 }
             }
