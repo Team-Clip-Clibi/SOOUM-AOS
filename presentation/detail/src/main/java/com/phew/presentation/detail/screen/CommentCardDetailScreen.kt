@@ -194,6 +194,7 @@ internal fun CommentCardDetailScreen(
             val parentId = cardDetail.previousCardId?.toLongOrNull() ?: 0L
             SooumLog.d(TAG, "parentId : $parentId")
             onBackPressed(parentId)
+            //  TODO 이전 카드 삭제된 케이스일 경우 서버 동작 이슈로 추후 배포에서 수정 예정
         }
     }
     val showBottomSheetLambda = remember { { showBottomSheet = true } }
