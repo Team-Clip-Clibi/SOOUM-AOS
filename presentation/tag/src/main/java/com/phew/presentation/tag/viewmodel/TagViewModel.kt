@@ -531,7 +531,7 @@ class TagViewModel @Inject constructor(
                 SooumLog.d(TAG, "Successfully refreshed tag cards for $tagName")
             } catch (e: Exception) {
                 SooumLog.e(TAG, "Failed to refresh tag cards: ${e.message}")
-                _uiState.update { it.copy(isRefreshing = false) }
+                _uiState.update { it.copy(isRefreshing = false, viewTagsDataLoaded = false) }
                 emitViewTagsScreenEffect(TagUiEffect.ShowNetworkErrorSnackbar { refreshViewTags(tagName, tagId) })
             }
         }
