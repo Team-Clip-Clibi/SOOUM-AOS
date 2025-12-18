@@ -8,12 +8,5 @@ class SaveEventLogWriteCardView @Inject constructor(private val repository: Even
     suspend fun logBottomWriteClick() = repository.logWriteBottomAddCard()
     suspend fun logWriteTagClickEnter() = repository.logWriteTagWriteFinishWithEnter()
     suspend fun logChangeBackgroundCategory() = repository.logWriteCountBackgroundChange()
-    suspend fun logWriteCardFinish(isSharedDistance: Boolean) {
-        repository.logWriteCardClickFinishButton()
-        if (!isSharedDistance) {
-            repository.logWriteDistanceSharedOff()
-        }
-    }
-
     suspend fun logBackHandler() = repository.logWriteBackToFeedCard()
 }
