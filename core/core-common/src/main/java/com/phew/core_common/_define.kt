@@ -88,6 +88,7 @@ object EventCommon {
 }
 
 enum class CardDetailTrace(val value: String) {
+    KEY("previous_path"),
     FEED("feed"),
     COMMENT("comment"),
     PROFILE("profile")

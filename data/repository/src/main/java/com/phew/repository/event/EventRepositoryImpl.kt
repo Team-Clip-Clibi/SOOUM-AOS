@@ -1,11 +1,13 @@
 package com.phew.repository.event
 
 import com.phew.analytics.AppEventLog
+import com.phew.core_common.CardDetailTrace
 import com.phew.core_common.Detail.LOG_DETAIL_CARD_TAG_CLICK
 import com.phew.core_common.Detail.LOG_DETAIL_WRITE_COMMENT_CARD_BUTTON_ALL
 import com.phew.core_common.Detail.LOG_DETAIL_WRITE_COMMENT_CARD_BUTTON_FLOAT
 import com.phew.core_common.Detail.LOG_DETAIL_WRITE_COMMENT_CARD_BUTTON_IMAGE
 import com.phew.core_common.Detail.LOG_DETAIL_WRITE_COMMENT_WHEN_BACKGROUND_EVENT_CARD
+import com.phew.core_common.EventCommon.LOG_TRACE_CARD_DETAIL_VIEW
 import com.phew.core_common.Feed.LOG_FEED_BOTTOM_ADD_CARD_CLICK
 import com.phew.core_common.Feed.LOG_FEED_CLICK_CARD_DETAIL
 import com.phew.core_common.Feed.LOG_FEED_CLICK_EVENT_CARD
@@ -125,8 +127,8 @@ class EventRepositoryImpl @Inject constructor(private val appEventLog: AppEventL
     override suspend fun logTagClickPopularTag() {
         appEventLog.logEvent(LOG_TAG_POPULAR_TAG_CLICK)
     }
-
+    // 카드 상세조회 이전 화면 추적
     override suspend fun traceWhereComeFromCardDetail(view: String) {
-        TODO("Not yet implemented")
+        appEventLog.logEvent(LOG_TRACE_CARD_DETAIL_VIEW ,mapOf(CardDetailTrace.KEY.value to view) )
     }
 }
