@@ -37,5 +37,67 @@ const val BANNER_SERVICE = "service"
 
 //bottom navigation height
 const val BOTTOM_NAVIGATION_HEIGHT = 62
+
 //Nick name length
 const val INPUT_NICK_NAME = 8
+
+//eventCard
+const val EVENT_CARD = "event"
+
+//event Log
+object Feed {
+    const val LOG_FEED_MOVE_TOP_HOME = "feedMoveToTop_home_btn_click"
+    const val LOG_FEED_BOTTOM_ADD_CARD_CLICK = "moveToCreateFeedCardView_btn_click"
+    const val LOG_FEED_CLICK_CARD_DETAIL = "feedToCardDetailView_card_click"
+    const val LOG_FEED_CLICK_EVENT_CARD = "feedToCardDetailView_cardWithEventImg_click"
+}
+
+object Write {
+    const val LOG_WRITE_CARD_ENTER = "multipleFeedTagCreation_enter_btn_click"
+    const val LOG_WRITE_CARD_FINISH = "createFeedCard_btn_click"
+    const val LOG_WRITE_CARD_BACKGROUND_CHANGE = "feedBackgroundCategory_tab_click"
+    const val LOG_WRITE_CARD_DISTANCE_OFF = "createFeedCardWithoutDistanceSharedOpt_btn_click"
+    const val LOG_WRITE_COMMENT_CARD_BACKGROUND_CHANGE = "commentBackgroundCategory_tab_click"
+    const val LOG_WRITE_BACK_BUTTON_WRITE_FEED_CARD = "moveToCreateFeedCardView_cancel_btn_click"
+    const val LOG_WRITE_COMMENT_CARD_BACK_HANDLER = "moveToCreateCommentCardView_cancel_btn_click"
+}
+
+object Detail {
+    const val LOG_DETAIL_WRITE_COMMENT_CARD_BUTTON_ALL = "moveToCreateCommentCardView_btn_click"
+    const val LOG_DETAIL_WRITE_COMMENT_CARD_BUTTON_IMAGE =
+        "moveToCreateCommentCardView_icon_btn_click"
+    const val LOG_DETAIL_WRITE_COMMENT_CARD_BUTTON_FLOAT =
+        "moveToCreateCommentCardView_floating_btn_click"
+    const val LOG_DETAIL_CARD_TAG_CLICK = "cardDetailTag_btn_click"
+    const val LOG_DETAIL_WRITE_COMMENT_WHEN_BACKGROUND_EVENT_CARD =
+        "moveToCreateCommentCardView_withEventImg_floating_btn_click"
+}
+
+object SignUpSetting {
+    const val LOG_ACCOUNT_TRANSFER_SUCCESS = "accountTransferSuccess"
+}
+
+object Tag {
+    const val LOG_TAG_REGISTER_TAG = "favoriteTagRegister_btn_click"
+    const val LOG_TAG_SEARCH_VIEW_CLICK = "tagMenuSearchBar_click"
+    const val LOG_TAG_POPULAR_TAG_CLICK = "popularTag_item_click"
+}
+
+object EventCommon {
+    const val LOG_TRACE_CARD_DETAIL_VIEW = "cardDetailView_tracePath_click"
+}
+
+enum class CardDetailTrace(val value: String) {
+    FEED("feed"),
+    COMMENT("comment"),
+    PROFILE("profile")
+}
+
+enum class MoveDetail {
+    FLOAT,
+    IMAGE
+}
+
+object CheckEventCard {
+    fun String.isEventCard(): Boolean = this.contains(EVENT_CARD)
+}
