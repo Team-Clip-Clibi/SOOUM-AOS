@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.phew.core.ui.model.navigation.CardDetailArgs
+import com.phew.core_common.CardDetailTrace
 import com.phew.domain.dto.FeedData
 import com.phew.core_common.DataResult
 import com.phew.core_common.DomainResult
@@ -774,7 +775,7 @@ class FeedViewModel @Inject constructor(
                         if (isEventCard) eventLog.moveToCardDetailWhenEventCard() else eventLog.moveToCardDetail()
                         _navigationEvent.emit(
                             NavigationEvent.NavigateToDetail(
-                                CardDetailArgs(cardIdLong)
+                                CardDetailArgs(cardIdLong, previousView = CardDetailTrace.FEED)
                             )
                         )
                     }

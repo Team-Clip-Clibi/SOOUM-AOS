@@ -48,6 +48,8 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import com.phew.core.ui.model.navigation.CardDetailArgs
+import com.phew.core_common.CardDetailTrace
 import com.phew.core_common.ERROR_LOGOUT
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_design.AppBar
@@ -77,7 +79,7 @@ internal fun OtherProfile(
     onBackPress: () -> Unit,
     onClickFollower: () -> Unit,
     onClickFollowing: () -> Unit,
-    onClickCard: (Long) -> Unit,
+    onClickCard: (CardDetailArgs) -> Unit,
 ) {
     if (userId == 0L) {
         ErrorView(errorMessage = "Fail to get Profile")
@@ -190,7 +192,14 @@ internal fun OtherProfile(
                                 }
                             }
                         },
-                        onClickCard = onClickCard,
+                        onClickCard = { id ->
+                            onClickCard(
+                                CardDetailArgs(
+                                    cardId = id,
+                                    previousView = CardDetailTrace.PROFILE
+                                )
+                            )
+                        },
                         onLogout = onLogOut,
                         snackBarHostState = snackBarHostState,
                         modifier = Modifier

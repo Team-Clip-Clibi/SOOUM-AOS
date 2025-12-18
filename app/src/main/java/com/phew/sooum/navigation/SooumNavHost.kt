@@ -10,7 +10,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.navOptions
 import com.phew.core.ui.component.back.SooumOnBackPressed
 import com.phew.core.ui.component.home.HomeTabType
-import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.model.navigation.CardDetailCommentArgs
 import com.phew.core.ui.model.navigation.OnBoardingArgs
 import com.phew.core.ui.model.navigation.ProfileArgs
@@ -20,10 +19,9 @@ import com.phew.home.navigation.navigateToHomeGraph
 import com.phew.home.navigation.navigateToReport
 import com.phew.presentation.detail.navigation.detailGraph
 import com.phew.core.ui.model.navigation.WriteArgs
+import com.phew.core_common.CardDetailTrace
 import com.phew.core_common.log.SooumLog
-import com.phew.core_design.component.card.CardViewComment
 import com.phew.domain.interceptor.GlobalEvent
-import com.phew.feed.navigation.navigateToFeedGraph
 import com.phew.presentation.MainViewModel
 import com.phew.presentation.detail.navigation.navigateToDetailCommentDirect
 import com.phew.presentation.detail.navigation.navigateToDetailGraph
@@ -129,8 +127,9 @@ fun SooumNavHost(
                 cardClick = { id ->
                     navController.navigateToDetailCommentDirect(
                         cardDetailCommentArgs = CardDetailCommentArgs(
-                            cardId = id,
-                            parentId = 0
+                            cardId = id.cardId,
+                            parentId = 0,
+                            previousView = CardDetailTrace.FEED
                         )
                     )
                 }

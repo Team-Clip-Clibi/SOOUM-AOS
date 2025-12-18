@@ -93,6 +93,7 @@ import androidx.paging.compose.itemKey
 import kotlinx.coroutines.launch
 import com.airbnb.lottie.compose.LottieConstants
 import com.phew.core.ui.model.navigation.TagViewArgs
+import com.phew.core_common.CardDetailTrace
 import com.phew.core_design.LoadingAnimation
 import com.phew.core_design.component.refresh.RefreshBox
 import com.phew.core_design.typography.FontType
@@ -211,7 +212,8 @@ internal fun CommentCardDetailScreen(
             onNavigateToComment(
                 CardDetailCommentArgs(
                     cardId = childId,
-                    parentId = cardDetail.cardId
+                    parentId = cardDetail.cardId,
+                    previousView = CardDetailTrace.COMMENT
                 )
             )
         }

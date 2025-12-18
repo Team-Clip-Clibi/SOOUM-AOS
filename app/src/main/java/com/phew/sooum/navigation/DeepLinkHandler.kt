@@ -10,6 +10,7 @@ import com.phew.core.ui.component.home.HomeTabType
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.model.navigation.CardDetailCommentArgs
 import com.phew.core.ui.state.SooumAppState
+import com.phew.core_common.CardDetailTrace
 import com.phew.core_common.log.SooumLog
 import com.phew.feed.navigation.navigateToFeedGraph
 import com.phew.home.navigation.navigateToHomeGraph
@@ -175,7 +176,8 @@ class DeepLinkHandler @Inject constructor(
                     cardDetailCommentArgs = CardDetailCommentArgs(
                         cardId = cardId,
                         parentId = 0L,
-                        backTo = backTo
+                        backTo = backTo,
+                        previousView = CardDetailTrace.FEED
                     )
                 )
             }
