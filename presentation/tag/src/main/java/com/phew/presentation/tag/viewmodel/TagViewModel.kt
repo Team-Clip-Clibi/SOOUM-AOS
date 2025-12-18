@@ -20,6 +20,7 @@ import com.phew.domain.usecase.GetTagCardsPaging
 import com.phew.domain.usecase.GetTagRank
 import com.phew.domain.usecase.GetUserInfo
 import com.phew.domain.usecase.RemoveFavoriteTag
+import com.phew.domain.usecase.SaveEventLogTagView
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -74,6 +75,7 @@ class TagViewModel @Inject constructor(
     private val addFavoriteTag: AddFavoriteTag,
     private val removeFavoriteTag: RemoveFavoriteTag,
     private val getTagRank: GetTagRank,
+    private val log : SaveEventLogTagView
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TagUiState())
@@ -256,6 +258,7 @@ class TagViewModel @Inject constructor(
 
     fun navToSearchScreen() {
         viewModelScope.launch {
+            log.logClickSearchView()
             emitTagScreenEffect(TagUiEffect.NavigationSearchScreen)
         }
     }
@@ -456,9 +459,10 @@ class TagViewModel @Inject constructor(
             }
         }
     }
-    
+
     fun onTagRankClick(tagId: Long) {
         viewModelScope.launch {
+            log.logSelectPopularTag()
             val tagRank = _uiState.value.tagRank
             if (tagRank is UiState.Success) {
                 val selectedTag = tagRank.data.find { it.id == tagId }
