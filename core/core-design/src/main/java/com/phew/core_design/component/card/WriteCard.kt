@@ -167,8 +167,7 @@ private fun BaseCard(
         modifier = modifier
             .fillMaxWidth()
             .defaultMinSize(
-                minWidth = 328.dp,
-                minHeight = minimumHeight
+                minWidth = 328.dp, minHeight = minimumHeight
             ),
         shape = RoundedCornerShape(CardDesignTokens.CardRadius),
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
@@ -199,8 +198,7 @@ private fun EditableWriteContentBox(
             .fillMaxWidth()
             .padding(horizontal = 32.dp)
             .background(
-                color = OpacityColor.blackSmallColor,
-                shape = RoundedCornerShape(12.dp)
+                color = OpacityColor.blackSmallColor, shape = RoundedCornerShape(12.dp)
             )
             .clickable(
                 enabled = isEditable,
@@ -284,8 +282,7 @@ private fun ReadOnlyContentBox(
             .fillMaxWidth()
             .padding(horizontal = 32.dp)
             .background(
-                color = OpacityColor.blackSmallColor,
-                shape = RoundedCornerShape(12.dp)
+                color = OpacityColor.blackSmallColor, shape = RoundedCornerShape(12.dp)
             ),
         contentAlignment = Alignment.Center
     ) {
@@ -591,35 +588,41 @@ private fun DeletedCard(
     }
 }
 
-//// ===== 프리뷰 =====
-//@Preview(showBackground = true, backgroundColor = 0xFFFFFFFF)
-//@Composable
-//fun CardViewPreview() {
-//    LazyColumn(
-//        modifier = Modifier
-//            .fillMaxSize()
-//            .padding(16.dp),
-//        verticalArrangement = Arrangement.spacedBy(16.dp)
-//    ) {
-//        item {
-//            CardView(BaseCardData.Write(content = "짧은 글 예시입니다.\n스크롤 안전!", tags = listOf("Tag1", "Tag2")))
-//        }
-//        item {
-//            CardView(
-//                BaseCardData.Reply(
-//                    previousCommentThumbnailUri = "2",
-//                    content = "이건 ReplyCard 예시",
-//                    tags = listOf("답변", "예시"),
-//                    hasPreviousCommentThumbnail = true,
-//
-//                )
-//            )
-//        }
-//        item {
-//            CardView(BaseCardData.Deleted("삭제된 카드예요"))
-//        }
-//    }
-//}
+// ===== 프리뷰 =====
+@Preview(showBackground = true, backgroundColor = 0xFFFFFFFF)
+@Composable
+fun CardViewPreview() {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        item {
+            CardView(
+                data = BaseCardData.Write(
+                    content = "짧은 글 예시입니다.\n스크롤 안전!",
+                    tags = listOf("Tag1", "Tag2")
+                ),
+                enterClick = {}
+            )
+        }
+        item {
+            CardView(
+                enterClick = {}, data = BaseCardData.Reply(
+                    previousCommentThumbnailUri = "2",
+                    content = "이건 ReplyCard 예시",
+                    tags = listOf("답변", "예시"),
+                    hasPreviousCommentThumbnail = true,
+
+                    )
+            )
+        }
+        item {
+            CardView(data = BaseCardData.Deleted("삭제된 카드예요"), enterClick = {})
+        }
+    }
+}
 
 private object DisabledTextToolbar : TextToolbar {
     override val status: TextToolbarStatus

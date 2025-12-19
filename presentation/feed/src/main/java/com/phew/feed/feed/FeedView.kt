@@ -111,7 +111,6 @@ fun FeedView(
         viewModel.navigationEvent.collect { event ->
             when (event) {
                 is NavigationEvent.NavigateToDetail -> {
-                    viewModel.logMoveCardDetail()
                     navigateToDetail(event.args)
                 }
             }

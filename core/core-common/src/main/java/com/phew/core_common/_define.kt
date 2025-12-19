@@ -101,6 +101,4 @@ enum class MoveDetail {
     IMAGE
 }
 
-object CheckEventCard {
-    fun String.isEventCard(): Boolean = this.contains(EVENT_CARD)
-}
+fun String.isEventCard(): Boolean = this.contains(EVENT_CARD)

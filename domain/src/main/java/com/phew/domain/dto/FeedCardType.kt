@@ -1,6 +1,6 @@
 package com.phew.domain.dto
 
-import com.phew.core_common.CheckEventCard
+import com.phew.core_common.isEventCard
 
 sealed class FeedCardType {
     data class BoombType(
@@ -46,6 +46,6 @@ sealed class FeedCardType {
             is AdminType -> this.imageName
             is NormalType -> this.imageName
         }
-        return with(CheckEventCard) { targetImageName.isEventCard() }
+        return targetImageName.isEventCard()
     }
 }
