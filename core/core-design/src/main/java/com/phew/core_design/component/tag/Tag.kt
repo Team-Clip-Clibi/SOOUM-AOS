@@ -48,6 +48,11 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -196,7 +201,8 @@ internal fun TagRow(
     onInputChange: (String) -> Unit = {},
     fontFamily: FontFamily = FontFamily.Default,
     modifier: Modifier = Modifier,
-    onTagClick: (String) -> Unit = { }
+    onTagClick: (String) -> Unit = { },
+    enterClick: () -> Unit
 ) {
     var input by remember { mutableStateOf(currentInput) }
     var state by remember { mutableStateOf(TagState.AddNew) }
@@ -281,6 +287,7 @@ internal fun TagRow(
                         state = TagState.Focus
                         awaitingFocus = true
                         focusTrigger++
+                        enterClick()
                     }
                 },
                 onRemove = {
@@ -329,7 +336,7 @@ fun TagRankView(
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp)
-            .padding( top= 4.dp, bottom = 4.dp, end = 12.dp)
+            .padding(top = 4.dp, bottom = 4.dp, end = 12.dp)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,

@@ -17,8 +17,8 @@ import com.phew.core_common.ERROR_UN_GOOD_IMAGE
 import com.phew.core_common.HTTP_BAD_REQUEST
 import com.phew.core_common.HTTP_CARD_ALREADY_DELETE
 import com.phew.core_common.HTTP_NOT_FOUND
-import com.phew.core_common.HTTP_SUCCESS
 import com.phew.domain.repository.DeviceRepository
+import com.phew.domain.repository.event.EventRepository
 import com.phew.domain.repository.network.CardFeedRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -32,6 +32,7 @@ class PostCard @Inject constructor(
     private val networkRepository: CardFeedRepository,
     @ApplicationContext private val context: Context,
     private val deviceRepository: DeviceRepository,
+    private val eventRepository: EventRepository
 ) {
     data class Param(
         val isFromDevice: Boolean, //핸드폰 디바이스에서 사진 선택했는지
@@ -107,7 +108,11 @@ class PostCard @Inject constructor(
             )
         }
         return when (uploadResult) {
-            is DataResult.Success -> DomainResult.Success(uploadResult.data.cardId)
+            is DataResult.Success -> {
+                eventRepository.logWriteCardClickFinishButton()
+                if(!locationPermissionCheck) eventRepository.logWriteDistanceSharedOff()
+                DomainResult.Success(uploadResult.data.cardId)
+            }
             is DataResult.Fail -> when (uploadResult.code) {
                 HTTP_BAD_REQUEST -> DomainResult.Failure(ERROR_ACCOUNT_SUSPENDED)
                 HTTP_CARD_ALREADY_DELETE -> DomainResult.Failure(ERROR_ALREADY_CARD_DELETE)
