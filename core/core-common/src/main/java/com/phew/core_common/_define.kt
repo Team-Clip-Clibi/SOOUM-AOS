@@ -46,31 +46,32 @@ const val EVENT_CARD = "event"
 
 //event Log
 object Feed {
-    const val LOG_FEED_MOVE_TOP_HOME = "feedMoveToTop_home_btn_click"
-    const val LOG_FEED_BOTTOM_ADD_CARD_CLICK = "moveToCreateFeedCardView_btn_click"
-    const val LOG_FEED_CLICK_CARD_DETAIL = "feedToCardDetailView_card_click"
-    const val LOG_FEED_CLICK_EVENT_CARD = "feedToCardDetailView_cardWithEventImg_click"
+    const val LOG_FEED_MOVE_TOP_HOME = "feedMoveTop_homeBtnClick"
+    const val LOG_FEED_BOTTOM_ADD_CARD_CLICK = "goCreateFCard_btnClick"
+    const val LOG_FEED_CLICK_CARD_DETAIL = "feedCardDetail_cardClick"
+    const val LOG_FEED_CLICK_EVENT_CARD = "feedCardDetail_cardWithEventImgClick"
 }
 
 object Write {
-    const val LOG_WRITE_CARD_ENTER = "multipleFeedTagCreation_enter_btn_click"
-    const val LOG_WRITE_CARD_FINISH = "createFeedCard_btn_click"
-    const val LOG_WRITE_CARD_BACKGROUND_CHANGE = "feedBackgroundCategory_tab_click"
-    const val LOG_WRITE_CARD_DISTANCE_OFF = "createFeedCardWithoutDistanceSharedOpt_btn_click"
-    const val LOG_WRITE_COMMENT_CARD_BACKGROUND_CHANGE = "commentBackgroundCategory_tab_click"
-    const val LOG_WRITE_BACK_BUTTON_WRITE_FEED_CARD = "moveToCreateFeedCardView_cancel_btn_click"
-    const val LOG_WRITE_COMMENT_CARD_BACK_HANDLER = "moveToCreateCommentCardView_cancel_btn_click"
+    const val LOG_WRITE_CARD_ENTER = "multipleFeedTagCreation_enterBtnClick"
+    const val LOG_WRITE_CARD_FINISH = "createFCard_btnClick"
+    const val LOG_WRITE_CARD_BACKGROUND_CHANGE = "feedBackgroundCategory_tabClick"
+    const val LOG_WRITE_CARD_DISTANCE_OFF = "createFCardWithoutDistanceOpt_btnClick"
+    const val LOG_WRITE_COMMENT_CARD_BACKGROUND_CHANGE = "commentBackgroundCategory_tabClick"
+    const val LOG_WRITE_BACK_BUTTON_WRITE_FEED_CARD = "goCreateFCard_cancelBtnClick"
+    const val LOG_WRITE_COMMENT_CARD_BACK_HANDLER = "goCreateCCard_cancelBtnClick"
+    const val LOG_WRITE_EVENT_BACKGROUND = "createFCardEventCategory_btnClick"
 }
 
 object Detail {
-    const val LOG_DETAIL_WRITE_COMMENT_CARD_BUTTON_ALL = "moveToCreateCommentCardView_btn_click"
+    const val LOG_DETAIL_WRITE_COMMENT_CARD_BUTTON_ALL = "goCreateCCard_btnClick"
     const val LOG_DETAIL_WRITE_COMMENT_CARD_BUTTON_IMAGE =
-        "moveToCreateCommentCardView_icon_btn_click"
+        "goCreateCCard_iconBtnClick"
     const val LOG_DETAIL_WRITE_COMMENT_CARD_BUTTON_FLOAT =
-        "moveToCreateCommentCardView_floating_btn_click"
-    const val LOG_DETAIL_CARD_TAG_CLICK = "cardDetailTag_btn_click"
+        "goCreateCCard_fBtnClick"
+    const val LOG_DETAIL_CARD_TAG_CLICK = "cardDetailTag_btnClick"
     const val LOG_DETAIL_WRITE_COMMENT_WHEN_BACKGROUND_EVENT_CARD =
-        "moveToCreateCommentCardView_withEventImg_floating_btn_click"
+        "goCreateCCardWithEventImg_fBtnClick"
 }
 
 object SignUpSetting {
@@ -78,19 +79,20 @@ object SignUpSetting {
 }
 
 object Tag {
-    const val LOG_TAG_REGISTER_TAG = "favoriteTagRegister_btn_click"
+    const val LOG_TAG_REGISTER_TAG = "favoriteTagRegister_btnClick"
     const val LOG_TAG_SEARCH_VIEW_CLICK = "tagMenuSearchBar_click"
-    const val LOG_TAG_POPULAR_TAG_CLICK = "popularTag_item_click"
+    const val LOG_TAG_POPULAR_TAG_CLICK = "popularTag_itemClick"
 }
 
 object EventCommon {
-    const val LOG_TRACE_CARD_DETAIL_VIEW = "cardDetailView_tracePath_click"
+    const val LOG_TRACE_CARD_DETAIL_VIEW = "cardDetail_tracePathClick"
 }
 
 enum class CardDetailTrace(val value: String) {
     KEY("previous_path"),
     FEED("feed"),
     COMMENT("comment"),
+    NONE("None"),
     PROFILE("profile")
 }
 
