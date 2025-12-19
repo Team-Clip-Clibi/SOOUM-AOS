@@ -177,7 +177,6 @@ class DeepLinkHandler @Inject constructor(
                         cardId = cardId,
                         parentId = 0L,
                         backTo = backTo,
-                        previousView = CardDetailTrace.FEED
                     )
                 )
             }

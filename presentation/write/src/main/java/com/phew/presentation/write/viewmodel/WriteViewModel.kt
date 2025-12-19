@@ -17,7 +17,6 @@ import com.phew.domain.usecase.GetCardDefaultImage
 import com.phew.domain.usecase.GetRelatedTag
 import com.phew.domain.usecase.PostCard
 import com.phew.domain.usecase.PostCardReply
-import com.phew.presentation.write.model.BackgroundConfig
 import com.phew.presentation.write.model.WriteOptions
 import com.phew.presentation.write.model.WriteUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -292,7 +291,23 @@ class WriteViewModel @Inject constructor(
     fun selectBackgroundFilter(filter: BackgroundFilterType, isFromFeedCard: Boolean) {
         _uiState.update { it.copy(selectedBackgroundFilter = filter) }
         viewModelScope.launch(Dispatchers.IO) {
-            if (!isFromFeedCard) logWriteFeedCard.logChangeBackgroundCategory() else logWRiteCommentCard.logBackgroundChange()
+            when (isFromFeedCard) {
+                true -> {
+                    if (filter == BackgroundFilterType.EVENT) {
+                        logWriteFeedCard.logWriteEventCard()
+                    } else {
+                        logWriteFeedCard.logChangeBackgroundCategory()
+                    }
+                }
+
+                false -> {
+                    if (filter == BackgroundFilterType.EVENT) {
+                        logWRiteCommentCard.logWriteEventCard()
+                    } else {
+                        logWRiteCommentCard.logBackgroundChange()
+                    }
+                }
+            }
         }
     }
 

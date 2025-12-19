@@ -9,4 +9,5 @@ class SaveEventLogWriteCardView @Inject constructor(private val repository: Even
     suspend fun logWriteTagClickEnter() = repository.logWriteTagWriteFinishWithEnter()
     suspend fun logChangeBackgroundCategory() = repository.logWriteCountBackgroundChange()
     suspend fun logBackHandler() = repository.logWriteBackToFeedCard()
+    suspend fun logWriteEventCard() = repository.logWriteSelectEventTab()
 }

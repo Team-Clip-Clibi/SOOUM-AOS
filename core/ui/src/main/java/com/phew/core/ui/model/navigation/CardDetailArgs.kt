@@ -7,5 +7,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class CardDetailArgs(
     val cardId: Long,
-    val previousView: CardDetailTrace = CardDetailTrace.FEED
+    val previousView: CardDetailTrace = CardDetailTrace.NONE,
 ) : java.io.Serializable

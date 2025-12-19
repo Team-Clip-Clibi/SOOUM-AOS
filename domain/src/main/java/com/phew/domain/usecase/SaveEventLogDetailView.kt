@@ -16,6 +16,8 @@ class SaveEventLogDetailView @Inject constructor(private val repository: EventRe
     }
 
     suspend fun moveToTagView() = repository.logDetailTagClick()
-    suspend fun tracePreviousView(view: CardDetailTrace) =
+    suspend fun tracePreviousView(view: CardDetailTrace) {
+        if (view == CardDetailTrace.NONE) return
         repository.traceWhereComeFromCardDetail(view.value)
+    }
 }

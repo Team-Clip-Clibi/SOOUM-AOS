@@ -356,7 +356,6 @@ internal fun CardDetailRoute(
                 CardDetailCommentArgs(
                     cardId = commentCardId,
                     parentId = args.cardId,
-                    previousView = CardDetailTrace.FEED
                 )
             )
         },

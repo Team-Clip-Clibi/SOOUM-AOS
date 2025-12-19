@@ -145,7 +145,6 @@ fun NavGraphBuilder.detailGraph(
                                     CardDetailCommentArgs(
                                         cardId = parentId,
                                         parentId = 0L,
-                                        previousView = CardDetailTrace.FEED
                                     )
                                 ),
                                 navOptions {

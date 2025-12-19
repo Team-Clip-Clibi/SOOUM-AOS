@@ -12,5 +12,5 @@ data class CardDetailCommentArgs(
     val parentId: Long,
     val backTo: String? = null,
     val isComment: Boolean = true,
-    val previousView : CardDetailTrace
+    val previousView : CardDetailTrace = CardDetailTrace.NONE
 ): java.io.Serializable

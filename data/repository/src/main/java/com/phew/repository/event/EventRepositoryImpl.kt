@@ -23,6 +23,7 @@ import com.phew.core_common.Write.LOG_WRITE_CARD_ENTER
 import com.phew.core_common.Write.LOG_WRITE_CARD_FINISH
 import com.phew.core_common.Write.LOG_WRITE_COMMENT_CARD_BACKGROUND_CHANGE
 import com.phew.core_common.Write.LOG_WRITE_COMMENT_CARD_BACK_HANDLER
+import com.phew.core_common.Write.LOG_WRITE_EVENT_BACKGROUND
 import com.phew.domain.repository.event.EventRepository
 import javax.inject.Inject
 
@@ -81,6 +82,10 @@ class EventRepositoryImpl @Inject constructor(private val appEventLog: AppEventL
     //댓글 카드 작성 중 뒤로 가기 기록
     override suspend fun logWriteBackCommentCard() {
         appEventLog.logEvent(LOG_WRITE_COMMENT_CARD_BACK_HANDLER)
+    }
+
+    override suspend fun logWriteSelectEventTab() {
+        appEventLog.logEvent(LOG_WRITE_EVENT_BACKGROUND)
     }
 
     //댓글 카드 작성 화면 이동 기록

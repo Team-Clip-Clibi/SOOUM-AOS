@@ -15,7 +15,7 @@ interface EventRepository {
     suspend fun logWriteCommentCardBackgroundChange()
     suspend fun logWriteBackToFeedCard()
     suspend fun logWriteBackCommentCard()
-
+    suspend fun logWriteSelectEventTab()
     //Detail
     suspend fun logDetailWriteCommentCard()
     suspend fun logDetailWriteCommentCardImage()

@@ -129,7 +129,7 @@ fun SooumNavHost(
                         cardDetailCommentArgs = CardDetailCommentArgs(
                             cardId = id.cardId,
                             parentId = 0,
-                            previousView = CardDetailTrace.FEED
+                            previousView = CardDetailTrace.PROFILE
                         )
                     )
                 }
