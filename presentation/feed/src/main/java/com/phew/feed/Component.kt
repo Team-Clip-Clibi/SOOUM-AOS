@@ -109,7 +109,7 @@ object FeedUi {
                 state = pagerState,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(71.dp)
+                    .wrapContentHeight()
                     .clip(RoundedCornerShape(20.dp))
             ) { page ->
                 val actualIndex = page % feedNotice.size

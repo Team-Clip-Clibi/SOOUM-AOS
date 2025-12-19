@@ -86,10 +86,10 @@ import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.model.navigation.CardDetailCommentArgs
 import com.phew.core.ui.model.navigation.TagViewArgs
 import com.phew.core_common.CardDetailTrace
-import com.phew.core_common.CheckEventCard.isEventCard
 import com.phew.core_common.MoveDetail
 import com.phew.domain.dto.CardDetailTag
 import com.phew.core_common.TimeUtils
+import com.phew.core_common.isEventCard
 import com.phew.core_common.log.SooumLog
 import com.phew.core_design.BottomSheetComponent
 import com.phew.core_design.BottomSheetItem
