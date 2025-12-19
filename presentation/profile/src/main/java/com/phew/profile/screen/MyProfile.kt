@@ -67,7 +67,9 @@ import androidx.paging.compose.LazyPagingItems
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core_common.BOTTOM_NAVIGATION_HEIGHT
+import com.phew.core_common.CardDetailTrace
 import com.phew.core_design.CustomFont
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.LoadingAnimation
@@ -84,7 +86,7 @@ internal fun MyProfile(
     onClickFollower: () -> Unit,
     onClickFollowing: () -> Unit,
     onClickSetting: () -> Unit,
-    onClickCard: (Long) -> Unit,
+    onClickCard: (CardDetailArgs) -> Unit,
     onLogout: () -> Unit,
     onEditProfileClick: () -> Unit,
 ) {
@@ -168,7 +170,9 @@ internal fun MyProfile(
                         onEditProfileClick = onEditProfileClick,
                         onFeedCardClick = { selectIndex = TAB_MY_FEED_CARD },
                         onCommentCardClick = { selectIndex = TAB_MY_COMMENT_CARD },
-                        onClickCard = onClickCard,
+                        onClickCard = { id ->
+                            onClickCard(CardDetailArgs(id, CardDetailTrace.PROFILE))
+                        },
                         onLogout = onLogout,
                         snackBarHostState = snackBarHostState,
                         modifier = Modifier

@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,7 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.foundation.lazy.LazyColumn
@@ -67,7 +65,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -88,6 +85,9 @@ import com.airbnb.lottie.compose.rememberLottieComposition
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.model.navigation.CardDetailCommentArgs
 import com.phew.core.ui.model.navigation.TagViewArgs
+import com.phew.core_common.CardDetailTrace
+import com.phew.core_common.CheckEventCard.isEventCard
+import com.phew.core_common.MoveDetail
 import com.phew.domain.dto.CardDetailTag
 import com.phew.core_common.TimeUtils
 import com.phew.core_common.log.SooumLog
@@ -130,7 +130,8 @@ internal fun CardDetailRoute(
     onBackPressed: () -> Unit,
     onPreviousCardClick: () -> Unit = { },
     profileClick: (Long) -> Unit,
-    onCardChanged: () -> Unit
+    onCardChanged: () -> Unit,
+    cardDetailTrace: CardDetailTrace
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackBarHostState = remember { SnackbarHostState() }
@@ -316,7 +317,9 @@ internal fun CardDetailRoute(
             remainingTimeMillis -= 1000L
         }
     }
-
+    LaunchedEffect(Unit) {
+        viewModel.logWhereComeFrom(view = cardDetailTrace)
+    }
     CardDetailScreen(
         modifier = modifier,
         cardContent = cardDetail.cardContent,
@@ -341,14 +344,18 @@ internal fun CardDetailRoute(
         onClickLike = {
             viewModel.toggleLike(args.cardId)
         },
-        onClickCommentIcon = {
+        onClickCommentIcon = { event ->
+            viewModel.logMoveToCommentCard(
+                event = event,
+                isEventCard = cardDetail.cardImgName.isEventCard()
+            )
             onNavigateToWrite(args.cardId)
         },
         onClickCommentView = { commentCardId ->
             onNavigateToComment(
                 CardDetailCommentArgs(
                     cardId = commentCardId,
-                    parentId = args.cardId
+                    parentId = args.cardId,
                 )
             )
         },
@@ -359,7 +366,10 @@ internal fun CardDetailRoute(
         onRefresh = {
             viewModel.loadCardDetail(args.cardId)
         },
-        onNavigateToViewTags = onNavigateToViewTags,
+        onNavigateToViewTags = { tag ->
+            viewModel.logMoveToTagView()
+            onNavigateToViewTags(tag)
+        },
         lazyListState = lazyListState,
         nestedScrollConnection = nestedScrollConnection,
         cardId = args.cardId,
@@ -420,7 +430,7 @@ private fun CardDetailScreen(
     composition: LottieComposition?,
     onBackPressed: () -> Unit,
     onClickLike: () -> Unit,
-    onClickCommentIcon: () -> Unit,
+    onClickCommentIcon: (MoveDetail) -> Unit,
     onClickCommentView: (Long) -> Unit,
     onBlockMember: (Long, String) -> Unit,
     deleteCard: (Long) -> Unit,
@@ -483,7 +493,7 @@ private fun CardDetailScreen(
                         .clickable(
                             indication = null,
                             interactionSource = remember { MutableInteractionSource() }
-                        ) { onClickCommentIcon() },
+                        ) { onClickCommentIcon(MoveDetail.FLOAT) },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -570,7 +580,9 @@ private fun CardDetailScreen(
                                 searchCnt = searchCnt,
                                 isLikeCard = isLikeCard,
                                 onClickLike = onClickLike,
-                                onClickComment = onClickCommentIcon
+                                onClickComment = {
+                                    onClickCommentIcon(MoveDetail.IMAGE)
+                                }
                             )
                         },
                         modifier = Modifier.fillMaxWidth(),

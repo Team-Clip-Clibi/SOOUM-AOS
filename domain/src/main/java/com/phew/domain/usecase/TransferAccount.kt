@@ -5,6 +5,7 @@ import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.domain.BuildConfig
 import com.phew.domain.interceptor.InterceptorManger
 import com.phew.domain.repository.DeviceRepository
+import com.phew.domain.repository.event.EventRepository
 import com.phew.domain.repository.network.MembersRepository
 import com.phew.domain.repository.network.SignUpRepository
 import java.security.KeyFactory
@@ -17,7 +18,8 @@ class TransferAccount @Inject constructor(
     private val membersRepository: MembersRepository,
     private val deviceRepository: DeviceRepository,
     private val signUpRepository: SignUpRepository,
-    private val interceptorManger : InterceptorManger
+    private val interceptorManger: InterceptorManger,
+    private val eventLogRepository: EventRepository,
 ) {
     data class Param(
         val transferCode: String,
@@ -26,6 +28,7 @@ class TransferAccount @Inject constructor(
     suspend operator fun invoke(param: Param): Result<Unit> {
         val requestTransferKey = signUpRepository.requestSecurityKey()
         if (requestTransferKey is DataResult.Fail) return Result.failure(Exception("Failed to get transfer key"))
+        eventLogRepository.logSuccessTransfer()
         val deviceId = deviceRepository.requestDeviceId()
         val transferEncryptInfo = makeDeviceInfo(
             key = (requestTransferKey as DataResult.Success).data,
@@ -54,7 +57,7 @@ class TransferAccount @Inject constructor(
 
             is DataResult.Success -> {
                 val deleteAll = interceptorManger.deleteAll()
-                if(!deleteAll) return Result.failure(Exception(ERROR_FAIL_JOB))
+                if (!deleteAll) return Result.failure(Exception(ERROR_FAIL_JOB))
                 interceptorManger.resetToken()
                 val saveToken = deviceRepository.saveToken(
                     key = BuildConfig.TOKEN_KEY,

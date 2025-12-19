@@ -10,6 +10,7 @@ import com.phew.domain.BuildConfig
 import com.phew.domain.dto.Token
 import com.phew.domain.interceptor.InterceptorManger
 import com.phew.domain.repository.DeviceRepository
+import com.phew.domain.repository.event.EventRepository
 import com.phew.domain.repository.network.MembersRepository
 import com.phew.domain.repository.network.ProfileRepository
 import com.phew.domain.repository.network.SignUpRepository
@@ -25,6 +26,7 @@ class RestoreAccount @Inject constructor(
     private val deviceRepository: DeviceRepository,
     private val interceptorManger: InterceptorManger,
     private val profileRepository: ProfileRepository,
+    private val eventLogRepository: EventRepository,
 ) {
     data class Param(
         val transferCode: String,
@@ -43,6 +45,7 @@ class RestoreAccount @Inject constructor(
         if (codeResult != Result.success(Unit)) return DomainResult.Failure(
             ERROR_TRANSFER_CODE_INVALID
         )
+        eventLogRepository.logSuccessTransfer()
         val loginKey = signUpRepository.requestSecurityKey()
         val loginEncryptedInfo =
             makeDeviceInfo(key = (loginKey as DataResult.Success).data, deviceInfo = deviceId)

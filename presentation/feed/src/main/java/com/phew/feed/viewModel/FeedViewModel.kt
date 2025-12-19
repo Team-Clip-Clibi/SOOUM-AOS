@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.phew.core.ui.model.navigation.CardDetailArgs
+import com.phew.core_common.CardDetailTrace
 import com.phew.domain.dto.FeedData
 import com.phew.core_common.DataResult
 import com.phew.core_common.DomainResult
@@ -28,6 +29,7 @@ import com.phew.domain.usecase.GetLatestFeed
 import com.phew.domain.usecase.GetNotification
 import com.phew.domain.usecase.GetReadNotification
 import com.phew.domain.usecase.GetUnReadNotification
+import com.phew.domain.usecase.SaveEventLogFeedView
 import com.phew.domain.usecase.SetReadActivateNotify
 import com.phew.domain.usecase.SetReadActivateNotify.*
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -65,6 +67,7 @@ class FeedViewModel @Inject constructor(
     private val notification: GetFeedNotification,
     private val readNotify: SetReadActivateNotify,
     private val checkCardDelete: CheckCardAlreadyDelete,
+    private val eventLog: SaveEventLogFeedView,
 ) :
     ViewModel() {
     private val _uiState = MutableStateFlow(Home())
@@ -137,7 +140,8 @@ class FeedViewModel @Inject constructor(
         }
     }
 
-    val notice: Flow<PagingData<Notice>> = getNotificationPage(NoticeSource.NOTIFICATION).cachedIn(viewModelScope)
+    val notice: Flow<PagingData<Notice>> =
+        getNotificationPage(NoticeSource.NOTIFICATION).cachedIn(viewModelScope)
     val unReadActivateAlarm: Flow<PagingData<Notification>> =
         getUnReadNotification().cachedIn(viewModelScope)
     val readActivateAlarm: Flow<PagingData<Notification>> =
@@ -162,6 +166,7 @@ class FeedViewModel @Inject constructor(
             current.copy(refreshToken = current.refreshToken + 1)
         }
     }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val latestFeedPaging: Flow<PagingData<Latest>> = _latestFeedLocation
         .flatMapLatest { query ->
@@ -183,6 +188,18 @@ class FeedViewModel @Inject constructor(
         }
         _uiState.update { state ->
             state.copy(shouldShowPermissionRationale = true)
+        }
+    }
+
+    fun clickHomeTab() {
+        viewModelScope.launch(Dispatchers.IO) {
+            eventLog.moveToTop()
+        }
+    }
+
+    fun logMoveCardDetail() {
+        viewModelScope.launch(Dispatchers.IO) {
+            eventLog.moveToCardDetail()
         }
     }
 
@@ -261,7 +278,11 @@ class FeedViewModel @Inject constructor(
                 currentState.feedCards
             }
             _uiState.update {
-                it.copy(latestPagingState = if (isInitial) FeedPagingState.Loading else FeedPagingState.LoadingMore(existingCards))
+                it.copy(
+                    latestPagingState = if (isInitial) FeedPagingState.Loading else FeedPagingState.LoadingMore(
+                        existingCards
+                    )
+                )
             }
 
             val lastId = if (isInitial) null else (currentState as? FeedPagingState.Success)?.lastId
@@ -278,8 +299,14 @@ class FeedViewModel @Inject constructor(
                 )) {
                     is DataResult.Success -> {
                         val newFeedCards = mapLatestToFeedCards(result.data)
-                        val isDuplicate = newFeedCards.isNotEmpty() && newFeedCards == existingCards.takeLast(newFeedCards.size)
-                        SooumLog.d(TAG, "Latest feed duplicate check: $isDuplicate (new=${newFeedCards.size}, existing=${existingCards.size})")
+                        val isDuplicate =
+                            newFeedCards.isNotEmpty() && newFeedCards == existingCards.takeLast(
+                                newFeedCards.size
+                            )
+                        SooumLog.d(
+                            TAG,
+                            "Latest feed duplicate check: $isDuplicate (new=${newFeedCards.size}, existing=${existingCards.size})"
+                        )
                         delay(1000L)
                         _uiState.update { state ->
                             state.copy(
@@ -493,7 +520,7 @@ class FeedViewModel @Inject constructor(
                     unreadIdBuffer.clear()
                     ids
                 }
-                if(notify.isNotEmpty()){
+                if (notify.isNotEmpty()) {
                     when (val result =
                         readNotify.invoke(Param(notifyId = notify))) {
                         is DomainResult.Failure -> {
@@ -512,11 +539,13 @@ class FeedViewModel @Inject constructor(
             }
         }
     }
+
     // 요기 수정 -> 새로운 함수 생성 기존 refreshCurrentTab 명칭 사용
     fun refreshCurrentTab() {
         _uiState.update { state -> state.copy(refresh = true) }
         currentTab()
     }
+
     // 요기 수정 -> refreshCurrentTab -> currentTab으로 명칭 변경
     private fun currentTab() {
         when (_uiState.value.currentTab) {
@@ -720,7 +749,7 @@ class FeedViewModel @Inject constructor(
         }
     }
 
-    fun navigateToDetail(cardId: String) {
+    fun navigateToDetail(cardId: String, isEventCard: Boolean) {
         if (_uiState.value.checkCardDelete is UiState.Loading) return
         val cardIdLong = cardId.toLongOrNull()
         if (cardIdLong == null) {
@@ -742,11 +771,14 @@ class FeedViewModel @Inject constructor(
 
                 is DomainResult.Success -> {
                     _uiState.update { state -> state.copy(checkCardDelete = UiState.Success(result.data)) }
-                    if (!result.data) _navigationEvent.emit(
-                        NavigationEvent.NavigateToDetail(
-                            CardDetailArgs(cardIdLong)
+                    if (!result.data) {
+                        if (isEventCard) eventLog.moveToCardDetailWhenEventCard() else eventLog.moveToCardDetail()
+                        _navigationEvent.emit(
+                            NavigationEvent.NavigateToDetail(
+                                CardDetailArgs(cardIdLong, previousView = CardDetailTrace.FEED)
+                            )
                         )
-                    )
+                    }
                 }
             }
         }

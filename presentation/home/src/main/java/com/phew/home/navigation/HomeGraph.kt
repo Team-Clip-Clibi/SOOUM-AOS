@@ -38,7 +38,7 @@ fun NavGraphBuilder.homeGraph(
     onBackPressed: () -> Unit,
     // 요기 수정 -> webView 삭제
     onWriteComplete: (CardDetailArgs) -> Unit = {},
-    cardClick: (Long) -> Unit,
+    cardClick: (CardDetailArgs) -> Unit,
     onLogOut: () -> Unit,
     onWithdrawalComplete: () -> Unit,
 ) {

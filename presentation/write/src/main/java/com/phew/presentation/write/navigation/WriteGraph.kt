@@ -61,7 +61,8 @@ fun NavGraphBuilder.writeGraph(
                 args = null,
                 onBackPressed = onBackPressed,
                 onWriteComplete = onWriteComplete,
-                onHome = onBackPressed
+                onHome = onBackPressed,
+                isFromTab = true
             )
         }
         
@@ -87,7 +88,8 @@ fun NavGraphBuilder.writeGraph(
                         onWriteComplete(it)
                     }
                 },
-                onHome = onHome
+                onHome = onHome,
+                isFromTab = false
             )
         }
     }

@@ -54,7 +54,7 @@ object AppModule {
     fun provideClarityConfig(): ClarityConfig {
         return ClarityConfig(
             projectId = BuildConfig.CLARITY_PROJECT_ID,
-            logLevel = if (BuildConfig.DEBUG) LogLevel.Verbose else LogLevel.None,
+            logLevel = LogLevel.None,
             applicationFramework = ApplicationFramework.Native
         )
     }
