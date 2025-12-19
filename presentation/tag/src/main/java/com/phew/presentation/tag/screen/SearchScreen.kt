@@ -166,13 +166,14 @@ internal fun SearchRoute(
         searchPerformed = uiState.searchPerformed,
         isSearchLoading = uiState.isSearchLoading,
         searchDataLoaded = uiState.searchDataLoaded,
+        isRelatedTagSearch = uiState.isRelatedTagSearch,
         cardDataItems = cardDataItems,
         listState = listState,
         gridState = gridState,
         onValueChange = viewModel::onValueChange,
         onDeleteClick = viewModel::onDeleteClick,
-        onItemClick = viewModel::performSearch,
-        onSearch = { viewModel.performSearch(uiState.searchValue) },
+        onItemClick = { tag -> viewModel.performSearch(tag, isRelatedTag = true) },
+        onSearch = { viewModel.performSearch(uiState.searchValue, isRelatedTag = false) },
         onClickCard = onClickCard,
         onBackPressed = onBackPressed,
         isFavorite = uiState.currentTagFavoriteState,
@@ -190,6 +191,7 @@ private fun SearchScreen(
     searchPerformed: Boolean,
     isSearchLoading: Boolean,
     searchDataLoaded: Boolean,
+    isRelatedTagSearch: Boolean,
     cardDataItems: LazyPagingItems<TagCardContent>,
     listState: LazyListState,
     gridState: LazyGridState,
@@ -204,7 +206,7 @@ private fun SearchScreen(
     snackbarHostState: SnackbarHostState,
     autoFocus: Boolean = false
 ) {
-    SooumLog.d("SearchScreen", "recommendedTags=$recommendedTags")
+    SooumLog.d("SearchScreen", "recommendedTags=$recommendedTags, isRelatedTagSearch=$isRelatedTagSearch")
     val focusManager = LocalFocusManager.current
     var isSearchFieldFocused by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
@@ -337,12 +339,9 @@ private fun SearchScreen(
                 }
                 // 3. 검색 수행 후 카드가 없음 (더 정확한 LoadState 확인)
                 searchPerformed && searchDataLoaded && !isSearchLoading && !isPagingLoading && cardDataItems.itemCount == 0 -> {
+                    println("!! isRelatedTagSearch= $isRelatedTagSearch")
                     // 추천 태그 클릭으로 검색한 경우 vs 직접 입력한 검색어로 검색한 경우 구분
-                    // 현재 검색값이 원래 추천 태그 목록에 있었는지 확인하기 위해 searchValue 사용
-                    val isFromRecommendedTag = recommendedTags.any { it.name == searchValue } || 
-                                             (recommendedTags.isEmpty() && searchValue.isNotBlank())
-                    
-                    if (isFromRecommendedTag) {
+                    if (isRelatedTagSearch) {
                         EmptyCardList() // 추천 태그를 클릭했지만 해당 태그에 카드가 없는 경우
                     } else {
                         EmptySearchCard() // 검색어를 입력하고 완료를 눌렀지만 관련 검색 결과가 없는 경우
@@ -372,7 +371,7 @@ private fun SearchScreen(
                 }
                 // 5. 검색어는 있지만 추천 태그가 없고 검색도 안함
                 searchValue.isNotBlank() && recommendedTags.isEmpty() && !searchPerformed && !isSearchFieldFocused -> {
-                    EmptyCardList()
+                    EmptySearchCard()
                 }
             }
         }

@@ -55,7 +55,8 @@ data class TagUiState(
     val isRefreshing: Boolean = false,
     val requestedTagCards: Set<String> = emptySet(), // 요청한 태그 카드 목록 (tagId:tagName 형태)
     val viewTagsDataLoaded: Boolean = false,
-    val searchDataLoaded: Boolean = false
+    val searchDataLoaded: Boolean = false,
+    val isRelatedTagSearch: Boolean = false
 )
 
 sealed interface UiState<out T> {
@@ -201,7 +202,14 @@ class TagViewModel @Inject constructor(
     }
 
     fun onValueChange(value: String) {
-        _uiState.update { it.copy(searchValue = value, searchPerformed = false, isSearchLoading = false) }
+        _uiState.update {
+            it.copy(
+                searchValue = value,
+                searchPerformed = false,
+                isSearchLoading = false,
+                isRelatedTagSearch = false
+            )
+        }
     }
 
     fun onDeleteClick() {
@@ -210,12 +218,13 @@ class TagViewModel @Inject constructor(
                 searchValue = "",
                 recommendedTags = emptyList(),
                 searchPerformed = false,
-                isSearchLoading = false
+                isSearchLoading = false,
+                isRelatedTagSearch = false
             )
         }
     }
 
-    fun performSearch(tag: String) {
+    fun performSearch(tag: String, isRelatedTag: Boolean = false) {
         val selectedTag = _uiState.value.recommendedTags.find { it.name == tag }
         val tagId = selectedTag?.id ?: return
 
@@ -225,7 +234,8 @@ class TagViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 isSearchLoading = true,
-                recommendedTags = emptyList()
+                recommendedTags = emptyList(),
+                isRelatedTagSearch = isRelatedTag
             )
         }
 
@@ -243,7 +253,8 @@ class TagViewModel @Inject constructor(
                         cardDataItems = cardsPagingFlow,
                         currentSearchedTag = selectedTag,
                         currentTagFavoriteState = false, // 초기값, 실제 값은 paging data에서 업데이트됨
-                        searchDataLoaded = true // 데이터 로드 완료
+                        searchDataLoaded = true, // 데이터 로드 완료
+                        isRelatedTagSearch = isRelatedTag
                     )
                 }
             } catch (e: Exception) {

@@ -211,6 +211,7 @@ private fun ViewTagsScreen(
         val refreshState = rememberPullToRefreshState()
 
         RefreshBox(
+            modifier = Modifier.fillMaxSize(),
             isRefresh = isRefreshing,
             onRefresh = onRefresh,
             state = refreshState,
