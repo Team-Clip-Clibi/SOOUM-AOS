@@ -17,6 +17,7 @@ import com.phew.core.ui.navigation.asNavArg
 import com.phew.core.ui.navigation.asNavParam
 import com.phew.core.ui.navigation.createNavType
 import com.phew.core.ui.navigation.getNavArg
+import com.phew.core_common.CardDetailTrace
 import com.phew.core_common.log.SooumLog
 import com.phew.core_design.slideComposable
 import com.phew.presentation.detail.screen.CardDetailRoute
@@ -99,7 +100,8 @@ fun NavGraphBuilder.detailGraph(
                     onNavigateToViewTags = onNavigateToViewTags,
                     onBackPressed = onBackPressed,
                     profileClick = onProfileScreen,
-                    onCardChanged = { navController.markFeedCardUpdated() }
+                    onCardChanged = { navController.markFeedCardUpdated() },
+                    cardDetailTrace = args.previousView
                 )
             }
         }
@@ -142,7 +144,7 @@ fun NavGraphBuilder.detailGraph(
                                 COMMENT_ROUTE.asNavArg(
                                     CardDetailCommentArgs(
                                         cardId = parentId,
-                                        parentId = 0L
+                                        parentId = 0L,
                                     )
                                 ),
                                 navOptions {

@@ -10,12 +10,14 @@ import com.phew.core_common.HTTP_BAD_REQUEST
 import com.phew.core_common.HTTP_CARD_ALREADY_DELETE
 import com.phew.domain.dto.CardReplyRequest
 import com.phew.domain.repository.DeviceRepository
+import com.phew.domain.repository.event.EventRepository
 import com.phew.domain.repository.network.CardDetailRepository
 import javax.inject.Inject
 
 class PostCardReply @Inject constructor(
     private val repository: CardDetailRepository,
-    private val deviceRepository: DeviceRepository
+    private val deviceRepository: DeviceRepository,
+    private val eventRepository: EventRepository
 ) {
     data class Param(
         val cardId: Long,
@@ -48,7 +50,11 @@ class PostCardReply @Inject constructor(
         )
 
         return when (val result = repository.postCardReply(param.cardId, request)) {
-            is DataResult.Success -> DomainResult.Success(result.data.cardId)
+            is DataResult.Success -> {
+                eventRepository.logWriteCardClickFinishButton()
+                if(!locationPermissionCheck) eventRepository.logWriteDistanceSharedOff()
+                DomainResult.Success(result.data.cardId)
+            }
             is DataResult.Fail -> mapFailure(result)
         }
     }

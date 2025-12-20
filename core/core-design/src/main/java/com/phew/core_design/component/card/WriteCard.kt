@@ -112,6 +112,7 @@ sealed class BaseCardData(open val id: String, open val type: CardType) {
         val onTagFocusHandled: () -> Unit = {},
         val currentTagInput: String = "",
         val onTagInputChange: (String) -> Unit = {},
+        val enterClick: () -> Unit = {},
         override val id: String = ""
     ) : BaseCardData(id, CardType.WRITE)
 
@@ -126,7 +127,8 @@ sealed class BaseCardData(open val id: String, open val type: CardType) {
         override val id: String = "",
         val backgroundImage: Uri? = null,
         val fontType: FontType? = null,
-        val onTagClick: (String) -> Unit = { }
+        val onTagClick: (String) -> Unit = { },
+        val enterClick: () -> Unit = {},
     ) : BaseCardData(id, CardType.REPLY)
 
     data class Deleted(
@@ -137,13 +139,20 @@ sealed class BaseCardData(open val id: String, open val type: CardType) {
 
 @Composable
 fun CardView(
+    enterClick: () -> Unit = {},
     data: BaseCardData,
     modifier: Modifier = Modifier,
-    onPreviousCardClick: () -> Unit = { }
+    onPreviousCardClick: () -> Unit = { },
 ) {
     when (data.type) {
-        CardType.WRITE -> WriteCard(data as BaseCardData.Write, modifier)
-        CardType.REPLY -> ReplyCard(data as BaseCardData.Reply, modifier, onPreviousCardClick)
+        CardType.WRITE -> WriteCard(data as BaseCardData.Write, modifier, enterClick)
+        CardType.REPLY -> ReplyCard(
+            data as BaseCardData.Reply,
+            modifier,
+            onPreviousCardClick,
+            enterClick
+        )
+
         CardType.DELETED -> DeletedCard(data as BaseCardData.Deleted, modifier)
     }
 }
@@ -161,8 +170,7 @@ private fun BaseCard(
         modifier = modifier
             .fillMaxWidth()
             .defaultMinSize(
-                minWidth = 328.dp,
-                minHeight = minimumHeight
+                minWidth = 328.dp, minHeight = minimumHeight
             ),
         shape = RoundedCornerShape(CardDesignTokens.CardRadius),
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
@@ -185,15 +193,15 @@ private fun EditableWriteContentBox(
     onContentChange: (String) -> Unit,
     onContentClick: () -> Unit,
     fontType: FontType?,
-    isEditable: Boolean
+    isEditable: Boolean,
+    onEnterClick: () -> Unit
 ) {
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 32.dp)
             .background(
-                color = OpacityColor.blackSmallColor,
-                shape = RoundedCornerShape(12.dp)
+                color = OpacityColor.blackSmallColor, shape = RoundedCornerShape(12.dp)
             )
             .clickable(
                 enabled = isEditable,
@@ -277,8 +285,7 @@ private fun ReadOnlyContentBox(
             .fillMaxWidth()
             .padding(horizontal = 32.dp)
             .background(
-                color = OpacityColor.blackSmallColor,
-                shape = RoundedCornerShape(12.dp)
+                color = OpacityColor.blackSmallColor, shape = RoundedCornerShape(12.dp)
             ),
         contentAlignment = Alignment.Center
     ) {
@@ -315,7 +322,8 @@ private fun ReadOnlyContentBox(
 @Composable
 private fun WriteCard(
     data: BaseCardData.Write,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    enterClick: () -> Unit
 ) {
     Card(
         modifier = modifier
@@ -374,7 +382,8 @@ private fun WriteCard(
                         onContentChange = data.onContentChange,
                         onContentClick = data.onContentClick,
                         fontType = data.fontType,
-                        isEditable = data.isEditable
+                        isEditable = data.isEditable,
+                        onEnterClick = enterClick
                     )
                 }
 
@@ -396,7 +405,8 @@ private fun WriteCard(
                             onFocusHandled = data.onTagFocusHandled,
                             currentInput = data.currentTagInput,
                             onInputChange = data.onTagInputChange,
-                            fontFamily = getTagFontFamilyFromType(data.fontType)
+                            fontFamily = getTagFontFamilyFromType(data.fontType),
+                            enterClick = enterClick
                         )
                     }
                 }
@@ -410,6 +420,7 @@ private fun ReplyCard(
     data: BaseCardData.Reply,
     modifier: Modifier = Modifier,
     onPreviewCard: () -> Unit,
+    enterClick: () -> Unit
 ) {
     Card(
         modifier = modifier
@@ -527,7 +538,8 @@ private fun ReplyCard(
                             currentInput = "",
                             onInputChange = { },
                             fontFamily = getTagFontFamilyFromType(data.fontType),
-                            onTagClick = data.onTagClick
+                            onTagClick = data.onTagClick,
+                            enterClick = enterClick
                         )
                     }
                 }
@@ -583,7 +595,6 @@ private fun DeletedCard(
     }
 }
 
-
 // ===== 프리뷰 =====
 @Preview(showBackground = true, backgroundColor = 0xFFFFFFFF)
 @Composable
@@ -595,20 +606,27 @@ fun CardViewPreview() {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
-            CardView(BaseCardData.Write(content = "짧은 글 예시입니다.\n스크롤 안전!", tags = listOf("Tag1", "Tag2")))
-        }
-        item {
             CardView(
-                BaseCardData.Reply(
-                    previousCommentThumbnailUri = "2",
-                    content = "이건 ReplyCard 예시",
-                    tags = listOf("답변", "예시"),
-                    hasPreviousCommentThumbnail = true
-                )
+                data = BaseCardData.Write(
+                    content = "짧은 글 예시입니다.\n스크롤 안전!",
+                    tags = listOf("Tag1", "Tag2")
+                ),
+                enterClick = {}
             )
         }
         item {
-            CardView(BaseCardData.Deleted("삭제된 카드예요"))
+            CardView(
+                enterClick = {}, data = BaseCardData.Reply(
+                    previousCommentThumbnailUri = "2",
+                    content = "이건 ReplyCard 예시",
+                    tags = listOf("답변", "예시"),
+                    hasPreviousCommentThumbnail = true,
+
+                    )
+            )
+        }
+        item {
+            CardView(data = BaseCardData.Deleted("삭제된 카드예요"), enterClick = {})
         }
     }
 }

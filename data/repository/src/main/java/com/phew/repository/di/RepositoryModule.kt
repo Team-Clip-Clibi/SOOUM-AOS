@@ -1,6 +1,7 @@
 package com.phew.repository.di
 
 import com.phew.domain.repository.DeviceRepository
+import com.phew.domain.repository.event.EventRepository
 import com.phew.domain.repository.network.AppVersionRepository
 import com.phew.domain.repository.network.BlockRepository
 import com.phew.domain.repository.network.CardDetailRepository
@@ -14,6 +15,7 @@ import com.phew.domain.repository.network.SplashRepository
 import com.phew.domain.repository.network.TagRepository
 import com.phew.repository.DeviceRepositoryImpl
 import com.phew.repository.NotifyRepositoryImpl
+import com.phew.repository.event.EventRepositoryImpl
 import com.phew.repository.network.AppVersionRepositoryImpl
 import com.phew.repository.network.BlockRepositoryImpl
 import com.phew.repository.network.CardDetailRepositoryImpl
@@ -26,7 +28,6 @@ import com.phew.repository.network.SplashRepositoryImpl
 import com.phew.repository.network.TagRepositoryImpl
 import dagger.Binds
 import dagger.Module
-import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
@@ -86,4 +87,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindCardFeedRepository(impl: CardFeedRepositoryImpl): CardFeedRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindEventLogRepository(impl : EventRepositoryImpl) : EventRepository
 }

@@ -17,7 +17,6 @@ import com.phew.domain.usecase.GetCardDefaultImage
 import com.phew.domain.usecase.GetRelatedTag
 import com.phew.domain.usecase.PostCard
 import com.phew.domain.usecase.PostCardReply
-import com.phew.presentation.write.model.BackgroundConfig
 import com.phew.presentation.write.model.WriteOptions
 import com.phew.presentation.write.model.WriteUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -43,6 +42,8 @@ import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_design.CustomFont
 import com.phew.core_design.typography.FontType
 import com.phew.domain.usecase.GetActivityRestrictionDate
+import com.phew.domain.usecase.SaveEventLogWriteCardView
+import com.phew.domain.usecase.SaveEventLogWriteCommentCardView
 
 import com.phew.presentation.write.model.BackgroundFilterType
 import com.phew.presentation.write.utils.WriteErrorCase
@@ -57,6 +58,8 @@ class WriteViewModel @Inject constructor(
     private val postCard: PostCard,
     private val postCardReply: PostCardReply,
     private val activateDate: GetActivityRestrictionDate,
+    private val logWriteFeedCard: SaveEventLogWriteCardView,
+    private val logWRiteCommentCard: SaveEventLogWriteCommentCardView
 ) : ViewModel() {
 
     private val locationPermissions = arrayOf(
@@ -88,10 +91,12 @@ class WriteViewModel @Inject constructor(
                 .flatMapLatest { tagInput ->
                     _uiState.update { it.copy(isLoadingRelatedTags = true) }
                     try {
-                        when (val result = getRelatedTag(GetRelatedTag.Param(tag = tagInput, resultCnt = 8))) {
+                        when (val result =
+                            getRelatedTag(GetRelatedTag.Param(tag = tagInput, resultCnt = 8))) {
                             is DomainResult.Success -> {
                                 flowOf(result.data)
                             }
+
                             is DomainResult.Failure -> {
                                 flowOf(emptyList())
                             }
@@ -101,11 +106,11 @@ class WriteViewModel @Inject constructor(
                     }
                 }
                 .collect { relatedTags ->
-                    _uiState.update { 
+                    _uiState.update {
                         it.copy(
                             relatedTags = relatedTags,
                             isLoadingRelatedTags = false
-                        ) 
+                        )
                     }
                 }
         }
@@ -152,6 +157,24 @@ class WriteViewModel @Inject constructor(
                 showLocationPermissionDialog = false,
                 shouldShowPermissionRationale = !isGranted
             )
+        }
+    }
+
+    fun isComeFromTab() {
+        viewModelScope.launch(Dispatchers.IO) {
+            logWriteFeedCard.logBottomWriteClick()
+        }
+    }
+
+    fun writeFinishTagEnter(isFromFeedCard: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            if (isFromFeedCard) logWriteFeedCard.logWriteTagClickEnter() else logWRiteCommentCard.logWriteTagClickEnter()
+        }
+    }
+
+    fun clickBackHandler(isFromFeedCard: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            if(isFromFeedCard) logWriteFeedCard.logBackHandler() else logWRiteCommentCard.logBackHandler()
         }
     }
 
@@ -251,7 +274,7 @@ class WriteViewModel @Inject constructor(
                 state.copy(focusTagInput = false, currentTagInput = "")
             } else {
                 state.copy(
-                    tags = state.tags + trimmed, 
+                    tags = state.tags + trimmed,
                     focusTagInput = false,
                     currentTagInput = ""
                 )
@@ -265,8 +288,27 @@ class WriteViewModel @Inject constructor(
         }
     }
 
-    fun selectBackgroundFilter(filter: BackgroundFilterType) {
+    fun selectBackgroundFilter(filter: BackgroundFilterType, isFromFeedCard: Boolean) {
         _uiState.update { it.copy(selectedBackgroundFilter = filter) }
+        viewModelScope.launch(Dispatchers.IO) {
+            when (isFromFeedCard) {
+                true -> {
+                    if (filter == BackgroundFilterType.EVENT) {
+                        logWriteFeedCard.logWriteEventCard()
+                    } else {
+                        logWriteFeedCard.logChangeBackgroundCategory()
+                    }
+                }
+
+                false -> {
+                    if (filter == BackgroundFilterType.EVENT) {
+                        logWRiteCommentCard.logWriteEventCard()
+                    } else {
+                        logWRiteCommentCard.logBackgroundChange()
+                    }
+                }
+            }
+        }
     }
 
     fun selectBackgroundImage(imageName: String) {
@@ -276,7 +318,10 @@ class WriteViewModel @Inject constructor(
                 .flatten()
                 .find { it.imageName == imageName }
 
-            SooumLog.d(TAG, "selectBackgroundImage() imageName: $imageName, serverImage: $serverImage")
+            SooumLog.d(
+                TAG,
+                "selectBackgroundImage() imageName: $imageName, serverImage: $serverImage"
+            )
 
             if (serverImage != null) {
                 // 서버 기본 이미지인 경우
@@ -323,6 +368,7 @@ class WriteViewModel @Inject constructor(
                     )
                 }
             }
+
             else -> Unit
         }
     }
@@ -579,7 +625,10 @@ class WriteViewModel @Inject constructor(
         }
     }
 
-    private fun adjustOptionForPermission(optionIds: List<String>, hasPermission: Boolean): List<String> {
+    private fun adjustOptionForPermission(
+        optionIds: List<String>,
+        hasPermission: Boolean
+    ): List<String> {
         return if (!hasPermission) {
             optionIds.filter { it != distanceOptionId }
         } else {
@@ -593,18 +642,19 @@ class WriteViewModel @Inject constructor(
                 when (val result = getCardDefaultImage()) {
                     is DomainResult.Success -> {
                         _uiState.update { state ->
-                            val convertedMap = result.data.defaultImages.mapNotNull { (key, value) ->
-                                BackgroundFilterType.fromServerKey(key)?.let { it to value }
-                            }.toMap()
+                            val convertedMap =
+                                result.data.defaultImages.mapNotNull { (key, value) ->
+                                    BackgroundFilterType.fromServerKey(key)?.let { it to value }
+                                }.toMap()
 
                             val newState = state.copy(
                                 cardDefaultImagesByCategory = convertedMap
                             )
-                            
+
                             // COLOR 카테고리의 첫 번째 이미지를 자동으로 선택
                             val colorCategoryImages = convertedMap[BackgroundFilterType.COLOR]
                             val firstColorImage = colorCategoryImages?.firstOrNull()
-                            
+
                             if (firstColorImage != null && state.selectedDefaultImageName == null) {
                                 val uri = try {
                                     firstColorImage.url.toUri()
@@ -621,8 +671,12 @@ class WriteViewModel @Inject constructor(
                                 newState
                             }
                         }
-                        SooumLog.d(TAG, "loadCardDefaultImages() success: ${result.data.defaultImages.size} categories loaded")
+                        SooumLog.d(
+                            TAG,
+                            "loadCardDefaultImages() success: ${result.data.defaultImages.size} categories loaded"
+                        )
                     }
+
                     is DomainResult.Failure -> {
                         _uiState.update {
                             it.copy(
@@ -643,6 +697,7 @@ class WriteViewModel @Inject constructor(
         }
     }
 }
+
 sealed interface UiState<out T> {
     data object Loading : UiState<Nothing>
     data class Success<T>(val data: T) : UiState<T>
