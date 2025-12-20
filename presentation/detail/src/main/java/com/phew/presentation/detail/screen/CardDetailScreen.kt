@@ -461,7 +461,8 @@ private fun CardDetailScreen(
                 remainingTimeMillis = remainingTimeMillis,
                 onBackPressed = onBackPressed,
                 onMoreClick = { onShowBottomSheetChange(true) },
-                title = if (isDelete) stringResource(DetailR.string.card_detail_dialog_delete_title) else null
+                title = if (isDelete) stringResource(DetailR.string.card_detail_dialog_delete_title) else null,
+                isDelete = isDelete
             )
         },
         snackbarHost = {

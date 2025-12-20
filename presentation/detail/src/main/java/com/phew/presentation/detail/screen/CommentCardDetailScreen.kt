@@ -298,7 +298,8 @@ internal fun CommentCardDetailScreen(
                     remainingTimeMillis = cardDetail?.endTime ?: 0L,
                     onBackPressed = onBackPressedLambda,
                     onMoreClick = showBottomSheetLambda,
-                    title = if(isRealDelete) stringResource(R.string.card_detail_dialog_delete_title) else null
+                    title = if(isRealDelete) stringResource(R.string.card_detail_dialog_delete_title) else null,
+                    isDelete = isRealDelete
                 )
             } else {
                 TopLayout(

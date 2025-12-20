@@ -257,18 +257,16 @@ internal fun OtherProfile(
     }
 
     if (showDeleteDialog && deletedCardId != null) {
+        val onDialogHandled = {
+            deletedCardId?.let { viewModel.removeDeletedCard(it) }
+            showDeleteDialog = false
+            deletedCardId = null
+        }
         DeletedCardDialog(
-            onDismiss = {
-                deletedCardId?.let { viewModel.removeDeletedCard(it) }
-                showDeleteDialog = false
-                deletedCardId = null
-            },
-            onConfirm = {
-                deletedCardId?.let { viewModel.removeDeletedCard(it) }
-                showDeleteDialog = false
-                deletedCardId = null
-            }
+            onDismiss = onDialogHandled,
+            onConfirm = onDialogHandled
         )
+
     }
 }
 

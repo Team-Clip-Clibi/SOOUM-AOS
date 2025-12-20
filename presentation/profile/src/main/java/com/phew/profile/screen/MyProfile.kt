@@ -71,6 +71,7 @@ import coil3.request.crossfade
 import com.phew.core_common.BOTTOM_NAVIGATION_HEIGHT
 import com.phew.core_design.CustomFont
 import com.phew.core_design.DialogComponent
+import com.phew.core_design.DialogComponent.DeletedCardDialog
 import com.phew.core_design.LoadingAnimation
 import com.phew.core_design.component.refresh.RefreshBox
 import com.phew.domain.dto.ProfileCard
@@ -200,17 +201,14 @@ internal fun MyProfile(
     }
 
     if (showDeleteDialog && deletedCardId != null) {
-        DialogComponent.DeletedCardDialog(
-            onDismiss = {
-                deletedCardId?.let { viewModel.removeDeletedCard(it) }
-                showDeleteDialog = false
-                deletedCardId = null
-            },
-            onConfirm = {
-                deletedCardId?.let { viewModel.removeDeletedCard(it) }
-                showDeleteDialog = false
-                deletedCardId = null
-            }
+        val onDialogHandled = {
+            deletedCardId?.let { viewModel.removeDeletedCard(it) }
+            showDeleteDialog = false
+            deletedCardId = null
+        }
+        DeletedCardDialog(
+            onDismiss = onDialogHandled,
+            onConfirm = onDialogHandled
         )
     }
 }

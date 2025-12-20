@@ -172,33 +172,22 @@ fun NotifyView(
         }
         }
         if (uiState.checkCardDelete is UiState.Success) {
-            DeletedCardDialog(
-                onDismiss = {
-                    viewModel.initCheckCardDelete()
-                    when (selectIndex) {
-                        NotifyTab.NOTIFY_ACTIVATE -> {
-                            unRead.refresh()
-                            read.refresh()
-                        }
-
-                        NotifyTab.NOTIFY_SERVICE -> {
-                            notices.refresh()
-                        }
+            val onDialogHandled = {
+                viewModel.initCheckCardDelete()
+                when (selectIndex) {
+                    NotifyTab.NOTIFY_ACTIVATE -> {
+                        unRead.refresh()
+                        read.refresh()
                     }
-                },
-                onConfirm = {
-                    viewModel.initCheckCardDelete()
-                    when (selectIndex) {
-                        NotifyTab.NOTIFY_ACTIVATE -> {
-                            unRead.refresh()
-                            read.refresh()
-                        }
 
-                        NotifyTab.NOTIFY_SERVICE -> {
-                            notices.refresh()
-                        }
+                    NotifyTab.NOTIFY_SERVICE -> {
+                        notices.refresh()
                     }
                 }
+            }
+            DeletedCardDialog(
+                onDismiss = onDialogHandled,
+                onConfirm = onDialogHandled
             )
         }
     }
