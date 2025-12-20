@@ -39,3 +39,5 @@ const val BANNER_SERVICE = "service"
 const val BOTTOM_NAVIGATION_HEIGHT = 62
 //Nick name length
 const val INPUT_NICK_NAME = 8
+
+const val FEED_NOTICE_LAZY_ITEM_KEY = "feed_notice"
