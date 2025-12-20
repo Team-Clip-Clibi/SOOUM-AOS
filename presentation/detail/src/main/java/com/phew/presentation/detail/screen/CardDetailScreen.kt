@@ -173,7 +173,7 @@ internal fun CardDetailRoute(
                     // 두 번째 Resume부터만 새로고침 (WriteScreen에서 복귀 시)
                     if (hasResumed) {
                         SooumLog.d(TAG, "CardDetailScreen resumed from WriteScreen - refreshing data")
-                        viewModel.loadCardDetail(args.cardId)
+                        viewModel.loadCardDetail(args.cardId, isSilent = true)
                     } else {
                         hasResumed = true
                     }
@@ -195,6 +195,7 @@ internal fun CardDetailRoute(
             .collect { effect ->
                 when (effect) {
                     is CardDetailUiEffect.NavigationHome -> onNavigateToHome()
+                    is CardDetailUiEffect.NavigateToWrite -> onNavigateToWrite(effect.cardId)
                 }
             }
     }
@@ -215,7 +216,11 @@ internal fun CardDetailRoute(
                 viewModel.clearError()
             }
             CardDetailError.CARD_DELETE -> {
+                isDelete = true
                 viewModel.setDeleteDialog()
+            }
+            CardDetailError.CARD_DELETE_NO_DIALOG -> {
+                isDelete = true
             }
             else -> Unit
         }
@@ -337,10 +342,10 @@ internal fun CardDetailRoute(
         progress = progress,
         onBackPressed = onBackPressed,
         onClickLike = {
-            viewModel.toggleLike(args.cardId)
+            viewModel.verifyAndToggleLike(args.cardId)
         },
         onClickCommentIcon = {
-            onNavigateToWrite(args.cardId)
+            viewModel.verifyAndNavigateToWrite(args.cardId)
         },
         onClickCommentView = { commentCardId ->
             onNavigateToComment(
@@ -355,7 +360,7 @@ internal fun CardDetailRoute(
         },
         onNavigateToReport = onNavigateToReport,
         onRefresh = {
-            viewModel.loadCardDetail(args.cardId)
+            viewModel.loadCardDetail(args.cardId, isSilent = true)
         },
         onNavigateToViewTags = onNavigateToViewTags,
         lazyListState = lazyListState,
@@ -365,6 +370,7 @@ internal fun CardDetailRoute(
         remainingTimeMillis = remainingTimeMillis,
         isExpire = (cardDetail.storyExpirationTime != null && (cardDetail.endTime
             ?: 0L) <= 0L) || isDelete,
+        isDelete = isDelete,
         isOwnCard = cardDetail.isOwnCard,
         deleteCard = { cardId ->
             viewModel.requestDeleteCard(cardId)
@@ -387,7 +393,7 @@ internal fun CardDetailRoute(
         deleteErrorDialog = uiState.deleteErrorDialog,
         onClickDeleteErrorDialog = {
             viewModel.clearError()
-            onBackPressed()
+            onNavigateToHome()
         }
     )
 }
@@ -431,6 +437,7 @@ private fun CardDetailScreen(
     snackBarHostState: SnackbarHostState,
     remainingTimeMillis: Long,
     isExpire: Boolean,
+    isDelete: Boolean,
     isOwnCard: Boolean,
     showBottomSheet: Boolean,
     onShowBottomSheetChange: (Boolean) -> Unit,
@@ -446,14 +453,15 @@ private fun CardDetailScreen(
     deleteErrorDialog : Boolean,
     onClickDeleteErrorDialog : () -> Unit
 ) {
-
+    SooumLog.d(TAG, "CardDetailScreen")
     Scaffold(
         modifier = modifier,
         topBar = {
             CardDetailTopBar(
                 remainingTimeMillis = remainingTimeMillis,
                 onBackPressed = onBackPressed,
-                onMoreClick = { onShowBottomSheetChange(true) }
+                onMoreClick = { onShowBottomSheetChange(true) },
+                title = if (isDelete) stringResource(DetailR.string.card_detail_dialog_delete_title) else null
             )
         },
         snackbarHost = {
@@ -553,8 +561,8 @@ private fun CardDetailScreen(
                         },
                         header = {
                             CardDetailHeader(
-                                profileUri = profileUri,
-                                nickName = nickName,
+                                profileUri = if (isDelete) "" else profileUri,
+                                nickName = if (isDelete) stringResource(DetailR.string.card_detail_unknown_user) else nickName,
                                 distance = distance,
                                 createAt = createAt,
                                 memberId = memberId,

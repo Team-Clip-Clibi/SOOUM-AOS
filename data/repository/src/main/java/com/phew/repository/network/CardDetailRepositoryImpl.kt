@@ -103,7 +103,11 @@ class CardDetailRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 DataResult.Success(Unit)
             } else {
-                DataResult.Fail(code = response.code(), message = response.message())
+                if (response.code() == com.phew.core_common.HTTP_CARD_ALREADY_DELETE) {
+                    DataResult.Fail(code = response.code(), message = com.phew.core_common.ERROR_ALREADY_CARD_DELETE)
+                } else {
+                    DataResult.Fail(code = response.code(), message = response.message())
+                }
             }
         } catch (e: Exception) {
             DataResult.Fail(code = APP_ERROR_CODE, message = e.message, throwable = e)

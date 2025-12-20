@@ -28,7 +28,8 @@ import com.phew.presentation.detail.R as DetailR
 internal fun CardDetailTopBar(
     remainingTimeMillis: Long,
     onBackPressed: () -> Unit,
-    onMoreClick: () -> Unit
+    onMoreClick: () -> Unit,
+    title: String? = null
 ) {
     Column(
         modifier = Modifier
@@ -40,7 +41,7 @@ internal fun CardDetailTopBar(
         TextButtonAppBar(
             startImage = R.drawable.ic_left,
             endImage = R.drawable.ic_more_stroke_circle,
-            appBarText = stringResource(DetailR.string.card_title_comment),
+            appBarText = title ?: stringResource(DetailR.string.card_title_comment),
             startClick = onBackPressed,
             endClick = onMoreClick
         )

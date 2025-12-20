@@ -161,6 +161,7 @@ fun NavGraphBuilder.detailGraph(
                         }
                     },
                     onFeedPressed = navToHome,
+                    onNavigateToHome = navToHome,
                     onTagPressed = onTagPressed,
                     onNavigateToWrite = { cardId ->
                         onNavigateToWrite(cardId)
