@@ -180,10 +180,18 @@ fun FeedView(
                 }
         }
     }
-    val noticeShow = when (uiState.currentTab) {// 요기 수정
-        FeedType.Latest -> latestFeedItems.loadState.refresh is LoadState.Loading &&
-            latestFeedItems.itemCount == 0
-        else -> currentPagingState is FeedPagingState.Loading
+    val isLatestLoading = latestFeedItems.loadState.refresh is LoadState.Loading
+    val isLatestEmpty = latestFeedItems.itemCount == 0
+    val isOtherLoading = currentPagingState is FeedPagingState.Loading
+
+    val isRefresh = if (uiState.currentTab == FeedType.Latest) {
+        isLatestLoading && !isLatestEmpty
+    } else {
+        uiState.refresh
+    }
+    val showNotice = when (uiState.currentTab) {
+        FeedType.Latest -> !(isLatestLoading && isLatestEmpty)
+        else -> !isOtherLoading
     }
     val snackBarHostState = remember { SnackbarHostState() }
     val refreshState = rememberPullToRefreshState()
@@ -197,7 +205,7 @@ fun FeedView(
         snackBarHostState = snackBarHostState
     ) { paddingValues ->
         RefreshBox(
-            isRefresh = uiState.refresh,// 요기 수정
+            isRefresh = isRefresh,
             onRefresh = refreshCurrentFeed,
             state = refreshState,
             paddingValues = paddingValues,
@@ -234,8 +242,8 @@ fun FeedView(
                     onRemoveCard = viewModel::removeFeedCard,
                     currentPagingState = uiState.currentPagingState,
                     pullOffsetPx = pullOffsetPx,
-                    onRefresh = refreshCurrentFeed,// 요기 수정
-                    isNoticeShow = noticeShow // 요기 수정
+                    onRefresh = refreshCurrentFeed,
+                    isNoticeShow = !showNotice
                 )
                 if (uiState.shouldShowPermissionRationale) {
                     DialogComponent.DefaultButtonTwo(
@@ -353,13 +361,15 @@ private fun FeedContentView(
                 when (val refreshState = latestFeedItems.loadState.refresh) {
                     is LoadState.Error -> {
                         item(span = { GridItemSpan(maxLineSpan) }) {
-                            ErrorView(
-                                message = refreshState.error.message
-                                    ?: stringResource(R.string.home_feed_load_error),
-                                onRetry = {
-                                    latestFeedItems.retry()
-                                }
-                            )
+                            Box(modifier = Modifier.graphicsLayer { translationY = pullOffsetPx }) {
+                                ErrorView(
+                                    message = refreshState.error.message
+                                        ?: stringResource(R.string.home_feed_load_error),
+                                    onRetry = {
+                                        latestFeedItems.retry()
+                                    }
+                                )
+                            }
                         }
                     }
 
@@ -384,7 +394,9 @@ private fun FeedContentView(
                         } else {
                             if (latestFeedItems.itemCount == 0) {
                                 item(span = { GridItemSpan(maxLineSpan) }) {
-                                    EmptyFeedView()
+                                    Box(modifier = Modifier.graphicsLayer { translationY = pullOffsetPx }) {
+                                        EmptyFeedView()
+                                    }
                                 }
                             } else {
                                 items(
@@ -414,13 +426,15 @@ private fun FeedContentView(
                             when (val appendState = latestFeedItems.loadState.append) {
                                 is LoadState.Error -> {
                                     item(span = { GridItemSpan(maxLineSpan) }) {
-                                        ErrorView(
-                                            message = appendState.error.message
-                                                ?: stringResource(R.string.home_feed_load_error),
-                                            onRetry = {
-                                                latestFeedItems.retry()
-                                            }
-                                        )
+                                        Box(modifier = Modifier.graphicsLayer { translationY = pullOffsetPx }) {
+                                            ErrorView(
+                                                message = appendState.error.message
+                                                    ?: stringResource(R.string.home_feed_load_error),
+                                                onRetry = {
+                                                    latestFeedItems.retry()
+                                                }
+                                            )
+                                        }
                                     }
                                 }
 
@@ -452,17 +466,21 @@ private fun FeedContentView(
                 when (currentPagingState) {
                     is FeedPagingState.Error -> {
                         item(span = { GridItemSpan(maxLineSpan) }) {
-                            ErrorView(
-                                message = currentPagingState.message,
-                                onRetry = onRefresh
-                            )
+                            Box(modifier = Modifier.graphicsLayer { translationY = pullOffsetPx }) {
+                                ErrorView(
+                                    message = currentPagingState.message,
+                                    onRetry = onRefresh
+                                )
+                            }
                         }
                     }
 
                     is FeedPagingState.LoadingMore -> {
                         if (currentPagingState.existingData.isEmpty()) {
                             item(span = { GridItemSpan(maxLineSpan) }) {
-                                EmptyFeedView()
+                                Box(modifier = Modifier.graphicsLayer { translationY = pullOffsetPx }) {
+                                    EmptyFeedView()
+                                }
                             }
                         } else {
                             itemsIndexed(
@@ -495,7 +513,9 @@ private fun FeedContentView(
                     is FeedPagingState.Success -> {
                         if (currentPagingState.feedCards.isEmpty()) {
                             item(span = { GridItemSpan(maxLineSpan) }) {
-                                EmptyFeedView()
+                                Box(modifier = Modifier.graphicsLayer { translationY = pullOffsetPx }) {
+                                    EmptyFeedView()
+                                }
                             }
                         } else {
                             itemsIndexed(
@@ -521,6 +541,21 @@ private fun FeedContentView(
                                         onRemoveCard = onRemoveCard,
                                     )
                                 }
+                            }
+                        }
+                    }
+
+                    is FeedPagingState.Loading -> {
+                        item(span = { GridItemSpan(maxLineSpan) }) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 20.dp)
+                                    .graphicsLayer { translationY = pullOffsetPx }
+                            ) {
+                                LoadingAnimation.LoadingView(
+                                    modifier = Modifier.fillMaxWidth()
+                                )
                             }
                         }
                     }
