@@ -4,10 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import com.phew.core_common.CardDetailTrace
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR_ALREADY_CARD_DELETE
 import com.phew.core_common.ERROR_NETWORK
+import com.phew.core_common.MoveDetail
 import com.phew.domain.dto.CardComment
 import com.phew.domain.dto.CardDetail
 import com.phew.domain.usecase.BlockMember
@@ -17,6 +19,7 @@ import com.phew.domain.usecase.GetCardComments
 import com.phew.domain.usecase.GetCardCommentsPaging
 import com.phew.domain.usecase.GetCardDetail
 import com.phew.domain.usecase.LikeCard
+import com.phew.domain.usecase.SaveEventLogDetailView
 import com.phew.domain.usecase.UnblockMember
 import com.phew.domain.usecase.UnlikeCard
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -77,6 +80,7 @@ class CardDetailViewModel @Inject constructor(
     private val deleteCard: DeleteCard,
     private val blockMember: BlockMember,
     private val unblockMember: UnblockMember,
+    private val log : SaveEventLogDetailView,
     private val checkCardDelete: CheckCardAlreadyDelete,
 ) : ViewModel() {
 
@@ -372,6 +376,24 @@ class CardDetailViewModel @Inject constructor(
     fun clearBlockSuccess() {
         _uiState.update {
             it.copy(blockSuccess = false)
+        }
+    }
+
+    fun logMoveToCommentCard(event: MoveDetail, isEventCard: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            log.moveToCommentCard(event = event, isEventCard = isEventCard)
+        }
+    }
+
+    fun logMoveToTagView() {
+        viewModelScope.launch(Dispatchers.IO) {
+            log.moveToTagView()
+        }
+    }
+
+    fun logWhereComeFrom(view: CardDetailTrace) {
+        viewModelScope.launch(Dispatchers.IO) {
+            log.tracePreviousView(view)
         }
     }
 }

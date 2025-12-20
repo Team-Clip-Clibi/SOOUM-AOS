@@ -106,11 +106,16 @@ internal fun WriteRoute(
     onBackPressed: () -> Unit,
     onWriteComplete: (CardDetailArgs) -> Unit,
     onHome: () -> Unit,
+    isFromTab: Boolean = false
 ) {
     BackHandler {
         onBackPressed()
+        viewModel.clickBackHandler(isFromFeedCard = isFromTab)
     }
 
+    LaunchedEffect(Unit) {
+        if (isFromTab) viewModel.isComeFromTab()
+    }
     val context = LocalContext.current
 
     //   위치 권한
@@ -190,7 +195,7 @@ internal fun WriteRoute(
         onContentChange = viewModel::updateContent,
         onTagInputChange = viewModel::updateTagInput,
         onFilterChange = {
-            viewModel.selectBackgroundFilter(it)
+            viewModel.selectBackgroundFilter(it , isFromTab)
             viewModel.hideRelatedTags()
         },
         onImageSelected = {
@@ -249,7 +254,7 @@ internal fun WriteRoute(
         onCameraSettingsResult = viewModel::onCameraSettingsResult,
         hideRelatedTags = viewModel::hideRelatedTags,
         showErrorDialog = uiState.showErrorDialog,
-        activateDate = if(uiState.activateDate is  UiState.Success) {
+        activateDate = if (uiState.activateDate is UiState.Success) {
             (uiState.activateDate as UiState.Success).data
         } else {
             ""
@@ -258,6 +263,9 @@ internal fun WriteRoute(
         onClickErrorDialog = {
             viewModel.showErrorDialog(false)
             onHome()
+        },
+        onEnterClick = {
+            viewModel.writeFinishTagEnter(isFromFeedCard = isFromTab)
         }
     )
 }
@@ -328,6 +336,7 @@ private fun WriteScreen(
     activateDate: String,
     errorCase: WriteErrorCase,
     onClickErrorDialog: () -> Unit,
+    onEnterClick: () -> Unit
 ) {
     val snackBarHostState = remember { SnackbarHostState() }
     val cameraPermissions = arrayOf(Manifest.permission.CAMERA)
@@ -484,9 +493,9 @@ private fun WriteScreen(
                                 if (!isImeVisible) continue
                                 val dragDetected = event.changes.any { pointer ->
                                     pointer.type == PointerType.Touch &&
-                                        pointer.pressed &&
-                                        !pointer.isConsumed &&
-                                        pointer.positionChange() != Offset.Zero
+                                            pointer.pressed &&
+                                            !pointer.isConsumed &&
+                                            pointer.positionChange() != Offset.Zero
                                 }
                                 if (dragDetected) {
                                     isUserDragging = true
@@ -526,7 +535,8 @@ private fun WriteScreen(
                             shouldFocusTagInput = focusTagInput,
                             onTagFocusHandled = onTagFocusHandled,
                             currentTagInput = currentTagInput,
-                            onTagInputChange = onTagInputChange
+                            onTagInputChange = onTagInputChange,
+                            enterClick = onEnterClick
                         )
                     )
                 }

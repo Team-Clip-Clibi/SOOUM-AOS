@@ -6,6 +6,7 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.filter
 import com.phew.core.ui.model.navigation.CardDetailArgs
+import com.phew.core_common.CardDetailTrace
 import com.phew.core_common.DataResult
 import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR_FAIL_JOB
@@ -24,6 +25,7 @@ import com.phew.domain.usecase.GetTagCardsPaging
 import com.phew.domain.usecase.GetTagRank
 import com.phew.domain.usecase.GetUserInfo
 import com.phew.domain.usecase.RemoveFavoriteTag
+import com.phew.domain.usecase.SaveEventLogTagView
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -31,7 +33,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -81,6 +82,7 @@ class TagViewModel @Inject constructor(
     private val addFavoriteTag: AddFavoriteTag,
     private val removeFavoriteTag: RemoveFavoriteTag,
     private val getTagRank: GetTagRank,
+    private val log : SaveEventLogTagView,
     private val checkCardDelete: CheckCardAlreadyDelete,
 ) : ViewModel() {
 
@@ -274,6 +276,7 @@ class TagViewModel @Inject constructor(
 
     fun navToSearchScreen() {
         viewModelScope.launch {
+            log.logClickSearchView()
             emitTagScreenEffect(TagUiEffect.NavigationSearchScreen)
         }
     }
@@ -474,9 +477,10 @@ class TagViewModel @Inject constructor(
             }
         }
     }
-    
+
     fun onTagRankClick(tagId: Long) {
         viewModelScope.launch {
+            log.logSelectPopularTag()
             val tagRank = _uiState.value.tagRank
             if (tagRank is UiState.Success) {
                 val selectedTag = tagRank.data.find { it.id == tagId }
@@ -581,7 +585,7 @@ class TagViewModel @Inject constructor(
 
     fun navigateToDetail(cardId: Long) {
         if (_uiState.value.checkCardDelete is UiState.Loading) return
-        
+
         viewModelScope.launch {
             _uiState.update { state -> state.copy(checkCardDelete = UiState.Loading) }
             when (val result = checkCardDelete(CheckCardAlreadyDelete.Param(cardId = cardId))) {
@@ -594,7 +598,7 @@ class TagViewModel @Inject constructor(
                 is DomainResult.Success -> {
                     if (result.data) {
                         // 삭제된 경우 ID를 전달
-                        _uiState.update { state -> 
+                        _uiState.update { state ->
                             state.copy(checkCardDelete = UiState.Success(cardId))
                         }
                     } else {
@@ -602,7 +606,7 @@ class TagViewModel @Inject constructor(
                         _uiState.update { state -> state.copy(checkCardDelete = UiState.None) }
                          emitCommonEffect(
                             TagUiEffect.NavigateToDetail(
-                                CardDetailArgs(cardId)
+                                CardDetailArgs(cardId, previousView = CardDetailTrace.PROFILE)
                             )
                         )
                     }

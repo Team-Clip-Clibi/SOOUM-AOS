@@ -8,6 +8,7 @@ import androidx.navigation.NavOptions
 import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
 import com.phew.core.ui.component.home.HomeTabType
+import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.model.navigation.FollowArgs
 import com.phew.core.ui.model.navigation.ProfileArgs
 import com.phew.core.ui.navigation.asNavParam
@@ -70,7 +71,7 @@ fun NavGraphBuilder.profileGraph(
     onBackPressed: () -> Unit,
     onLogOut: () -> Unit,
     onWithdrawalComplete: () -> Unit,
-    cardClick: (Long) -> Unit,
+    cardClick: (CardDetailArgs) -> Unit,
 ) {
     navigation(
         route = HomeTabType.MY.graph,
@@ -92,8 +93,8 @@ fun NavGraphBuilder.profileGraph(
             MyProfile(
                 viewModel = viewModel,
                 onLogout = onLogOut,
-                onClickCard = { id ->
-                    cardClick(id)
+                onClickCard = { args ->
+                    cardClick(args)
                 },
                 onClickSetting = {
                     navController.navigateToSettingGraph()

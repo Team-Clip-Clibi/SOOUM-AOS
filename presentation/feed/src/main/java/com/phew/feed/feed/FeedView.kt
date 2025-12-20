@@ -147,6 +147,7 @@ fun FeedView(
         // feedScrollToTopEvent 처리
         launch {
             appState.feedScrollToTopEvent.collect {
+                viewModel.clickHomeTab()
                 lazyGridState.animateScrollToItem(0)
             }
         }
@@ -183,7 +184,8 @@ fun FeedView(
     }
     val noticeShow = when (uiState.currentTab) {// 요기 수정
         FeedType.Latest -> latestFeedItems.loadState.refresh is LoadState.Loading &&
-            latestFeedItems.itemCount == 0
+                latestFeedItems.itemCount == 0
+
         else -> currentPagingState is FeedPagingState.Loading
     }
     val snackBarHostState = remember { SnackbarHostState() }
@@ -299,7 +301,7 @@ private fun FeedContentView(
     feedNotice: List<Notice>,
     feedNoticeClick: () -> Unit, // // 요기 수정 -> 알림 VIEW로 이동으로 변경
     latestFeedItems: LazyPagingItems<Latest>,
-    onClick: (String) -> Unit,
+    onClick: (String, Boolean) -> Unit,
     onRemoveCard: (String) -> Unit,
     currentPagingState: FeedPagingState,
     pullOffsetPx: Float,
@@ -363,7 +365,8 @@ private fun FeedContentView(
                     }
 
                     is LoadState.Loading,
-                    is LoadState.NotLoading -> {
+                    is LoadState.NotLoading,
+                        -> {
                         val isInitialLoading =
                             refreshState is LoadState.Loading && latestFeedItems.itemCount == 0
 
@@ -402,7 +405,9 @@ private fun FeedContentView(
                                         ) {
                                             FeedUi.TypedFeedCardView(
                                                 feedCard = feedCardType,
-                                                onClick = onClick,
+                                                onClick = { id ->
+                                                    onClick(id, feedCardType.isEventCard())
+                                                },
                                                 onRemoveCard = onRemoveCard,
                                             )
                                         }
@@ -483,7 +488,9 @@ private fun FeedContentView(
                                 ) {
                                     FeedUi.TypedFeedCardView(
                                         feedCard = feedCard,
-                                        onClick = onClick,
+                                        onClick = { id ->
+                                            onClick(id, feedCard.isEventCard())
+                                        },
                                         onRemoveCard = onRemoveCard,
                                     )
                                 }
@@ -516,7 +523,9 @@ private fun FeedContentView(
                                 ) {
                                     FeedUi.TypedFeedCardView(
                                         feedCard = feedCard,
-                                        onClick = onClick,
+                                        onClick = { id ->
+                                            onClick(id, feedCard.isEventCard())
+                                        },
                                         onRemoveCard = onRemoveCard,
                                     )
                                 }

@@ -91,6 +91,7 @@ import androidx.paging.compose.itemKey
 import kotlinx.coroutines.launch
 import com.airbnb.lottie.compose.LottieConstants
 import com.phew.core.ui.model.navigation.TagViewArgs
+import com.phew.core_common.CardDetailTrace
 import com.phew.core_design.DialogComponent.DeletedCardDialog
 import com.phew.core_design.LoadingAnimation
 import com.phew.core_design.component.refresh.RefreshBox
@@ -185,7 +186,7 @@ internal fun CommentCardDetailScreen(
         restartOnPlay = isRefreshing
     )
     val isRealDelete = uiState.deleteSuccess || uiState.error == CardDetailError.CARD_DELETE || uiState.error == CardDetailError.CARD_DELETE_NO_DIALOG
-    
+
     var isTimerExpired by remember { mutableStateOf(false) }
     var showBottomSheet by remember { mutableStateOf(false) }
     var showBlockDialog by remember { mutableStateOf(false) }
@@ -207,14 +208,14 @@ internal fun CommentCardDetailScreen(
     if (cardDetail == null && !isRealDelete) {
         return
     }
-    
+
     val snackBarHostState = remember { SnackbarHostState() }
     val onBackPressedLambda = remember(cardDetail?.previousCardId) {
         {
             val parentId = cardDetail?.previousCardId?.toLongOrNull() ?: 0L
             SooumLog.d(TAG, "parentId : $parentId")
             onBackPressed(parentId)
-            
+
         }
     }
     val showBottomSheetLambda = remember { { showBottomSheet = true } }
@@ -231,7 +232,8 @@ internal fun CommentCardDetailScreen(
             onNavigateToComment(
                 CardDetailCommentArgs(
                     cardId = childId,
-                    parentId = cardDetail?.cardId ?: args.cardId
+                    parentId = cardDetail?.cardId ?: args.cardId,
+                    previousView = CardDetailTrace.COMMENT
                 )
             )
         }

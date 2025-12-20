@@ -8,17 +8,20 @@ import com.phew.core_common.ERROR_LOGOUT
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.ERROR_TAG_FAVORITE_MAX_EXCEEDED
 import com.phew.core_common.ERROR_TAG_FAVORITE_ALREADY_EXISTS
+import com.phew.domain.repository.event.EventRepository
 import com.phew.domain.repository.network.TagRepository
 import javax.inject.Inject
 
 class AddFavoriteTag @Inject constructor(
-    private val repository: TagRepository
+    private val repository: TagRepository,
+    private val eventRepository: EventRepository
 ) {
     data class Param(
         val tagId: Long
     )
 
     suspend operator fun invoke(param: Param): DataResult<Unit> {
+        eventRepository.logTagRegisterTag()
         return when (val result = repository.addFavoriteTag(param.tagId)) {
             is DataResult.Success -> DataResult.Success(result.data)
             is DataResult.Fail -> mapFailure(result)
