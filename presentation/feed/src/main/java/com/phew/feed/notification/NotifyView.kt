@@ -159,7 +159,10 @@ fun NotifyView(
                         onItemExpose = viewModel::addItemAsRead,
                         context = context,
                         onCardClick = { cardId ->
-                            viewModel.navigateToDetail(cardId.toString())
+                            viewModel.navigateToDetail(
+                                cardId = cardId.toString(),
+                                isEventCard = false
+                            )
                         }
                     )
 
