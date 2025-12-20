@@ -54,6 +54,7 @@ import com.phew.core_design.AppBar
 import com.phew.core_design.CustomFont
 import com.phew.core_design.Danger
 import com.phew.core_design.DialogComponent
+import com.phew.core_design.DialogComponent.DeletedCardDialog
 import com.phew.core_design.LoadingAnimation
 import com.phew.core_design.MediumButton
 import com.phew.core_design.NeutralColor
@@ -67,6 +68,7 @@ import com.phew.profile.ProfileViewModel
 import com.phew.profile.R
 import com.phew.profile.UiState
 import com.phew.profile.component.ProfileComponent
+import com.phew.profile.ProfileUiEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -96,6 +98,16 @@ internal fun OtherProfile(
         onLogout = onLogOut,
         snackBarHostState = snackBarHostState
     )
+    
+    LaunchedEffect(Unit) {
+        viewModel.uiEffect.collect { effect ->
+            when (effect) {
+                is ProfileUiEffect.NavigateToDetail -> {
+                    onClickCard(effect.cardDetailArgs.cardId)
+                }
+            }
+        }
+    }
     when (val profileState = uiState.profileInfo) {
         is UiState.Fail -> {
             LaunchedEffect(profileState.errorMessage) {
@@ -245,7 +257,7 @@ internal fun OtherProfile(
     }
 
     if (showDeleteDialog && deletedCardId != null) {
-        DialogComponent.DeletedCardDialog(
+        DeletedCardDialog(
             onDismiss = {
                 deletedCardId?.let { viewModel.removeDeletedCard(it) }
                 showDeleteDialog = false

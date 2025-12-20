@@ -96,9 +96,11 @@ class ProfileViewModel @Inject constructor(
                     _uiState.update { state ->
                         state.copy(
                             profileInfo = UiState.Success(request.data),
-                            profileFeedCard = getFeedCard(userId = request.data.userId).cachedIn(
-                                viewModelScope
-                            ),
+                            profileFeedCard = getFeedCard(userId = request.data.userId)
+                                .cachedIn(viewModelScope)
+                                .combine(_uiState.map { it.deletedCardIds }.distinctUntilChanged()) { pagingData, deletedIds ->
+                                    pagingData.filter { !deletedIds.contains(it.cardId) }
+                                },
                             profileCommentCard = getCommentCard().cachedIn(viewModelScope),
                             follow = getFollower(profileId = request.data.userId).cachedIn(
                                 viewModelScope
@@ -141,9 +143,11 @@ class ProfileViewModel @Inject constructor(
                     _uiState.update { state ->
                         state.copy(
                             profileInfo = UiState.Success(request.data),
-                            profileFeedCard = getFeedCard(userId = request.data.userId).cachedIn(
-                                viewModelScope
-                            ),
+                            profileFeedCard = getFeedCard(userId = request.data.userId)
+                                .cachedIn(viewModelScope)
+                                .combine(_uiState.map { it.deletedCardIds }.distinctUntilChanged()) { pagingData, deletedIds ->
+                                    pagingData.filter { !deletedIds.contains(it.cardId) }
+                                },
                             profileCommentCard = getCommentCard().cachedIn(viewModelScope),
                             follow = getFollower(profileId = request.data.userId).cachedIn(
                                 viewModelScope
