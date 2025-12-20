@@ -113,7 +113,6 @@ fun NavGraphBuilder.signUpGraph(
                 remember(nav) { navController.getBackStackEntry(SIGN_UP_GRAPH) }
             val signUpViewModel: SignUpViewModel = hiltViewModel(navBackStackEntry)
             val args = nav.arguments?.getNavArg<OnBoardingArgs>() ?: OnBoardingArgs()
-            println("!! $TAG, $ON_BOARDING_ROUTE")
             OnBoarding(
                 signUp = navController::navigateToSignUpAgreement,
                 alreadySignUp = navController::navigateToSignUpAuthCode,

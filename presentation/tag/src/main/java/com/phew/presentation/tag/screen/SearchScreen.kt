@@ -339,7 +339,6 @@ private fun SearchScreen(
                 }
                 // 3. 검색 수행 후 카드가 없음 (더 정확한 LoadState 확인)
                 searchPerformed && searchDataLoaded && !isSearchLoading && !isPagingLoading && cardDataItems.itemCount == 0 -> {
-                    println("!! isRelatedTagSearch= $isRelatedTagSearch")
                     // 추천 태그 클릭으로 검색한 경우 vs 직접 입력한 검색어로 검색한 경우 구분
                     if (isRelatedTagSearch) {
                         EmptyCardList() // 추천 태그를 클릭했지만 해당 태그에 카드가 없는 경우
