@@ -190,7 +190,7 @@ internal fun OtherProfile(
                                 }
                             }
                         },
-                        onClickCard = onClickCard,
+                        onClickCard = viewModel::navigateToDetail,
                         onLogout = onLogOut,
                         snackBarHostState = snackBarHostState,
                         modifier = Modifier
@@ -230,6 +230,33 @@ internal fun OtherProfile(
                 }
             }
         }
+        else -> {}
+    }
+
+    // 삭제된 카드 상태 감지
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var deletedCardId by remember { mutableStateOf<Long?>(null) }
+    
+    LaunchedEffect(uiState.checkCardDelete) {
+        if (uiState.checkCardDelete is UiState.Success) {
+            deletedCardId = (uiState.checkCardDelete as UiState.Success<Long>).data
+            showDeleteDialog = true
+        }
+    }
+
+    if (showDeleteDialog && deletedCardId != null) {
+        DialogComponent.DeletedCardDialog(
+            onDismiss = {
+                deletedCardId?.let { viewModel.removeDeletedCard(it) }
+                showDeleteDialog = false
+                deletedCardId = null
+            },
+            onConfirm = {
+                deletedCardId?.let { viewModel.removeDeletedCard(it) }
+                showDeleteDialog = false
+                deletedCardId = null
+            }
+        )
     }
 }
 

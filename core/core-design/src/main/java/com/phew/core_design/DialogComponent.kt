@@ -318,6 +318,19 @@ object DialogComponent {
             }
         }
     }
+
+    @Composable
+    fun DeletedCardDialog(
+        onConfirm: () -> Unit,
+        onDismiss: () -> Unit,
+    ) {
+        NoDescriptionButtonOne(
+            title = androidx.compose.ui.res.stringResource(R.string.dialog_deleted_card_title),
+            buttonText = androidx.compose.ui.res.stringResource(R.string.common_okay),
+            onClick = onConfirm,
+            onDismiss = onDismiss
+        )
+    }
 }
 
 @Composable

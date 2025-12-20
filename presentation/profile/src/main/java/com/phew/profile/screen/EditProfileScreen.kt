@@ -175,6 +175,8 @@ internal fun EditProfileScreen(viewModel: ProfileViewModel, onBackPress: () -> U
                     )
                 }
             }
+
+            else -> {}
         }
     }
 }

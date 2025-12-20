@@ -25,7 +25,9 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -41,9 +43,11 @@ import androidx.lifecycle.flowWithLifecycle
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
+import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core_design.AppBar.IconLeftAndRightAppBar
 import com.phew.core_design.CustomFont
 import com.phew.core_design.DialogComponent
+import com.phew.core_design.DialogComponent.DeletedCardDialog
 import com.phew.core_design.MediumButton.IconPrimary
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
@@ -55,6 +59,7 @@ import com.phew.domain.dto.TagCardContent
 import com.phew.presentation.tag.R
 import com.phew.presentation.tag.viewmodel.TagUiEffect
 import com.phew.presentation.tag.viewmodel.TagViewModel
+import com.phew.presentation.tag.viewmodel.UiState
 import com.phew.core_design.R as DesignR
 
 
@@ -64,7 +69,7 @@ internal fun ViewTagsRoute(
     tagName: String,
     tagId: Long,
     viewModel: TagViewModel = hiltViewModel(),
-    onClickCard: (Long) -> Unit,
+    navigateToDetail: (cardDetailArgs: CardDetailArgs) -> Unit,
     onBackPressed: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -73,6 +78,7 @@ internal fun ViewTagsRoute(
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
+    var showDeleteDialog by remember { mutableStateOf(false) }
     val yOffset = 8.dp.value.toInt()
 
     // favoriteTags 로드를 먼저 확인
@@ -132,12 +138,42 @@ internal fun ViewTagsRoute(
                             viewModel.clearViewTagsScreenUiEffect()
                         }
 
+                        is TagUiEffect.NavigateToDetail -> {
+                              navigateToDetail(it.cardDetailArgs)
+                              viewModel.clearViewTagsScreenUiEffect()
+                        }
+
                         else -> {
                             viewModel.clearViewTagsScreenUiEffect()
                         }
                     }
                 }
             }
+    }
+
+    // 삭제된 카드 상태 감지
+    var deletedCardId by remember { mutableStateOf<Long?>(null) }
+    
+    LaunchedEffect(uiState.checkCardDelete) {
+        if (uiState.checkCardDelete is UiState.Success) {
+            deletedCardId = (uiState.checkCardDelete as UiState.Success<Long>).data
+            showDeleteDialog = true
+        }
+    }
+
+    if (showDeleteDialog && deletedCardId != null) {
+        DeletedCardDialog(
+            onDismiss = {
+                deletedCardId?.let { viewModel.removeDeletedCard(it) }
+                showDeleteDialog = false
+                deletedCardId = null
+            },
+            onConfirm = {
+                deletedCardId?.let { viewModel.removeDeletedCard(it) }
+                showDeleteDialog = false
+                deletedCardId = null
+            }
+        )
     }
 
     // cardDataItems에서 첫 번째 아이템의 isFavorite 상태를 ViewModel에 업데이트
@@ -161,7 +197,7 @@ internal fun ViewTagsRoute(
         gridState = gridState,
         isRefreshing = uiState.isRefreshing,
         viewTagsDataLoaded = uiState.viewTagsDataLoaded,
-        onClickCard = onClickCard,
+        onClickCard = viewModel::navigateToDetail,
         onBackPressed = onBackPressed,
         isFavorite = uiState.favoriteTags.any { it.id == tagId },
         onFavoriteToggle = { viewModel.toggleTagFavorite(tagId, tagName) },

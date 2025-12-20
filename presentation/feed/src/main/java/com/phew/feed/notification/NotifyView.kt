@@ -51,6 +51,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core_design.AppBar
 import com.phew.core_design.DialogComponent
+import com.phew.core_design.DialogComponent.DeletedCardDialog
 import com.phew.core_design.LoadingAnimation
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
@@ -60,6 +61,7 @@ import com.phew.domain.dto.Notification
 import com.phew.feed.NotificationUi
 import com.phew.feed.NotifyTab
 import com.phew.feed.viewModel.FeedViewModel
+import com.phew.feed.viewModel.NavigationEvent
 import com.phew.feed.viewModel.UiState
 import com.phew.presentation.feed.R
 
@@ -70,6 +72,15 @@ fun NotifyView(
     backClick: () -> Unit,
     navigateToDetail: (CardDetailArgs) -> Unit,
 ) {
+    LaunchedEffect(viewModel) {
+        viewModel.navigationEvent.collect { event ->
+            when (event) {
+                is NavigationEvent.NavigateToDetail -> {
+                    navigateToDetail(event.args)
+                }
+            }
+        }
+    }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val notices = viewModel.notice.collectAsLazyPagingItems()
     val read = viewModel.readActivateAlarm.collectAsLazyPagingItems()
@@ -148,7 +159,7 @@ fun NotifyView(
                         onItemExpose = viewModel::addItemAsRead,
                         context = context,
                         onCardClick = { cardId ->
-                            navigateToDetail(CardDetailArgs(cardId))
+                            viewModel.navigateToDetail(cardId.toString())
                         }
                     )
 
@@ -159,8 +170,39 @@ fun NotifyView(
                 }
             }
         }
+        }
+        if (uiState.checkCardDelete is UiState.Success) {
+            DeletedCardDialog(
+                onDismiss = {
+                    viewModel.initCheckCardDelete()
+                    when (selectIndex) {
+                        NotifyTab.NOTIFY_ACTIVATE -> {
+                            unRead.refresh()
+                            read.refresh()
+                        }
+
+                        NotifyTab.NOTIFY_SERVICE -> {
+                            notices.refresh()
+                        }
+                    }
+                },
+                onConfirm = {
+                    viewModel.initCheckCardDelete()
+                    when (selectIndex) {
+                        NotifyTab.NOTIFY_ACTIVATE -> {
+                            unRead.refresh()
+                            read.refresh()
+                        }
+
+                        NotifyTab.NOTIFY_SERVICE -> {
+                            notices.refresh()
+                        }
+                    }
+                }
+            )
+        }
     }
-}
+
 
 @Composable
 private fun NoticeViewTopBar(

@@ -741,12 +741,16 @@ class FeedViewModel @Inject constructor(
                 }
 
                 is DomainResult.Success -> {
-                    _uiState.update { state -> state.copy(checkCardDelete = UiState.Success(result.data)) }
-                    if (!result.data) _navigationEvent.emit(
-                        NavigationEvent.NavigateToDetail(
-                            CardDetailArgs(cardIdLong)
+                    if (result.data) {
+                        _uiState.update { state -> state.copy(checkCardDelete = UiState.Success(cardIdLong)) }
+                    } else {
+                        _uiState.update { state -> state.copy(checkCardDelete = UiState.None) }
+                        _navigationEvent.emit(
+                            NavigationEvent.NavigateToDetail(
+                                CardDetailArgs(cardIdLong)
+                            )
                         )
-                    )
+                    }
                 }
             }
         }
@@ -778,7 +782,7 @@ data class Home(
     val shouldShowPermissionRationale: Boolean = false,
     val feedNotification: UiState<List<Notice>> = UiState.Loading,
     val setReadNotify: UiState<Unit> = UiState.Loading,
-    val checkCardDelete: UiState<Boolean> = UiState.None,
+    val checkCardDelete: UiState<Long> = UiState.None,
 ) {
     val currentPagingState: FeedPagingState
         get() = when (currentTab) {

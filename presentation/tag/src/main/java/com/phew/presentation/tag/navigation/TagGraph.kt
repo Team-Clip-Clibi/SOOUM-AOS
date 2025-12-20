@@ -1,6 +1,7 @@
 package com.phew.presentation.tag.navigation
 
 import android.annotation.SuppressLint
+import androidx.compose.runtime.remember
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -8,7 +9,6 @@ import androidx.navigation.NavOptions
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import com.phew.core.ui.component.home.HomeTabType
-import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.model.navigation.TagViewArgs
 import com.phew.core.ui.navigation.NavArgKey
 import com.phew.core.ui.navigation.asNavArg
@@ -74,11 +74,13 @@ fun NavGraphBuilder.tagGraph(
         }
 
         slideComposable(route = SEARCH_ROUTE) { nav ->
-            val tagHomeEntry = navController.getBackStackEntry(TAG_HOME_ROUTE)
+            val tagHomeEntry = remember(navController) {
+                navController.getBackStackEntry(TAG_HOME_ROUTE)
+            }
             val tagViewModel: TagViewModel = hiltViewModel(tagHomeEntry)
             SearchRoute(
-                onClickCard = { cardId ->
-                    navController.navigateToDetailGraph(CardDetailArgs(cardId))
+                navigateToDetail = { arg ->
+                    navController.navigateToDetailGraph(arg)
                 },
                 onBackPressed = {
                     tagViewModel.refreshTagScreenData()
@@ -101,8 +103,8 @@ fun NavGraphBuilder.tagGraph(
             ViewTagsRoute(
                 tagName = args.tagName,
                 tagId = args.tagId,
-                onClickCard = { cardId ->
-                    navController.navigateToDetailGraph(CardDetailArgs(cardId))
+                navigateToDetail = { arg ->
+                    navController.navigateToDetailGraph(arg)
                 },
                 onBackPressed = {
                     navController.previousBackStackEntry?.savedStateHandle?.set("favorite_changed", true)

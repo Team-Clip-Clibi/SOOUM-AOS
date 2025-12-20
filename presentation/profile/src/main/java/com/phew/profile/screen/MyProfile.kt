@@ -27,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -184,6 +185,33 @@ internal fun MyProfile(
                 }
             }
         }
+        else -> {}
+    }
+
+    // 삭제된 카드 상태 감지
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var deletedCardId by remember { mutableStateOf<Long?>(null) }
+    
+    LaunchedEffect(uiState.checkCardDelete) {
+        if (uiState.checkCardDelete is UiState.Success) {
+            deletedCardId = (uiState.checkCardDelete as UiState.Success<Long>).data
+            showDeleteDialog = true
+        }
+    }
+
+    if (showDeleteDialog && deletedCardId != null) {
+        DialogComponent.DeletedCardDialog(
+            onDismiss = {
+                deletedCardId?.let { viewModel.removeDeletedCard(it) }
+                showDeleteDialog = false
+                deletedCardId = null
+            },
+            onConfirm = {
+                deletedCardId?.let { viewModel.removeDeletedCard(it) }
+                showDeleteDialog = false
+                deletedCardId = null
+            }
+        )
     }
 }
 
@@ -200,7 +228,7 @@ private fun MyProfileScaffold(
         topBar = {
             AppBar.IconRightAppBar(
                 title = stringResource(R.string.profile_top_bar),
-                onClick = remember(onClickSetting) { onClickSetting }
+                onClick = onClickSetting
             )
         },
         content = content

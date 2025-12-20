@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -27,7 +26,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -93,6 +91,7 @@ import androidx.paging.compose.itemKey
 import kotlinx.coroutines.launch
 import com.airbnb.lottie.compose.LottieConstants
 import com.phew.core.ui.model.navigation.TagViewArgs
+import com.phew.core_design.DialogComponent.DeletedCardDialog
 import com.phew.core_design.LoadingAnimation
 import com.phew.core_design.component.refresh.RefreshBox
 import com.phew.core_design.typography.FontType
@@ -733,10 +732,8 @@ private fun HandleError(
 
 @Composable
 private fun DeleteDialog(onClick: () -> Unit) {
-    DialogComponent.NoDescriptionButtonOne(
-        title = stringResource(R.string.card_detail_dialog_delete_title),
-        buttonText = stringResource(com.phew.core_design.R.string.common_okay),
-        onClick = onClick,
+    DeletedCardDialog(
+        onConfirm = onClick,
         onDismiss = onClick
     )
 }

@@ -75,6 +75,7 @@ import com.phew.feed.viewModel.NavigationEvent
 import com.phew.feed.viewModel.UiState
 import com.phew.presentation.feed.R
 import com.phew.core.ui.state.SooumAppState
+import com.phew.core_design.DialogComponent.DeletedCardDialog
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
@@ -253,12 +254,10 @@ fun FeedView(
                         startButtonTextColor = NeutralColor.GRAY_600
                     )
                 }
-                if (uiState.checkCardDelete is UiState.Success && (uiState.checkCardDelete as UiState.Success<Boolean>).data) {
-                    DialogComponent.NoDescriptionButtonOne(
-                        title = stringResource(R.string.home_feed_dialog_delete_title),
-                        buttonText = stringResource(com.phew.core_design.R.string.common_okay),
+                if (uiState.checkCardDelete is UiState.Success) {
+                    DeletedCardDialog(
                         onDismiss = viewModel::initCheckCardDelete,
-                        onClick = viewModel::initCheckCardDelete
+                        onConfirm = viewModel::initCheckCardDelete
                     )
                 }
             }
