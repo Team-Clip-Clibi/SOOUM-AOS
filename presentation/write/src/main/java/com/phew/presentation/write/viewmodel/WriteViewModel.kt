@@ -42,6 +42,7 @@ import com.phew.core_common.ERROR_ALREADY_CARD_DELETE
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_design.CustomFont
 import com.phew.core_design.typography.FontType
+import com.phew.domain.usecase.CheckCardAlreadyDelete
 import com.phew.domain.usecase.GetActivityRestrictionDate
 
 import com.phew.presentation.write.model.BackgroundFilterType
@@ -57,6 +58,7 @@ class WriteViewModel @Inject constructor(
     private val postCard: PostCard,
     private val postCardReply: PostCardReply,
     private val activateDate: GetActivityRestrictionDate,
+    private val checkCardDelete: CheckCardAlreadyDelete,
 ) : ViewModel() {
 
     private val locationPermissions = arrayOf(
@@ -452,29 +454,35 @@ class WriteViewModel @Inject constructor(
 
                 val result: DomainResult<Long, String> = try {
                     if (state.parentCardId != null) {
-                        // 댓글 작성 (PostCardReply 사용)
-                        val (imgType, imgName) = when {
-                            state.selectedDefaultImageName != null -> "DEFAULT" to state.selectedDefaultImageName
-                            state.activeBackgroundUri != null -> "CUSTOM" to ""
-                            else -> "DEFAULT" to ""
+                        val checkResult = checkCardDelete(CheckCardAlreadyDelete.Param(cardId = state.parentCardId))
+                        if (checkResult is DomainResult.Success && checkResult.data) {
+                            // 삭제된 경우 -> Failure 반환
+                            DomainResult.Failure(ERROR_ALREADY_CARD_DELETE)
+                        } else {
+                            // 댓글 작성 (PostCardReply 사용)
+                            val (imgType, imgName) = when {
+                                state.selectedDefaultImageName != null -> "DEFAULT" to state.selectedDefaultImageName
+                                state.activeBackgroundUri != null -> "CUSTOM" to ""
+                                else -> "DEFAULT" to ""
+                            }
+
+                            SooumLog.d(
+                                TAG,
+                                "onWriteComplete reply imgType: $imgType, imgName: $imgName"
+                            )
+
+                            val replyParam = PostCardReply.Param(
+                                cardId = state.parentCardId,
+                                content = state.content,
+                                font = selectedFontServerName.data.serverName,
+                                imgType = imgType,
+                                imgName = imgName,
+                                tags = state.tags,
+                                isDistanceShared = state.selectedOptionIds.contains(WriteOptions.DISTANCE_OPTION_ID)
+                            )
+                            SooumLog.d(TAG, "onWriteComplete reply: $replyParam")
+                            postCardReply(replyParam)
                         }
-
-                        SooumLog.d(
-                            TAG,
-                            "onWriteComplete reply imgType: $imgType, imgName: $imgName"
-                        )
-
-                        val replyParam = PostCardReply.Param(
-                            cardId = state.parentCardId,
-                            content = state.content,
-                            font = selectedFontServerName.data.serverName,
-                            imgType = imgType,
-                            imgName = imgName,
-                            tags = state.tags,
-                            isDistanceShared = state.selectedOptionIds.contains(WriteOptions.DISTANCE_OPTION_ID)
-                        )
-                        SooumLog.d(TAG, "onWriteComplete reply: $replyParam")
-                        postCardReply(replyParam)
                     } else {
                         // 새 카드 작성 (PostCard 사용)
                         val (isFromDevice, imgName, imageUrl) = when {
