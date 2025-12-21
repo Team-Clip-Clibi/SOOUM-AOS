@@ -96,7 +96,6 @@ import com.phew.core_design.DialogComponent.DeletedCardDialog
 import com.phew.core_design.LoadingAnimation
 import com.phew.core_design.component.refresh.RefreshBox
 import com.phew.core_design.typography.FontType
-
 import androidx.lifecycle.flowWithLifecycle
 import com.phew.presentation.detail.viewmodel.CardDetailUiEffect
 import kotlinx.coroutines.flow.collect
@@ -312,7 +311,6 @@ internal fun CommentCardDetailScreen(
                     },
                     onBackPressed = onBackPressedLambda,
                     showBottomSheet = showBottomSheetLambda,
-
                     onExpire = onExpireLambda,
                     memberId = cardDetail?.memberId ?: -1L,
                     title = if(isRealDelete) stringResource(R.string.card_detail_dialog_delete_title) else stringResource(R.string.card_detail_comment_app_bar_title)
@@ -505,6 +503,7 @@ private fun CardView(
             ) {
                 CardDetailComponent(
                     modifier = Modifier.fillMaxWidth(),
+                    isPreviousCard = true,
                     previousCommentThumbnailUri = cardDetail?.previousCardImgUrl,
                     cardContent = cardDetail?.cardContent ?: "",
                     cardThumbnailUri = cardDetail?.cardImgUrl ?: "",

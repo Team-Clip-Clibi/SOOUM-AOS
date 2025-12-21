@@ -87,57 +87,62 @@ class FeedViewModel @Inject constructor(
      */
 
     init {
-        // 홈 화면 진입 시 최신 피드 자동 로딩
-        loadInitialFeeds()
-        getFeedNotice()
-        // 탭 변경 감지하여 필요시 데이터 로딩
+        // 순차적 초기화: 위치 설정 완료 후 다른 초기화 진행
         viewModelScope.launch {
-            uiState.map { it.currentTab }
-                .distinctUntilChanged()
-                .drop(1) // 초기값 무시
-                .collect { currentTab ->
-                    when (currentTab) {
-                        FeedType.Latest -> {
-                            if (_uiState.value.latestPagingState is FeedPagingState.None) {
-                                _uiState.update { it.copy(latestPagingState = FeedPagingState.Loading) }
-                                loadLatestFeeds(isInitial = true)
-                            }
-                        }
-
-                        FeedType.Popular -> {
-                            if (_uiState.value.popularPagingState is FeedPagingState.None) {
-                                _uiState.update { it.copy(popularPagingState = FeedPagingState.Loading) }
-                                loadPopularFeeds(isInitial = true)
-                            }
-                        }
-
-                        FeedType.Distance -> {
-                            val currentDistanceTab = _uiState.value.distanceTab
-                            val currentStateForTab =
-                                _uiState.value.distancePagingStates[currentDistanceTab]
-                            if (currentStateForTab == null || currentStateForTab is FeedPagingState.None) {
-                                _uiState.update { state ->
-                                    val newStates = state.distancePagingStates.toMutableMap()
-                                    newStates[currentDistanceTab] = FeedPagingState.Loading
-                                    state.copy(distancePagingStates = newStates)
-                                }
-                                loadDistanceFeeds(isInitial = true)
-                            }
-                        }
-                    }
-                }
+            // 위치 설정을 먼저 완료
+            loadInitialFeeds()
+            // 피드 노티스 로딩
+            getFeedNotice()
+            // 탭 변경 감지 시작
+            startTabChangeListener()
         }
     }
 
-    private fun loadInitialFeeds() {
-        viewModelScope.launch {
-            // Location 초기 설정
-            val location = getLocationSafely()
-            _latestFeedLocation.value = LatestFeedQuery(
-                latitude = location.latitude.takeIf { it != 0.0 },
-                longitude = location.longitude.takeIf { it != 0.0 }
-            )
-        }
+    private suspend fun startTabChangeListener() {
+        // 탭 변경 감지하여 필요시 데이터 로딩
+        uiState.map { it.currentTab }
+            .distinctUntilChanged()
+            .drop(1) // 초기값 무시
+            .collect { currentTab ->
+                when (currentTab) {
+                    FeedType.Latest -> {
+                        if (_uiState.value.latestPagingState is FeedPagingState.None) {
+                            _uiState.update { it.copy(latestPagingState = FeedPagingState.Loading) }
+                            loadLatestFeeds(isInitial = true)
+                        }
+                    }
+
+                    FeedType.Popular -> {
+                        if (_uiState.value.popularPagingState is FeedPagingState.None) {
+                            _uiState.update { it.copy(popularPagingState = FeedPagingState.Loading) }
+                            loadPopularFeeds(isInitial = true)
+                        }
+                    }
+
+                    FeedType.Distance -> {
+                        val currentDistanceTab = _uiState.value.distanceTab
+                        val currentStateForTab =
+                            _uiState.value.distancePagingStates[currentDistanceTab]
+                        if (currentStateForTab == null || currentStateForTab is FeedPagingState.None) {
+                            _uiState.update { state ->
+                                val newStates = state.distancePagingStates.toMutableMap()
+                                newStates[currentDistanceTab] = FeedPagingState.Loading
+                                state.copy(distancePagingStates = newStates)
+                            }
+                            loadDistanceFeeds(isInitial = true)
+                        }
+                    }
+                }
+            }
+    }
+
+    private suspend fun loadInitialFeeds() {
+        // Location 초기 설정
+        val location = getLocationSafely()
+        _latestFeedLocation.value = LatestFeedQuery(
+            latitude = location.latitude.takeIf { it != 0.0 },
+            longitude = location.longitude.takeIf { it != 0.0 }
+        )
     }
 
     val notice: Flow<PagingData<Notice>> =
@@ -307,7 +312,6 @@ class FeedViewModel @Inject constructor(
                             TAG,
                             "Latest feed duplicate check: $isDuplicate (new=${newFeedCards.size}, existing=${existingCards.size})"
                         )
-                        delay(1000L)
                         _uiState.update { state ->
                             state.copy(
                                 location = location,
@@ -316,7 +320,6 @@ class FeedViewModel @Inject constructor(
                                     hasNextPage = result.data.isNotEmpty(),
                                     lastId = result.data.lastOrNull()?.cardId?.toLongOrNull()
                                 ),
-                                refresh = false //요기 수정
                             )
                         }
                     }
@@ -327,7 +330,6 @@ class FeedViewModel @Inject constructor(
                                 latestPagingState = FeedPagingState.Error(
                                     result.message ?: "최신 피드 로딩 실패"
                                 ),
-                                refresh = false //요기 수정
                             )
                         }
                     }
@@ -370,7 +372,6 @@ class FeedViewModel @Inject constructor(
                         val existingCards = if (isInitial) emptyList() else {
                             (currentState as? FeedPagingState.Success)?.feedCards ?: emptyList()
                         }
-                        delay(1000L)
                         _uiState.update { state ->
                             state.copy(
                                 location = location,
@@ -455,7 +456,6 @@ class FeedViewModel @Inject constructor(
                         val existingCards = if (isInitial) emptyList() else {
                             (currentState as? FeedPagingState.Success)?.feedCards ?: emptyList()
                         }
-                        delay(1000L)
                         _uiState.update { state ->
                             val newStates = state.distancePagingStates.toMutableMap()
                             newStates[currentDistanceTab] = FeedPagingState.Success(
@@ -483,11 +483,11 @@ class FeedViewModel @Inject constructor(
     }
 
     fun switchTab(feedType: FeedType) {
-        _uiState.update { it.copy(currentTab = feedType) }
+        _uiState.update { it.copy(currentTab = feedType, refresh = false) }
     }
 
     fun switchDistanceTab(distanceTab: DistanceType) {
-        _uiState.update { state -> state.copy(distanceTab = distanceTab) }
+        _uiState.update { state -> state.copy(distanceTab = distanceTab, refresh = false) }
         val cachedState = _uiState.value.distancePagingStates[distanceTab]
         if (cachedState == null || cachedState is FeedPagingState.Error) {
             loadDistanceFeeds(isInitial = true)
@@ -550,22 +550,27 @@ class FeedViewModel @Inject constructor(
     private fun currentTab() {
         when (_uiState.value.currentTab) {
             FeedType.Latest -> {
-                _uiState.update { it.copy(latestPagingState = FeedPagingState.Loading) }
+                // Latest는 Paging3를 사용하므로 수동 Loading 상태나 loadLatestFeeds 호출을 하지 않음
                 triggerLatestFeedRefresh()
-                loadLatestFeeds(isInitial = true)
             }
 
             FeedType.Popular -> {
-                _uiState.update { it.copy(popularPagingState = FeedPagingState.Loading) }
+                // 이미 데이터가 있고 refresh 중이라면 Loading(초기화) 상태로 만들지 않음
+                if (!_uiState.value.refresh) {
+                    _uiState.update { it.copy(popularPagingState = FeedPagingState.Loading) }
+                }
                 loadPopularFeeds(isInitial = true)
             }
 
             FeedType.Distance -> {
                 val currentDistanceTab = _uiState.value.distanceTab
-                _uiState.update { state ->
-                    val newStates = state.distancePagingStates.toMutableMap()
-                    newStates[currentDistanceTab] = FeedPagingState.Loading
-                    state.copy(distancePagingStates = newStates)
+                // 이미 데이터가 있고 refresh 중이라면 Loading(초기화) 상태로 만들지 않음
+                if (!_uiState.value.refresh) {
+                    _uiState.update { state ->
+                        val newStates = state.distancePagingStates.toMutableMap()
+                        newStates[currentDistanceTab] = FeedPagingState.Loading
+                        state.copy(distancePagingStates = newStates)
+                    }
                 }
                 loadDistanceFeeds(isInitial = true)
             }

@@ -44,6 +44,7 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.phew.core.ui.model.navigation.CardDetailArgs
+import androidx.paging.LoadState
 import com.phew.core_design.AppBar.IconLeftAndRightAppBar
 import com.phew.core_design.CustomFont
 import com.phew.core_design.DialogComponent
@@ -90,10 +91,8 @@ internal fun ViewTagsRoute(
 
     // favoriteTags가 로드된 후 tagCards 로드 (즐겨찾기 상태 포함)
     LaunchedEffect(tagName, tagId, uiState.favoriteTags, uiState.nickName) {
-        if (uiState.favoriteTags.isNotEmpty() || uiState.nickName.isNotEmpty()) {
             val currentFavoriteState = viewModel.getTagFavoriteState(tagId)
             viewModel.loadTagCards(tagName, tagId, currentFavoriteState)
-        }
     }
 
     // Toast 처리 및 Snackbar 처리
@@ -153,7 +152,7 @@ internal fun ViewTagsRoute(
 
     // 삭제된 카드 상태 감지
     var deletedCardId by remember { mutableStateOf<Long?>(null) }
-    
+
     LaunchedEffect(uiState.checkCardDelete) {
         if (uiState.checkCardDelete is UiState.Success) {
             deletedCardId = (uiState.checkCardDelete as UiState.Success<Long>).data
@@ -245,12 +244,16 @@ private fun ViewTagsScreen(
         val refreshState = rememberPullToRefreshState()
 
         RefreshBox(
+            modifier = Modifier.fillMaxSize(),
             isRefresh = isRefreshing,
             onRefresh = onRefresh,
             state = refreshState,
             paddingValues = innerPadding
         ) {
-            if (viewTagsDataLoaded && cardDataItems.itemCount == 0) {
+            // viewTagsDataLoaded: 데이터 로드 시도 여부 (초기 진입 시 깜빡임 방지)
+            // itemCount == 0: 데이터가 없음
+            // loadState.refresh !is LoadState.Loading: 로딩 중이 아님 (NotLoading 또는 Error)
+            if (viewTagsDataLoaded && cardDataItems.loadState.refresh !is LoadState.Loading && cardDataItems.itemCount == 0) {
                 EmptyViewTags()
             } else {
                 LazyVerticalGrid(
