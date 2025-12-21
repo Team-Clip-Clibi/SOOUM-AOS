@@ -476,6 +476,7 @@ private fun CardView(
                 CardDetailComponent(
                     modifier = Modifier.fillMaxWidth(),
                     previousCommentThumbnailUri = cardDetail.previousCardImgUrl,
+                    isPreviousCard = true,
                     cardContent = cardDetail.cardContent,
                     cardThumbnailUri = cardDetail.cardImgUrl,
                     cardTags = cardDetail.tags.map { data -> data.name },

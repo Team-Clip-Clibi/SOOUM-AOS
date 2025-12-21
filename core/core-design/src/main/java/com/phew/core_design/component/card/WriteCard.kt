@@ -64,6 +64,7 @@ import com.phew.core_design.OpacityColor
 import com.phew.core_design.Primary
 import com.phew.core_design.R
 import com.phew.core_design.TextComponent
+import com.phew.core_design.component.card.CardDesignTokens.PreviousCardImageSize
 import com.phew.core_design.component.tag.TagRow
 import com.phew.core_design.typography.FontTextStyle
 import com.phew.core_design.typography.FontType
@@ -85,7 +86,8 @@ object CardDesignTokens {
     val TextDelete = NeutralColor.GRAY_400
 
     // 크기
-    val CardRadius = 8.dp
+    val CardRadius = 16.dp
+    val PreviousCardImageSize = 40.dp
 }
 
 enum class CardType {
@@ -119,6 +121,7 @@ sealed class BaseCardData(open val id: String, open val type: CardType) {
         val content: String,
         val tags: List<String> = emptyList(),
         val timeAgo: String = "",
+        val isPreviousCard: Boolean = false,
         val hasPreviousCommentThumbnail: Boolean = false,
         val thumbnailUri: String = "",
         override val id: String = "",
@@ -451,53 +454,57 @@ private fun ReplyCard(
 
             Box(modifier = Modifier.fillMaxSize()) {
                 // 이전 댓글 썸네일 영역 (상단)
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp)
-                        .align(Alignment.TopStart),
-                    contentAlignment = Alignment.TopStart
-                ) {
+                if (data.isPreviousCard) {
                     Box(
                         modifier = Modifier
-                            .size(32.dp)
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                                onClick = onPreviewCard
-                            ),
-                        contentAlignment = Alignment.Center
+                            .fillMaxWidth()
+                            .padding(10.dp)
+                            .align(Alignment.TopStart),
+                        contentAlignment = Alignment.TopStart
                     ) {
-                        if (data.hasPreviousCommentThumbnail) {
-                            Surface(
-                                modifier = Modifier.matchParentSize(),
-                                shape = RoundedCornerShape(CardDesignTokens.CardRadius)
+                        Box(
+                            modifier = Modifier
+                                .size(PreviousCardImageSize)
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                    onClick = onPreviewCard
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (data.hasPreviousCommentThumbnail) {
+                                Surface(
+                                    modifier = Modifier.matchParentSize(),
+                                    shape = RoundedCornerShape(CardDesignTokens.CardRadius)
+                                ) {
+                                    AsyncImage(
+                                        model = data.previousCommentThumbnailUri,
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier
+                                            .matchParentSize()
+                                            .clip(RoundedCornerShape(CardDesignTokens.CardRadius))
+                                    )
+                                }
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .clip(RoundedCornerShape(CardDesignTokens.CardRadius))
+                                    .background(Color.Black.copy(alpha = 0.3f)),
+                                contentAlignment = Alignment.Center
                             ) {
-                                AsyncImage(
-                                    model = data.previousCommentThumbnailUri,
-                                    contentDescription = null,
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier
-                                        .matchParentSize()
-                                        .clip(RoundedCornerShape(CardDesignTokens.CardRadius))
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_back_thumbnail),
+                                    contentDescription = "이전 댓글 썸네일",
+                                    tint = CardDesignTokens.TextPrimary
                                 )
                             }
                         }
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(RoundedCornerShape(CardDesignTokens.CardRadius))
-                                .background(Color.Black.copy(alpha = 0.3f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_back_thumbnail),
-                                contentDescription = "이전 댓글 썸네일",
-                                tint = CardDesignTokens.TextPrimary
-                            )
-                        }
                     }
                 }
+
 
                 // 중앙 컨텐츠 영역 - Box로 중앙 정렬
                 Box(
