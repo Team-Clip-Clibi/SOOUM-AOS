@@ -108,7 +108,7 @@ object TimeUtils {
     /**
      * ISO 8601 MM.dd 형식 출력
      */
-    private val MM_DD_FORMATTER = DateTimeFormatter.ofPattern("MM.dd")
+    private val MM_DD_FORMATTER = DateTimeFormatter.ofPattern("MM월 d일")
 
     fun formatToDate(createAt: String): String {
         if (createAt.trim().isEmpty()) return ""
