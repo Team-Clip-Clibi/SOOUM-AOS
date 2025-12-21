@@ -59,9 +59,10 @@ object AppBar {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp)
                 .background(color = NeutralColor.WHITE)
                 .zIndex(1f)
+                .statusBarsPadding()
+                .height(48.dp)
                 .padding(start = 16.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
@@ -98,9 +99,10 @@ object AppBar {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp)
                 .background(color = NeutralColor.WHITE)
                 .zIndex(1f)
+                .statusBarsPadding()
+                .height(48.dp)
                 .padding(start = 16.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
@@ -377,9 +379,10 @@ object AppBar {
         icon: @Composable () -> Unit,
         onBackClick: () -> Unit,
         onValueChange: (String) -> Unit,
-        onDeleteClick: () -> Unit,
+        onInputFieldRemoveClick: () -> Unit,
         onSearch: () -> Unit,
-        focusRequester: androidx.compose.ui.focus.FocusRequester? = null
+        focusRequester: androidx.compose.ui.focus.FocusRequester? = null,
+        showDeleteIcon: Boolean = true
     ) {
         val interactionSource = remember { MutableInteractionSource() }
         Row(
@@ -417,9 +420,10 @@ object AppBar {
                 isReadOnly = false,
                 placeHolder = placeholder,
                 onValueChange = onValueChange,
-                onDeleteClick = onDeleteClick,
+                onDeleteClick = onInputFieldRemoveClick,
                 onSearch = onSearch,
-                focusRequester = focusRequester
+                focusRequester = focusRequester,
+                showDeleteIcon = showDeleteIcon
             )
             if (isIcon) {
                 Box(

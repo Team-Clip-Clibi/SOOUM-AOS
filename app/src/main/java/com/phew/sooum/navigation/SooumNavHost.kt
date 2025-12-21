@@ -10,7 +10,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.navOptions
 import com.phew.core.ui.component.back.SooumOnBackPressed
 import com.phew.core.ui.component.home.HomeTabType
-import com.phew.core.ui.model.navigation.CardDetailArgs
+import com.phew.core.ui.model.navigation.CardDetailCommentArgs
 import com.phew.core.ui.model.navigation.OnBoardingArgs
 import com.phew.core.ui.model.navigation.ProfileArgs
 import com.phew.core.ui.state.SooumAppState
@@ -19,10 +19,11 @@ import com.phew.home.navigation.navigateToHomeGraph
 import com.phew.home.navigation.navigateToReport
 import com.phew.presentation.detail.navigation.detailGraph
 import com.phew.core.ui.model.navigation.WriteArgs
+import com.phew.core_common.CardDetailTrace
 import com.phew.core_common.log.SooumLog
 import com.phew.domain.interceptor.GlobalEvent
-import com.phew.feed.navigation.navigateToFeedGraph
 import com.phew.presentation.MainViewModel
+import com.phew.presentation.detail.navigation.navigateToDetailCommentDirect
 import com.phew.presentation.detail.navigation.navigateToDetailGraph
 import com.phew.presentation.tag.navigation.navigateToViewTagsWithArgs
 import com.phew.presentation.write.navigation.WRITE_GRAPH
@@ -44,7 +45,7 @@ fun SooumNavHost(
     modifier: Modifier = Modifier,
     appVersionUpdate: () -> Unit,
     finish: () -> Unit,
-    webView: (String) -> Unit,
+    // 요기 수정 -> webView 삭제
     mainViewModel: MainViewModel = hiltViewModel(),
 ) {
     val navController = appState.navController
@@ -90,14 +91,15 @@ fun SooumNavHost(
                 onBackPressed = {
                     SooumOnBackPressed(appState = appState)
                 },
-                webView = webView,
+                // 요기 수정 -> webView 삭제
                 onWriteComplete = {
-                    // Feed로 돌아가면서 새 카드가 보이도록 처리
-                    navController.navigateToFeedGraph(
+                    navController.navigateToDetailGraph(
+                        cardDetailArgs = it,
                         navOptions = navOptions {
                             popUpTo(WRITE_GRAPH) {
                                 inclusive = true
                             }
+                            launchSingleTop = true
                         }
                     )
                 },
@@ -123,7 +125,13 @@ fun SooumNavHost(
                     )
                 },
                 cardClick = { id ->
-                    navController.navigateToDetailGraph(cardDetailArgs = CardDetailArgs(cardId = id))
+                    navController.navigateToDetailCommentDirect(
+                        cardDetailCommentArgs = CardDetailCommentArgs(
+                            cardId = id.cardId,
+                            parentId = 0,
+                            previousView = CardDetailTrace.PROFILE
+                        )
+                    )
                 }
             )
 

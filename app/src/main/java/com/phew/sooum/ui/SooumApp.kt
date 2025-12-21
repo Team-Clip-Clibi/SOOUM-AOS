@@ -1,12 +1,7 @@
 package com.phew.sooum.ui
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,7 +17,7 @@ fun SooumApp(
     appVersionUpdate: () -> Unit,
     finish: () -> Unit,
     appState: SooumAppState = rememberSooumAppState(),
-    webView: (String) -> Unit,
+    // 요기 수정 -> webView 삭제
     isExpend: Boolean,
 ) {
     Box(
@@ -30,12 +25,11 @@ fun SooumApp(
         contentAlignment = Alignment.BottomCenter
     ) {
         SooumNavHost(
-            modifier = Modifier
-                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Vertical)),
+            modifier = Modifier.fillMaxSize(),
             appState = appState,
             appVersionUpdate = appVersionUpdate,
             finish = finish,
-            webView = webView
+            // 요기 수정 -> webView 삭제
         )
 
         SooumBottomBar(

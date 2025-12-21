@@ -7,9 +7,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
@@ -23,9 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -50,43 +48,6 @@ fun Splash(
             viewModel.saveNotify(isGranted)
         }
     )
-    val view = LocalView.current
-
-    // [이 화면 전용 설정] 시스템 바 영역 무시하고 전체 화면 사용하기
-    if (!view.isInEditMode) {
-        androidx.compose.runtime.DisposableEffect(Unit) {
-            val window = (view.context as android.app.Activity).window
-            val insetsController = androidx.core.view.WindowCompat.getInsetsController(window, view)
-
-            // 1. 현재 설정 저장 (나갈 때 복구용)
-            val originalStatusBarColor = window.statusBarColor
-            val originalNavColor = window.navigationBarColor
-
-            // 2. "시스템 바 영역 무시하고 꽉 채우기" 설정 (핵심!)
-            // false로 설정하면 뷰가 시스템 바 뒤까지 확장됩니다.
-            androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
-
-            // 3. 확장된 뷰가 보이도록 시스템 바 배경색을 투명으로 변경
-            // (이걸 안 하면 확장은 되는데 흰색 바가 위를 덮어버립니다)
-            window.statusBarColor = androidx.compose.ui.graphics.Color.Transparent.toArgb()
-            window.navigationBarColor = androidx.compose.ui.graphics.Color.Transparent.toArgb()
-
-            // 아이콘 색상 밝게 (배경이 파란색이라서)
-            insetsController.isAppearanceLightStatusBars = false
-            insetsController.isAppearanceLightNavigationBars = false
-
-            onDispose {
-                // 4. 이 화면을 나갈 때 원래 설정으로 복구 (다른 화면에 영향 주지 않기 위해)
-                androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, true)
-                window.statusBarColor = originalStatusBarColor
-                window.navigationBarColor = originalNavColor
-
-                // 아이콘 색상 복구 (필요시 true/false 조정)
-                insetsController.isAppearanceLightStatusBars = true
-                insetsController.isAppearanceLightNavigationBars = true
-            }
-        }
-    }
     LaunchedEffect(uiState) {
         when (uiState) {
             UiState.Success -> {
@@ -115,13 +76,12 @@ fun Splash(
             else -> Unit
         }
     }
-
     Scaffold(
         snackbarHost = {
             DialogComponent.CustomAnimationSnackBarHost(hostState = snackBarHostState)
         },
         containerColor = Primary.MAIN,
-        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0)
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { _ ->
         Column(
             modifier = Modifier

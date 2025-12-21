@@ -1,6 +1,7 @@
 package com.phew.presentation.detail.screen
 
-import android.widget.Toast
+import android.annotation.SuppressLint
+import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -49,12 +50,12 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import android.content.res.Configuration
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -62,12 +63,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.flowWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -82,14 +85,17 @@ import com.airbnb.lottie.compose.rememberLottieComposition
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.model.navigation.CardDetailCommentArgs
 import com.phew.core.ui.model.navigation.TagViewArgs
-import com.phew.domain.dto.CardDetail
+import com.phew.core_common.CardDetailTrace
+import com.phew.core_common.MoveDetail
 import com.phew.domain.dto.CardDetailTag
 import com.phew.core_common.TimeUtils
+import com.phew.core_common.isEventCard
 import com.phew.core_common.log.SooumLog
 import com.phew.core_design.BottomSheetComponent
 import com.phew.core_design.BottomSheetItem
 import com.phew.core_design.Danger
 import com.phew.core_design.DialogComponent
+import com.phew.core_design.DialogComponent.DeletedCardDialog
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.R
 import com.phew.core_design.TextComponent
@@ -104,9 +110,10 @@ import com.phew.presentation.detail.component.CardDetailTopBar
 import com.phew.presentation.detail.model.MoreAction
 import com.phew.presentation.detail.viewmodel.CardDetailError
 import com.phew.presentation.detail.viewmodel.CardDetailViewModel
-import com.phew.core_design.CustomFont
 import com.phew.core_design.NeutralColor.GRAY_200
+import com.phew.core_design.component.toast.SooumToast
 import com.phew.core_design.typography.FontType
+import com.phew.presentation.detail.viewmodel.CardDetailUiEffect
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -116,6 +123,7 @@ internal fun CardDetailRoute(
     modifier: Modifier = Modifier,
     args: CardDetailArgs,
     viewModel: CardDetailViewModel = hiltViewModel(),
+    onNavigateToHome: () -> Unit,
     onNavigateToComment: (CardDetailCommentArgs) -> Unit,
     onNavigateToWrite: (Long) -> Unit,
     onNavigateToReport: (Long) -> Unit,
@@ -123,7 +131,8 @@ internal fun CardDetailRoute(
     onBackPressed: () -> Unit,
     onPreviousCardClick: () -> Unit = { },
     profileClick: (Long) -> Unit,
-    onCardChanged: () -> Unit
+    onCardChanged: () -> Unit,
+    cardDetailTrace: CardDetailTrace
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackBarHostState = remember { SnackbarHostState() }
@@ -168,7 +177,7 @@ internal fun CardDetailRoute(
                     // 두 번째 Resume부터만 새로고침 (WriteScreen에서 복귀 시)
                     if (hasResumed) {
                         SooumLog.d(TAG, "CardDetailScreen resumed from WriteScreen - refreshing data")
-                        viewModel.loadCardDetail(args.cardId)
+                        viewModel.loadCardDetail(args.cardId, isSilent = true)
                     } else {
                         hasResumed = true
                     }
@@ -184,6 +193,17 @@ internal fun CardDetailRoute(
     }
     var isDelete by remember { mutableStateOf(false) }
 
+    LaunchedEffect(Unit) {
+        viewModel.uiEffect
+            .flowWithLifecycle(lifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+            .collect { effect ->
+                when (effect) {
+                    is CardDetailUiEffect.NavigationHome -> onNavigateToHome()
+                    is CardDetailUiEffect.NavigateToWrite -> onNavigateToWrite(effect.cardId)
+                }
+            }
+    }
+
     val context = LocalContext.current
     // 에러 처리
     LaunchedEffect(uiState.error) {
@@ -196,11 +216,15 @@ internal fun CardDetailRoute(
                     CardDetailError.FAIL -> context.getString(R.string.error_app)
                     else -> ""
                 }
-                Toast.makeText(context , message , Toast.LENGTH_SHORT).show()
+                SooumToast.makeToast(context , message , SooumToast.LENGTH_SHORT).show()
                 viewModel.clearError()
             }
             CardDetailError.CARD_DELETE -> {
+                isDelete = true
                 viewModel.setDeleteDialog()
+            }
+            CardDetailError.CARD_DELETE_NO_DIALOG -> {
+                isDelete = true
             }
             else -> Unit
         }
@@ -224,7 +248,7 @@ internal fun CardDetailRoute(
             viewModel.clearBlockSuccess()
         }
     }
-    if(uiState.deleteSuccess){
+    if(uiState.deleteSuccess) {
         isDelete = true
     }
 
@@ -299,7 +323,9 @@ internal fun CardDetailRoute(
             remainingTimeMillis -= 1000L
         }
     }
-
+    LaunchedEffect(Unit) {
+        viewModel.logWhereComeFrom(view = cardDetailTrace)
+    }
     CardDetailScreen(
         modifier = modifier,
         cardContent = cardDetail.cardContent,
@@ -322,16 +348,20 @@ internal fun CardDetailRoute(
         progress = progress,
         onBackPressed = onBackPressed,
         onClickLike = {
-            viewModel.toggleLike(args.cardId)
+            viewModel.verifyAndToggleLike(args.cardId)
         },
-        onClickCommentIcon = {
-            onNavigateToWrite(args.cardId)
+        onClickCommentIcon = { event ->
+            viewModel.logMoveToCommentCard(
+                event = event,
+                isEventCard = cardDetail.cardImgName.isEventCard()
+            )
+            viewModel.verifyAndNavigateToWrite(args.cardId)
         },
         onClickCommentView = { commentCardId ->
             onNavigateToComment(
                 CardDetailCommentArgs(
                     cardId = commentCardId,
-                    parentId = args.cardId
+                    parentId = args.cardId,
                 )
             )
         },
@@ -340,9 +370,12 @@ internal fun CardDetailRoute(
         },
         onNavigateToReport = onNavigateToReport,
         onRefresh = {
-            viewModel.loadCardDetail(args.cardId)
+            viewModel.loadCardDetail(args.cardId, isSilent = true)
         },
-        onNavigateToViewTags = onNavigateToViewTags,
+        onNavigateToViewTags = { tag ->
+            viewModel.logMoveToTagView()
+            onNavigateToViewTags(tag)
+        },
         lazyListState = lazyListState,
         nestedScrollConnection = nestedScrollConnection,
         cardId = args.cardId,
@@ -350,6 +383,7 @@ internal fun CardDetailRoute(
         remainingTimeMillis = remainingTimeMillis,
         isExpire = (cardDetail.storyExpirationTime != null && (cardDetail.endTime
             ?: 0L) <= 0L) || isDelete,
+        isDelete = isDelete,
         isOwnCard = cardDetail.isOwnCard,
         deleteCard = { cardId ->
             viewModel.requestDeleteCard(cardId)
@@ -372,12 +406,13 @@ internal fun CardDetailRoute(
         deleteErrorDialog = uiState.deleteErrorDialog,
         onClickDeleteErrorDialog = {
             viewModel.clearError()
-            onBackPressed()
+            onNavigateToHome()
         }
     )
 }
 
 
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CardDetailScreen(
@@ -402,7 +437,7 @@ private fun CardDetailScreen(
     composition: LottieComposition?,
     onBackPressed: () -> Unit,
     onClickLike: () -> Unit,
-    onClickCommentIcon: () -> Unit,
+    onClickCommentIcon: (MoveDetail) -> Unit,
     onClickCommentView: (Long) -> Unit,
     onBlockMember: (Long, String) -> Unit,
     deleteCard: (Long) -> Unit,
@@ -415,6 +450,7 @@ private fun CardDetailScreen(
     snackBarHostState: SnackbarHostState,
     remainingTimeMillis: Long,
     isExpire: Boolean,
+    isDelete: Boolean,
     isOwnCard: Boolean,
     showBottomSheet: Boolean,
     onShowBottomSheetChange: (Boolean) -> Unit,
@@ -422,22 +458,24 @@ private fun CardDetailScreen(
     onShowBlockDialogChange: (Boolean) -> Unit,
     showDeleteDialog: Boolean,
     onShowDeleteDialogChange: (Boolean) -> Unit,
-    refreshingOffset: androidx.compose.ui.unit.Dp,
-    refreshState: androidx.compose.material3.pulltorefresh.PullToRefreshState,
+    refreshingOffset: Dp,
+    refreshState: PullToRefreshState,
     density: androidx.compose.ui.unit.Density,
     onPreviousCardClick: () -> Unit = { },
     profileClick : (Long) -> Unit,
     deleteErrorDialog : Boolean,
     onClickDeleteErrorDialog : () -> Unit
 ) {
-
+    SooumLog.d(TAG, "CardDetailScreen")
     Scaffold(
         modifier = modifier,
         topBar = {
             CardDetailTopBar(
                 remainingTimeMillis = remainingTimeMillis,
                 onBackPressed = onBackPressed,
-                onMoreClick = { onShowBottomSheetChange(true) }
+                onMoreClick = { onShowBottomSheetChange(true) },
+                title = if (isDelete) stringResource(DetailR.string.card_detail_dialog_delete_title) else null,
+                isDelete = isDelete
             )
         },
         snackbarHost = {
@@ -465,7 +503,7 @@ private fun CardDetailScreen(
                         .clickable(
                             indication = null,
                             interactionSource = remember { MutableInteractionSource() }
-                        ) { onClickCommentIcon() },
+                        ) { onClickCommentIcon(MoveDetail.FLOAT) },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -537,8 +575,8 @@ private fun CardDetailScreen(
                         },
                         header = {
                             CardDetailHeader(
-                                profileUri = profileUri,
-                                nickName = nickName,
+                                profileUri = if (isDelete) "" else profileUri,
+                                nickName = if (isDelete) stringResource(DetailR.string.card_detail_unknown_user) else nickName,
                                 distance = distance,
                                 createAt = createAt,
                                 memberId = memberId,
@@ -552,7 +590,9 @@ private fun CardDetailScreen(
                                 searchCnt = searchCnt,
                                 isLikeCard = isLikeCard,
                                 onClickLike = onClickLike,
-                                onClickComment = onClickCommentIcon
+                                onClickComment = {
+                                    onClickCommentIcon(MoveDetail.IMAGE)
+                                }
                             )
                         },
                         modifier = Modifier.fillMaxWidth(),
@@ -575,10 +615,8 @@ private fun CardDetailScreen(
                 }
                 if (deleteErrorDialog) {
                     item {
-                        DialogComponent.NoDescriptionButtonOne(
-                            title = stringResource(com.phew.presentation.detail.R.string.card_detail_dialog_delete_title),
-                            buttonText = stringResource(R.string.common_okay),
-                            onClick = onClickDeleteErrorDialog,
+                        DeletedCardDialog(
+                            onConfirm = onClickDeleteErrorDialog,
                             onDismiss = onClickDeleteErrorDialog
                         )
                     }

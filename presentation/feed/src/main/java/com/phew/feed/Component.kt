@@ -53,6 +53,7 @@ import com.phew.core_design.component.card.FeedPungCard
 import com.phew.core_design.component.card.NotiCard
 import com.phew.core_design.component.card.NotiCardData
 import com.phew.core_design.component.card.component.IndicatorDot
+import com.phew.core_design.component.filter.SooumFilter
 import com.phew.core_design.component.tab.SooumTab
 import com.phew.core_design.component.tab.SooumTabRow
 import com.phew.core_design.label.LabelComponent
@@ -78,7 +79,7 @@ object FeedUi {
     @Composable
     internal fun FeedNoticeView(
         feedNotice: List<Notice>,
-        feedNoticeClick: (String) -> Unit,
+        feedNoticeClick: () -> Unit,
         modifier : Modifier = Modifier
     ) {
         if (feedNotice.isEmpty()) return
@@ -108,7 +109,7 @@ object FeedUi {
                 state = pagerState,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(71.dp)
+                    .wrapContentHeight()
                     .clip(RoundedCornerShape(20.dp))
             ) { page ->
                 val actualIndex = page % feedNotice.size
@@ -135,7 +136,7 @@ object FeedUi {
                 )
                 NotiCard(
                     data = cardData,
-                    onClick = { feedNoticeClick(currentNotice.url) },
+                    onClick = feedNoticeClick,
                     modifier = Modifier
                         .fillMaxWidth()
                         .shadow(
@@ -199,68 +200,28 @@ object FeedUi {
                     )
                 }
             }
-            HorizontalDivider(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(1.dp),
-                color = NeutralColor.GRAY_200
-            )
             if (selectTabData == NAV_HOME_NEAR_INDEX) {
-                Row(
+                SooumFilter(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(color = WHITE)
                         .padding(start = 16.dp, end = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.Start),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    DistanceText(
-                        distance = stringResource(R.string.home_feed_1km_distance),
-                        onClick = { onDistanceClick(DistanceType.KM_1) },
-                        isSelect = selectDistanceType == DistanceType.KM_1
-                    )
-                    DistanceText(
-                        distance = stringResource(R.string.home_feed_5km_distance),
-                        onClick = { onDistanceClick(DistanceType.KM_5) },
-                        isSelect = selectDistanceType == DistanceType.KM_5
-                    )
-                    DistanceText(
-                        distance = stringResource(R.string.home_feed_10km_distance),
-                        onClick = { onDistanceClick(DistanceType.KM_10) },
-                        isSelect = selectDistanceType == DistanceType.KM_10
-                    )
-                    DistanceText(
-                        distance = stringResource(R.string.home_feed_20km_distance),
-                        onClick = { onDistanceClick(DistanceType.KM_20) },
-                        isSelect = selectDistanceType == DistanceType.KM_20
-                    )
-                    DistanceText(
-                        distance = stringResource(R.string.home_feed_50km_distance),
-                        onClick = { onDistanceClick(DistanceType.KM_50) },
-                        isSelect = selectDistanceType == DistanceType.KM_50
-                    )
-                }
+                    selectedFilter = selectDistanceType,
+                    filters = listOf(DistanceType.KM_1, DistanceType.KM_5, DistanceType.KM_10, DistanceType.KM_20, DistanceType.KM_50),
+                    onFilterSelected = onDistanceClick,
+                    labelProvider = { distanceType ->
+                        when (distanceType) {
+                            DistanceType.KM_1 -> stringResource(R.string.home_feed_1km_distance)
+                            DistanceType.KM_5 -> stringResource(R.string.home_feed_5km_distance)
+                            DistanceType.KM_10 -> stringResource(R.string.home_feed_10km_distance)
+                            DistanceType.KM_20 -> stringResource(R.string.home_feed_20km_distance)
+                            DistanceType.KM_50 -> stringResource(R.string.home_feed_50km_distance)
+                        }
+                    }
+                )
             }
         }
     }
 
-    @Composable
-    private fun DistanceText(distance: String, onClick: () -> Unit, isSelect: Boolean) {
-        Text(
-            text = distance,
-            style = TextComponent.SUBTITLE_3_SB_14,
-            color = if (isSelect) NeutralColor.BLACK else GRAY_400,
-            modifier = Modifier
-                .wrapContentWidth()
-                .height(37.dp)
-                .padding(start = 10.dp, top = 8.dp, end = 10.dp, bottom = 8.dp)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = { onClick() }
-                )
-        )
-    }
 
 
     @Composable

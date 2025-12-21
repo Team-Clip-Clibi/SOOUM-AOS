@@ -12,7 +12,7 @@ data class Notice(
     val type = noticeType.viewNoticeType()
 
     private fun String.viewTime(): String {
-        return TimeUtils.formatToSimpleDate(this)
+        return TimeUtils.formatToDate(this)
     }
 
     private fun String.viewNoticeType(): NoticeType {

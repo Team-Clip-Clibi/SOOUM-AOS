@@ -17,6 +17,7 @@ import com.phew.core.ui.navigation.asNavArg
 import com.phew.core.ui.navigation.asNavParam
 import com.phew.core.ui.navigation.createNavType
 import com.phew.core.ui.navigation.getNavArg
+import com.phew.core_common.CardDetailTrace
 import com.phew.core_common.log.SooumLog
 import com.phew.core_design.slideComposable
 import com.phew.presentation.detail.screen.CardDetailRoute
@@ -27,18 +28,20 @@ val DETAIL_GRAPH = "detail_graph".asNavParam()
 private val DETAIL_ROUTE = "detail_route".asNavParam()
 private const val COMMENT_ROUTE_BASE = "comment_route"
 private val COMMENT_ROUTE = COMMENT_ROUTE_BASE.asNavParam()
+private const val PREVIOUS_DETAIL = "detail"
 
 fun NavHostController.navigateToDetailGraph(
     cardDetailArgs: CardDetailArgs,
     navOptions: NavOptions? = null,
 ) {
     SooumLog.i(TAG, "navigateToDetailGraph() $cardDetailArgs")
-    this.navigate(DETAIL_GRAPH.asNavArg(cardDetailArgs), navOptions {
+    val resolvedOptions = navOptions ?: navOptions {
         popUpTo(DETAIL_GRAPH) {
             inclusive = true
         }
         launchSingleTop = true
-    })
+    }
+    this.navigate(DETAIL_GRAPH.asNavArg(cardDetailArgs), resolvedOptions)
 }
 
 private fun NavHostController.navigateToDetailRoute(
@@ -89,6 +92,7 @@ fun NavGraphBuilder.detailGraph(
                     onNavigateToComment = { commentArgs ->
                         navController.navigate(COMMENT_ROUTE.asNavArg(commentArgs))
                     },
+                    onNavigateToHome = navToHome,
                     onNavigateToWrite = { cardId ->
                         onNavigateToWrite(cardId)
                     },
@@ -96,7 +100,8 @@ fun NavGraphBuilder.detailGraph(
                     onNavigateToViewTags = onNavigateToViewTags,
                     onBackPressed = onBackPressed,
                     profileClick = onProfileScreen,
-                    onCardChanged = { navController.markFeedCardUpdated() }
+                    onCardChanged = { navController.markFeedCardUpdated() },
+                    cardDetailTrace = args.previousView
                 )
             }
         }
@@ -121,9 +126,12 @@ fun NavGraphBuilder.detailGraph(
                     },
                     onBackPressed = { parentId ->
                         val previousRoute = navController.previousBackStackEntry?.destination?.route
-                        val hasDetailInStack = previousRoute?.contains("detail", ignoreCase = true) == true
-                        val hasCommentInStack = previousRoute?.startsWith(COMMENT_ROUTE_BASE) == true
-                        val shouldNavigateToParent = parentId > 0L && !hasDetailInStack && !hasCommentInStack
+                        val hasDetailInStack =
+                            previousRoute?.contains(PREVIOUS_DETAIL, ignoreCase = true) == true
+                        val hasCommentInStack =
+                            previousRoute?.startsWith(COMMENT_ROUTE_BASE) == true
+                        val shouldNavigateToParent =
+                            parentId > 0L && !hasDetailInStack && !hasCommentInStack
 
                         SooumLog.d(
                             TAG,
@@ -136,7 +144,7 @@ fun NavGraphBuilder.detailGraph(
                                 COMMENT_ROUTE.asNavArg(
                                     CardDetailCommentArgs(
                                         cardId = parentId,
-                                        parentId = 0L
+                                        parentId = 0L,
                                     )
                                 ),
                                 navOptions {
@@ -146,12 +154,16 @@ fun NavGraphBuilder.detailGraph(
                         } else {
                             val popped = navController.popBackStack()
                             if (!popped) {
-                                SooumLog.w(TAG, "Fail to popBackStack from comment route, navigating home")
+                                SooumLog.w(
+                                    TAG,
+                                    "Fail to popBackStack from comment route, navigating home"
+                                )
                                 navToHome()
                             }
                         }
                     },
                     onFeedPressed = navToHome,
+                    onNavigateToHome = navToHome,
                     onTagPressed = onTagPressed,
                     onNavigateToWrite = { cardId ->
                         onNavigateToWrite(cardId)

@@ -51,6 +51,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core_design.AppBar
 import com.phew.core_design.DialogComponent
+import com.phew.core_design.DialogComponent.DeletedCardDialog
 import com.phew.core_design.LoadingAnimation
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
@@ -60,6 +61,7 @@ import com.phew.domain.dto.Notification
 import com.phew.feed.NotificationUi
 import com.phew.feed.NotifyTab
 import com.phew.feed.viewModel.FeedViewModel
+import com.phew.feed.viewModel.NavigationEvent
 import com.phew.feed.viewModel.UiState
 import com.phew.presentation.feed.R
 
@@ -70,6 +72,15 @@ fun NotifyView(
     backClick: () -> Unit,
     navigateToDetail: (CardDetailArgs) -> Unit,
 ) {
+    LaunchedEffect(viewModel) {
+        viewModel.navigationEvent.collect { event ->
+            when (event) {
+                is NavigationEvent.NavigateToDetail -> {
+                    navigateToDetail(event.args)
+                }
+            }
+        }
+    }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val notices = viewModel.notice.collectAsLazyPagingItems()
     val read = viewModel.readActivateAlarm.collectAsLazyPagingItems()
@@ -148,7 +159,10 @@ fun NotifyView(
                         onItemExpose = viewModel::addItemAsRead,
                         context = context,
                         onCardClick = { cardId ->
-                            navigateToDetail(CardDetailArgs(cardId))
+                            viewModel.navigateToDetail(
+                                cardId = cardId.toString(),
+                                isEventCard = false
+                            )
                         }
                     )
 
@@ -159,8 +173,28 @@ fun NotifyView(
                 }
             }
         }
+        }
+        if (uiState.checkCardDelete is UiState.Success) {
+            val onDialogHandled = {
+                viewModel.initCheckCardDelete()
+                when (selectIndex) {
+                    NotifyTab.NOTIFY_ACTIVATE -> {
+                        unRead.refresh()
+                        read.refresh()
+                    }
+
+                    NotifyTab.NOTIFY_SERVICE -> {
+                        notices.refresh()
+                    }
+                }
+            }
+            DeletedCardDialog(
+                onDismiss = onDialogHandled,
+                onConfirm = onDialogHandled
+            )
+        }
     }
-}
+
 
 @Composable
 private fun NoticeViewTopBar(
@@ -175,9 +209,11 @@ private fun NoticeViewTopBar(
             DialogComponent.CustomAnimationSnackBarHost(hostState = snackBarHostState)
         },
         topBar = {
-            Column(modifier = Modifier
-                .fillMaxWidth()
-                .background(color = NeutralColor.WHITE)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(color = NeutralColor.WHITE)
+            ) {
                 AppBar.IconLeftAppBar(
                     onClick = onBackClick,
                     appBarText = stringResource(R.string.home_notice_top_bar)
@@ -221,9 +257,7 @@ private fun NotifyViewContent(
                     .background(color = NeutralColor.WHITE),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                LoadingAnimation.LoadingView()
-            }
+            ) {}
         }
 
         is LoadState.NotLoading -> {
@@ -428,12 +462,6 @@ private fun HandleActivateAlarm(
         modifier = Modifier.fillMaxSize()
     ) {
         when (unReadAlarm.loadState.refresh) {
-            LoadState.Loading -> {
-                item(span = { GridItemSpan(maxLineSpan) }) {
-                    LoadingAnimation.LoadingView()
-                }
-            }
-
             is LoadState.NotLoading -> {
                 items(
                     count = unReadAlarm.itemCount,
@@ -466,12 +494,6 @@ private fun HandleActivateAlarm(
             )
         }
         when (readAlarm.loadState.refresh) {
-            LoadState.Loading -> {
-                item(span = { GridItemSpan(maxLineSpan) }) {
-                    LoadingAnimation.LoadingView()
-                }
-            }
-
             is LoadState.NotLoading -> {
                 items(
                     count = readAlarm.itemCount,

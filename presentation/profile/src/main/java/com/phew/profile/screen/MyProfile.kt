@@ -27,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -67,9 +68,12 @@ import androidx.paging.compose.LazyPagingItems
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core_common.BOTTOM_NAVIGATION_HEIGHT
+import com.phew.core_common.CardDetailTrace
 import com.phew.core_design.CustomFont
 import com.phew.core_design.DialogComponent
+import com.phew.core_design.DialogComponent.DeletedCardDialog
 import com.phew.core_design.LoadingAnimation
 import com.phew.core_design.component.refresh.RefreshBox
 import com.phew.domain.dto.ProfileCard
@@ -84,7 +88,7 @@ internal fun MyProfile(
     onClickFollower: () -> Unit,
     onClickFollowing: () -> Unit,
     onClickSetting: () -> Unit,
-    onClickCard: (Long) -> Unit,
+    onClickCard: (CardDetailArgs) -> Unit,
     onLogout: () -> Unit,
     onEditProfileClick: () -> Unit,
 ) {
@@ -168,7 +172,12 @@ internal fun MyProfile(
                         onEditProfileClick = onEditProfileClick,
                         onFeedCardClick = { selectIndex = TAB_MY_FEED_CARD },
                         onCommentCardClick = { selectIndex = TAB_MY_COMMENT_CARD },
-                        onClickCard = onClickCard,
+                        onClickCard = { id ->
+                            onClickCard(CardDetailArgs(
+                                cardId = id,
+                                previousView = CardDetailTrace.PROFILE
+                            ))
+                        },
                         onLogout = onLogout,
                         snackBarHostState = snackBarHostState,
                         modifier = Modifier
@@ -184,6 +193,30 @@ internal fun MyProfile(
                 }
             }
         }
+        else -> {}
+    }
+
+    // 삭제된 카드 상태 감지
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var deletedCardId by remember { mutableStateOf<Long?>(null) }
+    
+    LaunchedEffect(uiState.checkCardDelete) {
+        if (uiState.checkCardDelete is UiState.Success) {
+            deletedCardId = (uiState.checkCardDelete as UiState.Success<Long>).data
+            showDeleteDialog = true
+        }
+    }
+
+    if (showDeleteDialog && deletedCardId != null) {
+        val onDialogHandled = {
+            deletedCardId?.let { viewModel.removeDeletedCard(it) }
+            showDeleteDialog = false
+            deletedCardId = null
+        }
+        DeletedCardDialog(
+            onDismiss = onDialogHandled,
+            onConfirm = onDialogHandled
+        )
     }
 }
 
@@ -200,7 +233,7 @@ private fun MyProfileScaffold(
         topBar = {
             AppBar.IconRightAppBar(
                 title = stringResource(R.string.profile_top_bar),
-                onClick = remember(onClickSetting) { onClickSetting }
+                onClick = onClickSetting
             )
         },
         content = content

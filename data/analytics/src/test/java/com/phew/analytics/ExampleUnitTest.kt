@@ -1,4 +1,4 @@
-package com.phew.presentation.detail
+package com.phew.analytics
 
 import org.junit.Test
 

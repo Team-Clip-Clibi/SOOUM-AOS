@@ -57,6 +57,7 @@ import com.phew.core_design.TextFiledComponent.SearchField
 import com.phew.core_design.component.refresh.RefreshBox
 import com.phew.core_design.component.refresh.pullToRefreshOffset
 import com.phew.core_design.component.tag.TagRankView
+import com.phew.core_design.component.toast.SooumToast
 import com.phew.domain.dto.FavoriteTag
 import com.phew.domain.model.TagInfo
 import com.phew.presentation.tag.R
@@ -100,19 +101,19 @@ internal fun TagRoute(
                         }
 
                         is TagUiEffect.ShowRemoveFavoriteTagToast -> {
-                            Toast.makeText(
+                            SooumToast.makeToast(
                                 context,
                                 context.getString(R.string.tag_favorite_delete, it.tagName),
-                                Toast.LENGTH_SHORT
+                                SooumToast.LENGTH_SHORT
                             ).show()
                             viewModel.clearTagScreenUiEffect()
                         }
 
                         is TagUiEffect.ShowAddFavoriteTagToast -> {
-                            Toast.makeText(
+                            SooumToast.makeToast(
                                 context,
                                 context.getString(R.string.tag_favorite_add, it.tagName),
-                                Toast.LENGTH_SHORT
+                                SooumToast.LENGTH_SHORT
                             ).show()
                             viewModel.clearTagScreenUiEffect()
                         }
@@ -124,6 +125,10 @@ internal fun TagRoute(
                         
                         is TagUiEffect.ShowNetworkErrorSnackbar -> {
                             // TagScreen에서는 네트워크 오류가 발생하지 않으므로 빈 처리
+                            viewModel.clearTagScreenUiEffect()
+                        }
+
+                        else -> {
                             viewModel.clearTagScreenUiEffect()
                         }
                     }
@@ -232,7 +237,8 @@ private fun TagView(
                 isReadOnly = true,
                 placeHolder = stringResource(R.string.tag_search_tag_placeholder),
                 onFieldClick = onSearchView,
-                focusRequester = null
+                focusRequester = null,
+                showDeleteIcon = false
             )
         }
 
@@ -317,6 +323,7 @@ private fun TagView(
                     )
                 }
             }
+            else -> {}
         }
     }
 }

@@ -529,7 +529,7 @@ object MediumButton {
     ) {
         BlinkMediumButton(
             baseColor = Primary.LIGHT_1,
-            blinkColor = NeutralColor.GRAY_600,
+            blinkColor = Primary.LIGHT_1,
             disabledColor = NeutralColor.GRAY_100,
             borderColor = Primary.DARK,
             onClick = onClick,
@@ -557,9 +557,11 @@ object MediumButton {
     ) {
         BlinkMediumButton(
             baseColor = NeutralColor.GRAY_100,
+            blinkColor = NeutralColor.GRAY_200,
             disabledColor = NeutralColor.GRAY_100,
             borderColor = NeutralColor.GRAY_100,
             onClick = onClick,
+            showStroke = false,
             enabled = isEnable
         ) {
             Text(

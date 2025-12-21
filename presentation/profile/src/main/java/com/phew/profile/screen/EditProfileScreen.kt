@@ -52,6 +52,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.ERROR_UN_GOOD_IMAGE
+import com.phew.core_common.INPUT_NICK_NAME
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.TextComponent
 
@@ -132,7 +133,7 @@ internal fun EditProfileScreen(viewModel: ProfileViewModel, onBackPress: () -> U
             is UiState.Success -> {
                 ChangeProfileView(
                     paddingValues = paddingValues,
-                    imageUrl =uiState.newProfileImageUri.lastOrNull()?.toString() ?: "",
+                    imageUrl = uiState.newProfileImageUri.lastOrNull()?.toString() ?: "",
                     nickName = uiState.changeNickName ?: result.data.nickname,
                     onAvatarClick = { bottomSheetView = true },
                     onValueChange = remember(viewModel::changeNickName) {
@@ -174,6 +175,8 @@ internal fun EditProfileScreen(viewModel: ProfileViewModel, onBackPress: () -> U
                     )
                 }
             }
+
+            else -> {}
         }
     }
 }
@@ -210,7 +213,7 @@ private fun ChangeProfileView(
             rightImageClick = remember(onValueChange) { { onValueChange("") } },
             value = nickName,
             onValueChange = { input ->
-                if (nickName.length < 9) {
+                if (input.length <= INPUT_NICK_NAME) {
                     onValueChange(input)
                 }
             },

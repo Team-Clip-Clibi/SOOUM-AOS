@@ -4,8 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import androidx.paging.filter
+import com.phew.core.ui.model.navigation.CardDetailArgs
+import com.phew.core_common.CardDetailTrace
 import com.phew.core_common.DataResult
 import com.phew.core_common.DomainResult
+import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.log.SooumLog
 import com.phew.domain.BuildConfig
 import com.phew.domain.dto.FavoriteTag
@@ -13,6 +17,7 @@ import com.phew.domain.dto.TagCardContent
 import com.phew.domain.model.TagInfo
 import com.phew.domain.model.TagInfoList
 import com.phew.domain.usecase.AddFavoriteTag
+import com.phew.domain.usecase.CheckCardAlreadyDelete
 import com.phew.domain.usecase.GetFavoriteTags
 import com.phew.domain.usecase.GetProfileInfo
 import com.phew.domain.usecase.GetRelatedTags
@@ -20,6 +25,7 @@ import com.phew.domain.usecase.GetTagCardsPaging
 import com.phew.domain.usecase.GetTagRank
 import com.phew.domain.usecase.GetUserInfo
 import com.phew.domain.usecase.RemoveFavoriteTag
+import com.phew.domain.usecase.SaveEventLogTagView
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -27,7 +33,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -53,10 +58,16 @@ data class TagUiState(
     val currentTagFavoriteState: Boolean = false, // 현재 검색한 태그의 즐겨찾기 상태
     val tagRank: UiState<List<TagInfo>> = UiState.Loading,
     val isRefreshing: Boolean = false,
-    val requestedTagCards: Set<String> = emptySet() // 요청한 태그 카드 목록 (tagId:tagName 형태)
+    val requestedTagCards: Set<String> = emptySet(), // 요청한 태그 카드 목록 (tagId:tagName 형태)
+    val viewTagsDataLoaded: Boolean = false,
+    val searchDataLoaded: Boolean = false,
+    val isRelatedTagSearch: Boolean = false,
+    val checkCardDelete: UiState<Long> = UiState.None,
+    val deletedCardIds: Set<Long> = emptySet()
 )
 
 sealed interface UiState<out T> {
+    data object None: UiState<Nothing>
     data object Loading : UiState<Nothing>
     data class Success<T>(val data: T) : UiState<T>
     data class Fail(val errorMessage: String) : UiState<Nothing>
@@ -72,6 +83,8 @@ class TagViewModel @Inject constructor(
     private val addFavoriteTag: AddFavoriteTag,
     private val removeFavoriteTag: RemoveFavoriteTag,
     private val getTagRank: GetTagRank,
+    private val log : SaveEventLogTagView,
+    private val checkCardDelete: CheckCardAlreadyDelete,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TagUiState())
@@ -97,7 +110,17 @@ class TagViewModel @Inject constructor(
         _uiState,
         refreshTrigger
     ) { state, _ ->
-        state
+        if (state.deletedCardIds.isNotEmpty()) {
+            state.copy(
+                cardDataItems = state.cardDataItems.map { pagingData ->
+                    pagingData.filter { card ->
+                        !state.deletedCardIds.contains(card.cardId)
+                    }
+                }
+            )
+        } else {
+            state
+        }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -199,7 +222,14 @@ class TagViewModel @Inject constructor(
     }
 
     fun onValueChange(value: String) {
-        _uiState.update { it.copy(searchValue = value, searchPerformed = false, isSearchLoading = false) }
+        _uiState.update {
+            it.copy(
+                searchValue = value,
+                searchPerformed = false,
+                isSearchLoading = false,
+                isRelatedTagSearch = false
+            )
+        }
     }
 
     fun onDeleteClick() {
@@ -208,12 +238,13 @@ class TagViewModel @Inject constructor(
                 searchValue = "",
                 recommendedTags = emptyList(),
                 searchPerformed = false,
-                isSearchLoading = false
+                isSearchLoading = false,
+                isRelatedTagSearch = false
             )
         }
     }
 
-    fun performSearch(tag: String) {
+    fun performSearch(tag: String, isRelatedTag: Boolean = false) {
         val selectedTag = _uiState.value.recommendedTags.find { it.name == tag }
         val tagId = selectedTag?.id ?: return
 
@@ -223,7 +254,8 @@ class TagViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 isSearchLoading = true,
-                recommendedTags = emptyList()
+                recommendedTags = emptyList(),
+                isRelatedTagSearch = isRelatedTag
             )
         }
 
@@ -240,12 +272,14 @@ class TagViewModel @Inject constructor(
                         searchValue = tag,
                         cardDataItems = cardsPagingFlow,
                         currentSearchedTag = selectedTag,
-                        currentTagFavoriteState = false // 초기값, 실제 값은 paging data에서 업데이트됨
+                        currentTagFavoriteState = false, // 초기값, 실제 값은 paging data에서 업데이트됨
+                        searchDataLoaded = true, // 데이터 로드 완료
+                        isRelatedTagSearch = isRelatedTag
                     )
                 }
             } catch (e: Exception) {
                 SooumLog.e(TAG, "Failed to perform search: ${e.message}")
-                _uiState.update { it.copy(isSearchLoading = false) }
+                _uiState.update { it.copy(isSearchLoading = false, searchDataLoaded = true) } // 실패 시에도 로드 완료로 처리
                 emitSearchScreenEffect(TagUiEffect.ShowNetworkErrorSnackbar { performSearch(tag) })
             }
         }
@@ -253,6 +287,7 @@ class TagViewModel @Inject constructor(
 
     fun navToSearchScreen() {
         viewModelScope.launch {
+            log.logClickSearchView()
             emitTagScreenEffect(TagUiEffect.NavigationSearchScreen)
         }
     }
@@ -280,17 +315,17 @@ class TagViewModel @Inject constructor(
     // 화면별 UiEffect 발생 함수들
     private suspend fun emitTagScreenEffect(effect: TagUiEffect) {
         _tagScreenUiEffect.emit(effect)
-        _uiEffect.emit(effect) // 기존 호환성
+        _uiEffect.emit(effect)
     }
 
     private suspend fun emitSearchScreenEffect(effect: TagUiEffect) {
         _searchScreenUiEffect.emit(effect)
-        _uiEffect.emit(effect) // 기존 호환성
+        _uiEffect.emit(effect)
     }
 
     private suspend fun emitViewTagsScreenEffect(effect: TagUiEffect) {
         _viewTagsScreenUiEffect.emit(effect)
-        _uiEffect.emit(effect) // 기존 호환성
+        _uiEffect.emit(effect)
     }
     
     private suspend fun emitCommonEffect(effect: TagUiEffect) {
@@ -298,7 +333,7 @@ class TagViewModel @Inject constructor(
         _tagScreenUiEffect.emit(effect)
         _searchScreenUiEffect.emit(effect)
         _viewTagsScreenUiEffect.emit(effect)
-        _uiEffect.emit(effect) // 기존 호환성
+        _uiEffect.emit(effect)
     }
 
     fun toggleFavoriteTag(tagId: Long, tagName: String) {
@@ -453,9 +488,10 @@ class TagViewModel @Inject constructor(
             }
         }
     }
-    
+
     fun onTagRankClick(tagId: Long) {
         viewModelScope.launch {
+            log.logSelectPopularTag()
             val tagRank = _uiState.value.tagRank
             if (tagRank is UiState.Success) {
                 val selectedTag = tagRank.data.find { it.id == tagId }
@@ -497,13 +533,14 @@ class TagViewModel @Inject constructor(
                         recommendedTags = emptyList(),
                         cardDataItems = cardsPagingFlow,
                         currentSearchedTag = TagInfo(id = tagId, name = tagName, usageCnt = 0),
-                        currentTagFavoriteState = initialFavoriteState
+                        currentTagFavoriteState = initialFavoriteState,
+                        viewTagsDataLoaded = true // 데이터 로드 완료
                     )
                 }
             } catch (e: Exception) {
                 SooumLog.e(TAG, "Failed to load tag cards: ${e.message}")
                 // 실패시 요청 상태에서 제거
-                _uiState.update { it.copy(requestedTagCards = it.requestedTagCards - tagKey) }
+                _uiState.update { it.copy(requestedTagCards = it.requestedTagCards - tagKey, viewTagsDataLoaded = true) } // 실패 시에도 로드 완료로 처리
                 emitViewTagsScreenEffect(TagUiEffect.ShowNetworkErrorSnackbar { loadTagCards(tagName, tagId) })
             }
         }
@@ -522,12 +559,12 @@ class TagViewModel @Inject constructor(
                 
                 // 약간의 지연 후 새로고침 상태 해제 (Paging 데이터 로드 시간 고려)
                 kotlinx.coroutines.delay(500)
-                _uiState.update { it.copy(isRefreshing = false) }
+                _uiState.update { it.copy(isRefreshing = false, viewTagsDataLoaded = true) }
                 
                 SooumLog.d(TAG, "Successfully refreshed tag cards for $tagName")
             } catch (e: Exception) {
                 SooumLog.e(TAG, "Failed to refresh tag cards: ${e.message}")
-                _uiState.update { it.copy(isRefreshing = false) }
+                _uiState.update { it.copy(isRefreshing = false, viewTagsDataLoaded = false) }
                 emitViewTagsScreenEffect(TagUiEffect.ShowNetworkErrorSnackbar { refreshViewTags(tagName, tagId) })
             }
         }
@@ -556,6 +593,47 @@ class TagViewModel @Inject constructor(
             }
         }
     }
+
+    fun navigateToDetail(cardId: Long) {
+        if (_uiState.value.checkCardDelete is UiState.Loading) return
+
+        viewModelScope.launch {
+            _uiState.update { state -> state.copy(checkCardDelete = UiState.Loading) }
+            when (val result = checkCardDelete(CheckCardAlreadyDelete.Param(cardId = cardId))) {
+                is DomainResult.Failure -> {
+                    _uiState.update { state ->
+                        state.copy(checkCardDelete = UiState.Fail(result.error))
+                    }
+                }
+
+                is DomainResult.Success -> {
+                    if (result.data) {
+                        // 삭제된 경우 ID를 전달
+                        _uiState.update { state ->
+                            state.copy(checkCardDelete = UiState.Success(cardId))
+                        }
+                    } else {
+                        // 삭제되지 않음
+                        _uiState.update { state -> state.copy(checkCardDelete = UiState.None) }
+                         emitCommonEffect(
+                            TagUiEffect.NavigateToDetail(
+                                CardDetailArgs(cardId, previousView = CardDetailTrace.PROFILE)
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    fun removeDeletedCard(cardId: Long) {
+        _uiState.update { state ->
+            state.copy(
+                deletedCardIds = state.deletedCardIds + cardId,
+                checkCardDelete = UiState.None
+            )
+        }
+    }
 }
 
 sealed interface TagUiEffect {
@@ -564,6 +642,7 @@ sealed interface TagUiEffect {
     data class ShowRemoveFavoriteTagToast(val tagName: String) : TagUiEffect
     data class NavigateToViewTags(val tagName: String, val tagId: Long) : TagUiEffect
     data class ShowNetworkErrorSnackbar(val retryAction: () -> Unit) : TagUiEffect
+    data class NavigateToDetail(val cardDetailArgs: CardDetailArgs) : TagUiEffect
 }
 
 private const val TAG = "TagViewModel"

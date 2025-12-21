@@ -10,6 +10,5 @@ android {
 
 dependencies {
     api(project(":core:core-design"))
-    //  TODO 성일님 이거 어떻게 할까요?
-    implementation(libs.jetbrains.kotlinx.serialization.json)
+    api(project(":core:core-common"))
 }

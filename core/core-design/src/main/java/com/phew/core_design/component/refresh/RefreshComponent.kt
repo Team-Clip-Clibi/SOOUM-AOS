@@ -39,6 +39,7 @@ fun Modifier.pullToRefreshOffset(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RefreshBox(
+    modifier: Modifier = Modifier,
     isRefresh: Boolean,
     backgroundColor: Color = NeutralColor.WHITE,
     onRefresh: () -> Unit,
@@ -58,7 +59,7 @@ fun RefreshBox(
     PullToRefreshBox(
         isRefreshing = isRefresh,
         onRefresh = onRefresh,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .background(backgroundColor),
         state = state,

@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.phew.core.ui.model.CameraCaptureRequest
 import com.phew.core.ui.model.CameraPickerEffectState
 import com.phew.core_common.log.SooumLog
+import com.phew.core.ui.clarity.LocalSessionRecorder
 
 private val DefaultAlbumPermissions: Array<String> =
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -37,17 +38,18 @@ fun CameraPickerEffect(
     albumPermissions: Array<String> = DefaultAlbumPermissions,
     onCameraPermissionDenied: () -> Unit = {},
     onGalleryPermissionDenied: () -> Unit = {},
-    mediaRequest: PickVisualMediaRequest = PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+    mediaRequest: PickVisualMediaRequest = PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
 ) {
     val context = LocalContext.current
     val anyAlbumPermission = albumPermissions.isNotEmpty()
     val anyCameraPermission = cameraPermissions.isNotEmpty()
-
+    val sessionRecorder = LocalSessionRecorder.current
     var activeCapture: CameraCaptureRequest? by remember { mutableStateOf(null) }
 
     val albumLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri ->
+            sessionRecorder.resume()
             if (uri != null) {
                 onAlbumPicked(uri)
             }
@@ -63,6 +65,7 @@ fun CameraPickerEffect(
             SooumLog.d(TAG, "album permission result : $granted")
             if (granted) {
                 albumLauncher.launch(mediaRequest)
+                sessionRecorder.pause()
             } else {
                 onGalleryPermissionDenied()
             }
@@ -85,6 +88,7 @@ fun CameraPickerEffect(
     val takePictureLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture(),
         onResult = { success ->
+            sessionRecorder.resume()
             val capture = activeCapture
             if (capture != null) {
                 if (!success) {

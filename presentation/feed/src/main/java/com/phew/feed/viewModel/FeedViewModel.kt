@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.phew.core.ui.model.navigation.CardDetailArgs
+import com.phew.core_common.CardDetailTrace
 import com.phew.domain.dto.FeedData
 import com.phew.core_common.DataResult
 import com.phew.core_common.DomainResult
@@ -28,6 +29,7 @@ import com.phew.domain.usecase.GetLatestFeed
 import com.phew.domain.usecase.GetNotification
 import com.phew.domain.usecase.GetReadNotification
 import com.phew.domain.usecase.GetUnReadNotification
+import com.phew.domain.usecase.SaveEventLogFeedView
 import com.phew.domain.usecase.SetReadActivateNotify
 import com.phew.domain.usecase.SetReadActivateNotify.*
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -65,6 +67,7 @@ class FeedViewModel @Inject constructor(
     private val notification: GetFeedNotification,
     private val readNotify: SetReadActivateNotify,
     private val checkCardDelete: CheckCardAlreadyDelete,
+    private val eventLog: SaveEventLogFeedView,
 ) :
     ViewModel() {
     private val _uiState = MutableStateFlow(Home())
@@ -84,68 +87,95 @@ class FeedViewModel @Inject constructor(
      */
 
     init {
-        // 홈 화면 진입 시 최신 피드 자동 로딩
-        loadInitialFeeds()
-        getFeedNotice()
-        // 탭 변경 감지하여 필요시 데이터 로딩
+        // 순차적 초기화: 위치 설정 완료 후 다른 초기화 진행
         viewModelScope.launch {
-            uiState.map { it.currentTab }
-                .distinctUntilChanged()
-                .drop(1) // 초기값 무시
-                .collect { currentTab ->
-                    when (currentTab) {
-                        FeedType.Latest -> {
-                            if (_uiState.value.latestPagingState is FeedPagingState.None) {
-                                _uiState.update { it.copy(latestPagingState = FeedPagingState.Loading) }
-                                loadLatestFeeds(isInitial = true)
-                            }
-                        }
+            // 위치 설정을 먼저 완료
+            loadInitialFeeds()
+            // 피드 노티스 로딩
+            getFeedNotice()
+            // 탭 변경 감지 시작
+            startTabChangeListener()
+        }
+    }
 
-                        FeedType.Popular -> {
-                            if (_uiState.value.popularPagingState is FeedPagingState.None) {
-                                _uiState.update { it.copy(popularPagingState = FeedPagingState.Loading) }
-                                loadPopularFeeds(isInitial = true)
-                            }
+    private suspend fun startTabChangeListener() {
+        // 탭 변경 감지하여 필요시 데이터 로딩
+        uiState.map { it.currentTab }
+            .distinctUntilChanged()
+            .drop(1) // 초기값 무시
+            .collect { currentTab ->
+                when (currentTab) {
+                    FeedType.Latest -> {
+                        if (_uiState.value.latestPagingState is FeedPagingState.None) {
+                            _uiState.update { it.copy(latestPagingState = FeedPagingState.Loading) }
+                            loadLatestFeeds(isInitial = true)
                         }
+                    }
 
-                        FeedType.Distance -> {
-                            val currentDistanceTab = _uiState.value.distanceTab
-                            val currentStateForTab =
-                                _uiState.value.distancePagingStates[currentDistanceTab]
-                            if (currentStateForTab == null || currentStateForTab is FeedPagingState.None) {
-                                _uiState.update { state ->
-                                    val newStates = state.distancePagingStates.toMutableMap()
-                                    newStates[currentDistanceTab] = FeedPagingState.Loading
-                                    state.copy(distancePagingStates = newStates)
-                                }
-                                loadDistanceFeeds(isInitial = true)
+                    FeedType.Popular -> {
+                        if (_uiState.value.popularPagingState is FeedPagingState.None) {
+                            _uiState.update { it.copy(popularPagingState = FeedPagingState.Loading) }
+                            loadPopularFeeds(isInitial = true)
+                        }
+                    }
+
+                    FeedType.Distance -> {
+                        val currentDistanceTab = _uiState.value.distanceTab
+                        val currentStateForTab =
+                            _uiState.value.distancePagingStates[currentDistanceTab]
+                        if (currentStateForTab == null || currentStateForTab is FeedPagingState.None) {
+                            _uiState.update { state ->
+                                val newStates = state.distancePagingStates.toMutableMap()
+                                newStates[currentDistanceTab] = FeedPagingState.Loading
+                                state.copy(distancePagingStates = newStates)
                             }
+                            loadDistanceFeeds(isInitial = true)
                         }
                     }
                 }
-        }
+            }
     }
 
-    private fun loadInitialFeeds() {
-        viewModelScope.launch {
-            // Location 초기 설정
-            val location = getLocationSafely()
-            _latestFeedLocation.value = location.latitude.takeIf { it != 0.0 } to location.longitude.takeIf { it != 0.0 }
-        }
+    private suspend fun loadInitialFeeds() {
+        // Location 초기 설정
+        val location = getLocationSafely()
+        _latestFeedLocation.value = LatestFeedQuery(
+            latitude = location.latitude.takeIf { it != 0.0 },
+            longitude = location.longitude.takeIf { it != 0.0 }
+        )
     }
 
-    val notice: Flow<PagingData<Notice>> = getNotificationPage(NoticeSource.NOTIFICATION).cachedIn(viewModelScope)
+    val notice: Flow<PagingData<Notice>> =
+        getNotificationPage(NoticeSource.NOTIFICATION).cachedIn(viewModelScope)
     val unReadActivateAlarm: Flow<PagingData<Notification>> =
         getUnReadNotification().cachedIn(viewModelScope)
     val readActivateAlarm: Flow<PagingData<Notification>> =
         getReadNotification().cachedIn(viewModelScope)
 
     // Latest Feed Paging
-    private val _latestFeedLocation = MutableStateFlow<Pair<Double?, Double?>>(null to null)
+    /**
+     * 최신 피드 페이징은 위치가 동일해도 새로고침 시 스트림을 다시 구독해야 하므로
+     * refreshToken을 함께 사용해 강제로 플로우를 재시작한다.
+     */
+    private data class LatestFeedQuery(
+        val latitude: Double?,
+        val longitude: Double?,
+        val refreshToken: Long = 0L,
+    )
+
+    private val _latestFeedLocation =
+        MutableStateFlow(LatestFeedQuery(latitude = null, longitude = null))
+
+    private fun triggerLatestFeedRefresh() {
+        _latestFeedLocation.update { current ->
+            current.copy(refreshToken = current.refreshToken + 1)
+        }
+    }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val latestFeedPaging: Flow<PagingData<Latest>> = _latestFeedLocation
-        .flatMapLatest { (latitude, longitude) ->
-            getLatestFeed(latitude, longitude)
+        .flatMapLatest { query ->
+            getLatestFeed(query.latitude, query.longitude)
         }
         .cachedIn(viewModelScope)
 
@@ -166,6 +196,18 @@ class FeedViewModel @Inject constructor(
         }
     }
 
+    fun clickHomeTab() {
+        viewModelScope.launch(Dispatchers.IO) {
+            eventLog.moveToTop()
+        }
+    }
+
+    fun logMoveCardDetail() {
+        viewModelScope.launch(Dispatchers.IO) {
+            eventLog.moveToCardDetail()
+        }
+    }
+
     private suspend fun getLocationSafely(): Location {
         return try {
             deviceRepository.requestLocation()
@@ -183,7 +225,10 @@ class FeedViewModel @Inject constructor(
                 state.copy(location = location, currentTab = FeedType.Distance)
             }
             // Latest feed location도 업데이트
-            _latestFeedLocation.value = location.latitude.takeIf { it != 0.0 } to location.longitude.takeIf { it != 0.0 }
+            _latestFeedLocation.value = LatestFeedQuery(
+                latitude = location.latitude.takeIf { it != 0.0 },
+                longitude = location.longitude.takeIf { it != 0.0 }
+            )
         }
     }
 
@@ -238,7 +283,11 @@ class FeedViewModel @Inject constructor(
                 currentState.feedCards
             }
             _uiState.update {
-                it.copy(latestPagingState = if (isInitial) FeedPagingState.Loading else FeedPagingState.LoadingMore(existingCards))
+                it.copy(
+                    latestPagingState = if (isInitial) FeedPagingState.Loading else FeedPagingState.LoadingMore(
+                        existingCards
+                    )
+                )
             }
 
             val lastId = if (isInitial) null else (currentState as? FeedPagingState.Success)?.lastId
@@ -255,9 +304,14 @@ class FeedViewModel @Inject constructor(
                 )) {
                     is DataResult.Success -> {
                         val newFeedCards = mapLatestToFeedCards(result.data)
-                        val isDuplicate = newFeedCards.isNotEmpty() && newFeedCards == existingCards.takeLast(newFeedCards.size)
-                        SooumLog.d(TAG, "Latest feed duplicate check: $isDuplicate (new=${newFeedCards.size}, existing=${existingCards.size})")
-                        delay(2000L)
+                        val isDuplicate =
+                            newFeedCards.isNotEmpty() && newFeedCards == existingCards.takeLast(
+                                newFeedCards.size
+                            )
+                        SooumLog.d(
+                            TAG,
+                            "Latest feed duplicate check: $isDuplicate (new=${newFeedCards.size}, existing=${existingCards.size})"
+                        )
                         _uiState.update { state ->
                             state.copy(
                                 location = location,
@@ -265,7 +319,7 @@ class FeedViewModel @Inject constructor(
                                     feedCards = existingCards + newFeedCards,
                                     hasNextPage = result.data.isNotEmpty(),
                                     lastId = result.data.lastOrNull()?.cardId?.toLongOrNull()
-                                )
+                                ),
                             )
                         }
                     }
@@ -275,7 +329,7 @@ class FeedViewModel @Inject constructor(
                             it.copy(
                                 latestPagingState = FeedPagingState.Error(
                                     result.message ?: "최신 피드 로딩 실패"
-                                )
+                                ),
                             )
                         }
                     }
@@ -318,7 +372,6 @@ class FeedViewModel @Inject constructor(
                         val existingCards = if (isInitial) emptyList() else {
                             (currentState as? FeedPagingState.Success)?.feedCards ?: emptyList()
                         }
-                        delay(1000L)
                         _uiState.update { state ->
                             state.copy(
                                 location = location,
@@ -326,7 +379,8 @@ class FeedViewModel @Inject constructor(
                                     feedCards = existingCards + newFeedCards,
                                     hasNextPage = false, // Popular는 페이징이 없음
                                     lastId = null // Popular는 페이징이 없으므로 null
-                                )
+                                ),
+                                refresh = false //요기 수정
                             )
                         }
                     }
@@ -336,7 +390,8 @@ class FeedViewModel @Inject constructor(
                             it.copy(
                                 popularPagingState = FeedPagingState.Error(
                                     result.message ?: "인기 피드 로딩 실패"
-                                )
+                                ),
+                                refresh = false //요기 수정
                             )
                         }
                     }
@@ -392,7 +447,7 @@ class FeedViewModel @Inject constructor(
                             val newStates = state.distancePagingStates.toMutableMap()
                             newStates[currentDistanceTab] =
                                 FeedPagingState.Error(message = result.message ?: "거리 피드 로딩 실패")
-                            state.copy(distancePagingStates = newStates)
+                            state.copy(distancePagingStates = newStates, refresh = false)//요기 수정
                         }
                     }
 
@@ -401,7 +456,6 @@ class FeedViewModel @Inject constructor(
                         val existingCards = if (isInitial) emptyList() else {
                             (currentState as? FeedPagingState.Success)?.feedCards ?: emptyList()
                         }
-                        delay(1000L)
                         _uiState.update { state ->
                             val newStates = state.distancePagingStates.toMutableMap()
                             newStates[currentDistanceTab] = FeedPagingState.Success(
@@ -411,7 +465,8 @@ class FeedViewModel @Inject constructor(
                             )
                             state.copy(
                                 location = location,
-                                distancePagingStates = newStates
+                                distancePagingStates = newStates,
+                                refresh = false //요기 수정
                             )
                         }
                     }
@@ -428,11 +483,11 @@ class FeedViewModel @Inject constructor(
     }
 
     fun switchTab(feedType: FeedType) {
-        _uiState.update { it.copy(currentTab = feedType) }
+        _uiState.update { it.copy(currentTab = feedType, refresh = false) }
     }
 
     fun switchDistanceTab(distanceTab: DistanceType) {
-        _uiState.update { state -> state.copy(distanceTab = distanceTab) }
+        _uiState.update { state -> state.copy(distanceTab = distanceTab, refresh = false) }
         val cachedState = _uiState.value.distancePagingStates[distanceTab]
         if (cachedState == null || cachedState is FeedPagingState.Error) {
             loadDistanceFeeds(isInitial = true)
@@ -465,7 +520,7 @@ class FeedViewModel @Inject constructor(
                     unreadIdBuffer.clear()
                     ids
                 }
-                if(notify.isNotEmpty()){
+                if (notify.isNotEmpty()) {
                     when (val result =
                         readNotify.invoke(Param(notifyId = notify))) {
                         is DomainResult.Failure -> {
@@ -485,24 +540,37 @@ class FeedViewModel @Inject constructor(
         }
     }
 
+    // 요기 수정 -> 새로운 함수 생성 기존 refreshCurrentTab 명칭 사용
     fun refreshCurrentTab() {
+        _uiState.update { state -> state.copy(refresh = true) }
+        currentTab()
+    }
+
+    // 요기 수정 -> refreshCurrentTab -> currentTab으로 명칭 변경
+    private fun currentTab() {
         when (_uiState.value.currentTab) {
             FeedType.Latest -> {
-                _uiState.update { it.copy(latestPagingState = FeedPagingState.Loading) }
-                loadLatestFeeds(isInitial = true)
+                // Latest는 Paging3를 사용하므로 수동 Loading 상태나 loadLatestFeeds 호출을 하지 않음
+                triggerLatestFeedRefresh()
             }
 
             FeedType.Popular -> {
-                _uiState.update { it.copy(popularPagingState = FeedPagingState.Loading) }
+                // 이미 데이터가 있고 refresh 중이라면 Loading(초기화) 상태로 만들지 않음
+                if (!_uiState.value.refresh) {
+                    _uiState.update { it.copy(popularPagingState = FeedPagingState.Loading) }
+                }
                 loadPopularFeeds(isInitial = true)
             }
 
             FeedType.Distance -> {
                 val currentDistanceTab = _uiState.value.distanceTab
-                _uiState.update { state ->
-                    val newStates = state.distancePagingStates.toMutableMap()
-                    newStates[currentDistanceTab] = FeedPagingState.Loading
-                    state.copy(distancePagingStates = newStates)
+                // 이미 데이터가 있고 refresh 중이라면 Loading(초기화) 상태로 만들지 않음
+                if (!_uiState.value.refresh) {
+                    _uiState.update { state ->
+                        val newStates = state.distancePagingStates.toMutableMap()
+                        newStates[currentDistanceTab] = FeedPagingState.Loading
+                        state.copy(distancePagingStates = newStates)
+                    }
                 }
                 loadDistanceFeeds(isInitial = true)
             }
@@ -686,7 +754,7 @@ class FeedViewModel @Inject constructor(
         }
     }
 
-    fun navigateToDetail(cardId: String) {
+    fun navigateToDetail(cardId: String, isEventCard: Boolean) {
         if (_uiState.value.checkCardDelete is UiState.Loading) return
         val cardIdLong = cardId.toLongOrNull()
         if (cardIdLong == null) {
@@ -707,12 +775,17 @@ class FeedViewModel @Inject constructor(
                 }
 
                 is DomainResult.Success -> {
-                    _uiState.update { state -> state.copy(checkCardDelete = UiState.Success(result.data)) }
-                    if (!result.data) _navigationEvent.emit(
-                        NavigationEvent.NavigateToDetail(
-                            CardDetailArgs(cardIdLong)
+                    if (result.data) {
+                        _uiState.update { state -> state.copy(checkCardDelete = UiState.Success(cardIdLong)) }
+                    } else {
+                        _uiState.update { state -> state.copy(checkCardDelete = UiState.None) }
+                        if (isEventCard) eventLog.moveToCardDetailWhenEventCard() else eventLog.moveToCardDetail()
+                        _navigationEvent.emit(
+                            NavigationEvent.NavigateToDetail(
+                                CardDetailArgs(cardId = cardIdLong, previousView = CardDetailTrace.PROFILE)
+                            )
                         )
-                    )
+                    }
                 }
             }
         }
@@ -722,7 +795,7 @@ class FeedViewModel @Inject constructor(
         _uiState.update { state ->
             state.copy(checkCardDelete = UiState.None)
         }
-        refreshCurrentTab()
+        currentTab() // 요기 수정 함수 이름 명칭 변경
     }
 
 }
@@ -737,14 +810,14 @@ data class Home(
     val latestPagingState: FeedPagingState = FeedPagingState.None,
     val popularPagingState: FeedPagingState = FeedPagingState.None,
     val distancePagingStates: Map<DistanceType, FeedPagingState> = emptyMap(),
-    val refresh: UiState<Boolean> = UiState.None,
+    val refresh: Boolean = false, //요기 수정 변수 사용
     val feedItem: List<FeedData> = emptyList(),
     val notifyItem: List<Notify> = emptyList(),
     val location: Location = Location.EMPTY,
     val shouldShowPermissionRationale: Boolean = false,
     val feedNotification: UiState<List<Notice>> = UiState.Loading,
     val setReadNotify: UiState<Unit> = UiState.Loading,
-    val checkCardDelete: UiState<Boolean> = UiState.None,
+    val checkCardDelete: UiState<Long> = UiState.None,
 ) {
     val currentPagingState: FeedPagingState
         get() = when (currentTab) {

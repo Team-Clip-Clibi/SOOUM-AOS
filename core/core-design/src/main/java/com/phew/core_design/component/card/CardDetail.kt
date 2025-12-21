@@ -21,6 +21,7 @@ import androidx.core.net.toUri
 fun CardDetail(
     modifier: Modifier = Modifier,
     isDeleted: Boolean = false,
+    isPreviousCard: Boolean = false,
     previousCommentThumbnailUri: String? = null,
     backgroundImageUrl : Uri? =null,
     cardContent: String,
@@ -59,6 +60,7 @@ fun CardDetail(
                     modifier = modifier.padding(vertical = 2.dp),
                     data = BaseCardData.Reply(
                         previousCommentThumbnailUri = previousCommentThumbnailUri,
+                        isPreviousCard = isPreviousCard,
                         content = cardContent,
                         tags = cardTags,
                         hasPreviousCommentThumbnail = !previousCommentThumbnailUri.isNullOrEmpty(),

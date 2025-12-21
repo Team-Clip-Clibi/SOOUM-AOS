@@ -8,7 +8,9 @@ import com.microsoft.clarity.models.LogLevel
 import com.phew.sooum.BuildConfig
 import com.phew.core_common.AppVersion
 import com.phew.core_common.IsDebug
+import com.phew.core_common.clarity.ClarityInterface
 import com.phew.core_common.di.ApplicationScope
+import com.phew.sooum.clarity.ClarityManger
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -18,7 +20,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import javax.inject.Singleton
-
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -56,5 +57,13 @@ object AppModule {
             logLevel = LogLevel.None,
             applicationFramework = ApplicationFramework.Native
         )
+    }
+
+    @Provides
+    @Singleton
+    fun provideClarityInterface(
+        manger: ClarityManger,
+    ): ClarityInterface {
+        return manger
     }
 }

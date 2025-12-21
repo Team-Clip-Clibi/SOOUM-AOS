@@ -10,12 +10,10 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.phew.core_design.AppBar.IconLeftAppBar
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.R as DesignR
@@ -85,9 +83,9 @@ private fun PrivacyPolicyScreen(
         LazyColumn(
             modifier = modifier
                 .fillMaxSize()
+                .background(NeutralColor.WHITE)
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp)
-                .background(NeutralColor.WHITE)
         ) {
             itemsIndexed(items) { index, item ->
                 PrivacyPolicyItemRow(

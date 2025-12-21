@@ -106,6 +106,21 @@ object TimeUtils {
     }
 
     /**
+     * ISO 8601 MM.dd 형식 출력
+     */
+    private val MM_DD_FORMATTER = DateTimeFormatter.ofPattern("MM월 d일")
+
+    fun formatToDate(createAt: String): String {
+        if (createAt.trim().isEmpty()) return ""
+        return try {
+            LocalDate.parse(createAt).format(MM_DD_FORMATTER)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            ""
+        }
+    }
+
+    /**
      * ISO 8601 종료 시각에서 현재까지 남은 시간을 밀리초로 환산
      */
     fun remainingMillisUntil(expirationIsoString: String?): Long {
@@ -178,45 +193,6 @@ object TimeUtils {
         } catch (e: Exception) {
             SooumLog.w(TAG, "Failed to format withdrawal date: $dateString, ${e.message}")
             return dateString
-        }
-    }
-    
-    /**
-     * 날짜 문자열을 yyyy.MM.dd 형식으로 포맷팅
-     * @param dateString yyyy-MM-dd 또는 ISO 8601 형식의 날짜 문자열
-     * @return yyyy.MM.dd 형식의 문자열, 파싱 실패시 원본 반환
-     */
-    fun formatToSimpleDate(dateString: String): String {
-        return try {
-            if (dateString.isBlank()) {
-                return dateString
-            }
-            
-            // yyyy-MM-dd 형식으로 파싱 시도
-            val parsedDate = try {
-                val localDate = LocalDate.parse(dateString, DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-                localDate.format(DateTimeFormatter.ofPattern("yyyy.MM.dd"))
-            } catch (e: Exception) {
-                // ISO 8601 형식으로 파싱 시도
-                try {
-                    val parsedTime = iso8601Format.parse(dateString)?.time
-                    if (parsedTime != null) {
-                        val outputFormat = SimpleDateFormat("yyyy.MM.dd", Locale.getDefault()).apply {
-                            timeZone = TimeZone.getTimeZone("Asia/Seoul")
-                        }
-                        outputFormat.format(parsedTime)
-                    } else {
-                        dateString
-                    }
-                } catch (e: Exception) {
-                    dateString
-                }
-            }
-            
-            parsedDate
-        } catch (e: Exception) {
-            SooumLog.w(TAG, "Failed to format simple date: $dateString, ${e.message}")
-            dateString
         }
     }
     
