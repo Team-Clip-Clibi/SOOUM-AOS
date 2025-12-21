@@ -4,8 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import androidx.paging.filter
+import com.phew.core.ui.model.navigation.CardDetailArgs
+import com.phew.core_common.CardDetailTrace
 import com.phew.core_common.DataResult
 import com.phew.core_common.DomainResult
+import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.log.SooumLog
 import com.phew.domain.BuildConfig
 import com.phew.domain.dto.FavoriteTag
@@ -13,6 +17,7 @@ import com.phew.domain.dto.TagCardContent
 import com.phew.domain.model.TagInfo
 import com.phew.domain.model.TagInfoList
 import com.phew.domain.usecase.AddFavoriteTag
+import com.phew.domain.usecase.CheckCardAlreadyDelete
 import com.phew.domain.usecase.GetFavoriteTags
 import com.phew.domain.usecase.GetProfileInfo
 import com.phew.domain.usecase.GetRelatedTags
@@ -56,10 +61,13 @@ data class TagUiState(
     val requestedTagCards: Set<String> = emptySet(), // 요청한 태그 카드 목록 (tagId:tagName 형태)
     val viewTagsDataLoaded: Boolean = false,
     val searchDataLoaded: Boolean = false,
-    val isRelatedTagSearch: Boolean = false
+    val isRelatedTagSearch: Boolean = false,
+    val checkCardDelete: UiState<Long> = UiState.None,
+    val deletedCardIds: Set<Long> = emptySet()
 )
 
 sealed interface UiState<out T> {
+    data object None: UiState<Nothing>
     data object Loading : UiState<Nothing>
     data class Success<T>(val data: T) : UiState<T>
     data class Fail(val errorMessage: String) : UiState<Nothing>
@@ -75,7 +83,8 @@ class TagViewModel @Inject constructor(
     private val addFavoriteTag: AddFavoriteTag,
     private val removeFavoriteTag: RemoveFavoriteTag,
     private val getTagRank: GetTagRank,
-    private val log : SaveEventLogTagView
+    private val log : SaveEventLogTagView,
+    private val checkCardDelete: CheckCardAlreadyDelete,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TagUiState())
@@ -101,7 +110,17 @@ class TagViewModel @Inject constructor(
         _uiState,
         refreshTrigger
     ) { state, _ ->
-        state
+        if (state.deletedCardIds.isNotEmpty()) {
+            state.copy(
+                cardDataItems = state.cardDataItems.map { pagingData ->
+                    pagingData.filter { card ->
+                        !state.deletedCardIds.contains(card.cardId)
+                    }
+                }
+            )
+        } else {
+            state
+        }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -296,17 +315,17 @@ class TagViewModel @Inject constructor(
     // 화면별 UiEffect 발생 함수들
     private suspend fun emitTagScreenEffect(effect: TagUiEffect) {
         _tagScreenUiEffect.emit(effect)
-        _uiEffect.emit(effect) // 기존 호환성
+        _uiEffect.emit(effect)
     }
 
     private suspend fun emitSearchScreenEffect(effect: TagUiEffect) {
         _searchScreenUiEffect.emit(effect)
-        _uiEffect.emit(effect) // 기존 호환성
+        _uiEffect.emit(effect)
     }
 
     private suspend fun emitViewTagsScreenEffect(effect: TagUiEffect) {
         _viewTagsScreenUiEffect.emit(effect)
-        _uiEffect.emit(effect) // 기존 호환성
+        _uiEffect.emit(effect)
     }
     
     private suspend fun emitCommonEffect(effect: TagUiEffect) {
@@ -314,7 +333,7 @@ class TagViewModel @Inject constructor(
         _tagScreenUiEffect.emit(effect)
         _searchScreenUiEffect.emit(effect)
         _viewTagsScreenUiEffect.emit(effect)
-        _uiEffect.emit(effect) // 기존 호환성
+        _uiEffect.emit(effect)
     }
 
     fun toggleFavoriteTag(tagId: Long, tagName: String) {
@@ -574,6 +593,47 @@ class TagViewModel @Inject constructor(
             }
         }
     }
+
+    fun navigateToDetail(cardId: Long) {
+        if (_uiState.value.checkCardDelete is UiState.Loading) return
+
+        viewModelScope.launch {
+            _uiState.update { state -> state.copy(checkCardDelete = UiState.Loading) }
+            when (val result = checkCardDelete(CheckCardAlreadyDelete.Param(cardId = cardId))) {
+                is DomainResult.Failure -> {
+                    _uiState.update { state ->
+                        state.copy(checkCardDelete = UiState.Fail(result.error))
+                    }
+                }
+
+                is DomainResult.Success -> {
+                    if (result.data) {
+                        // 삭제된 경우 ID를 전달
+                        _uiState.update { state ->
+                            state.copy(checkCardDelete = UiState.Success(cardId))
+                        }
+                    } else {
+                        // 삭제되지 않음
+                        _uiState.update { state -> state.copy(checkCardDelete = UiState.None) }
+                         emitCommonEffect(
+                            TagUiEffect.NavigateToDetail(
+                                CardDetailArgs(cardId, previousView = CardDetailTrace.PROFILE)
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    fun removeDeletedCard(cardId: Long) {
+        _uiState.update { state ->
+            state.copy(
+                deletedCardIds = state.deletedCardIds + cardId,
+                checkCardDelete = UiState.None
+            )
+        }
+    }
 }
 
 sealed interface TagUiEffect {
@@ -582,6 +642,7 @@ sealed interface TagUiEffect {
     data class ShowRemoveFavoriteTagToast(val tagName: String) : TagUiEffect
     data class NavigateToViewTags(val tagName: String, val tagId: Long) : TagUiEffect
     data class ShowNetworkErrorSnackbar(val retryAction: () -> Unit) : TagUiEffect
+    data class NavigateToDetail(val cardDetailArgs: CardDetailArgs) : TagUiEffect
 }
 
 private const val TAG = "TagViewModel"

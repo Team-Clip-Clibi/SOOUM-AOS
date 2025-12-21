@@ -379,7 +379,7 @@ object AppBar {
         icon: @Composable () -> Unit,
         onBackClick: () -> Unit,
         onValueChange: (String) -> Unit,
-        onDeleteClick: () -> Unit,
+        onInputFieldRemoveClick: () -> Unit,
         onSearch: () -> Unit,
         focusRequester: androidx.compose.ui.focus.FocusRequester? = null,
         showDeleteIcon: Boolean = true
@@ -420,7 +420,7 @@ object AppBar {
                 isReadOnly = false,
                 placeHolder = placeholder,
                 onValueChange = onValueChange,
-                onDeleteClick = onDeleteClick,
+                onDeleteClick = onInputFieldRemoveClick,
                 onSearch = onSearch,
                 focusRequester = focusRequester,
                 showDeleteIcon = showDeleteIcon

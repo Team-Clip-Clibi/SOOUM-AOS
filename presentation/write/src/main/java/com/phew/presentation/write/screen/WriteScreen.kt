@@ -93,6 +93,7 @@ import com.phew.presentation.write.R as WriteR
 import androidx.navigation.NavController
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core_common.log.SooumLog
+import com.phew.core_design.DialogComponent.DeletedCardDialog
 import com.phew.presentation.write.utils.WriteErrorCase
 import com.phew.presentation.write.viewmodel.UiState
 
@@ -684,10 +685,8 @@ private fun ErrorDialog(
         }
 
         WriteErrorCase.ERROR_DELETE -> {
-            DialogComponent.NoDescriptionButtonOne(
-                title = stringResource(com.phew.presentation.write.R.string.write_screen_dialog_delete_title),
-                buttonText = stringResource(com.phew.core_design.R.string.common_okay),
-                onClick = onclick,
+            DeletedCardDialog(
+                onConfirm = onclick,
                 onDismiss = onclick
             )
         }

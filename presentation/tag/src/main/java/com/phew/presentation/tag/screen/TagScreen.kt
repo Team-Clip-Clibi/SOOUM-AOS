@@ -127,6 +127,10 @@ internal fun TagRoute(
                             // TagScreen에서는 네트워크 오류가 발생하지 않으므로 빈 처리
                             viewModel.clearTagScreenUiEffect()
                         }
+
+                        else -> {
+                            viewModel.clearTagScreenUiEffect()
+                        }
                     }
                 }
             }
@@ -319,6 +323,7 @@ private fun TagView(
                     )
                 }
             }
+            else -> {}
         }
     }
 }

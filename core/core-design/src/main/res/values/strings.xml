@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dialog_deleted_card_title">삭제된 카드예요</string>
+</resources>

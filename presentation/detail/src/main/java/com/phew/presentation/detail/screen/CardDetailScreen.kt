@@ -86,15 +86,16 @@ import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.model.navigation.CardDetailCommentArgs
 import com.phew.core.ui.model.navigation.TagViewArgs
 import com.phew.core_common.CardDetailTrace
-import com.phew.core_common.CheckEventCard.isEventCard
 import com.phew.core_common.MoveDetail
 import com.phew.domain.dto.CardDetailTag
 import com.phew.core_common.TimeUtils
+import com.phew.core_common.isEventCard
 import com.phew.core_common.log.SooumLog
 import com.phew.core_design.BottomSheetComponent
 import com.phew.core_design.BottomSheetItem
 import com.phew.core_design.Danger
 import com.phew.core_design.DialogComponent
+import com.phew.core_design.DialogComponent.DeletedCardDialog
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.R
 import com.phew.core_design.TextComponent
@@ -176,7 +177,7 @@ internal fun CardDetailRoute(
                     // 두 번째 Resume부터만 새로고침 (WriteScreen에서 복귀 시)
                     if (hasResumed) {
                         SooumLog.d(TAG, "CardDetailScreen resumed from WriteScreen - refreshing data")
-                        viewModel.loadCardDetail(args.cardId)
+                        viewModel.loadCardDetail(args.cardId, isSilent = true)
                     } else {
                         hasResumed = true
                     }
@@ -198,6 +199,7 @@ internal fun CardDetailRoute(
             .collect { effect ->
                 when (effect) {
                     is CardDetailUiEffect.NavigationHome -> onNavigateToHome()
+                    is CardDetailUiEffect.NavigateToWrite -> onNavigateToWrite(effect.cardId)
                 }
             }
     }
@@ -218,7 +220,11 @@ internal fun CardDetailRoute(
                 viewModel.clearError()
             }
             CardDetailError.CARD_DELETE -> {
+                isDelete = true
                 viewModel.setDeleteDialog()
+            }
+            CardDetailError.CARD_DELETE_NO_DIALOG -> {
+                isDelete = true
             }
             else -> Unit
         }
@@ -342,14 +348,14 @@ internal fun CardDetailRoute(
         progress = progress,
         onBackPressed = onBackPressed,
         onClickLike = {
-            viewModel.toggleLike(args.cardId)
+            viewModel.verifyAndToggleLike(args.cardId)
         },
         onClickCommentIcon = { event ->
             viewModel.logMoveToCommentCard(
                 event = event,
                 isEventCard = cardDetail.cardImgName.isEventCard()
             )
-            onNavigateToWrite(args.cardId)
+            viewModel.verifyAndNavigateToWrite(args.cardId)
         },
         onClickCommentView = { commentCardId ->
             onNavigateToComment(
@@ -364,7 +370,7 @@ internal fun CardDetailRoute(
         },
         onNavigateToReport = onNavigateToReport,
         onRefresh = {
-            viewModel.loadCardDetail(args.cardId)
+            viewModel.loadCardDetail(args.cardId, isSilent = true)
         },
         onNavigateToViewTags = { tag ->
             viewModel.logMoveToTagView()
@@ -377,6 +383,7 @@ internal fun CardDetailRoute(
         remainingTimeMillis = remainingTimeMillis,
         isExpire = (cardDetail.storyExpirationTime != null && (cardDetail.endTime
             ?: 0L) <= 0L) || isDelete,
+        isDelete = isDelete,
         isOwnCard = cardDetail.isOwnCard,
         deleteCard = { cardId ->
             viewModel.requestDeleteCard(cardId)
@@ -399,7 +406,7 @@ internal fun CardDetailRoute(
         deleteErrorDialog = uiState.deleteErrorDialog,
         onClickDeleteErrorDialog = {
             viewModel.clearError()
-            onBackPressed()
+            onNavigateToHome()
         }
     )
 }
@@ -443,6 +450,7 @@ private fun CardDetailScreen(
     snackBarHostState: SnackbarHostState,
     remainingTimeMillis: Long,
     isExpire: Boolean,
+    isDelete: Boolean,
     isOwnCard: Boolean,
     showBottomSheet: Boolean,
     onShowBottomSheetChange: (Boolean) -> Unit,
@@ -458,14 +466,16 @@ private fun CardDetailScreen(
     deleteErrorDialog : Boolean,
     onClickDeleteErrorDialog : () -> Unit
 ) {
-
+    SooumLog.d(TAG, "CardDetailScreen")
     Scaffold(
         modifier = modifier,
         topBar = {
             CardDetailTopBar(
                 remainingTimeMillis = remainingTimeMillis,
                 onBackPressed = onBackPressed,
-                onMoreClick = { onShowBottomSheetChange(true) }
+                onMoreClick = { onShowBottomSheetChange(true) },
+                title = if (isDelete) stringResource(DetailR.string.card_detail_dialog_delete_title) else null,
+                isDelete = isDelete
             )
         },
         snackbarHost = {
@@ -565,8 +575,8 @@ private fun CardDetailScreen(
                         },
                         header = {
                             CardDetailHeader(
-                                profileUri = profileUri,
-                                nickName = nickName,
+                                profileUri = if (isDelete) "" else profileUri,
+                                nickName = if (isDelete) stringResource(DetailR.string.card_detail_unknown_user) else nickName,
                                 distance = distance,
                                 createAt = createAt,
                                 memberId = memberId,
@@ -605,10 +615,8 @@ private fun CardDetailScreen(
                 }
                 if (deleteErrorDialog) {
                     item {
-                        DialogComponent.NoDescriptionButtonOne(
-                            title = stringResource(com.phew.presentation.detail.R.string.card_detail_dialog_delete_title),
-                            buttonText = stringResource(R.string.common_okay),
-                            onClick = onClickDeleteErrorDialog,
+                        DeletedCardDialog(
+                            onConfirm = onClickDeleteErrorDialog,
                             onDismiss = onClickDeleteErrorDialog
                         )
                     }

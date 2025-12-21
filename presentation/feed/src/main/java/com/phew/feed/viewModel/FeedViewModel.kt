@@ -775,12 +775,14 @@ class FeedViewModel @Inject constructor(
                 }
 
                 is DomainResult.Success -> {
-                    _uiState.update { state -> state.copy(checkCardDelete = UiState.Success(result.data)) }
-                    if (!result.data) {
+                    if (result.data) {
+                        _uiState.update { state -> state.copy(checkCardDelete = UiState.Success(cardIdLong)) }
+                    } else {
+                        _uiState.update { state -> state.copy(checkCardDelete = UiState.None) }
                         if (isEventCard) eventLog.moveToCardDetailWhenEventCard() else eventLog.moveToCardDetail()
                         _navigationEvent.emit(
                             NavigationEvent.NavigateToDetail(
-                                CardDetailArgs(cardIdLong, previousView = CardDetailTrace.FEED)
+                                CardDetailArgs(cardId = cardIdLong, previousView = CardDetailTrace.PROFILE)
                             )
                         )
                     }
@@ -815,7 +817,7 @@ data class Home(
     val shouldShowPermissionRationale: Boolean = false,
     val feedNotification: UiState<List<Notice>> = UiState.Loading,
     val setReadNotify: UiState<Unit> = UiState.Loading,
-    val checkCardDelete: UiState<Boolean> = UiState.None,
+    val checkCardDelete: UiState<Long> = UiState.None,
 ) {
     val currentPagingState: FeedPagingState
         get() = when (currentTab) {

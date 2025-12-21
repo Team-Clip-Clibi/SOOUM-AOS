@@ -6,11 +6,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import androidx.paging.filter
 import com.phew.core.ui.model.CameraCaptureRequest
+import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core_common.DomainResult
+import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.domain.dto.FollowData
 import com.phew.domain.dto.ProfileInfo
 import com.phew.domain.dto.ProfileCard
+import com.phew.domain.usecase.CheckCardAlreadyDelete
 import com.phew.domain.usecase.CheckNickName
 import com.phew.domain.usecase.CreateImageFile
 import com.phew.domain.usecase.FinishTakePicture
@@ -28,10 +32,15 @@ import com.phew.domain.usecase.UpdateProfile
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -52,9 +61,13 @@ class ProfileViewModel @Inject constructor(
     private val createFile: CreateImageFile,
     private val finishPhoto: FinishTakePicture,
     private val updateProfile: UpdateProfile,
+    private val checkCardDelete: CheckCardAlreadyDelete,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(Profile())
     val uiState: StateFlow<Profile> = _uiState.asStateFlow()
+
+    private val _uiEffect = MutableSharedFlow<ProfileUiEffect>()
+    val uiEffect = _uiEffect.asSharedFlow()
 
     fun refreshMyProfile() {
         _uiState.update { state -> state.copy(isRefreshing = true) }
@@ -83,9 +96,11 @@ class ProfileViewModel @Inject constructor(
                     _uiState.update { state ->
                         state.copy(
                             profileInfo = UiState.Success(request.data),
-                            profileFeedCard = getFeedCard(userId = request.data.userId).cachedIn(
-                                viewModelScope
-                            ),
+                            profileFeedCard = getFeedCard(userId = request.data.userId)
+                                .cachedIn(viewModelScope)
+                                .combine(_uiState.map { it.deletedCardIds }.distinctUntilChanged()) { pagingData, deletedIds ->
+                                    pagingData.filter { !deletedIds.contains(it.cardId) }
+                                },
                             profileCommentCard = getCommentCard().cachedIn(viewModelScope),
                             follow = getFollower(profileId = request.data.userId).cachedIn(
                                 viewModelScope
@@ -128,9 +143,11 @@ class ProfileViewModel @Inject constructor(
                     _uiState.update { state ->
                         state.copy(
                             profileInfo = UiState.Success(request.data),
-                            profileFeedCard = getFeedCard(userId = request.data.userId).cachedIn(
-                                viewModelScope
-                            ),
+                            profileFeedCard = getFeedCard(userId = request.data.userId)
+                                .cachedIn(viewModelScope)
+                                .combine(_uiState.map { it.deletedCardIds }.distinctUntilChanged()) { pagingData, deletedIds ->
+                                    pagingData.filter { !deletedIds.contains(it.cardId) }
+                                },
                             profileCommentCard = getCommentCard().cachedIn(viewModelScope),
                             follow = getFollower(profileId = request.data.userId).cachedIn(
                                 viewModelScope
@@ -405,6 +422,47 @@ class ProfileViewModel @Inject constructor(
             )
         }
     }
+
+    fun navigateToDetail(cardId: Long) {
+        if (_uiState.value.checkCardDelete is UiState.Loading) return
+        
+        viewModelScope.launch {
+            _uiState.update { state -> state.copy(checkCardDelete = UiState.Loading) }
+            when (val result = checkCardDelete(CheckCardAlreadyDelete.Param(cardId = cardId))) {
+                is DomainResult.Failure -> {
+                    _uiState.update { state ->
+                        state.copy(checkCardDelete = UiState.Fail(result.error))
+                    }
+                }
+
+                is DomainResult.Success -> {
+                    if (result.data) {
+                        // 삭제된 경우 ID를 전달
+                        _uiState.update { state -> 
+                            state.copy(checkCardDelete = UiState.Success(cardId))
+                        }
+                    } else {
+                        // 삭제되지 않음
+                        _uiState.update { state -> state.copy(checkCardDelete = UiState.None) }
+                        _uiEffect.emit(
+                            ProfileUiEffect.NavigateToDetail(
+                                CardDetailArgs(cardId)
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    fun removeDeletedCard(cardId: Long) {
+        _uiState.update { state ->
+            state.copy(
+                deletedCardIds = state.deletedCardIds + cardId,
+                checkCardDelete = UiState.None
+            )
+        }
+    }
 }
 
 data class Profile(
@@ -428,11 +486,18 @@ data class Profile(
     val errorMessage: String = "",
     val changeProfile: Boolean = false,
     val imageChange: Boolean = false,
-    val imageDialog: Boolean = false
+    val imageDialog: Boolean = false,
+    val checkCardDelete: UiState<Long> = UiState.None,
+    val deletedCardIds: Set<Long> = emptySet(),
 )
 
 sealed interface UiState<out T> {
+    data object None : UiState<Nothing>
     data object Loading : UiState<Nothing>
     data class Success<T>(val data: T) : UiState<T>
     data class Fail(val errorMessage: String) : UiState<Nothing>
+}
+
+sealed interface ProfileUiEffect {
+    data class NavigateToDetail(val cardDetailArgs: CardDetailArgs): ProfileUiEffect
 }

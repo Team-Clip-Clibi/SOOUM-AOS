@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberOverscrollEffect
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -52,10 +53,12 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
+import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core_common.log.SooumLog
 import com.phew.core_design.AppBar.SearchAppBar
 import com.phew.core_design.CustomFont
 import com.phew.core_design.DialogComponent
+import com.phew.core_design.DialogComponent.DeletedCardDialog
 import com.phew.core_design.LoadingAnimation
 import com.phew.core_design.MediumButton.IconPrimary
 import com.phew.core_design.NeutralColor
@@ -69,13 +72,14 @@ import com.phew.presentation.tag.R
 import com.phew.presentation.tag.component.SearchListItem
 import com.phew.presentation.tag.viewmodel.TagUiEffect
 import com.phew.presentation.tag.viewmodel.TagViewModel
+import com.phew.presentation.tag.viewmodel.UiState
 import com.phew.core_design.R as DesignR
 
 @Composable
 internal fun SearchRoute(
     modifier: Modifier = Modifier,
     viewModel: TagViewModel = hiltViewModel(),
-    onClickCard: (Long) -> Unit,
+    navigateToDetail: (cardDetailArgs: CardDetailArgs) -> Unit,
     onBackPressed: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -85,6 +89,7 @@ internal fun SearchRoute(
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
+    var showDeleteDialog by remember { mutableStateOf(false) }
     val yOffset = 8.dp.value.toInt()
 
     // Toast 처리 및 Snackbar 처리
@@ -129,12 +134,39 @@ internal fun SearchRoute(
                             viewModel.clearSearchScreenUiEffect()
                         }
 
+                        is TagUiEffect.NavigateToDetail -> {
+                              navigateToDetail(it.cardDetailArgs)
+                              viewModel.clearSearchScreenUiEffect()
+                        }
+
                         else -> {
                             viewModel.clearSearchScreenUiEffect()
                         }
                     }
                 }
             }
+    }
+
+    // 삭제된 카드 상태 감지
+    var deletedCardId by remember { mutableStateOf<Long?>(null) }
+
+    LaunchedEffect(uiState.checkCardDelete) {
+        if (uiState.checkCardDelete is UiState.Success) {
+            deletedCardId = (uiState.checkCardDelete as UiState.Success<Long>).data
+            showDeleteDialog = true
+        }
+    }
+
+    if (showDeleteDialog && deletedCardId != null) {
+        val onDialogHandled = {
+            deletedCardId?.let { viewModel.removeDeletedCard(it) }
+            showDeleteDialog = false
+            deletedCardId = null
+        }
+        DeletedCardDialog(
+            onDismiss = onDialogHandled,
+            onConfirm = onDialogHandled
+        )
     }
 
     // cardDataItems에서 첫 번째 아이템의 isFavorite 상태를 ViewModel에 업데이트
@@ -171,10 +203,10 @@ internal fun SearchRoute(
         listState = listState,
         gridState = gridState,
         onValueChange = viewModel::onValueChange,
-        onDeleteClick = viewModel::onDeleteClick,
+        onInputFieldRemoveClick = viewModel::onDeleteClick,
         onItemClick = { tag -> viewModel.performSearch(tag, isRelatedTag = true) },
         onSearch = { viewModel.performSearch(uiState.searchValue, isRelatedTag = false) },
-        onClickCard = onClickCard,
+        onClickCard = viewModel::navigateToDetail,
         onBackPressed = onBackPressed,
         isFavorite = uiState.currentTagFavoriteState,
         onFavoriteToggle = viewModel::toggleCurrentSearchedTagFavorite,
@@ -196,7 +228,7 @@ private fun SearchScreen(
     listState: LazyListState,
     gridState: LazyGridState,
     onValueChange: (String) -> Unit,
-    onDeleteClick: () -> Unit,
+    onInputFieldRemoveClick: () -> Unit,
     onItemClick: (String) -> Unit,
     onSearch: () -> Unit,
     onClickCard: (Long) -> Unit,
@@ -255,7 +287,7 @@ private fun SearchScreen(
                     onValueChange(value)
                     isSearchFieldFocused = true
                 },
-                onDeleteClick = onDeleteClick,
+                onInputFieldRemoveClick = onInputFieldRemoveClick,
                 onBackClick = onBackPressed,
                 onSearch = {
                     focusManager.clearFocus()

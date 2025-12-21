@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -27,7 +26,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -94,9 +92,13 @@ import kotlinx.coroutines.launch
 import com.airbnb.lottie.compose.LottieConstants
 import com.phew.core.ui.model.navigation.TagViewArgs
 import com.phew.core_common.CardDetailTrace
+import com.phew.core_design.DialogComponent.DeletedCardDialog
 import com.phew.core_design.LoadingAnimation
 import com.phew.core_design.component.refresh.RefreshBox
 import com.phew.core_design.typography.FontType
+import androidx.lifecycle.flowWithLifecycle
+import com.phew.presentation.detail.viewmodel.CardDetailUiEffect
+import kotlinx.coroutines.flow.collect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -109,6 +111,7 @@ internal fun CommentCardDetailScreen(
     onNavigateToViewTags: (TagViewArgs) -> Unit,
     onBackPressed: (Long) -> Unit,
     onFeedPressed: () -> Unit,
+    onNavigateToHome: () -> Unit,
     onTagPressed: () -> Unit,
     onProfileClick: (Long) -> Unit,
     onCardChanged: () -> Unit,
@@ -117,15 +120,26 @@ internal fun CommentCardDetailScreen(
     val comments: LazyPagingItems<CardComment> = viewModel.commentsPagingData
         .collectAsLazyPagingItems()
     val cardDetail = uiState.cardDetail
+    val lifecycleOwner = LocalLifecycleOwner.current
     TrackCardInteraction(cardDetail = cardDetail, onCardChanged = onCardChanged)
     LaunchedEffect(args.cardId) {
         SooumLog.d(TAG, "CardId : ${args.cardId}")
-        viewModel.loadCardDetail(args.cardId)
+        viewModel.loadCardDetail(args.cardId, isSilent = true)
         viewModel.requestComment(args.cardId)
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.uiEffect
+            .flowWithLifecycle(lifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+            .collect { effect ->
+                when (effect) {
+                    is CardDetailUiEffect.NavigationHome -> onNavigateToHome()
+                    is CardDetailUiEffect.NavigateToWrite -> onNavigateToWrite(effect.cardId)
+                }
+            }
+    }
+
     // WriteScreen에서 복귀 시에만 새로고침 처리
-    val lifecycleOwner = LocalLifecycleOwner.current
     var hasResumed by remember { mutableStateOf(false) }
 
     DisposableEffect(lifecycleOwner) {
@@ -143,7 +157,7 @@ internal fun CommentCardDetailScreen(
                             TAG,
                             "CommentCardDetailScreen resumed from WriteScreen - refreshing data"
                         )
-                        viewModel.loadCardDetail(args.cardId)
+                        viewModel.loadCardDetail(args.cardId, isSilent = true)
                         viewModel.requestComment(args.cardId)
                     } else {
                         hasResumed = true
@@ -170,6 +184,15 @@ internal fun CommentCardDetailScreen(
         iterations = LottieConstants.IterateForever,
         restartOnPlay = isRefreshing
     )
+    val isRealDelete = uiState.deleteSuccess || uiState.error == CardDetailError.CARD_DELETE || uiState.error == CardDetailError.CARD_DELETE_NO_DIALOG
+
+    var isTimerExpired by remember { mutableStateOf(false) }
+    var showBottomSheet by remember { mutableStateOf(false) }
+    var showBlockDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    val isExpire = isRealDelete || isTimerExpired
+
+    // cardDetail이 null이어도 삭제된 상태면 진행
     if (uiState.isLoading && cardDetail == null) {
         Box(
             modifier = Modifier
@@ -181,29 +204,25 @@ internal fun CommentCardDetailScreen(
         }
         return
     }
-    if (cardDetail == null) {
+    if (cardDetail == null && !isRealDelete) {
         return
     }
-    var isTimerExpired by remember { mutableStateOf(false) }
-    var showBottomSheet by remember { mutableStateOf(false) }
-    var showBlockDialog by remember { mutableStateOf(false) }
-    var showDeleteDialog by remember { mutableStateOf(false) }
-    val isDelete = uiState.deleteSuccess || isTimerExpired
+
     val snackBarHostState = remember { SnackbarHostState() }
-    val onBackPressedLambda = remember(cardDetail.previousCardId) {
+    val onBackPressedLambda = remember(cardDetail?.previousCardId) {
         {
-            val parentId = cardDetail.previousCardId?.toLongOrNull() ?: 0L
+            val parentId = cardDetail?.previousCardId?.toLongOrNull() ?: 0L
             SooumLog.d(TAG, "parentId : $parentId")
             onBackPressed(parentId)
-            //  TODO 이전 카드 삭제된 케이스일 경우 서버 동작 이슈로 추후 배포에서 수정 예정
+
         }
     }
     val showBottomSheetLambda = remember { { showBottomSheet = true } }
     val onExpireLambda = remember { { isTimerExpired = true } }
-    val onClickLikeLambda = remember(args.cardId) { { viewModel.toggleLike(args.cardId) } }
-    val onClickPreviousCard = remember(cardDetail.previousCardId) {
+    val onClickLikeLambda = remember(args.cardId) { { viewModel.verifyAndToggleLike(args.cardId) } }
+    val onClickPreviousCard = remember(cardDetail?.previousCardId) {
         {
-            val parentId = cardDetail.previousCardId?.toLongOrNull() ?: 0L
+            val parentId = cardDetail?.previousCardId?.toLongOrNull() ?: 0L
             onBackPressed(parentId)
         }
     }
@@ -212,18 +231,18 @@ internal fun CommentCardDetailScreen(
             onNavigateToComment(
                 CardDetailCommentArgs(
                     cardId = childId,
-                    parentId = cardDetail.cardId,
+                    parentId = cardDetail?.cardId ?: args.cardId,
                     previousView = CardDetailTrace.COMMENT
                 )
             )
         }
     }
-    val onWriteClickLambda = remember(args.cardId) { { onNavigateToWrite(args.cardId) } }
+    val onWriteClickLambda = remember(args.cardId) { { viewModel.verifyAndNavigateToWrite(args.cardId) } }
     val closeBottomSheetLambda = remember { { showBottomSheet = false } }
     val onNavigateToReportLambda =
-        remember(cardDetail.memberId) { { onNavigateToReport(cardDetail.memberId) } }
-    val onBlockMemberLambda = remember(cardDetail.memberId, cardDetail.nickname) {
-        { viewModel.blockMember(cardDetail.memberId, cardDetail.nickname) }
+        remember(cardDetail?.memberId) { { onNavigateToReport(cardDetail?.memberId ?: -1L) } }
+    val onBlockMemberLambda = remember(cardDetail?.memberId, cardDetail?.nickname) {
+        { viewModel.blockMember(cardDetail?.memberId ?: -1L, cardDetail?.nickname ?: "") }
     }
     val deleteCardLambda = remember(args.cardId) { { viewModel.requestDeleteCard(args.cardId) } }
     val clearBlockSuccessLambda = remember { { viewModel.clearBlockSuccess() } }
@@ -236,7 +255,7 @@ internal fun CommentCardDetailScreen(
     val onRefresh = remember(args.cardId) {
         {
             isManualRefreshing = true
-            viewModel.loadCardDetail(args.cardId)
+            viewModel.loadCardDetail(args.cardId, isSilent = true)
             viewModel.requestComment(args.cardId)
             // 새로고침 완료를 기다린 후 상태 초기화
             coroutineScope.launch {
@@ -254,13 +273,13 @@ internal fun CommentCardDetailScreen(
 
     HandleBlockUser(
         blockSuccess = uiState.blockSuccess,
-        nickName = cardDetail.nickname,
+        nickName = cardDetail?.nickname ?: "",
         clearBlockSuccess = clearBlockSuccessLambda,
         unBlockMember = unBlockMemberLambda,
         snackBarHostState = snackBarHostState
     )
     val errorType = uiState.error
-    if (errorType != null && errorType != CardDetailError.CARD_DELETE) {
+    if (errorType != null && errorType != CardDetailError.CARD_DELETE && errorType != CardDetailError.CARD_DELETE_NO_DIALOG) {
         HandleError(
             errorType = errorType,
             snackBarHostState = snackBarHostState,
@@ -269,18 +288,23 @@ internal fun CommentCardDetailScreen(
     }
     val refreshState = rememberPullToRefreshState()
     val density = LocalDensity.current
-    val showDetailTopBar = cardDetail.previousCardId.isNullOrEmpty()
+    val showDetailTopBar = cardDetail?.previousCardId.isNullOrEmpty()
+
+    SooumLog.d(TAG, "CommentCardDetailScreen : ${args.cardId}")
+
     Scaffold(
         topBar = {
             if (showDetailTopBar) {
                 CardDetailTopBar(
-                    remainingTimeMillis = cardDetail.endTime,
+                    remainingTimeMillis = cardDetail?.endTime ?: 0L,
                     onBackPressed = onBackPressedLambda,
-                    onMoreClick = showBottomSheetLambda
+                    onMoreClick = showBottomSheetLambda,
+                    title = if(isRealDelete) stringResource(R.string.card_detail_dialog_delete_title) else null,
+                    isDelete = isRealDelete
                 )
             } else {
                 TopLayout(
-                    storyRemainingMillis = cardDetail.endTime,
+                    storyRemainingMillis = cardDetail?.endTime ?: 0L,
                     onFeedPressed = when (args.backTo) {
                         "tag" -> onTagPressed
                         else -> onFeedPressed
@@ -288,7 +312,8 @@ internal fun CommentCardDetailScreen(
                     onBackPressed = onBackPressedLambda,
                     showBottomSheet = showBottomSheetLambda,
                     onExpire = onExpireLambda,
-                    memberId = cardDetail.memberId
+                    memberId = cardDetail?.memberId ?: -1L,
+                    title = if(isRealDelete) stringResource(R.string.card_detail_dialog_delete_title) else stringResource(R.string.card_detail_comment_app_bar_title)
                 )
             }
         },
@@ -319,7 +344,8 @@ internal fun CommentCardDetailScreen(
                                 refreshState.distanceFraction * with(density) { 72.dp.toPx() }
                         },
                     cardDetail = cardDetail,
-                    isExpire = isDelete,
+                    isExpire = isExpire,
+                    isDelete = isRealDelete,
                     onClickLike = onClickLikeLambda,
                     onClickCommentIcon = onWriteClickLambda,
                     comments = comments,
@@ -342,7 +368,7 @@ internal fun CommentCardDetailScreen(
                 )
                 if (showBottomSheet) {
                     BottomSheetView(
-                        isOwnCard = cardDetail.isOwnCard,
+                        isOwnCard = cardDetail?.isOwnCard == true,
                         closeBottomSheet = closeBottomSheetLambda,
                         onNavigateToReport = onNavigateToReportLambda,
                         showBlockDialog = {
@@ -358,7 +384,7 @@ internal fun CommentCardDetailScreen(
                         title = stringResource(R.string.card_detail_block_dialog_title),
                         description = stringResource(
                             R.string.card_detail_block_dialog_subtitle,
-                            cardDetail.nickname
+                            cardDetail?.nickname ?: ""
                         ),
                         buttonTextStart = stringResource(R.string.card_detail_cancel),
                         buttonTextEnd = stringResource(R.string.card_detail_block),
@@ -391,7 +417,7 @@ internal fun CommentCardDetailScreen(
                 if (uiState.deleteErrorDialog) {
                     DeleteDialog(onClick = {
                         viewModel.clearError()
-                        onBackPressedLambda()
+                        onNavigateToHome()
                     })
                 }
             }
@@ -407,6 +433,7 @@ private fun TopLayout(
     onBackPressed: () -> Unit,
     showBottomSheet: () -> Unit,
     onExpire: () -> Unit,
+    title: String
 ) {
     var remainingTimeMillis by remember { mutableLongStateOf(storyRemainingMillis) }
     var isExpired by remember { mutableStateOf(false) }
@@ -426,7 +453,7 @@ private fun TopLayout(
             .statusBarsPadding()
     ) {
         AppBar.IconBothAppBar(
-            topAppBarText = stringResource(R.string.card_detail_comment_app_bar_title),
+            topAppBarText = title,
             onBackClick = onBackPressed,
             onSecClick = onFeedPressed,
             onLastClick = showBottomSheet
@@ -449,8 +476,9 @@ private fun TopLayout(
 @Composable
 private fun CardView(
     modifier: Modifier,
-    cardDetail: CardDetail,
+    cardDetail: CardDetail?,
     isExpire: Boolean,
+    isDelete: Boolean,
     onClickLike: () -> Unit,
     onClickCommentIcon: () -> Unit,
     comments: LazyPagingItems<CardComment>,
@@ -475,36 +503,36 @@ private fun CardView(
             ) {
                 CardDetailComponent(
                     modifier = Modifier.fillMaxWidth(),
-                    previousCommentThumbnailUri = cardDetail.previousCardImgUrl,
                     isPreviousCard = true,
-                    cardContent = cardDetail.cardContent,
-                    cardThumbnailUri = cardDetail.cardImgUrl,
-                    cardTags = cardDetail.tags.map { data -> data.name },
+                    previousCommentThumbnailUri = cardDetail?.previousCardImgUrl,
+                    cardContent = cardDetail?.cardContent ?: "",
+                    cardThumbnailUri = cardDetail?.cardImgUrl ?: "",
+                    cardTags = cardDetail?.tags?.map { data -> data.name } ?: emptyList(),
                     isDeleted = isExpire,
-                    backgroundImageUrl = cardDetail.cardImgUrl.toUri(),
-                    fontType = FontType.fromServerName(cardDetail.font),
+                    backgroundImageUrl = cardDetail?.cardImgUrl?.toUri(),
+                    fontType = if(cardDetail != null) FontType.fromServerName(cardDetail.font) else null,
                     onTagClick = { tagName ->
-                        val tag = cardDetail.tags.find { it.name == tagName }
+                        val tag = cardDetail?.tags?.find { it.name == tagName }
                         if (tag != null) {
                             onNavigateToViewTags(TagViewArgs(tagName = tag.name, tagId = tag.tagId))
                         }
                     },
                     header = {
                         CardDetailHeader(
-                            profileUri = cardDetail.profileImgUrl ?: "",
-                            nickName = cardDetail.nickname,
-                            distance = cardDetail.distance ?: "",
-                            createAt = cardDetail.createdAt,
-                            memberId = cardDetail.memberId,
+                            profileUri = if(isDelete) "" else cardDetail?.profileImgUrl ?: "",
+                            nickName = if(isDelete) stringResource(R.string.card_detail_unknown_user) else cardDetail?.nickname ?: "",
+                            distance = cardDetail?.distance ?: "",
+                            createAt = cardDetail?.createdAt ?: "",
+                            memberId = cardDetail?.memberId ?: -1L,
                             onClick = onProfileClick
                         )
                     },
                     bottom = {
                         CardDetailBottom(
-                            likeCnt = cardDetail.likeCount,
-                            commentCnt = cardDetail.commentCardCount,
-                            searchCnt = cardDetail.visitedCnt,
-                            isLikeCard = cardDetail.isLike,
+                            likeCnt = cardDetail?.likeCount ?: 0,
+                            commentCnt = cardDetail?.commentCardCount ?: 0,
+                            searchCnt = cardDetail?.visitedCnt ?: 0,
+                            isLikeCard = cardDetail?.isLike == true,
                             onClickLike = onClickLike,
                             onClickComment = onClickCommentIcon
                         )
@@ -736,10 +764,8 @@ private fun HandleError(
 
 @Composable
 private fun DeleteDialog(onClick: () -> Unit) {
-    DialogComponent.NoDescriptionButtonOne(
-        title = stringResource(R.string.card_detail_dialog_delete_title),
-        buttonText = stringResource(com.phew.core_design.R.string.common_okay),
-        onClick = onClick,
+    DeletedCardDialog(
+        onConfirm = onClick,
         onDismiss = onClick
     )
 }

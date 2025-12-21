@@ -22,13 +22,16 @@ import com.phew.core_design.R
 import com.phew.core_design.TextComponent
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import com.phew.core_design.AppBar.IconLeftAppBar
 import com.phew.presentation.detail.R as DetailR
 
 @Composable
 internal fun CardDetailTopBar(
     remainingTimeMillis: Long,
     onBackPressed: () -> Unit,
-    onMoreClick: () -> Unit
+    onMoreClick: () -> Unit,
+    title: String? = null,
+    isDelete: Boolean = false
 ) {
     Column(
         modifier = Modifier
@@ -37,13 +40,22 @@ internal fun CardDetailTopBar(
             .statusBarsPadding(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        TextButtonAppBar(
-            startImage = R.drawable.ic_left,
-            endImage = R.drawable.ic_more_stroke_circle,
-            appBarText = stringResource(DetailR.string.card_title_comment),
-            startClick = onBackPressed,
-            endClick = onMoreClick
-        )
+        if (isDelete) {
+            IconLeftAppBar(
+                image = R.drawable.ic_left,
+                onClick = onBackPressed,
+                appBarText = title ?: stringResource(DetailR.string.card_title_comment)
+            )
+        } else{
+            TextButtonAppBar(
+                startImage = R.drawable.ic_left,
+                endImage = R.drawable.ic_more_stroke_circle,
+                appBarText = title ?: stringResource(DetailR.string.card_title_comment),
+                startClick = onBackPressed,
+                endClick = onMoreClick
+            )
+        }
+
         val timer = TimeUtils.formatMillisToTimer(remainingTimeMillis)
         if (timer.isNotBlank() && remainingTimeMillis.toString().trim() != "0") {
             Box(
