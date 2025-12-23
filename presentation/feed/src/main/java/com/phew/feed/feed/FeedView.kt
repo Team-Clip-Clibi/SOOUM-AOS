@@ -294,7 +294,8 @@ fun FeedView(
                     currentPagingState = uiState.currentPagingState,
                     pullOffsetPx = pullOffsetPx,
                     onRefresh = refreshCurrentFeed,
-                    isNoticeShow = !showNotice
+                    isNoticeShow = !showNotice,
+                    hiddenCardIds = uiState.hiddenCardIds
                 )
                 if (uiState.shouldShowPermissionRationale) {
                     DialogComponent.DefaultButtonTwo(
@@ -363,6 +364,7 @@ private fun FeedContentView(
     pullOffsetPx: Float,
     onRefresh: () -> Unit,
     isNoticeShow: Boolean,
+    hiddenCardIds: Set<Long>,
 ) {
     val selectIndex = when (currentTab) {
         FeedType.Latest -> NAV_HOME_FEED_INDEX
@@ -460,21 +462,25 @@ private fun FeedContentView(
                                     contentType = latestFeedItems.itemContentType { "LatestFeed" }
                                 ) { index ->
                                     latestFeedItems[index]?.let { latest ->
-                                        val feedCardType = classifyLatestFeedType(latest)
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .wrapContentHeight()
-                                                .padding(horizontal = 16.dp)
-                                                .graphicsLayer { translationY = pullOffsetPx }
-                                        ) {
-                                            FeedUi.TypedFeedCardView(
-                                                feedCard = feedCardType,
-                                                onClick = { id ->
-                                                    onClick(id, feedCardType.isEventCard())
-                                                },
-                                                onRemoveCard = onRemoveCard,
-                                            )
+                                        val cardId = latest.cardId.toLongOrNull()
+                                        // hiddenCardIds에 포함된 카드는 렌더링하지 않음
+                                        if (cardId == null || !hiddenCardIds.contains(cardId)) {
+                                            val feedCardType = classifyLatestFeedType(latest)
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .wrapContentHeight()
+                                                    .padding(horizontal = 16.dp)
+                                                    .graphicsLayer { translationY = pullOffsetPx }
+                                            ) {
+                                                FeedUi.TypedFeedCardView(
+                                                    feedCard = feedCardType,
+                                                    onClick = { id ->
+                                                        onClick(id, feedCardType.isEventCard())
+                                                    },
+                                                    onRemoveCard = onRemoveCard,
+                                                )
+                                            }
                                         }
                                     }
                                 }

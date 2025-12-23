@@ -7,9 +7,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -45,6 +45,7 @@ object LargeButton {
 
     @Composable
     private fun BlinkLargeButton(
+        modifier: Modifier = Modifier,
         enabled: Boolean = true,
         baseColor: Color = NeutralColor.BLACK,
         blinkColor: Color = NeutralColor.GRAY_600,
@@ -56,7 +57,7 @@ object LargeButton {
         val isPressed by interactionSource.collectIsPressedAsState()
 
         Row(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
                 .height(56.dp)
                 .clip(shape = RoundedCornerShape(10.dp))
@@ -157,11 +158,13 @@ object LargeButton {
 
     @Composable
     fun NoIconSecondary(
+        modifier: Modifier = Modifier,
         buttonText: String,
         onClick: () -> Unit,
         isEnable: Boolean = true,
     ) {
         BlinkLargeButton(
+            modifier = modifier,
             baseColor = NeutralColor.GRAY_100,
             blinkColor = NeutralColor.GRAY_200,
             disabledColor = NeutralColor.GRAY_200,
@@ -734,7 +737,7 @@ object SmallButton {
         modifier: Modifier,
         content: @Composable RowScope.() -> Unit,
 
-    ) {
+        ) {
         val interactionSource = remember { MutableInteractionSource() }
         val isPressed by interactionSource.collectIsPressedAsState()
 
@@ -768,7 +771,7 @@ object SmallButton {
     fun NoIconPrimary(
         buttonText: String,
         onClick: () -> Unit,
-        textColor : Color = NeutralColor.WHITE,
+        textColor: Color = NeutralColor.WHITE,
         baseColor: Color = NeutralColor.BLACK,
         modifier: Modifier
     ) {

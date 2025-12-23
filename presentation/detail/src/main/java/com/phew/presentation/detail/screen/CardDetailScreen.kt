@@ -562,6 +562,7 @@ private fun CardDetailScreen(
                 item {
                     CardDetail(
                         previousCommentThumbnailUri = previousCommentThumbnailUri,
+                        isPreviousCard = false,
                         cardContent = cardContent,
                         cardThumbnailUri = cardThumbnailUri,
                         cardTags = cardTags.map { it.name },

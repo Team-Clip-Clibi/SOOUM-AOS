@@ -792,10 +792,83 @@ class FeedViewModel @Inject constructor(
     }
 
     fun initCheckCardDelete() {
+        val deletedCardId = when (val checkCardDelete = _uiState.value.checkCardDelete) {
+            is UiState.Success<*> -> checkCardDelete.data as? Long
+            else -> null
+        }
+        
         _uiState.update { state ->
             state.copy(checkCardDelete = UiState.None)
         }
-        currentTab() // 요기 수정 함수 이름 명칭 변경
+        
+        // 삭제된 카드 ID가 있다면 해당 카드를 숨김 목록에 추가
+        deletedCardId?.let { cardId ->
+            addToHiddenCards(cardId)
+            // Popular/Distance 탭의 경우 추가로 리스트에서도 제거
+            if (_uiState.value.currentTab != FeedType.Latest) {
+                removeCardFromCurrentTab(cardId)
+            }
+        }
+    }
+    
+    private fun addToHiddenCards(cardId: Long) {
+        _uiState.update { state ->
+            state.copy(
+                hiddenCardIds = state.hiddenCardIds + cardId
+            )
+        }
+    }
+    
+    private fun removeCardFromCurrentTab(cardId: Long) {
+        when (_uiState.value.currentTab) {
+            FeedType.Latest -> removeCardFromLatestTab(cardId)
+            FeedType.Popular -> removeCardFromPopularTab(cardId)
+            FeedType.Distance -> removeCardFromDistanceTab(cardId)
+        }
+    }
+    
+    private fun removeCardFromLatestTab(cardId: Long) {
+        // Latest 탭은 UI 레벨에서 hiddenCardIds로 숨김 처리
+        // 별도 처리 불필요
+    }
+    
+    private fun removeCardFromPopularTab(cardId: Long) {
+        val currentState = _uiState.value.popularPagingState
+        if (currentState is FeedPagingState.Success) {
+            val filteredCards = currentState.feedCards.filterNot { 
+                when (it) {
+                    is FeedCardType.BoombType -> it.cardId.toLongOrNull() == cardId
+                    is FeedCardType.AdminType -> it.cardId.toLongOrNull() == cardId
+                    is FeedCardType.NormalType -> it.cardId.toLongOrNull() == cardId
+                }
+            }
+            _uiState.update { state ->
+                state.copy(
+                    popularPagingState = currentState.copy(feedCards = filteredCards)
+                )
+            }
+        }
+    }
+    
+    private fun removeCardFromDistanceTab(cardId: Long) {
+        val currentDistanceTab = _uiState.value.distanceTab
+        val currentState = _uiState.value.distancePagingStates[currentDistanceTab]
+        if (currentState is FeedPagingState.Success) {
+            val filteredCards = currentState.feedCards.filterNot { 
+                when (it) {
+                    is FeedCardType.BoombType -> it.cardId.toLongOrNull() == cardId
+                    is FeedCardType.AdminType -> it.cardId.toLongOrNull() == cardId
+                    is FeedCardType.NormalType -> it.cardId.toLongOrNull() == cardId
+                }
+            }
+            val newStates = _uiState.value.distancePagingStates.toMutableMap()
+            newStates[currentDistanceTab] = currentState.copy(feedCards = filteredCards)
+            _uiState.update { state ->
+                state.copy(
+                    distancePagingStates = newStates
+                )
+            }
+        }
     }
 
 }
@@ -818,6 +891,7 @@ data class Home(
     val feedNotification: UiState<List<Notice>> = UiState.Loading,
     val setReadNotify: UiState<Unit> = UiState.Loading,
     val checkCardDelete: UiState<Long> = UiState.None,
+    val hiddenCardIds: Set<Long> = emptySet(),
 ) {
     val currentPagingState: FeedPagingState
         get() = when (currentTab) {

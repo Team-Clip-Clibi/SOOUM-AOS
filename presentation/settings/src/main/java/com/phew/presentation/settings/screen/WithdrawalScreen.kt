@@ -1,13 +1,14 @@
 package com.phew.presentation.settings.screen
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,7 +17,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -27,29 +27,27 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.phew.core.ui.component.ErrorDialog
-import com.phew.domain.usecase.GetRefreshToken
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.phew.core.ui.component.ErrorDialog
 import com.phew.core_design.AppBar.IconLeftAppBar
-import com.phew.core_design.DialogComponent
 import com.phew.core_design.LargeButton
 import com.phew.core_design.MediumButton.NoIconSecondary
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.Primary
 import com.phew.core_design.TextComponent
-import com.phew.core_design.R as DesignR
 import com.phew.presentation.settings.R
 import com.phew.presentation.settings.viewmodel.WithdrawalReason
 import com.phew.presentation.settings.viewmodel.WithdrawalUiEffect
 import com.phew.presentation.settings.viewmodel.WithdrawalUiState
 import com.phew.presentation.settings.viewmodel.WithdrawalViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import com.phew.core_design.R as DesignR
 
 @Composable
 internal fun WithdrawalRoute(
@@ -60,7 +58,7 @@ internal fun WithdrawalRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var errorWithRefreshToken by remember { mutableStateOf<String?>(null) }
-    
+
     LaunchedEffect(Unit) {
         viewModel.uiEffect.collect { effect ->
             when (effect) {
@@ -73,7 +71,7 @@ internal fun WithdrawalRoute(
             }
         }
     }
-    
+
     WithdrawalScreen(
         modifier = modifier,
         uiState = uiState,
@@ -82,7 +80,7 @@ internal fun WithdrawalRoute(
         onSelectReason = viewModel::selectReason,
         onUpdateCustomReason = viewModel::updateCustomReason
     )
-    
+
     errorWithRefreshToken?.let { refreshToken ->
         ErrorDialog(
             onDismiss = { errorWithRefreshToken = null },
@@ -101,14 +99,19 @@ private fun WithdrawalScreen(
     onUpdateCustomReason: (String) -> Unit
 ) {
     val reasons = WithdrawalReason.entries.toTypedArray()
-    
+
     val scrollState = rememberScrollState()
     val focusRequester = remember { FocusRequester() }
     val scope = rememberCoroutineScope()
+    var bottomBarHeightPx by remember { mutableStateOf(0) }
+    val density = LocalDensity.current
+    val imePadding = with(density) { WindowInsets.ime.getBottom(this).toDp() }
+    val bottomBarHeight = with(density) { bottomBarHeightPx.toDp() }
+    val adjustedImePadding = (imePadding - bottomBarHeight).coerceAtLeast(0.dp)
 
     Scaffold(
-        modifier = modifier
-            .background(NeutralColor.WHITE),
+        modifier = modifier.fillMaxSize(),
+        containerColor = NeutralColor.WHITE,
         topBar = {
             Column(
                 modifier = Modifier
@@ -123,16 +126,30 @@ private fun WithdrawalScreen(
             }
         },
         bottomBar = {
+            val navigationPaddingModifier = if (imePadding > 0.dp) {
+                Modifier
+            } else {
+                Modifier.navigationBarsPadding()
+            }
             Box(
                 modifier = Modifier
-                    .imePadding()
-                    .padding(bottom = 16.dp, start = 16.dp, end = 16.dp)
+                    .fillMaxWidth()
+                    .background(color = NeutralColor.WHITE)
+                    .padding(bottom = adjustedImePadding)
             ) {
-                LargeButton.NoIconPrimary(
-                    buttonText = stringResource(R.string.withdrawal_button),
-                    isEnable = uiState.isWithdrawal && !uiState.isLoading,
-                    onClick = onWithdrawal
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .then(navigationPaddingModifier)
+                        .onSizeChanged { size -> bottomBarHeightPx = size.height }
+                        .padding(horizontal = 16.dp, vertical = 16.dp)
+                ) {
+                    LargeButton.NoIconSecondary(
+                        buttonText = stringResource(R.string.withdrawal_button),
+                        isEnable = uiState.isWithdrawal && !uiState.isLoading,
+                        onClick = onWithdrawal
+                    )
+                }
             }
         }
     ) { innerPadding ->
@@ -151,7 +168,7 @@ private fun WithdrawalScreen(
                 color = NeutralColor.BLACK,
                 modifier = Modifier.padding(vertical = 16.dp)
             )
-            
+
             // 탈퇴 사유 버튼들 (1~6)
             reasons.forEach { reason ->
                 val reasonTextRes = when (reason.resourceKey) {
@@ -163,7 +180,7 @@ private fun WithdrawalScreen(
                     "withdrawal_reason_6" -> R.string.withdrawal_reason_6
                     else -> R.string.withdrawal_reason_6 // fallback
                 }
-                
+
                 Box(modifier = Modifier.fillMaxWidth()) {
                     NoIconSecondary(
                         buttonText = stringResource(reasonTextRes),
@@ -175,7 +192,7 @@ private fun WithdrawalScreen(
                     )
                 }
             }
-            
+
             if (uiState.selectedReason == WithdrawalReason.OTHER) {
                 OutlinedTextField(
                     value = uiState.customReasonText,
@@ -184,7 +201,7 @@ private fun WithdrawalScreen(
                             onUpdateCustomReason(text)
                         }
                     },
-                    placeholder = { 
+                    placeholder = {
                         Text(
                             text = stringResource(R.string.withdrawal_reason),
                             style = TextComponent.SUBTITLE_1_M_16,
@@ -207,7 +224,7 @@ private fun WithdrawalScreen(
                         color = NeutralColor.BLACK
                     )
                 )
-                
+
                 LaunchedEffect(uiState.selectedReason) {
                     if (uiState.selectedReason == WithdrawalReason.OTHER) {
                         delay(100) // UI 업데이트를 위한 약간의 지연
