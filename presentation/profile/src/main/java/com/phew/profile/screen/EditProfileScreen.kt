@@ -3,6 +3,7 @@ package com.phew.profile.screen
 import android.Manifest
 import android.net.Uri
 import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -12,8 +13,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
@@ -50,6 +53,11 @@ import com.phew.profile.UiState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
+import com.canhub.cropper.CropImageContract
+import com.canhub.cropper.CropImageContractOptions
+import com.canhub.cropper.CropImageOptions
+import com.canhub.cropper.CropImageView
+import com.phew.core.ui.component.camera.cropOption
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.ERROR_UN_GOOD_IMAGE
 import com.phew.core_common.INPUT_NICK_NAME
@@ -61,11 +69,19 @@ internal fun EditProfileScreen(viewModel: ProfileViewModel, onBackPress: () -> U
     val snackBarHostState = remember { SnackbarHostState() }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var bottomSheetView by remember { mutableStateOf(false) }
+    val context = LocalContext.current
     val albumPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         arrayOf(Manifest.permission.READ_MEDIA_IMAGES)
     } else {
         arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
     }
+    val cropLauncher = rememberLauncherForActivityResult(
+        contract = CropImageContract(),
+        onResult = { result ->
+            val cropped = result.uriContent ?: return@rememberLauncherForActivityResult
+            viewModel.onAlbumPicked(cropped)
+        }
+    )
     ObserverUpdateState(
         updateProfile = uiState.updateProfile, onBackPress = {
             viewModel.initEditProfile()
@@ -81,7 +97,14 @@ internal fun EditProfileScreen(viewModel: ProfileViewModel, onBackPress: () -> U
             pendingCapture = uiState.pendingProfileCameraCapture
         ),
         onAlbumRequestConsumed = viewModel::onProfileAlbumRequestConsumed,
-        onAlbumPicked = viewModel::onAlbumPicked,
+        onAlbumPicked = { uri ->
+            cropLauncher.launch(
+                CropImageContractOptions(
+                    uri = uri,
+                    cropImageOptions = cropOption()
+                )
+            )
+        },
         onCameraPermissionRequestConsumed = viewModel::onProfileCameraPermissionRequestConsumed,
         onCameraPermissionResult = viewModel::onProfileCameraPermissionResult,
         onCameraCaptureResult = { success, uri ->
@@ -113,8 +136,9 @@ internal fun EditProfileScreen(viewModel: ProfileViewModel, onBackPress: () -> U
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(80.dp)
+                    .wrapContentHeight()
                     .background(color = NeutralColor.WHITE)
+                    .navigationBarsPadding()
                     .padding(vertical = 12.dp, horizontal = 16.dp)
             ) {
                 LargeButton.NoIconPrimary(

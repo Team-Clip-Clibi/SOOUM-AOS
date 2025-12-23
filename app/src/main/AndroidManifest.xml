@@ -41,7 +41,7 @@
         
         <activity
             android:name="com.canhub.cropper.CropImageActivity"
-            android:theme="@style/Base.Theme.AppCompat" />
+            android:theme="@style/Theme.CropImage.White" />
 
         <activity
             android:name=".MainActivity"
