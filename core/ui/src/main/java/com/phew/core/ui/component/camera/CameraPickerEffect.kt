@@ -12,8 +12,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import com.canhub.cropper.CropImageOptions
 import com.canhub.cropper.CropImageView
@@ -21,7 +19,6 @@ import com.phew.core.ui.model.CameraCaptureRequest
 import com.phew.core.ui.model.CameraPickerEffectState
 import com.phew.core_common.log.SooumLog
 import com.phew.core.ui.clarity.LocalSessionRecorder
-import com.phew.core_design.NeutralColor
 
 private val DefaultAlbumPermissions: Array<String> =
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

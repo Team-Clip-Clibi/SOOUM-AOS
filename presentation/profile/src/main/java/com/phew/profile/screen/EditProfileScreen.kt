@@ -55,8 +55,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
-import com.canhub.cropper.CropImageOptions
-import com.canhub.cropper.CropImageView
 import com.phew.core.ui.component.camera.cropOption
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.ERROR_UN_GOOD_IMAGE
@@ -69,7 +67,6 @@ internal fun EditProfileScreen(viewModel: ProfileViewModel, onBackPress: () -> U
     val snackBarHostState = remember { SnackbarHostState() }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var bottomSheetView by remember { mutableStateOf(false) }
-    val context = LocalContext.current
     val albumPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         arrayOf(Manifest.permission.READ_MEDIA_IMAGES)
     } else {
