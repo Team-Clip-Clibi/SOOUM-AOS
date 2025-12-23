@@ -11,6 +11,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
-import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieAnimatable
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.R
@@ -51,12 +52,20 @@ fun RefreshBox(
     val composition by rememberLottieComposition(
         LottieCompositionSpec.RawRes(R.raw.ic_refresh)
     )
-    val refreshProgress by animateLottieCompositionAsState(
-        composition = composition,
-        iterations = LottieConstants.IterateForever,
-        isPlaying = isRefresh,
-        restartOnPlay = true
-    )
+    val lottieAnimaTable = rememberLottieAnimatable()
+    LaunchedEffect(isRefresh, composition) {
+        if (isRefresh && composition != null) {
+            lottieAnimaTable.animate(
+                composition = composition,
+                iterations = LottieConstants.IterateForever
+            )
+        } else {
+            if (composition != null) {
+                lottieAnimaTable.snapTo(composition, 0f)
+            }
+        }
+    }
+
     PullToRefreshBox(
         isRefreshing = isRefresh,
         onRefresh = onRefresh,
@@ -72,17 +81,16 @@ fun RefreshBox(
                     .height(100.dp),
                 contentAlignment = Alignment.Center
             ) {
-                val currentProgress = if (isRefresh) refreshProgress else 0f
                 if (isRefresh || state.distanceFraction > 0f) {
                     LottieAnimation(
                         composition = composition,
-                        progress = { currentProgress },
+                        progress = { if (isRefresh) lottieAnimaTable.progress else 0f },
                         modifier = Modifier
                             .size(44.dp)
                             .graphicsLayer {
                                 alpha =
                                     if (isRefresh) 1f else state.distanceFraction.coerceIn(0f, 1f)
-                                rotationZ =  0f
+                                rotationZ = 0f
                             }
                     )
                 }
