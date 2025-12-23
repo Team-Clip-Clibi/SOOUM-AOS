@@ -88,7 +88,7 @@ fun NotifyView(
     val onBack by rememberUpdatedState(newValue = backClick)
     val snackBarHostState = remember { SnackbarHostState() }
     val refreshState = rememberPullToRefreshState()
-    var selectIndex by remember { mutableStateOf(NotifyTab.NOTIFY_SERVICE) }
+    var selectIndex by remember { mutableStateOf(NotifyTab.NOTIFY_ACTIVATE) }
     val isRefreshing by remember(
         key1 = notices.loadState.refresh,
         key2 = unRead.loadState.refresh,
