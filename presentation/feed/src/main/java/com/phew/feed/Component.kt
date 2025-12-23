@@ -110,7 +110,7 @@ object FeedUi {
                 modifier = Modifier
                     .fillMaxWidth()
                     .wrapContentHeight()
-                    .clip(RoundedCornerShape(20.dp))
+                    .clip(RoundedCornerShape(16.dp))
             ) { page ->
                 val actualIndex = page % feedNotice.size
                 val currentNotice = feedNotice[actualIndex]

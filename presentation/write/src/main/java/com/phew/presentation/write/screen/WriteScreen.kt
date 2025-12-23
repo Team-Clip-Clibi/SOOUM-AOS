@@ -60,7 +60,6 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
-import com.canhub.cropper.CropImageOptions
 import com.phew.core.ui.R
 import com.phew.core.ui.component.camera.CameraPickerBottomSheet
 import com.phew.core.ui.component.camera.CameraPickerEffect
@@ -91,6 +90,7 @@ import com.phew.presentation.write.model.BackgroundFilterType
 import com.phew.presentation.write.screen.component.ImageGrid
 import com.phew.presentation.write.R as WriteR
 import androidx.navigation.NavController
+import com.phew.core.ui.component.camera.cropOption
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core_common.log.SooumLog
 import com.phew.core_design.DialogComponent.DeletedCardDialog
@@ -106,7 +106,7 @@ internal fun WriteRoute(
     onBackPressed: () -> Unit,
     onWriteComplete: (CardDetailArgs) -> Unit,
     onHome: () -> Unit,
-    isFromTab: Boolean = false
+    isFromTab: Boolean = false,
 ) {
     BackHandler {
         onBackPressed()
@@ -166,7 +166,7 @@ internal fun WriteRoute(
     val compareContent = stringResource(WriteR.string.write_card_content_default_placeholder)
 
     LaunchedEffect(uiState.errorCase) {
-        if(uiState.errorCase != WriteErrorCase.NONE){
+        if (uiState.errorCase != WriteErrorCase.NONE) {
             viewModel.showErrorDialog(true)
         }
     }
@@ -195,7 +195,7 @@ internal fun WriteRoute(
         onContentChange = viewModel::updateContent,
         onTagInputChange = viewModel::updateTagInput,
         onFilterChange = {
-            viewModel.selectBackgroundFilter(it , isFromTab)
+            viewModel.selectBackgroundFilter(it, isFromTab)
             viewModel.hideRelatedTags()
         },
         onImageSelected = {
@@ -336,7 +336,7 @@ private fun WriteScreen(
     activateDate: String,
     errorCase: WriteErrorCase,
     onClickErrorDialog: () -> Unit,
-    onEnterClick: () -> Unit
+    onEnterClick: () -> Unit,
 ) {
     val snackBarHostState = remember { SnackbarHostState() }
     val cameraPermissions = arrayOf(Manifest.permission.CAMERA)
@@ -417,7 +417,7 @@ private fun WriteScreen(
             cropLauncher.launch(
                 CropImageContractOptions(
                     uri = uri,
-                    cropImageOptions = CropImageOptions()
+                    cropImageOptions = cropOption()
                 )
             )
         },
@@ -443,8 +443,7 @@ private fun WriteScreen(
         topBar = {
             val titleRes = if (args?.parentCardId != null) {
                 WriteR.string.write_screen_comment_title
-            }
-            else {
+            } else {
                 WriteR.string.write_screen_title
             }
             AppBar.TextButtonAppBarText(
@@ -515,7 +514,7 @@ private fun WriteScreen(
                 Box(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center
-                ){
+                ) {
                     CardView(
                         modifier = Modifier,
                         data = BaseCardData.Write(
@@ -555,8 +554,8 @@ private fun WriteScreen(
                     fontItem = CustomFont.fontData,
                     selectedFont = selectedFont,
                     onFontSelected = onFontSelected
-                    )
-                }
+                )
+            }
 
             val showRelatedTags = relatedTags.isNotEmpty() && isImeVisible
             val showOptionButtons = relatedTags.isEmpty() && !isImeVisible
@@ -743,11 +742,13 @@ private fun BackgroundSelect(
     cardDefaultImagesByCategory: Map<BackgroundFilterType, List<CardImageDefault>>,
     onFilterChange: (filter: BackgroundFilterType) -> Unit,
     onImageSelected: (String) -> Unit,
-    onCameraClick: () -> Unit
+    onCameraClick: () -> Unit,
 ) {
-    Column(modifier = Modifier
-        .fillMaxWidth()
-        .padding(top = 24.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 24.dp)
+    ) {
         Text(
             text = stringResource(com.phew.presentation.write.R.string.write_screen_background_section),
             style = TextComponent.CAPTION_1_SB_12.copy(color = Primary.DARK),
@@ -767,9 +768,10 @@ private fun BackgroundSelect(
                 }
             )
 
-            val currentFilterImages = remember(selectedBackgroundFilter, cardDefaultImagesByCategory) {
-                cardDefaultImagesByCategory[selectedBackgroundFilter] ?: emptyList()
-            }
+            val currentFilterImages =
+                remember(selectedBackgroundFilter, cardDefaultImagesByCategory) {
+                    cardDefaultImagesByCategory[selectedBackgroundFilter] ?: emptyList()
+                }
 
             ImageGrid(
                 cardDefaultImages = currentFilterImages,
@@ -817,10 +819,12 @@ private fun OptionButtons(
             .fillMaxWidth()
             .background(NeutralColor.WHITE)
     ) {
-        Spacer(modifier = Modifier
-            .fillMaxWidth()
-            .height(1.dp)
-            .background(NeutralColor.GRAY_200))
+        Spacer(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(NeutralColor.GRAY_200)
+        )
 
         Row(
             modifier = Modifier

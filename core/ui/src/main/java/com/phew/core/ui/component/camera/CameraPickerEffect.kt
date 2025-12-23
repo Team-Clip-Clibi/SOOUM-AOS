@@ -13,6 +13,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import com.canhub.cropper.CropImageOptions
+import com.canhub.cropper.CropImageView
 import com.phew.core.ui.model.CameraCaptureRequest
 import com.phew.core.ui.model.CameraPickerEffectState
 import com.phew.core_common.log.SooumLog
@@ -127,6 +129,23 @@ fun CameraPickerEffect(
         activeCapture = request
         onCameraCaptureLaunched(request)
         takePictureLauncher.launch(request.uri)
+    }
+}
+
+fun cropOption(): CropImageOptions {
+    return CropImageOptions().apply {
+        fixAspectRatio = true
+        aspectRatioX = 1
+        aspectRatioY = 1
+        scaleType = CropImageView.ScaleType.FIT_CENTER
+        allowFlipping = false
+        allowRotation = false
+        maxZoom = 1
+        autoZoomEnabled = false
+        initialCropWindowPaddingRatio = 0.1f
+        activityTitle = ""
+        activityMenuIconColor = android.graphics.Color.BLACK
+        activityBackgroundColor = android.graphics.Color.WHITE
     }
 }
 

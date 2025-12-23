@@ -4,6 +4,7 @@ import android.Manifest
 import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,8 +32,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.canhub.cropper.CropImageContract
+import com.canhub.cropper.CropImageContractOptions
 import com.phew.core.ui.component.camera.CameraPickerBottomSheet
 import com.phew.core.ui.component.camera.CameraPickerEffect
+import com.phew.core.ui.component.camera.cropOption
 import com.phew.core.ui.model.CameraPickerEffectState
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.ERROR_UN_GOOD_IMAGE
@@ -54,6 +58,7 @@ fun ProfileImageView(viewModel: SignUpViewModel, onBack: () -> Unit, nexPage: ()
     val snackBarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     BackHandler {
+        viewModel.initProfileImage()
         onBack()
     }
     LaunchedEffect(uiState.signUp) {
@@ -87,7 +92,13 @@ fun ProfileImageView(viewModel: SignUpViewModel, onBack: () -> Unit, nexPage: ()
             else -> Unit
         }
     }
-
+    val cropLauncher = rememberLauncherForActivityResult(
+        contract = CropImageContract(),
+        onResult = { result ->
+            val cropped = result.uriContent ?: return@rememberLauncherForActivityResult
+            viewModel.onAlbumImagePicked(cropped)
+        }
+    )
     val cameraPermissions = arrayOf(Manifest.permission.CAMERA)
     val albumPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         arrayOf(Manifest.permission.READ_MEDIA_IMAGES)
@@ -102,7 +113,14 @@ fun ProfileImageView(viewModel: SignUpViewModel, onBack: () -> Unit, nexPage: ()
             pendingCapture = uiState.pendingProfileCameraCapture
         ),
         onAlbumRequestConsumed = viewModel::onProfileAlbumRequestConsumed,
-        onAlbumPicked = viewModel::onAlbumImagePicked,
+        onAlbumPicked = { uri ->
+            cropLauncher.launch(
+                CropImageContractOptions(
+                    uri = uri,
+                    cropImageOptions = cropOption()
+                )
+            )
+        },
         onCameraPermissionRequestConsumed = viewModel::onProfileCameraPermissionRequestConsumed,
         onCameraPermissionResult = viewModel::onProfileCameraPermissionResult,
         onCameraCaptureLaunched = remember(viewModel) { { viewModel.onProfileCameraCaptureLaunched() } },
@@ -116,7 +134,11 @@ fun ProfileImageView(viewModel: SignUpViewModel, onBack: () -> Unit, nexPage: ()
     Scaffold(
         topBar = {
             AppBar.IconLeftAppBar(
-                onClick = onBack, appBarText = stringResource(R.string.signUp_app_bar)
+                onClick = {
+                    viewModel.initProfileImage()
+                    onBack()
+                },
+                appBarText = stringResource(R.string.signUp_app_bar)
             )
         },
         bottomBar = {
