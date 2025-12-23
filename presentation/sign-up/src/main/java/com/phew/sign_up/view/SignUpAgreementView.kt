@@ -47,14 +47,14 @@ fun SignUpAgreementView(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     BackHandler {
-        viewModel.initSignUp()
+        viewModel.initAgreement()
         back()
     }
     Scaffold(
         topBar = {
             AppBar.IconLeftAppBar(
                 onClick = {
-                    viewModel.initSignUp()
+                    viewModel.initAgreement()
                     back()
                 },
                 appBarText = stringResource(R.string.signUp_app_bar)

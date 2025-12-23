@@ -34,7 +34,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
-import com.canhub.cropper.CropImageOptions
 import com.phew.core.ui.component.camera.CameraPickerBottomSheet
 import com.phew.core.ui.component.camera.CameraPickerEffect
 import com.phew.core.ui.component.camera.cropOption
@@ -59,6 +58,7 @@ fun ProfileImageView(viewModel: SignUpViewModel, onBack: () -> Unit, nexPage: ()
     val snackBarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     BackHandler {
+        viewModel.initProfileImage()
         onBack()
     }
     LaunchedEffect(uiState.signUp) {
@@ -134,7 +134,11 @@ fun ProfileImageView(viewModel: SignUpViewModel, onBack: () -> Unit, nexPage: ()
     Scaffold(
         topBar = {
             AppBar.IconLeftAppBar(
-                onClick = onBack, appBarText = stringResource(R.string.signUp_app_bar)
+                onClick = {
+                    viewModel.initProfileImage()
+                    onBack()
+                },
+                appBarText = stringResource(R.string.signUp_app_bar)
             )
         },
         bottomBar = {
