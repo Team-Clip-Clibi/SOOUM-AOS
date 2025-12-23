@@ -106,7 +106,10 @@ fun FeedView(
     }
     val currentPagingState = uiState.currentPagingState
     // 요기 수정
-    val refreshCurrentFeed: () -> Unit = viewModel::refreshCurrentTab
+    val refreshCurrentFeed: () -> Unit = {
+        viewModel.refreshCurrentTab()
+        unRead.refresh()
+    }
 
     // Navigation event handling
     LaunchedEffect(viewModel) {
