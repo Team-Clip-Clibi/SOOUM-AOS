@@ -54,7 +54,8 @@ fun RefreshBox(
     val refreshProgress by animateLottieCompositionAsState(
         composition = composition,
         iterations = LottieConstants.IterateForever,
-        restartOnPlay = isRefresh
+        isPlaying = isRefresh,
+        restartOnPlay = true
     )
     PullToRefreshBox(
         isRefreshing = isRefresh,
@@ -71,16 +72,17 @@ fun RefreshBox(
                     .height(100.dp),
                 contentAlignment = Alignment.Center
             ) {
-                val progress = if (isRefresh) refreshProgress else state.distanceFraction
+                val currentProgress = if (isRefresh) refreshProgress else 0f
                 if (isRefresh || state.distanceFraction > 0f) {
                     LottieAnimation(
                         composition = composition,
-                        progress = { progress },
+                        progress = { currentProgress },
                         modifier = Modifier
                             .size(44.dp)
                             .graphicsLayer {
                                 alpha =
                                     if (isRefresh) 1f else state.distanceFraction.coerceIn(0f, 1f)
+                                rotationZ =  0f
                             }
                     )
                 }
