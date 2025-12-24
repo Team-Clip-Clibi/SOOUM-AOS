@@ -99,7 +99,7 @@ fun Splash(
                     .height(33.dp)
                     .padding(1.dp)
             )
-            if (uiState is UiState.Update) {
+            if (uiState is UiState.Update || uiState is UiState.ForceUpdate) {
                 DialogComponent.DefaultButtonOne(
                     title = stringResource(R.string.splash_dialog_update_title),
                     description = stringResource(R.string.splash_dialog_update_description),
@@ -108,7 +108,11 @@ fun Splash(
                         update()
                     },
                     onDismiss = {
-                        finish()
+                        if (uiState is UiState.Update) {
+                            viewModel.updateFcmToken()
+                        } else {
+                            finish()
+                        }
                     }
                 )
             }
