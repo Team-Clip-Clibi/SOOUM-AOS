@@ -108,7 +108,11 @@ fun FeedView(
         HomeTabType.findHome(navBackStackEntry?.destination?.route)
     }
     val currentPagingState = uiState.currentPagingState
-    val refreshCurrentFeed: () -> Unit = viewModel::refreshCurrentTab
+    // 요기 수정
+    val refreshCurrentFeed: () -> Unit = {
+        viewModel.refreshCurrentTab()
+        unRead.refresh()
+    }
 
     LaunchedEffect(feedNoticeState) {
         if (feedNoticeState is UiState.Success) {

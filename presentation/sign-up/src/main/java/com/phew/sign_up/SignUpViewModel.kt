@@ -38,19 +38,40 @@ class SignUpViewModel @Inject constructor(
 
     private var _uiState = MutableStateFlow(SignUp())
     val uiState: StateFlow<SignUp> = _uiState.asStateFlow()
-
+    private var nickNameGenerate : String = ""
     /**
-     * 동의 화면에서 뒤로가기 클릭시 데이터 초기화
+     * 닉네임 초기화 함수
      */
-    fun initSignUp() {
+    fun initNickName() {
         _uiState.update { state ->
             state.copy(
-                nickName = "",
+                nickName = nickNameGenerate,
+                checkNickName = UiState.Loading,
+            )
+        }
+    }
+
+    /**
+     * 프로필 사진 초기화 함수
+     */
+    fun initProfileImage() {
+        _uiState.update { state ->
+            state.copy(
+                profile = listOf(Uri.EMPTY),
+            )
+        }
+    }
+
+    /**
+     * 동의 초기화 함수
+     */
+    fun initAgreement(){
+        _uiState.update { state ->
+            state.copy(
                 agreementAll = false,
                 agreedToTermsOfService = false,
                 agreedToPrivacyPolicy = false,
                 agreedToLocationTerms = false,
-                profile = listOf(Uri.EMPTY),
                 checkSignUp = UiState.Loading,
             )
         }
@@ -83,6 +104,7 @@ class SignUpViewModel @Inject constructor(
                     _uiState.update { state ->
                         state.copy(nickName = result.data, checkNickName = UiState.Success(true))
                     }
+                    nickNameGenerate = result.data
                 }
             }
         }
@@ -393,7 +415,7 @@ class SignUpViewModel @Inject constructor(
      */
     private fun closeFile(data: Uri) {
         viewModelScope.launch(Dispatchers.IO) {
-            when (val result = finishPhoto(FinishTakePicture.Param(data))) {
+            when (finishPhoto(FinishTakePicture.Param(data))) {
                 is DomainResult.Failure -> {
                     // 실패 시 별도 처리 없음
                 }
