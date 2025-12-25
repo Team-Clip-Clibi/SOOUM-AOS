@@ -87,14 +87,15 @@ class FeedViewModel @Inject constructor(
      */
 
     init {
-        // 순차적 초기화: 위치 설정 완료 후 다른 초기화 진행
+        // 병렬 초기화: 독립적인 작업들을 동시에 실행
         viewModelScope.launch {
-            // 위치 설정을 먼저 완료
-            loadInitialFeeds()
-            // 피드 노티스 로딩
-            getFeedNotice()
-            // 탭 변경 감지 시작
-            startTabChangeListener()
+            // 병렬로 실행할 작업들
+            launch { loadInitialFeeds() }     // 위치 설정
+            launch { 
+                // 초기 로딩 완료 후 탭 변경 감지 시작
+                startTabChangeListener()
+            }
+            launch { getFeedNotice() }        // 피드 노티스 로딩 (초기 1회만)
         }
     }
 
