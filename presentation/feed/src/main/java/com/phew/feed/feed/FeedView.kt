@@ -579,6 +579,7 @@ private fun FeedContentView(
                                 }
                             }
                         } else {
+
                             itemsIndexed(
                                 items = currentPagingState.feedCards,
                                 key = { _, feedCard ->
