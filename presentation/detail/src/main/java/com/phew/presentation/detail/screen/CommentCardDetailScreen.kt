@@ -503,7 +503,7 @@ private fun CardView(
             ) {
                 CardDetailComponent(
                     modifier = Modifier.fillMaxWidth(),
-                    isPreviousCard = true,
+                    isPreviousCard = cardDetail?.previousCardId?.isNotEmpty() ?: false,
                     previousCommentThumbnailUri = cardDetail?.previousCardImgUrl,
                     cardContent = cardDetail?.cardContent ?: "",
                     cardThumbnailUri = cardDetail?.cardImgUrl ?: "",
