@@ -31,12 +31,15 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.phew.core.ui.component.ErrorDialog
 import com.phew.core_design.AppBar.IconLeftAppBar
 import com.phew.core_design.LargeButton
+import com.phew.core_design.MediumButton.DisabledSecondary
 import com.phew.core_design.MediumButton.NoIconSecondary
+import com.phew.core_design.MediumButton.SelectedSecondary
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.Primary
 import com.phew.core_design.TextComponent
@@ -182,14 +185,19 @@ private fun WithdrawalScreen(
                 }
 
                 Box(modifier = Modifier.fillMaxWidth()) {
-                    NoIconSecondary(
-                        buttonText = stringResource(reasonTextRes),
-                        onClick = { onSelectReason(reason) },
-                        isSelect = uiState.selectedReason == reason,
-                        borderColor = if (uiState.selectedReason == reason) Primary.DARK else NeutralColor.GRAY_100,
-                        baseColor = if (uiState.selectedReason == reason) Primary.LIGHT_1 else NeutralColor.WHITE,
-                        textCenter = false
-                    )
+                    if (uiState.selectedReason == reason) {
+                        SelectedSecondary(
+                            buttonText = stringResource(reasonTextRes),
+                            textAlign = TextAlign.Start,
+                            onClick = { onSelectReason(reason) }
+                        )
+                    } else {
+                        DisabledSecondary(
+                            buttonText = stringResource(reasonTextRes),
+                            textAlign = TextAlign.Start,
+                            onClick = { onSelectReason(reason) }
+                        )
+                    }
                 }
             }
 
@@ -205,12 +213,11 @@ private fun WithdrawalScreen(
                         Text(
                             text = stringResource(R.string.withdrawal_reason),
                             style = TextComponent.SUBTITLE_1_M_16,
-                            color = NeutralColor.BLACK
+                            color = NeutralColor.GRAY_500
                         )
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 8.dp)
                         .focusRequester(focusRequester),
                     shape = RoundedCornerShape(10.dp),
                     maxLines = 5,
