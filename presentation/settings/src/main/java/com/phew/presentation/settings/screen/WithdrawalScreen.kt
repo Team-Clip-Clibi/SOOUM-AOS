@@ -110,7 +110,13 @@ private fun WithdrawalScreen(
     val density = LocalDensity.current
     val imePadding = with(density) { WindowInsets.ime.getBottom(this).toDp() }
     val bottomBarHeight = with(density) { bottomBarHeightPx.toDp() }
-    val adjustedImePadding = (imePadding - bottomBarHeight).coerceAtLeast(0.dp)
+    // 키보드 툴바 높이 추가 고려 (일반적으로 40-50dp 이지만, 디자인 상 12dp 추가)
+    val keyboardToolbarHeight = 12.dp
+    val adjustedImePadding = if (imePadding > 0.dp) {
+        (imePadding + keyboardToolbarHeight - bottomBarHeight).coerceAtLeast(keyboardToolbarHeight)
+    } else {
+        0.dp
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
