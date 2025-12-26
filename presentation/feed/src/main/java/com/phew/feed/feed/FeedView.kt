@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
@@ -60,9 +61,11 @@ import com.phew.core.ui.component.home.HomeTabType
 import com.phew.core_common.BOTTOM_NAVIGATION_HEIGHT
 import com.phew.core_design.LoadingAnimation
 import com.phew.core_design.component.refresh.RefreshBox
+import com.phew.domain.dto.DistanceCard
 import com.phew.domain.dto.FeedCardType
 import com.phew.domain.dto.Latest
 import com.phew.domain.dto.Notice
+import com.phew.domain.dto.Popular
 import com.phew.feed.FeedUi
 import com.phew.feed.NAV_HOME_FEED_INDEX
 import com.phew.feed.NAV_HOME_NEAR_INDEX
@@ -75,7 +78,6 @@ import com.phew.feed.viewModel.NavigationEvent
 import com.phew.feed.viewModel.UiState
 import com.phew.presentation.feed.R
 import com.phew.core.ui.state.SooumAppState
-import com.phew.core_common.FEED_NOTICE_LAZY_ITEM_KEY // 노티 아이템의 고유 키 상수 (레이아웃 안정성)
 import com.phew.core_design.DialogComponent.DeletedCardDialog
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
@@ -96,6 +98,7 @@ fun FeedView(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val unRead = viewModel.unReadActivateAlarm.collectAsLazyPagingItems()
     val feedNoticeState = uiState.feedNotification
+    var cachedFeedNotice by remember { mutableStateOf<List<Notice>>(emptyList()) }
     val latestFeedItems = viewModel.latestFeedPaging.collectAsLazyPagingItems()
     val lazyGridState = rememberLazyGridState()
     var hasScrolledToTop by rememberSaveable { mutableStateOf(false) }
@@ -109,6 +112,16 @@ fun FeedView(
     val refreshCurrentFeed: () -> Unit = {
         viewModel.refreshCurrentTab()
         unRead.refresh()
+    }
+
+    LaunchedEffect(feedNoticeState) {
+        if (feedNoticeState is UiState.Success) {
+            cachedFeedNotice = feedNoticeState.data
+        }
+    }
+    val feedNotice = when (feedNoticeState) {
+        is UiState.Success -> feedNoticeState.data
+        else -> cachedFeedNotice
     }
 
     // Navigation event handling
@@ -128,7 +141,6 @@ fun FeedView(
             val cardUpdated = savedStateHandle.remove<Boolean>(NavigationKeys.CARD_UPDATED) == true
             val cardDeleted = savedStateHandle.remove<Boolean>(NavigationKeys.CARD_DELETED) == true
             if (cardAdded || cardUpdated || cardDeleted) {
-                // Immediately trigger refresh for better responsiveness
                 refreshCurrentFeed()
             }
         }
@@ -183,34 +195,6 @@ fun FeedView(
         }
     }
 
-    // 헬퍼 함수 - shouldShowNotice 로직 단일화 및 깜박임 방지
-    // 탭 전환 시 노티뷰 깜박임 문제 해결: 성공 상태에서 데이터가 있을 때만 노티 표시,
-    // 나머지 상태(Loading, LoadingMore, Error, None)에서는 항상 노티 유지
-    fun shouldShowNotice(
-        currentTab: FeedType,
-        latestLoading: Boolean,
-        latestEmpty: Boolean,
-        currentPagingState: FeedPagingState
-    ): Boolean {
-        return when (currentTab) {
-            FeedType.Latest -> !(latestLoading && latestEmpty)
-            else -> {
-                // 성공적인 로딩 후 진짜로 비어있는 경우를 제외하고 모든 경우에 노티 표시
-                when (currentPagingState) {
-                    is FeedPagingState.Success -> {
-                        // 성공적인 로드 후 완전히 비어있을 때만 숨김
-                        currentPagingState.feedCards.isNotEmpty()
-                    }
-                    else -> {
-                        // Loading, LoadingMore, Error, None 상태에서 노티 표시
-                        // 전환 시 깜박임 방지
-                        true
-                    }
-                }
-            }
-        }
-    }
-
     LaunchedEffect(lazyGridState, uiState.currentTab) {
         if (uiState.currentTab != FeedType.Latest) {
             snapshotFlow { lazyGridState.layoutInfo.visibleItemsInfo }
@@ -233,13 +217,6 @@ fun FeedView(
     val isLatestLoading = latestFeedItems.loadState.refresh is LoadState.Loading
     val isLatestEmpty = latestFeedItems.itemCount == 0
 
-    // 헬퍼 함수 사용으로 로직 단일화
-    val showNotice = shouldShowNotice(
-        currentTab = uiState.currentTab,
-        latestLoading = isLatestLoading,
-        latestEmpty = isLatestEmpty,
-        currentPagingState = currentPagingState
-    )
     val snackBarHostState = remember { SnackbarHostState() }
     val refreshState = rememberPullToRefreshState()
     // 헬퍼 함수 사용으로 로직 단일화
@@ -289,15 +266,15 @@ fun FeedView(
                     distanceClick = viewModel::switchDistanceTab,
                     selectDistance = uiState.distanceTab,
                     currentTab = uiState.currentTab,
-                    feedNotice = if (feedNoticeState is UiState.Success) feedNoticeState.data else emptyList(),
-                    feedNoticeClick = noticeClick,// 요기 수정
+                    feedNotice = feedNotice,
+                    feedNoticeClick = noticeClick,
                     latestFeedItems = latestFeedItems,
                     onClick = viewModel::navigateToDetail,
                     onRemoveCard = viewModel::removeFeedCard,
                     currentPagingState = uiState.currentPagingState,
                     pullOffsetPx = pullOffsetPx,
                     onRefresh = refreshCurrentFeed,
-                    isNoticeShow = !showNotice
+                    hiddenCardIds = uiState.hiddenCardIds
                 )
                 if (uiState.shouldShowPermissionRationale) {
                     DialogComponent.DefaultButtonTwo(
@@ -365,7 +342,7 @@ private fun FeedContentView(
     currentPagingState: FeedPagingState,
     pullOffsetPx: Float,
     onRefresh: () -> Unit,
-    isNoticeShow: Boolean,
+    hiddenCardIds: Set<Long>,
 ) {
     val selectIndex = when (currentTab) {
         FeedType.Latest -> NAV_HOME_FEED_INDEX
@@ -395,11 +372,9 @@ private fun FeedContentView(
             }
             Spacer(modifier = Modifier.height(6.dp))
         }
-        if (!isNoticeShow) { // 요기 수정
-            // 노티뷰 위치 고정을 위한 key 추가
-            // FEED_NOTICE_LAZY_ITEM_KEY 상수 사용으로 레이아웃 안정성 확보
+        if (feedNotice.isNotEmpty()) {
             item(
-                key = FEED_NOTICE_LAZY_ITEM_KEY,
+                key = feedNotice.joinToString("_") { it.id.toString() },
                 span = { GridItemSpan(maxLineSpan) }
             ) {
                 FeedUi.FeedNoticeView(
@@ -463,21 +438,25 @@ private fun FeedContentView(
                                     contentType = latestFeedItems.itemContentType { "LatestFeed" }
                                 ) { index ->
                                     latestFeedItems[index]?.let { latest ->
-                                        val feedCardType = classifyLatestFeedType(latest)
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .wrapContentHeight()
-                                                .padding(horizontal = 16.dp)
-                                                .graphicsLayer { translationY = pullOffsetPx }
-                                        ) {
-                                            FeedUi.TypedFeedCardView(
-                                                feedCard = feedCardType,
-                                                onClick = { id ->
-                                                    onClick(id, feedCardType.isEventCard())
-                                                },
-                                                onRemoveCard = onRemoveCard,
-                                            )
+                                        val cardId = latest.cardId.toLongOrNull()
+                                        // hiddenCardIds에 포함된 카드는 렌더링하지 않음
+                                        if (cardId == null || !hiddenCardIds.contains(cardId)) {
+                                            val feedCardType = classifyLatestFeedType(latest)
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .wrapContentHeight()
+                                                    .padding(horizontal = 16.dp)
+                                                    .graphicsLayer { translationY = pullOffsetPx }
+                                            ) {
+                                                FeedUi.TypedFeedCardView(
+                                                    feedCard = feedCardType,
+                                                    onClick = { id ->
+                                                        onClick(id, feedCardType.isEventCard())
+                                                    },
+                                                    onRemoveCard = onRemoveCard,
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -604,6 +583,7 @@ private fun FeedContentView(
                                 }
                             }
                         } else {
+
                             itemsIndexed(
                                 items = currentPagingState.feedCards,
                                 key = { _, feedCard ->
