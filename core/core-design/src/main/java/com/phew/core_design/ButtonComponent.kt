@@ -335,6 +335,7 @@ object MediumButton {
         borderColor: Color = baseColor,
         onClick: () -> Unit,
         showStroke : Boolean = true,
+        horizontalArrangement: Arrangement.Horizontal = Arrangement.Center,
         content: @Composable RowScope.() -> Unit,
     ) {
         val interactionSource = remember { MutableInteractionSource() }
@@ -372,7 +373,7 @@ object MediumButton {
                 )
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+            horizontalArrangement = horizontalArrangement
         ) {
             content()
         }
@@ -527,6 +528,7 @@ object MediumButton {
         buttonText: String,
         onClick: () -> Unit,
         isEnable: Boolean = true,
+        textAlign: TextAlign = TextAlign.Start,
         fontFamily: FontFamily = FontFamily(Font(R.font.medium)),
         textStyle: TextStyle? = null,
     ) {
@@ -534,9 +536,10 @@ object MediumButton {
             baseColor = Primary.LIGHT_1,
             blinkColor = Primary.LIGHT_1,
             disabledColor = NeutralColor.GRAY_100,
-            borderColor = Primary.DARK,
+            borderColor = Primary.MAIN,
             onClick = onClick,
-            enabled = isEnable
+            enabled = isEnable,
+            horizontalArrangement = if (textAlign == TextAlign.Start) Arrangement.Start else Arrangement.Center
         ) {
             Text(
                 text = buttonText,
@@ -545,7 +548,9 @@ object MediumButton {
                         fontFamily = fontFamily
                     )
                 },
-                color = if (isEnable) NeutralColor.GRAY_600 else NeutralColor.GRAY_400
+                textAlign = textAlign,
+                color = if (isEnable) NeutralColor.GRAY_600 else NeutralColor.GRAY_400,
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }
@@ -555,6 +560,7 @@ object MediumButton {
         buttonText: String,
         onClick: () -> Unit,
         isEnable: Boolean = true,
+        textAlign: TextAlign = TextAlign.Start,
         fontFamily: FontFamily = FontFamily(Font(R.font.medium)),
         textStyle: TextStyle? = null,
     ) {
@@ -565,7 +571,8 @@ object MediumButton {
             borderColor = NeutralColor.GRAY_100,
             onClick = onClick,
             showStroke = false,
-            enabled = isEnable
+            enabled = isEnable,
+            horizontalArrangement = if (textAlign == TextAlign.Start) Arrangement.Start else Arrangement.Center
         ) {
             Text(
                 text = buttonText,
@@ -574,7 +581,9 @@ object MediumButton {
                         fontFamily = fontFamily
                     )
                 },
-                color = if (isEnable) NeutralColor.GRAY_600 else NeutralColor.GRAY_400
+                textAlign = textAlign,
+                color = if (isEnable) NeutralColor.GRAY_600 else NeutralColor.GRAY_400,
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }

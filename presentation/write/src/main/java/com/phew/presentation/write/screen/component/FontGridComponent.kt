@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.phew.core_design.MediumButton.DisabledSecondary
@@ -63,14 +64,14 @@ internal fun FontSelectorGrid(
                             SelectedSecondary(
                                 buttonText = font.name,
                                 onClick = { font.previewTypeface?.let { onFontSelected(it) } },
-                                isEnable = true,
+                                textAlign = TextAlign.Center,
                                 textStyle = fontTextStyle
                             )
                         } else {
                             DisabledSecondary(
                                 buttonText = font.name,
                                 onClick = { font.previewTypeface?.let { onFontSelected(it) } },
-                                isEnable = true,
+                                textAlign = TextAlign.Center,
                                 textStyle = fontTextStyle
                             )
                         }

@@ -459,7 +459,7 @@ private fun ReplyCard(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(10.dp)
+                            .padding(16.dp)
                             .align(Alignment.TopStart),
                         contentAlignment = Alignment.TopStart
                     ) {

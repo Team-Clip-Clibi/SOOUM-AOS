@@ -29,16 +29,17 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.phew.core.ui.component.ErrorDialog
 import com.phew.core_design.AppBar.IconLeftAppBar
 import com.phew.core_design.LargeButton
-import com.phew.core_design.MediumButton.NoIconSecondary
+import com.phew.core_design.MediumButton.DisabledSecondary
+import com.phew.core_design.MediumButton.SelectedSecondary
 import com.phew.core_design.NeutralColor
-import com.phew.core_design.Primary
 import com.phew.core_design.TextComponent
 import com.phew.presentation.settings.R
 import com.phew.presentation.settings.viewmodel.WithdrawalReason
@@ -65,6 +66,7 @@ internal fun WithdrawalRoute(
                 is WithdrawalUiEffect.ShowSuccessDialog -> {
                     onWithdrawalComplete()
                 }
+
                 is WithdrawalUiEffect.ShowError -> {
                     errorWithRefreshToken = effect.refreshToken
                 }
@@ -107,7 +109,13 @@ private fun WithdrawalScreen(
     val density = LocalDensity.current
     val imePadding = with(density) { WindowInsets.ime.getBottom(this).toDp() }
     val bottomBarHeight = with(density) { bottomBarHeightPx.toDp() }
-    val adjustedImePadding = (imePadding - bottomBarHeight).coerceAtLeast(0.dp)
+    // 키보드 툴바 높이 추가 고려 (일반적으로 40-50dp 이지만, 디자인 상 12dp 추가)
+    val keyboardToolbarHeight = 12.dp
+    val adjustedImePadding = if (imePadding > 0.dp) {
+        (imePadding + keyboardToolbarHeight - bottomBarHeight).coerceAtLeast(keyboardToolbarHeight)
+    } else {
+        0.dp
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -182,14 +190,19 @@ private fun WithdrawalScreen(
                 }
 
                 Box(modifier = Modifier.fillMaxWidth()) {
-                    NoIconSecondary(
-                        buttonText = stringResource(reasonTextRes),
-                        onClick = { onSelectReason(reason) },
-                        isSelect = uiState.selectedReason == reason,
-                        borderColor = if (uiState.selectedReason == reason) Primary.DARK else NeutralColor.GRAY_100,
-                        baseColor = if (uiState.selectedReason == reason) Primary.LIGHT_1 else NeutralColor.WHITE,
-                        textCenter = false
-                    )
+                    if (uiState.selectedReason == reason) {
+                        SelectedSecondary(
+                            buttonText = stringResource(reasonTextRes),
+                            textAlign = TextAlign.Start,
+                            onClick = { onSelectReason(reason) }
+                        )
+                    } else {
+                        DisabledSecondary(
+                            buttonText = stringResource(reasonTextRes),
+                            textAlign = TextAlign.Start,
+                            onClick = { onSelectReason(reason) }
+                        )
+                    }
                 }
             }
 
@@ -205,12 +218,11 @@ private fun WithdrawalScreen(
                         Text(
                             text = stringResource(R.string.withdrawal_reason),
                             style = TextComponent.SUBTITLE_1_M_16,
-                            color = NeutralColor.BLACK
+                            color = NeutralColor.GRAY_500
                         )
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 8.dp)
                         .focusRequester(focusRequester),
                     shape = RoundedCornerShape(10.dp),
                     maxLines = 5,
