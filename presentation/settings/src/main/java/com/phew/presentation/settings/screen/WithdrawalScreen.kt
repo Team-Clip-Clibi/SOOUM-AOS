@@ -29,19 +29,17 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.phew.core.ui.component.ErrorDialog
 import com.phew.core_design.AppBar.IconLeftAppBar
 import com.phew.core_design.LargeButton
 import com.phew.core_design.MediumButton.DisabledSecondary
-import com.phew.core_design.MediumButton.NoIconSecondary
 import com.phew.core_design.MediumButton.SelectedSecondary
 import com.phew.core_design.NeutralColor
-import com.phew.core_design.Primary
 import com.phew.core_design.TextComponent
 import com.phew.presentation.settings.R
 import com.phew.presentation.settings.viewmodel.WithdrawalReason
@@ -68,6 +66,7 @@ internal fun WithdrawalRoute(
                 is WithdrawalUiEffect.ShowSuccessDialog -> {
                     onWithdrawalComplete()
                 }
+
                 is WithdrawalUiEffect.ShowError -> {
                     errorWithRefreshToken = effect.refreshToken
                 }
