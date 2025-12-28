@@ -343,7 +343,11 @@ private fun SearchScreen(
                         columns = GridCells.Fixed(3),
                         state = gridState,
                         modifier = modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(bottom = innerPadding.calculateBottomPadding() + 63.dp),
+                        contentPadding = PaddingValues(
+                            bottom = innerPadding.calculateBottomPadding() + 63.dp,
+                            start = 0.dp,
+                            end = 0.dp
+                        ),
                         verticalArrangement = Arrangement.spacedBy(1.dp),
                         horizontalArrangement = Arrangement.spacedBy(1.dp)
                     ) {

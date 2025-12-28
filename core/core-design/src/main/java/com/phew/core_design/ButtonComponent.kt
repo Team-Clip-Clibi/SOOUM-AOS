@@ -7,9 +7,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -45,6 +45,7 @@ object LargeButton {
 
     @Composable
     private fun BlinkLargeButton(
+        modifier: Modifier = Modifier,
         enabled: Boolean = true,
         baseColor: Color = NeutralColor.BLACK,
         blinkColor: Color = NeutralColor.GRAY_600,
@@ -56,7 +57,7 @@ object LargeButton {
         val isPressed by interactionSource.collectIsPressedAsState()
 
         Row(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
                 .height(56.dp)
                 .clip(shape = RoundedCornerShape(10.dp))
@@ -157,11 +158,13 @@ object LargeButton {
 
     @Composable
     fun NoIconSecondary(
+        modifier: Modifier = Modifier,
         buttonText: String,
         onClick: () -> Unit,
         isEnable: Boolean = true,
     ) {
         BlinkLargeButton(
+            modifier = modifier,
             baseColor = NeutralColor.GRAY_100,
             blinkColor = NeutralColor.GRAY_200,
             disabledColor = NeutralColor.GRAY_200,
@@ -332,6 +335,7 @@ object MediumButton {
         borderColor: Color = baseColor,
         onClick: () -> Unit,
         showStroke : Boolean = true,
+        horizontalArrangement: Arrangement.Horizontal = Arrangement.Center,
         content: @Composable RowScope.() -> Unit,
     ) {
         val interactionSource = remember { MutableInteractionSource() }
@@ -369,7 +373,7 @@ object MediumButton {
                 )
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+            horizontalArrangement = horizontalArrangement
         ) {
             content()
         }
@@ -524,6 +528,7 @@ object MediumButton {
         buttonText: String,
         onClick: () -> Unit,
         isEnable: Boolean = true,
+        textAlign: TextAlign = TextAlign.Start,
         fontFamily: FontFamily = FontFamily(Font(R.font.medium)),
         textStyle: TextStyle? = null,
     ) {
@@ -531,9 +536,10 @@ object MediumButton {
             baseColor = Primary.LIGHT_1,
             blinkColor = Primary.LIGHT_1,
             disabledColor = NeutralColor.GRAY_100,
-            borderColor = Primary.DARK,
+            borderColor = Primary.MAIN,
             onClick = onClick,
-            enabled = isEnable
+            enabled = isEnable,
+            horizontalArrangement = if (textAlign == TextAlign.Start) Arrangement.Start else Arrangement.Center
         ) {
             Text(
                 text = buttonText,
@@ -542,7 +548,9 @@ object MediumButton {
                         fontFamily = fontFamily
                     )
                 },
-                color = if (isEnable) NeutralColor.GRAY_600 else NeutralColor.GRAY_400
+                textAlign = textAlign,
+                color = if (isEnable) NeutralColor.GRAY_600 else NeutralColor.GRAY_400,
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }
@@ -552,6 +560,7 @@ object MediumButton {
         buttonText: String,
         onClick: () -> Unit,
         isEnable: Boolean = true,
+        textAlign: TextAlign = TextAlign.Start,
         fontFamily: FontFamily = FontFamily(Font(R.font.medium)),
         textStyle: TextStyle? = null,
     ) {
@@ -562,7 +571,8 @@ object MediumButton {
             borderColor = NeutralColor.GRAY_100,
             onClick = onClick,
             showStroke = false,
-            enabled = isEnable
+            enabled = isEnable,
+            horizontalArrangement = if (textAlign == TextAlign.Start) Arrangement.Start else Arrangement.Center
         ) {
             Text(
                 text = buttonText,
@@ -571,7 +581,9 @@ object MediumButton {
                         fontFamily = fontFamily
                     )
                 },
-                color = if (isEnable) NeutralColor.GRAY_600 else NeutralColor.GRAY_400
+                textAlign = textAlign,
+                color = if (isEnable) NeutralColor.GRAY_600 else NeutralColor.GRAY_400,
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }
@@ -734,7 +746,7 @@ object SmallButton {
         modifier: Modifier,
         content: @Composable RowScope.() -> Unit,
 
-    ) {
+        ) {
         val interactionSource = remember { MutableInteractionSource() }
         val isPressed by interactionSource.collectIsPressedAsState()
 
@@ -768,7 +780,7 @@ object SmallButton {
     fun NoIconPrimary(
         buttonText: String,
         onClick: () -> Unit,
-        textColor : Color = NeutralColor.WHITE,
+        textColor: Color = NeutralColor.WHITE,
         baseColor: Color = NeutralColor.BLACK,
         modifier: Modifier
     ) {

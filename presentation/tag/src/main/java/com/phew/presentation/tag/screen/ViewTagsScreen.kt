@@ -261,8 +261,8 @@ private fun ViewTagsScreen(
                     state = gridState,
                     contentPadding = PaddingValues(
                         top = innerPadding.calculateTopPadding(),
-                        start = 1.dp,
-                        end = 1.dp,
+                        start = 0.dp,
+                        end = 0.dp,
                         bottom = innerPadding.calculateBottomPadding()
                     ),
                     verticalArrangement = Arrangement.spacedBy(1.dp),

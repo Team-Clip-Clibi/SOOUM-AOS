@@ -87,6 +87,7 @@ object CardDesignTokens {
 
     // 크기
     val CardRadius = 16.dp
+    val CardPreviousRadius = 8.dp
     val PreviousCardImageSize = 40.dp
 }
 
@@ -427,7 +428,7 @@ private fun ReplyCard(
             .aspectRatio(1f)
             .border(1.dp, NeutralColor.GRAY_100, RoundedCornerShape(CardDesignTokens.CardRadius)),
         shape = RoundedCornerShape(CardDesignTokens.CardRadius),
-        colors = CardDefaults.cardColors(containerColor = CardDesignTokens.CardBackgroundCyan),
+        colors = CardDefaults.cardColors(containerColor = CardDesignTokens.CardBackgroundGray),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -458,7 +459,7 @@ private fun ReplyCard(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(10.dp)
+                            .padding(16.dp)
                             .align(Alignment.TopStart),
                         contentAlignment = Alignment.TopStart
                     ) {
@@ -475,7 +476,7 @@ private fun ReplyCard(
                             if (data.hasPreviousCommentThumbnail) {
                                 Surface(
                                     modifier = Modifier.matchParentSize(),
-                                    shape = RoundedCornerShape(CardDesignTokens.CardRadius)
+                                    shape = RoundedCornerShape(CardDesignTokens.CardPreviousRadius)
                                 ) {
                                     AsyncImage(
                                         model = data.previousCommentThumbnailUri,
@@ -483,7 +484,7 @@ private fun ReplyCard(
                                         contentScale = ContentScale.Crop,
                                         modifier = Modifier
                                             .matchParentSize()
-                                            .clip(RoundedCornerShape(CardDesignTokens.CardRadius))
+                                            .clip(RoundedCornerShape(CardDesignTokens.CardPreviousRadius))
                                     )
                                 }
                             }
@@ -491,7 +492,7 @@ private fun ReplyCard(
                             Box(
                                 modifier = Modifier
                                     .matchParentSize()
-                                    .clip(RoundedCornerShape(CardDesignTokens.CardRadius))
+                                    .clip(RoundedCornerShape(CardDesignTokens.CardPreviousRadius))
                                     .background(Color.Black.copy(alpha = 0.3f)),
                                 contentAlignment = Alignment.Center
                             ) {

@@ -9,6 +9,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.cropper)
     api(project(":core:core-design"))
     api(project(":core:core-common"))
 }
