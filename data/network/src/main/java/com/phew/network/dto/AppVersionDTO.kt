@@ -6,4 +6,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class AppVersionDTO(
     val status: String,
+    val latestVersion: String
 )

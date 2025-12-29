@@ -1,7 +1,5 @@
 package com.phew.domain
 
-const val APP_UPDATE = "UPDATE"
-
 const val SIGN_UP_ALREADY_SIGN_UP = "alreadySignUp"
 const val SIGN_UP_BANNED = "banned"
 const val SIGN_UP_WITHDRAWN = "withdrawn"
