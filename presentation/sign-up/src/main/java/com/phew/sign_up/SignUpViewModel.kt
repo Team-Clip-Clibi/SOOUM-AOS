@@ -38,14 +38,14 @@ class SignUpViewModel @Inject constructor(
 
     private var _uiState = MutableStateFlow(SignUp())
     val uiState: StateFlow<SignUp> = _uiState.asStateFlow()
-    private var nickNameGenerate : String = ""
+
     /**
      * 닉네임 초기화 함수
      */
     fun initNickName() {
         _uiState.update { state ->
             state.copy(
-                nickName = nickNameGenerate,
+                nickName = "",
                 checkNickName = UiState.Loading,
             )
         }
@@ -91,7 +91,7 @@ class SignUpViewModel @Inject constructor(
     /**
      * 닉네임 생성 함수
      */
-    private fun generateNickName() {
+    fun generateNickName() {
         viewModelScope.launch(Dispatchers.IO) {
             when (val result = getNickName()) {
                 is DomainResult.Failure -> {
@@ -104,7 +104,6 @@ class SignUpViewModel @Inject constructor(
                     _uiState.update { state ->
                         state.copy(nickName = result.data, checkNickName = UiState.Success(true))
                     }
-                    nickNameGenerate = result.data
                 }
             }
         }
@@ -263,7 +262,6 @@ class SignUpViewModel @Inject constructor(
                             )
                         )
                     }
-                    generateNickName()
                 }
             }
         }

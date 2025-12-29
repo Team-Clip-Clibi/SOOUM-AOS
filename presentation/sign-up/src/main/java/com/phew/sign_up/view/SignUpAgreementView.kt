@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -50,6 +51,9 @@ fun SignUpAgreementView(
         viewModel.initAgreement()
         back()
     }
+    LaunchedEffect(uiState.nickName) {
+        if (uiState.nickName.isNotEmpty()) nextPage()
+    }
     Scaffold(
         topBar = {
             AppBar.IconLeftAppBar(
@@ -74,9 +78,7 @@ fun SignUpAgreementView(
             ) {
                 LargeButton.NoIconPrimary(
                     buttonText = stringResource(com.phew.core_design.R.string.common_next),
-                    onClick = {
-                        nextPage()
-                    },
+                    onClick = viewModel::generateNickName,
                     isEnable = uiState.agreementAll || (uiState.agreedToTermsOfService && uiState.agreedToLocationTerms && uiState.agreedToPrivacyPolicy)
                 )
             }
@@ -100,7 +102,8 @@ fun SignUpAgreementView(
                 },
                 onClickService = onClickService,
                 onClickLocation = onClickLocation,
-                onClickPrivate = onClickPrivate)
+                onClickPrivate = onClickPrivate
+            )
         }
     }
 }
