@@ -9,6 +9,5 @@ android {
 dependencies {
     implementation(libs.paging.compose)
     implementation(libs.paging.runtime)
-    implementation(libs.cropper)
     implementation(project(":presentation:settings"))
 }
