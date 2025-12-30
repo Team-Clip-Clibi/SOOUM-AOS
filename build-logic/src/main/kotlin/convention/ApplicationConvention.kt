@@ -34,7 +34,7 @@ class ApplicationConvention : Plugin<Project> {
                 minSdk = 31
                 targetSdk = 36
                 versionCode = 1
-                versionName = "1.0.18"
+                versionName = "1.0.19"
                 testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
             }
             signingConfigs {
