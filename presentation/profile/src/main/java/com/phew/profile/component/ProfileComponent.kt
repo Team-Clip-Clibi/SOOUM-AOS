@@ -43,7 +43,8 @@ object ProfileComponent {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(60.dp)
-                .background(color = NeutralColor.WHITE),
+                .background(color = NeutralColor.WHITE)
+                .padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(space = 10.dp, Alignment.Start),
             verticalAlignment = Alignment.CenterVertically,
         ) {
