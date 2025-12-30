@@ -1,6 +1,8 @@
 package com.phew.repository.network
 
 import com.phew.core_common.DataResult
+import com.phew.domain.model.AppVersionStatus
+import com.phew.domain.model.AppVersionStatusType
 import com.phew.domain.repository.network.SplashRepository
 import com.phew.network.dto.FCMToken
 import com.phew.network.retrofit.SplashHttp
@@ -12,10 +14,10 @@ class SplashRepositoryImpl @Inject constructor(private val splashHttp: SplashHtt
     override suspend fun requestAppVersion(
         type: String,
         appVersion: String
-    ): DataResult<String> {
+    ): DataResult<AppVersionStatus> {
         return apiCall(
             apiCall = { splashHttp.getVersion(type = type, data = appVersion) },
-            mapper = { result -> result.status }
+            mapper = { result -> AppVersionStatus(status = AppVersionStatusType.from(result.status) , latestVersion = result.latestVersion) }
         )
     }
 

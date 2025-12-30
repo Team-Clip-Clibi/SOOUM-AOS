@@ -3,7 +3,6 @@ package com.phew.profile.screen
 import android.Manifest
 import android.net.Uri
 import android.os.Build
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -53,9 +52,6 @@ import com.phew.profile.UiState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
-import com.canhub.cropper.CropImageContract
-import com.canhub.cropper.CropImageContractOptions
-import com.phew.core.ui.component.camera.cropOption
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.ERROR_UN_GOOD_IMAGE
 import com.phew.core_common.INPUT_NICK_NAME
@@ -72,13 +68,7 @@ internal fun EditProfileScreen(viewModel: ProfileViewModel, onBackPress: () -> U
     } else {
         arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
     }
-    val cropLauncher = rememberLauncherForActivityResult(
-        contract = CropImageContract(),
-        onResult = { result ->
-            val cropped = result.uriContent ?: return@rememberLauncherForActivityResult
-            viewModel.onAlbumPicked(cropped)
-        }
-    )
+
     ObserverUpdateState(
         updateProfile = uiState.updateProfile, onBackPress = {
             viewModel.initEditProfile()
@@ -95,12 +85,7 @@ internal fun EditProfileScreen(viewModel: ProfileViewModel, onBackPress: () -> U
         ),
         onAlbumRequestConsumed = viewModel::onProfileAlbumRequestConsumed,
         onAlbumPicked = { uri ->
-            cropLauncher.launch(
-                CropImageContractOptions(
-                    uri = uri,
-                    cropImageOptions = cropOption()
-                )
-            )
+            viewModel.onAlbumPicked(uri)
         },
         onCameraPermissionRequestConsumed = viewModel::onProfileCameraPermissionRequestConsumed,
         onCameraPermissionResult = viewModel::onProfileCameraPermissionResult,
