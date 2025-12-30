@@ -4,10 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -27,8 +26,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -105,17 +102,6 @@ private fun WithdrawalScreen(
     val scrollState = rememberScrollState()
     val focusRequester = remember { FocusRequester() }
     val scope = rememberCoroutineScope()
-    var bottomBarHeightPx by remember { mutableStateOf(0) }
-    val density = LocalDensity.current
-    val imePadding = with(density) { WindowInsets.ime.getBottom(this).toDp() }
-    val bottomBarHeight = with(density) { bottomBarHeightPx.toDp() }
-    // 키보드 툴바 높이 추가 고려 (일반적으로 40-50dp 이지만, 디자인 상 12dp 추가)
-    val keyboardToolbarHeight = 12.dp
-    val adjustedImePadding = if (imePadding > 0.dp) {
-        (imePadding + keyboardToolbarHeight - bottomBarHeight).coerceAtLeast(keyboardToolbarHeight)
-    } else {
-        0.dp
-    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -134,22 +120,16 @@ private fun WithdrawalScreen(
             }
         },
         bottomBar = {
-            val navigationPaddingModifier = if (imePadding > 0.dp) {
-                Modifier
-            } else {
-                Modifier.navigationBarsPadding()
-            }
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(color = NeutralColor.WHITE)
-                    .padding(bottom = adjustedImePadding)
+                    .navigationBarsPadding() // 기본 네비게이션 바 패딩만 적용
+                    .imePadding() // 키보드 패딩 추가
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .then(navigationPaddingModifier)
-                        .onSizeChanged { size -> bottomBarHeightPx = size.height }
                         .padding(horizontal = 16.dp, vertical = 16.dp)
                 ) {
                     LargeButton.NoIconSecondary(
@@ -162,7 +142,7 @@ private fun WithdrawalScreen(
         }
     ) { innerPadding ->
         Column(
-            modifier = modifier
+            modifier = Modifier // modifier 재사용 버그 수정: 파라미터 modifier 대신 새로운 Modifier 사용
                 .fillMaxSize()
                 .background(NeutralColor.WHITE)
                 .padding(innerPadding)

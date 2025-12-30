@@ -263,7 +263,8 @@ class WriteViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 currentTagInput = "",
-                tagInputCompleteSignal = it.tagInputCompleteSignal + 1
+                tagInputCompleteSignal = it.tagInputCompleteSignal + 1,
+                relatedTags = emptyList()
             )
         }
     }
@@ -273,12 +274,17 @@ class WriteViewModel @Inject constructor(
         if (trimmed.isEmpty()) return
         _uiState.update { state ->
             if (state.tags.contains(trimmed)) {
-                state.copy(focusTagInput = false, currentTagInput = "")
+                state.copy(
+                    focusTagInput = false,
+                    currentTagInput = "",
+                    relatedTags = emptyList()
+                )
             } else {
                 state.copy(
                     tags = state.tags + trimmed,
                     focusTagInput = false,
-                    currentTagInput = ""
+                    currentTagInput = "",
+                    relatedTags = emptyList()
                 )
             }
         }
