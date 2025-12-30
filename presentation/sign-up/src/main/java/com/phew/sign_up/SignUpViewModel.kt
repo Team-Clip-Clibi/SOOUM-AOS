@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.phew.core.ui.model.CameraCaptureRequest
 import com.phew.core.ui.model.CameraPickerAction
 import com.phew.core_common.DomainResult
+import com.phew.core_common.ERROR
 import com.phew.domain.usecase.CheckNickName
 import com.phew.domain.usecase.CheckSignUp
 import com.phew.domain.usecase.CreateImageFile
@@ -96,7 +97,7 @@ class SignUpViewModel @Inject constructor(
             when (val result = getNickName()) {
                 is DomainResult.Failure -> {
                     _uiState.update { state ->
-                        state.copy(nickName = "ERROR")
+                        state.copy(nickName = ERROR)
                     }
                 }
 

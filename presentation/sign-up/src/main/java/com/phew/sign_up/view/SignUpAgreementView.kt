@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -20,9 +22,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.phew.core_common.ERROR
 import com.phew.core_design.AppBar
+import com.phew.core_design.DialogComponent
 import com.phew.core_design.LargeButton
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.Primary
@@ -46,13 +51,21 @@ fun SignUpAgreementView(
     onClickLocation: () -> Unit,
     onClickPrivate: () -> Unit,
 ) {
+    val snackBarHostState: SnackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     BackHandler {
         viewModel.initAgreement()
         back()
     }
     LaunchedEffect(uiState.nickName) {
-        if (uiState.nickName.isNotEmpty()) nextPage()
+        if (uiState.nickName.isNotEmpty() && uiState.nickName != ERROR) nextPage()
+        if (uiState.nickName == ERROR) {
+            snackBarHostState.showSnackbar(
+                message = context.getString(com.phew.core_design.R.string.error_network),
+                duration = SnackbarDuration.Short
+            )
+        }
     }
     Scaffold(
         topBar = {
@@ -82,6 +95,9 @@ fun SignUpAgreementView(
                     isEnable = uiState.agreementAll || (uiState.agreedToTermsOfService && uiState.agreedToLocationTerms && uiState.agreedToPrivacyPolicy)
                 )
             }
+        },
+        snackbarHost = {
+            DialogComponent.CustomAnimationSnackBarHost(hostState = snackBarHostState)
         }
     ) { paddingValues ->
         Column(
