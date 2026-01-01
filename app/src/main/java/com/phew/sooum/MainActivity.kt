@@ -121,7 +121,7 @@ class MainActivity : ComponentActivity() {
         try {
             val intent = Intent(
                 Intent.ACTION_VIEW,
-                "https://play.google.com/store/apps/details?id=com.phew.sooum".toUri()
+                BuildConfig.PLAY_STORE_LINK.toUri()
             ).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
