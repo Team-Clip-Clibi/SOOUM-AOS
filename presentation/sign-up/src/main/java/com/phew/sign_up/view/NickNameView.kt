@@ -42,6 +42,7 @@ import com.phew.sign_up.UiState
 @Composable
 fun NickNameView(viewModel: SignUpViewModel, onBack: () -> Unit, nextPage: () -> Unit) {
     BackHandler {
+        viewModel.initNickName()
         onBack()
     }
 
@@ -64,7 +65,10 @@ fun NickNameView(viewModel: SignUpViewModel, onBack: () -> Unit, nextPage: () ->
     Scaffold(
         topBar = {
             AppBar.IconLeftAppBar(
-                onClick = onBack,
+                onClick = {
+                    viewModel.initNickName()
+                    onBack()
+                },
                 appBarText = stringResource(R.string.signUp_app_bar)
             )
         },

@@ -28,6 +28,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -44,6 +45,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
@@ -72,15 +76,6 @@ fun NotifyView(
     backClick: () -> Unit,
     navigateToDetail: (CardDetailArgs) -> Unit,
 ) {
-    LaunchedEffect(viewModel) {
-        viewModel.navigationEvent.collect { event ->
-            when (event) {
-                is NavigationEvent.NavigateToDetail -> {
-                    navigateToDetail(event.args)
-                }
-            }
-        }
-    }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val notices = viewModel.notice.collectAsLazyPagingItems()
     val read = viewModel.readActivateAlarm.collectAsLazyPagingItems()
@@ -88,7 +83,7 @@ fun NotifyView(
     val onBack by rememberUpdatedState(newValue = backClick)
     val snackBarHostState = remember { SnackbarHostState() }
     val refreshState = rememberPullToRefreshState()
-    var selectIndex by remember { mutableStateOf(NotifyTab.NOTIFY_SERVICE) }
+    var selectIndex by remember { mutableStateOf(NotifyTab.NOTIFY_ACTIVATE) }
     val isRefreshing by remember(
         key1 = notices.loadState.refresh,
         key2 = unRead.loadState.refresh,
@@ -102,6 +97,39 @@ fun NotifyView(
 
                 NotifyTab.NOTIFY_SERVICE -> notices.loadState.refresh is LoadState.Loading
             }
+        }
+    }
+    LaunchedEffect(viewModel) {
+        viewModel.navigationEvent.collect { event ->
+            when (event) {
+                is NavigationEvent.NavigateToDetail -> {
+                    unRead.refresh()
+                    read.refresh()
+                    navigateToDetail(event.args)
+                }
+            }
+        }
+    }
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                when (selectIndex) {
+                    NotifyTab.NOTIFY_ACTIVATE -> {
+                        unRead.refresh()
+                        read.refresh()
+                    }
+
+                    NotifyTab.NOTIFY_SERVICE -> {
+                        notices.refresh()
+                    }
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
     val context = LocalContext.current

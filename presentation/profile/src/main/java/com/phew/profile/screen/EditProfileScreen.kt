@@ -12,8 +12,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
@@ -66,6 +68,7 @@ internal fun EditProfileScreen(viewModel: ProfileViewModel, onBackPress: () -> U
     } else {
         arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
     }
+
     ObserverUpdateState(
         updateProfile = uiState.updateProfile, onBackPress = {
             viewModel.initEditProfile()
@@ -81,7 +84,9 @@ internal fun EditProfileScreen(viewModel: ProfileViewModel, onBackPress: () -> U
             pendingCapture = uiState.pendingProfileCameraCapture
         ),
         onAlbumRequestConsumed = viewModel::onProfileAlbumRequestConsumed,
-        onAlbumPicked = viewModel::onAlbumPicked,
+        onAlbumPicked = { uri ->
+            viewModel.onAlbumPicked(uri)
+        },
         onCameraPermissionRequestConsumed = viewModel::onProfileCameraPermissionRequestConsumed,
         onCameraPermissionResult = viewModel::onProfileCameraPermissionResult,
         onCameraCaptureResult = { success, uri ->
@@ -113,8 +118,9 @@ internal fun EditProfileScreen(viewModel: ProfileViewModel, onBackPress: () -> U
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(80.dp)
+                    .wrapContentHeight()
                     .background(color = NeutralColor.WHITE)
+                    .navigationBarsPadding()
                     .padding(vertical = 12.dp, horizontal = 16.dp)
             ) {
                 LargeButton.NoIconPrimary(

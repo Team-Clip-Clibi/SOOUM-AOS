@@ -4,6 +4,7 @@ import android.Manifest
 import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -54,6 +55,7 @@ fun ProfileImageView(viewModel: SignUpViewModel, onBack: () -> Unit, nexPage: ()
     val snackBarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     BackHandler {
+        viewModel.initProfileImage()
         onBack()
     }
     LaunchedEffect(uiState.signUp) {
@@ -87,7 +89,6 @@ fun ProfileImageView(viewModel: SignUpViewModel, onBack: () -> Unit, nexPage: ()
             else -> Unit
         }
     }
-
     val cameraPermissions = arrayOf(Manifest.permission.CAMERA)
     val albumPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         arrayOf(Manifest.permission.READ_MEDIA_IMAGES)
@@ -102,7 +103,9 @@ fun ProfileImageView(viewModel: SignUpViewModel, onBack: () -> Unit, nexPage: ()
             pendingCapture = uiState.pendingProfileCameraCapture
         ),
         onAlbumRequestConsumed = viewModel::onProfileAlbumRequestConsumed,
-        onAlbumPicked = viewModel::onAlbumImagePicked,
+        onAlbumPicked = { uri ->
+            viewModel.onAlbumImagePicked(uri)
+        },
         onCameraPermissionRequestConsumed = viewModel::onProfileCameraPermissionRequestConsumed,
         onCameraPermissionResult = viewModel::onProfileCameraPermissionResult,
         onCameraCaptureLaunched = remember(viewModel) { { viewModel.onProfileCameraCaptureLaunched() } },
@@ -116,7 +119,11 @@ fun ProfileImageView(viewModel: SignUpViewModel, onBack: () -> Unit, nexPage: ()
     Scaffold(
         topBar = {
             AppBar.IconLeftAppBar(
-                onClick = onBack, appBarText = stringResource(R.string.signUp_app_bar)
+                onClick = {
+                    viewModel.initProfileImage()
+                    onBack()
+                },
+                appBarText = stringResource(R.string.signUp_app_bar)
             )
         },
         bottomBar = {

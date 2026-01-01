@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.phew.core.ui.model.CameraCaptureRequest
 import com.phew.core.ui.model.CameraPickerAction
 import com.phew.core_common.DomainResult
+import com.phew.core_common.ERROR
 import com.phew.domain.usecase.CheckNickName
 import com.phew.domain.usecase.CheckSignUp
 import com.phew.domain.usecase.CreateImageFile
@@ -40,17 +41,38 @@ class SignUpViewModel @Inject constructor(
     val uiState: StateFlow<SignUp> = _uiState.asStateFlow()
 
     /**
-     * 동의 화면에서 뒤로가기 클릭시 데이터 초기화
+     * 닉네임 초기화 함수
      */
-    fun initSignUp() {
+    fun initNickName() {
         _uiState.update { state ->
             state.copy(
                 nickName = "",
+                checkNickName = UiState.Loading,
+            )
+        }
+    }
+
+    /**
+     * 프로필 사진 초기화 함수
+     */
+    fun initProfileImage() {
+        _uiState.update { state ->
+            state.copy(
+                profile = listOf(Uri.EMPTY),
+            )
+        }
+    }
+
+    /**
+     * 동의 초기화 함수
+     */
+    fun initAgreement(){
+        _uiState.update { state ->
+            state.copy(
                 agreementAll = false,
                 agreedToTermsOfService = false,
                 agreedToPrivacyPolicy = false,
                 agreedToLocationTerms = false,
-                profile = listOf(Uri.EMPTY),
                 checkSignUp = UiState.Loading,
             )
         }
@@ -70,12 +92,12 @@ class SignUpViewModel @Inject constructor(
     /**
      * 닉네임 생성 함수
      */
-    private fun generateNickName() {
+    fun generateNickName() {
         viewModelScope.launch(Dispatchers.IO) {
             when (val result = getNickName()) {
                 is DomainResult.Failure -> {
                     _uiState.update { state ->
-                        state.copy(nickName = "ERROR")
+                        state.copy(nickName = ERROR)
                     }
                 }
 
@@ -241,7 +263,6 @@ class SignUpViewModel @Inject constructor(
                             )
                         )
                     }
-                    generateNickName()
                 }
             }
         }
@@ -393,7 +414,7 @@ class SignUpViewModel @Inject constructor(
      */
     private fun closeFile(data: Uri) {
         viewModelScope.launch(Dispatchers.IO) {
-            when (val result = finishPhoto(FinishTakePicture.Param(data))) {
+            when (finishPhoto(FinishTakePicture.Param(data))) {
                 is DomainResult.Failure -> {
                     // 실패 시 별도 처리 없음
                 }

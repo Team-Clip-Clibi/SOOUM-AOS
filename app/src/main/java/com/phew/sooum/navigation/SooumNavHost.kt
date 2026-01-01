@@ -124,10 +124,10 @@ fun SooumNavHost(
                         }
                     )
                 },
-                cardClick = { id ->
+                cardClick = { args ->
                     navController.navigateToDetailCommentDirect(
                         cardDetailCommentArgs = CardDetailCommentArgs(
-                            cardId = id.cardId,
+                            cardId = args.cardId,
                             parentId = 0,
                             previousView = CardDetailTrace.PROFILE
                         )
