@@ -31,11 +31,21 @@ class CheckAppVersion @Inject constructor(private val repository: SplashReposito
                 if (result.data.status == AppVersionStatusType.UPDATE) {
                     return DomainResult.Success(AppVersionStatusType.UPDATE)
                 }
-                if (result.data.latestVersion != version) {
-                    return DomainResult.Success(AppVersionStatusType.PENDING)
-                }
+                val compareResult = version.compareVersion(result.data.latestVersion)
+                if (!compareResult) return DomainResult.Success(AppVersionStatusType.PENDING)
                 return DomainResult.Success(AppVersionStatusType.OK)
             }
         }
+    }
+
+    private fun String.compareVersion(serverVersion: String): Boolean {
+        val app = this.split(".").map { it.toInt() }
+        val server = serverVersion.split(".").map { it.toInt() }
+        for (i in 0 until maxOf(app.size, server.size)) {
+            val myVersion = app.getOrElse(i) { 0 }
+            val apiVersion = server.getOrElse(i) { 0 }
+            if (myVersion < apiVersion) return false
+        }
+        return true
     }
 }

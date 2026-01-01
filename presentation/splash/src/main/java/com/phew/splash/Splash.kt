@@ -105,7 +105,7 @@ fun Splash(
                     title = stringResource(R.string.splash_dialog_update_title),
                     description = stringResource(R.string.splash_dialog_update_description),
                     buttonText = stringResource(R.string.splash_dialog_update_btn),
-                    onClick = { if (uiState is UiState.Update) update() else viewModel.updateFcmToken() },
+                    onClick = { update() },
                     onDismiss = { if (uiState is UiState.Update) finish() else viewModel.updateFcmToken() }
                 )
             }
