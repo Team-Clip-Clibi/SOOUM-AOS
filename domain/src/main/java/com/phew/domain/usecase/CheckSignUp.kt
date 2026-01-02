@@ -57,7 +57,7 @@ class CheckSignUp @Inject constructor(
                     data.withdrawn -> SIGN_UP_WITHDRAWN
                     else -> SIGN_UP_OKAY
                 }
-                DomainResult.Success(Pair(resultType, TimeUtils.formatToKoreanDateTime(data.time)))
+                DomainResult.Success(Pair(resultType, TimeUtils.convertIsoToDateString(data.time)))
             }
         }
     }
