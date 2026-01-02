@@ -58,7 +58,8 @@ fun AuthCodeView(
     HandleAuthCode(
         uiState = uiState,
         restoreSuccess = onRestoreSuccess,
-        snackBarHostState = snackBarHostState
+        snackBarHostState = snackBarHostState,
+        initRestoreAccountResult = viewModel::initRestoreAccountResult
     )
     Scaffold(
         topBar = {
@@ -175,6 +176,7 @@ private fun HandleAuthCode(
     uiState: SignUp,
     restoreSuccess: () -> Unit,
     snackBarHostState: SnackbarHostState,
+    initRestoreAccountResult: () -> Unit
 ) {
     val context = LocalContext.current
     LaunchedEffect(uiState.restoreAccountResult) {
@@ -202,6 +204,7 @@ private fun HandleAuthCode(
                         )
                     }
                 }
+                initRestoreAccountResult()
             }
 
             is UiState.Success -> restoreSuccess()
