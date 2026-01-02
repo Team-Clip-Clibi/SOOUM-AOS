@@ -63,8 +63,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.canhub.cropper.CropImageContract
-import com.canhub.cropper.CropImageContractOptions
 import com.phew.core.ui.R
 import com.phew.core.ui.component.camera.CameraPickerBottomSheet
 import com.phew.core.ui.component.camera.CameraPickerEffect
@@ -95,7 +93,6 @@ import com.phew.presentation.write.model.BackgroundFilterType
 import com.phew.presentation.write.screen.component.ImageGrid
 import com.phew.presentation.write.R as WriteR
 import androidx.navigation.NavController
-import com.phew.core.ui.component.camera.cropOption
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core_common.log.SooumLog
 import com.phew.core_design.DialogComponent.DeletedCardDialog
@@ -403,14 +400,6 @@ private fun WriteScreen(
         }
     }
 
-    val cropLauncher = rememberLauncherForActivityResult(
-        contract = CropImageContract(),
-        onResult = { result ->
-            val cropped = result.uriContent ?: return@rememberLauncherForActivityResult
-            onCustomImageSelected(cropped)
-        }
-    )
-
     CameraPickerEffect(
         effectState = CameraPickerEffectState(
             launchAlbum = shouldLaunchAlbum,
@@ -418,14 +407,7 @@ private fun WriteScreen(
             pendingCapture = pendingCameraCapture
         ),
         onAlbumRequestConsumed = onAlbumRequestConsumed,
-        onAlbumPicked = { uri ->
-            cropLauncher.launch(
-                CropImageContractOptions(
-                    uri = uri,
-                    cropImageOptions = cropOption()
-                )
-            )
-        },
+        onAlbumPicked = onCustomImageSelected,
         onCameraPermissionRequestConsumed = onCameraPermissionRequestConsumed,
         onCameraPermissionResult = onCameraPermissionResult,
         onCameraCaptureLaunched = onCameraCaptureLaunched,
