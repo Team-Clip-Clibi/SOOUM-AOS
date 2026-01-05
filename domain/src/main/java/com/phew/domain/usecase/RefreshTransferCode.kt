@@ -5,6 +5,7 @@ import com.phew.domain.model.TransferCode
 import com.phew.domain.repository.network.MembersRepository
 import javax.inject.Inject
 
+import com.phew.core_common.APP_ERROR_CODE
 import com.phew.core_common.exception.ServerException
 
 class RefreshTransferCode @Inject constructor(
@@ -21,12 +22,12 @@ class RefreshTransferCode @Inject constructor(
                     if (e is ServerException) {
                         DomainResult.Failure(e.code)
                     } else {
-                        DomainResult.Failure(null)
+                        DomainResult.Failure(APP_ERROR_CODE)
                     }
                 }
             )
         } catch (e: Exception) {
-            DomainResult.Failure(null)
+            DomainResult.Failure(APP_ERROR_CODE)
         }
     }
 }

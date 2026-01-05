@@ -65,23 +65,7 @@ class LoginOtherDeviceViewModel @Inject constructor(
                     startTimer()
                 }
                 is DomainResult.Failure -> {
-                     val error = result.error
-                     if (error == ERROR_CODE_SERVER) {
-                         val refreshToken = getRefreshToken()
-                         _uiState.update {
-                             it.copy(
-                                 isLoading = false,
-                                 showErrorDialog = true,
-                                 refreshToken = refreshToken
-                             )
-                         }
-                     } else {
-                         _uiState.update {
-                             it.copy(
-                                 isLoading = false,
-                             )
-                         }
-                     }
+                    handleApiFailure(result.error)
                 }
             }
         }
@@ -143,23 +127,7 @@ class LoginOtherDeviceViewModel @Inject constructor(
                     startTimer()
                 }
                 is DomainResult.Failure -> {
-                    val error = result.error
-                    if (error == ERROR_CODE_SERVER) {
-                        val refreshToken = getRefreshToken()
-                        _uiState.update {
-                            it.copy(
-                                isLoading = false,
-                                showErrorDialog = true,
-                                refreshToken = refreshToken
-                            )
-                        }
-                    } else {
-                        _uiState.update {
-                            it.copy(
-                                isLoading = false,
-                            )
-                        }
-                    }
+                    handleApiFailure(result.error)
                 }
             }
         }
@@ -168,6 +136,21 @@ class LoginOtherDeviceViewModel @Inject constructor(
     fun onErrorDialogDismiss() {
         _uiState.update {
             it.copy(showErrorDialog = false)
+        }
+    }
+
+    private suspend fun handleApiFailure(error: Int?) {
+        if (error == ERROR_CODE_SERVER) {
+            val refreshToken = getRefreshToken()
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    showErrorDialog = true,
+                    refreshToken = refreshToken
+                )
+            }
+        } else {
+            _uiState.update { it.copy(isLoading = false) }
         }
     }
 
