@@ -30,6 +30,8 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
@@ -50,6 +52,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import com.phew.core_design.typography.FontType
@@ -457,12 +462,20 @@ private fun WriteScreen(
                 focusManager.clearFocus()
             }
         }
+        val layoutDirection = LocalLayoutDirection.current
+
         Column(
             modifier = Modifier
                 .background(NeutralColor.WHITE)
                 .fillMaxSize()
-                .padding(innerPadding)
-                .windowInsetsPadding(WindowInsets.ime.only(WindowInsetsSides.Bottom))
+                .padding(
+                    top = innerPadding.calculateTopPadding(),
+                    start = innerPadding.calculateStartPadding(layoutDirection),
+                    end = innerPadding.calculateEndPadding(layoutDirection)
+                )
+                .windowInsetsPadding(
+                    WindowInsets.ime.union(WindowInsets.navigationBars)
+                )
         ) {
             Column(
                 modifier = Modifier

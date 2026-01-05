@@ -5,5 +5,7 @@ data class LoginOtherDeviceUiState(
     val expiredAt: String = "",
     val remainingTimeText: String = "",
     val isCodeGenerated: Boolean = false,
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val showErrorDialog: Boolean = false,
+    val refreshToken: String = ""
 )

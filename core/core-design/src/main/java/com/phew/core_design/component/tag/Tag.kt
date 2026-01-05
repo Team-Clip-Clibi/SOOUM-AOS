@@ -304,11 +304,13 @@ internal fun TagRow(
                 onInputFocusChanged = { focused ->
                     if (!focused) {
                         if (!awaitingFocus) {
-                            state = if (input.isBlank()) {
-                                TagState.AddNew
-                            } else {
-                                TagState.Input
+                            val candidate = TagPolicy.sanitize(input)
+                            if (candidate.isNotEmpty() && TagPolicy.isValid(candidate)) {
+                                onAdd(candidate)
+                                input = ""
+                                onInputChange("")
                             }
+                            state = TagState.AddNew
                         }
                     } else {
                         awaitingFocus = false
