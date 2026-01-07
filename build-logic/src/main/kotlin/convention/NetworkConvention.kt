@@ -30,7 +30,8 @@ class NetworkConvention : Plugin<Project> {
                 if (localPropsFile.exists()) {
                     localPropsFile.inputStream().use { properties.load(it) }
                 }
-                val baseUrl: String = properties.getProperty("base_url", "")
+                val baseUrlDebug: String = properties.getProperty("base_url_debug", "")
+                val baseUrlProd: String = properties.getProperty("base_url_prod", "")
                 val apiUrl: String = properties.getProperty("api_url", "")
                 val apiUrlType: String = properties.getProperty("api_url_type", "")
                 val apiUrlQuery: String = properties.getProperty("api_url_version", "")
@@ -102,7 +103,8 @@ class NetworkConvention : Plugin<Project> {
                     properties.getProperty("api_url_check_card_delete", "")
                 val notifyToggle: String = properties.getProperty("api_url_notify_toggle", "")
 
-                buildConfigField("String", "BASE_URL", baseUrl)
+                buildConfigField("String", "BASE_URL_DEBUG", baseUrlDebug)
+                buildConfigField("String", "BASE_URL_PROD", baseUrlProd)
                 buildConfigField("String", "API_URL", apiUrl)
                 buildConfigField("String", "API_URL_TYPE", apiUrlType)
                 buildConfigField("String", "API_URL_QUERY", apiUrlQuery)
