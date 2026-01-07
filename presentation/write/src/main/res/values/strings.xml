@@ -9,6 +9,8 @@
     <string name="write_screen_dialog_restrict_title">이용 제한 안내</string>
     <string name="write_screen_dialog_restrict_message">신고된 카드로 인해 1일간 카드 추가가 제한됩니다. 카드 추가는 %1$s부터 가능합니다.</string>
     <string name="write_screen_dialog_delete_title">삭제된 카드예요</string>
+    <string name="signUp_picture_dialog_image_title">부적절한 사진으로 보여져요</string>
+    <string name="signUp_picture_dialog_image_content">다른 사진으로 변경하거나 기본 이미지를 사용해 주세요.</string>
     
     <!-- Background Filter Types -->
     <string name="background_filter_color">컬러</string>

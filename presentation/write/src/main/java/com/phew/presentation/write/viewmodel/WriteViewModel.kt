@@ -17,6 +17,7 @@ import com.phew.domain.usecase.GetCardDefaultImage
 import com.phew.domain.usecase.GetRelatedTag
 import com.phew.domain.usecase.PostCard
 import com.phew.domain.usecase.PostCardReply
+import com.phew.domain.usecase.GetRefreshToken
 import com.phew.presentation.write.model.WriteOptions
 import com.phew.presentation.write.model.WriteUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -38,7 +39,9 @@ import javax.inject.Inject
 import androidx.core.net.toUri
 import com.phew.core_common.ERROR_ACCOUNT_SUSPENDED
 import com.phew.core_common.ERROR_ALREADY_CARD_DELETE
+import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.ERROR_NETWORK
+import com.phew.core_common.ERROR_UN_GOOD_IMAGE
 import com.phew.core_design.CustomFont
 import com.phew.core_design.typography.FontType
 import com.phew.domain.usecase.CheckCardAlreadyDelete
@@ -47,7 +50,9 @@ import com.phew.domain.usecase.SaveEventLogWriteCardView
 import com.phew.domain.usecase.SaveEventLogWriteCommentCardView
 
 import com.phew.presentation.write.model.BackgroundFilterType
-import com.phew.presentation.write.utils.WriteErrorCase
+import com.phew.presentation.write.viewmodel.WriteUiEffect
+import com.phew.presentation.write.viewmodel.UiState
+import kotlinx.coroutines.withContext
 
 @HiltViewModel
 class WriteViewModel @Inject constructor(
@@ -61,7 +66,8 @@ class WriteViewModel @Inject constructor(
     private val activateDate: GetActivityRestrictionDate,
     private val checkCardDelete: CheckCardAlreadyDelete,
     private val logWriteFeedCard: SaveEventLogWriteCardView,
-    private val logWRiteCommentCard: SaveEventLogWriteCommentCardView
+    private val logWRiteCommentCard: SaveEventLogWriteCommentCardView,
+    private val getRefreshToken: GetRefreshToken
 ) : ViewModel() {
 
     private val locationPermissions = arrayOf(
@@ -129,6 +135,9 @@ class WriteViewModel @Inject constructor(
      */
     private val _writeCompleteEvent = MutableSharedFlow<Long>()
     val writeCompleteEvent = _writeCompleteEvent.asSharedFlow()
+
+    private val _uiEffect = MutableSharedFlow<WriteUiEffect>()
+    val uiEffect = _uiEffect.asSharedFlow()
 
     private suspend fun getLocationSafely(): Location {
         return try {
@@ -590,52 +599,45 @@ class WriteViewModel @Inject constructor(
                     }
 
                     is DomainResult.Failure -> {
+                        val errorCode = when (result.error) {
+                            ERROR_NETWORK -> ERROR_NETWORK
+                            ERROR_ACCOUNT_SUSPENDED -> ERROR_ACCOUNT_SUSPENDED
+                            ERROR_ALREADY_CARD_DELETE -> ERROR_ALREADY_CARD_DELETE
+                            ERROR_UN_GOOD_IMAGE -> ERROR_UN_GOOD_IMAGE
+                            else -> ERROR_FAIL_JOB
+                        }
                         _uiState.update {
                             it.copy(
-                                isWriteInProgress = false,
-                                errorCase = when (result.error) {
-                                    ERROR_NETWORK -> WriteErrorCase.ERROR_NETWORK
-                                    ERROR_ACCOUNT_SUSPENDED -> WriteErrorCase.ERROR_RESTRICT
-                                    ERROR_ALREADY_CARD_DELETE -> WriteErrorCase.ERROR_DELETE
-                                    else -> WriteErrorCase.ERROR_JOB_FAIL
-                                }
+                                isWriteInProgress = false
                             )
                         }
-                        if (_uiState.value.errorCase == WriteErrorCase.ERROR_RESTRICT) {
-                            getActivateDate()
+                        when (errorCode) {
+                            ERROR_ACCOUNT_SUSPENDED -> {
+                                _uiState.update { state ->
+                                    state.copy(activateDate = UiState.Loading)
+                                }
+                                _uiEffect.emit(WriteUiEffect.ShowRestricted)
+                                getActivateDate()
+                            }
+
+                            ERROR_ALREADY_CARD_DELETE -> {
+                                _uiEffect.emit(WriteUiEffect.ShowDeleted)
+                            }
+
+                            ERROR_UN_GOOD_IMAGE -> {
+                                _uiEffect.emit(WriteUiEffect.ShowBadImage)
+                            }
+
+                            else -> {
+                                val refreshToken = getRefreshToken()
+                                _uiEffect.emit(WriteUiEffect.ShowError(refreshToken))
+                            }
                         }
                         SooumLog.e(TAG, "onWriteComplete failed: ${result.error}")
                         // Handle error - could add error state to UI
                     }
                 }
             }
-        }
-    }
-
-    private fun getActivateDate() {
-        viewModelScope.launch(Dispatchers.IO) {
-            when (val result = activateDate()) {
-                is DomainResult.Success -> {
-                    _uiState.update { state ->
-                        state.copy(activateDate = UiState.Success(result.data ?: "ERROR"))
-                    }
-                }
-
-                is DomainResult.Failure -> {
-                    _uiState.update { state ->
-                        state.copy(activateDate = UiState.Fail(ERROR_NETWORK))
-                    }
-                }
-            }
-        }
-    }
-
-    fun showErrorDialog(show: Boolean) {
-        _uiState.update { state ->
-            state.copy(
-                showErrorDialog = show,
-                errorCase = if (!show) WriteErrorCase.NONE else state.errorCase
-            )
         }
     }
 
@@ -647,6 +649,18 @@ class WriteViewModel @Inject constructor(
             optionIds.filter { it != distanceOptionId }
         } else {
             optionIds
+        }
+    }
+
+    private suspend fun getActivateDate() {
+        val dateResult = withContext(Dispatchers.IO) { activateDate() }
+        _uiState.update { state ->
+            state.copy(
+                activateDate = when (dateResult) {
+                    is DomainResult.Success -> UiState.Success(dateResult.data ?: "")
+                    is DomainResult.Failure -> UiState.Fail(ERROR_NETWORK)
+                }
+            )
         }
     }
 
@@ -711,12 +725,5 @@ class WriteViewModel @Inject constructor(
         }
     }
 }
-
-sealed interface UiState<out T> {
-    data object Loading : UiState<Nothing>
-    data class Success<T>(val data: T) : UiState<T>
-    data class Fail(val errorMessage: String) : UiState<Nothing>
-}
-
 
 private const val TAG = "WriteViewModel"

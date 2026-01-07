@@ -17,6 +17,7 @@ import com.phew.core_common.ERROR_UN_GOOD_IMAGE
 import com.phew.core_common.HTTP_BAD_REQUEST
 import com.phew.core_common.HTTP_CARD_ALREADY_DELETE
 import com.phew.core_common.HTTP_NOT_FOUND
+import com.phew.core_common.HTTP_UN_GOOD_IMAGE
 import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.event.EventRepository
 import com.phew.domain.repository.network.CardFeedRepository
@@ -139,16 +140,22 @@ class PostCard @Inject constructor(
                     } catch (e: OutOfMemoryError) {
                         return DomainResult.Failure(ERROR_FAIL_JOB)
                     }
-                when (networkRepository.requestUploadImage(data = file, url = uploadInfo.url)) {
+                when (val uploadResult = networkRepository.requestUploadImage(data = file, url = uploadInfo.url)) {
                     is DataResult.Fail -> {
-                        return DomainResult.Failure(ERROR_NETWORK)
+                        return when (uploadResult.code) {
+                            HTTP_UN_GOOD_IMAGE -> DomainResult.Failure(ERROR_UN_GOOD_IMAGE)
+                            else -> DomainResult.Failure(ERROR_NETWORK)
+                        }
                     }
 
                     is DataResult.Success -> {
                         val checkBackgroundImage =
                             networkRepository.requestCheckImage(uploadInfo.imageName)
                         if (checkBackgroundImage is DataResult.Fail) {
-                            return DomainResult.Failure(ERROR_NETWORK)
+                            return when (checkBackgroundImage.code) {
+                                HTTP_UN_GOOD_IMAGE -> DomainResult.Failure(ERROR_UN_GOOD_IMAGE)
+                                else -> DomainResult.Failure(ERROR_NETWORK)
+                            }
                         }
                         if (checkBackgroundImage is DataResult.Success && !checkBackgroundImage.data) {
                             return DomainResult.Failure(ERROR_UN_GOOD_IMAGE)

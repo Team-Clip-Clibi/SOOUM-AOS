@@ -5,6 +5,7 @@ import com.phew.network.dto.TagRequestDTO
 import com.phew.network.dto.request.feed.CheckBanedDTO
 import com.phew.network.dto.request.feed.DefaultImageDTO
 import com.phew.network.dto.request.feed.ImageInfoDTO
+import com.phew.network.dto.request.feed.UploadCardImageInfoDTO
 import com.phew.network.dto.request.feed.RequestUploadCardAnswerDTO
 import com.phew.network.dto.request.feed.RequestUploadCardDTO
 import com.phew.network.dto.request.feed.TagInfoListDTO
@@ -84,7 +85,7 @@ interface FeedHttp {
      * card background image Upload url
      */
     @GET(BuildConfig.API_URL_UPLOAD_CARD_IMAGE)
-    suspend fun requestUploadCardUrl(): Response<ImageInfoDTO>
+    suspend fun requestUploadCardUrl(): Response<UploadCardImageInfoDTO>
 
     /**
      * Card Upload url
