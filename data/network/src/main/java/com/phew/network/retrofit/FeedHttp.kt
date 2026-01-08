@@ -25,6 +25,7 @@ import retrofit2.http.Query
 import retrofit2.http.Url
 
 import com.phew.network.dto.response.feed.CardIdResponseDto // Added import
+import com.phew.network.NoAuth
 
 interface FeedHttp {
     /**
@@ -113,6 +114,7 @@ interface FeedHttp {
     /**
      * Upload card background image
      */
+    @NoAuth
     @PUT
     suspend fun requestUploadImage(
         @Url url: String,
