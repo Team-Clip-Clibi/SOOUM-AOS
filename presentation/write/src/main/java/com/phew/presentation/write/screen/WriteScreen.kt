@@ -312,40 +312,20 @@ internal fun WriteRoute(
                 }
             }
 
-            is UiState.Success -> {
+            is UiState.Success, is UiState.Fail -> {
+                val dateString = if (activateDate is UiState.Success) activateDate.data else ""
+                val onDismissAction = {
+                    showRestrictedDialog = false
+                    onHome()
+                }
                 DialogComponent.DefaultButtonOne(
                     title = stringResource(WriteR.string.write_screen_dialog_restrict_title),
                     description = stringResource(
                         WriteR.string.write_screen_dialog_restrict_message,
-                        activateDate.data
+                        dateString
                     ),
-                    onClick = {
-                        showRestrictedDialog = false
-                        onHome()
-                    },
-                    onDismiss = {
-                        showRestrictedDialog = false
-                        onHome()
-                    },
-                    buttonText = stringResource(com.phew.core_design.R.string.common_okay)
-                )
-            }
-
-            is UiState.Fail -> {
-                DialogComponent.DefaultButtonOne(
-                    title = stringResource(WriteR.string.write_screen_dialog_restrict_title),
-                    description = stringResource(
-                        WriteR.string.write_screen_dialog_restrict_message,
-                        ""
-                    ),
-                    onClick = {
-                        showRestrictedDialog = false
-                        onHome()
-                    },
-                    onDismiss = {
-                        showRestrictedDialog = false
-                        onHome()
-                    },
+                    onClick = onDismissAction,
+                    onDismiss = onDismissAction,
                     buttonText = stringResource(com.phew.core_design.R.string.common_okay)
                 )
             }
@@ -367,8 +347,8 @@ internal fun WriteRoute(
 
     if (showBadImageDialog) {
         DialogComponent.DefaultButtonOne(
-            title = stringResource(WriteR.string.signUp_picture_dialog_image_title),
-            description = stringResource(WriteR.string.signUp_picture_dialog_image_content),
+            title = stringResource(WriteR.string.write_screen_picture_dialog_image_title),
+            description = stringResource(WriteR.string.write_screen_picture_dialog_image_content),
             buttonText = stringResource(com.phew.core_design.R.string.common_okay),
             onClick = { showBadImageDialog = false },
             onDismiss = { showBadImageDialog = false }
