@@ -350,8 +350,14 @@ internal fun WriteRoute(
             title = stringResource(WriteR.string.write_screen_picture_dialog_image_title),
             description = stringResource(WriteR.string.write_screen_picture_dialog_image_content),
             buttonText = stringResource(com.phew.core_design.R.string.common_okay),
-            onClick = { showBadImageDialog = false },
-            onDismiss = { showBadImageDialog = false }
+            onClick = {
+                showBadImageDialog = false
+                viewModel.resetToDefaultImage()
+            },
+            onDismiss = {
+                showBadImageDialog = false
+                viewModel.resetToDefaultImage()
+            }
         )
     }
 

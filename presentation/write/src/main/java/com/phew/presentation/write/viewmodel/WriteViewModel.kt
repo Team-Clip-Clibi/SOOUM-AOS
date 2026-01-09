@@ -664,6 +664,28 @@ class WriteViewModel @Inject constructor(
         }
     }
 
+    fun resetToDefaultImage() {
+        val state = _uiState.value
+        val colorCategoryImages = state.cardDefaultImagesByCategory[BackgroundFilterType.COLOR]
+        val firstColorImage = colorCategoryImages?.firstOrNull()
+
+        if (firstColorImage != null) {
+            val uri = try {
+                firstColorImage.url.toUri()
+            } catch (e: Exception) {
+                null
+            }
+            _uiState.update {
+                it.copy(
+                    activeBackgroundUri = uri,
+                    activeBackgroundResId = null,
+                    selectedDefaultImageName = firstColorImage.imageName,
+                    selectedBackgroundFilter = BackgroundFilterType.COLOR
+                )
+            }
+        }
+    }
+
     private fun loadCardDefaultImages() {
         viewModelScope.launch {
             try {
