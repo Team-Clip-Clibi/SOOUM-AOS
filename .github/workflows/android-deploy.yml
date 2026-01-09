@@ -30,7 +30,7 @@ jobs:
         run: echo "${{ secrets.KEYSTORE_PROPERTIES }}" | base64 -d > keystore.properties
         
       - name: Build Debug APK
-        run: ./gradlew assembleDevDebug
+        run: ./gradlew assembleDevDebug -Dorg.gradle.jvmargs=-Xmx4608m
 
       - name: Upload to Firebase App Distribution
         uses: wzieba/Firebase-Distribution-Github-Action@v1
