@@ -31,9 +31,6 @@ class CheckAppVersion @Inject constructor(private val repository: SplashReposito
                 if (result.data.status == AppVersionStatusType.UPDATE) {
                     return DomainResult.Success(AppVersionStatusType.UPDATE)
                 }
-                if (result.data.latestVersion != version) {
-                    return DomainResult.Success(AppVersionStatusType.PENDING)
-                }
                 return DomainResult.Success(AppVersionStatusType.OK)
             }
         }

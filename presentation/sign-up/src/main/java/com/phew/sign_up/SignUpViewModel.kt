@@ -53,6 +53,26 @@ class SignUpViewModel @Inject constructor(
     }
 
     /**
+     * SignUpResult 초기화 함수
+     */
+    fun initSignUpResult(){
+        _uiState.update { state ->
+            state.copy(
+                checkSignUp = UiState.Loading
+            )
+        }
+    }
+
+    /**
+     * restoreAccountResult 초기화 함수
+     */
+    fun initRestoreAccountResult() {
+        _uiState.update { state ->
+            state.copy(restoreAccountResult = UiState.Loading)
+        }
+    }
+
+    /**
      * 프로필 사진 초기화 함수
      */
     fun initProfileImage() {

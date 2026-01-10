@@ -101,7 +101,12 @@ fun OnBoarding(
             if (dialogShow.value) {
                 DialogView(
                     (uiState.checkSignUp as UiState.Success<SignUpResult>).data,
-                    onclick = remember { { dialogShow.value = false } }
+                    onclick = remember {
+                        {
+                            dialogShow.value = false
+                            viewModel.initSignUpResult()
+                        }
+                    }
                 )
             }
             
