@@ -17,10 +17,9 @@ class CheckAppVersion @Inject constructor(private val repository: SplashReposito
         if (data.isDebugMode) {
             return DomainResult.Success(AppVersionStatusType.OK)
         }
-        val version = data.appVersion.substringBefore("-")
         val result = repository.requestAppVersion(
             type = BuildConfig.APP_TYPE,
-            appVersion = version
+            appVersion = data.appVersion
         )
         when (result) {
             is DataResult.Fail -> {
