@@ -40,8 +40,8 @@ jobs:
       - name: Upload to Google Play
         uses: r0adkll/upload-google-play@v1
         with:
-          serviceAccountJsonPlainText: ${{ secrets.PLAY_STORE_JSON }}
+          serviceAccountJsonPlainText: ${{ secrets.ANDROID_PUBLISHER_CREDENTIALS }}
           packageName: com.phew.sooum
           releaseFiles: app/build/outputs/bundle/prodRelease/app-prod-release.aab
-          track: alpha   
-          status: draft 
+          track: alpha
+          status: draft
