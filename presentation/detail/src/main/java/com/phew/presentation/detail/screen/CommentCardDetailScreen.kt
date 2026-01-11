@@ -11,10 +11,12 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -495,6 +497,7 @@ private fun CardView(
     previewComments: List<CardComment>? = null,
 ) {
     val density = LocalDensity.current
+    val bottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     var containerHeightPx by remember { mutableStateOf(0) }
     var cardDetailHeightPx by remember { mutableStateOf(0) }
     val commentSectionHeight = if (containerHeightPx > 0 && cardDetailHeightPx > 0) {
@@ -503,7 +506,9 @@ private fun CardView(
     } else {
         null
     }
-    val commentCardHeight = commentSectionHeight?.let { (it - 20.dp).coerceAtLeast(0.dp) } ?: 180.dp
+    val commentCardHeight = commentSectionHeight?.let {
+        (it - 20.dp - bottomInset).coerceAtLeast(0.dp)
+    } ?: 180.dp
 
     BoxWithConstraints(
         modifier = modifier
@@ -595,7 +600,7 @@ private fun CardView(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .background(color = NeutralColor.GRAY_100)
-                                    .padding(top = 10.dp, bottom = 10.dp),
+                                    .padding(top = 10.dp, bottom = 10.dp + bottomInset),
                                 verticalArrangement = Arrangement.Center
                             ) {
                                 LazyRow(
@@ -652,7 +657,7 @@ private fun CardView(
                                         modifier = Modifier
                                             .fillMaxSize()
                                             .background(color = NeutralColor.GRAY_100)
-                                            .padding(top = 10.dp, bottom = 10.dp),
+                                            .padding(top = 10.dp, bottom = 10.dp + bottomInset),
                                         verticalArrangement = Arrangement.Center
                                     ) {
                                         LazyRow(

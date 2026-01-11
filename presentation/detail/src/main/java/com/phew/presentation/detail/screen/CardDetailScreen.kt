@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.foundation.lazy.LazyColumn
@@ -764,8 +766,9 @@ private fun CommentPreviewSection(
     }
     val maxHeight = if (isLandscape) landscapeMaxHeight else portraitMaxHeight
     val targetHeight = sectionHeight?.takeIf { it > 0.dp }
+    val bottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val innerHeight = if (targetHeight != null) {
-        (targetHeight - 20.dp).coerceAtLeast(0.dp)
+        (targetHeight - 20.dp - bottomInset).coerceAtLeast(0.dp)
     } else {
         180.dp
     }
@@ -776,13 +779,13 @@ private fun CommentPreviewSection(
             .fillMaxWidth()
             .then(
                 if (targetHeight != null) {
-                    Modifier.height(targetHeight)
+                        Modifier.height(targetHeight)
                 } else {
                     Modifier.heightIn(min = minHeight, max = maxHeight)
                 }
             )
             .background(NeutralColor.GRAY_100)
-            .padding(vertical = 10.dp),
+            .padding(top = 10.dp, bottom = 10.dp + bottomInset),
         contentAlignment = Alignment.CenterStart
     ) {
         Box(
