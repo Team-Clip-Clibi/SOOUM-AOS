@@ -24,7 +24,7 @@ object TimeUtils {
     private val iso8601Format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS", Locale.getDefault()).apply {
         timeZone = TimeZone.getTimeZone("UTC")
     }
-    
+
     /**
      * 백업용 ISO 8601 포맷 (밀리초만 있는 경우)
      */
@@ -105,6 +105,7 @@ object TimeUtils {
         }
     }
 
+
     /**
      * ISO 8601 MM.dd 형식 출력
      */
@@ -118,6 +119,15 @@ object TimeUtils {
             e.printStackTrace()
             ""
         }
+    }
+
+    /**
+     * ISO 8601 년 월 일 만 출력
+     */
+    fun convertIsoToDateString(isoString: String): String {
+        val parsedDate = LocalDateTime.parse(isoString, DateTimeFormatter.ISO_DATE_TIME)
+        val outputFormatter = DateTimeFormatter.ofPattern("yyyy년 MM월 dd일", Locale.KOREA)
+        return parsedDate.format(outputFormatter)
     }
 
     /**

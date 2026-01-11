@@ -1,14 +1,12 @@
 package com.phew.presentation.write.model
 
 import android.net.Uri
-import androidx.compose.ui.text.font.FontFamily
 import com.phew.core.ui.model.CameraCaptureRequest
 import com.phew.core_design.CustomFont
 import com.phew.core_design.typography.FontType
 import com.phew.domain.dto.CardImageDefault
 import com.phew.domain.dto.TagInfo
 import com.phew.presentation.write.component.NumberTagItem
-import com.phew.presentation.write.utils.WriteErrorCase
 import com.phew.presentation.write.viewmodel.UiState
 
 private val DefaultFilter: BackgroundFilterType = BackgroundFilterType.COLOR
@@ -41,9 +39,7 @@ data class WriteUiState(
     val parentCardId: Long? = null,
     val cardDefaultImagesByCategory: Map<BackgroundFilterType, List<CardImageDefault>> = emptyMap(),
     val selectedDefaultImageName: String? = null,
-    val showErrorDialog: Boolean = false,
-    val activateDate : UiState<String> = UiState.Loading,
-    val errorCase: WriteErrorCase = WriteErrorCase.NONE
+    val activateDate: UiState<String> = UiState.Loading
 ) {
     val isContentValid: Boolean
         get() = content.isNotBlank()

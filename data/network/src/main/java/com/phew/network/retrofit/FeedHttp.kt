@@ -5,6 +5,7 @@ import com.phew.network.dto.TagRequestDTO
 import com.phew.network.dto.request.feed.CheckBanedDTO
 import com.phew.network.dto.request.feed.DefaultImageDTO
 import com.phew.network.dto.request.feed.ImageInfoDTO
+import com.phew.network.dto.request.feed.UploadCardImageInfoDTO
 import com.phew.network.dto.request.feed.RequestUploadCardAnswerDTO
 import com.phew.network.dto.request.feed.RequestUploadCardDTO
 import com.phew.network.dto.request.feed.TagInfoListDTO
@@ -24,6 +25,7 @@ import retrofit2.http.Query
 import retrofit2.http.Url
 
 import com.phew.network.dto.response.feed.CardIdResponseDto // Added import
+import com.phew.network.NoAuth
 
 interface FeedHttp {
     /**
@@ -84,7 +86,7 @@ interface FeedHttp {
      * card background image Upload url
      */
     @GET(BuildConfig.API_URL_UPLOAD_CARD_IMAGE)
-    suspend fun requestUploadCardUrl(): Response<ImageInfoDTO>
+    suspend fun requestUploadCardUrl(): Response<UploadCardImageInfoDTO>
 
     /**
      * Card Upload url
@@ -112,6 +114,7 @@ interface FeedHttp {
     /**
      * Upload card background image
      */
+    @NoAuth
     @PUT
     suspend fun requestUploadImage(
         @Url url: String,

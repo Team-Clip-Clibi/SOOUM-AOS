@@ -20,10 +20,13 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import com.phew.domain.usecase.GetRefreshToken
+
 @HiltViewModel
 class LoginOtherDeviceViewModel @Inject constructor(
     private val getTransferCode: GetTransferCode,
-    private val refreshTransferCode: RefreshTransferCode
+    private val refreshTransferCode: RefreshTransferCode,
+    private val getRefreshToken: GetRefreshToken
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginOtherDeviceUiState())
@@ -38,6 +41,7 @@ class LoginOtherDeviceViewModel @Inject constructor(
     companion object {
         private const val ONE_HOUR_MILLIS = 60 * 60 * 1000L // 1시간
         private const val TIMER_INTERVAL = 1000L // 1초
+        private const val ERROR_CODE_SERVER = 500
     }
 
     init {
@@ -61,11 +65,7 @@ class LoginOtherDeviceViewModel @Inject constructor(
                     startTimer()
                 }
                 is DomainResult.Failure -> {
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                        )
-                    }
+                    handleApiFailure(result.error)
                 }
             }
         }
@@ -127,13 +127,30 @@ class LoginOtherDeviceViewModel @Inject constructor(
                     startTimer()
                 }
                 is DomainResult.Failure -> {
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                        )
-                    }
+                    handleApiFailure(result.error)
                 }
             }
+        }
+    }
+    
+    fun onErrorDialogDismiss() {
+        _uiState.update {
+            it.copy(showErrorDialog = false)
+        }
+    }
+
+    private suspend fun handleApiFailure(error: Int?) {
+        if (error == ERROR_CODE_SERVER) {
+            val refreshToken = getRefreshToken()
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    showErrorDialog = true,
+                    refreshToken = refreshToken
+                )
+            }
+        } else {
+            _uiState.update { it.copy(isLoading = false) }
         }
     }
 

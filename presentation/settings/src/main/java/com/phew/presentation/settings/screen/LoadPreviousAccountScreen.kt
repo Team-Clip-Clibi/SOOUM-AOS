@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -77,7 +78,7 @@ internal fun LoadPreviousAccountRoute(
         }
     )
     
-    // 성공 다이얼로그
+    // 성공 다이얼로그 (생략)
     if (showSuccessDialog) {
         DialogComponent.DefaultButtonOne(
             title = stringResource(R.string.load_previous_account_dialog_success_title),
@@ -95,7 +96,7 @@ internal fun LoadPreviousAccountRoute(
         )
     }
     
-    // 실패 다이얼로그
+    // 실패 다이얼로그 (생략)
     if (showErrorDialog) {
         DialogComponent.DefaultButtonOne(
             title = stringResource(R.string.load_previous_account_dialog_wrong_title),
@@ -113,6 +114,8 @@ internal fun LoadPreviousAccountRoute(
     }
 }
 
+// ... (LoadPreviousAccountScreen implementation below)
+
 @Composable
 private fun LoadPreviousAccountScreen(
     modifier: Modifier = Modifier,
@@ -123,6 +126,8 @@ private fun LoadPreviousAccountScreen(
     onClicked: () -> Unit
 ) {
     Scaffold(
+        modifier = modifier.fillMaxSize(),
+        containerColor = NeutralColor.WHITE,
         topBar = {
             Column(
                 modifier = Modifier
@@ -138,20 +143,28 @@ private fun LoadPreviousAccountScreen(
         },
         bottomBar = {
             Box(
-                modifier = modifier
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(color = NeutralColor.WHITE)
                     .navigationBarsPadding()
-                    .padding(bottom = 16.dp, start = 16.dp, end = 16.dp)
+                    .imePadding()
             ) {
-                LargeButton.NoIconPrimary(
-                    buttonText = stringResource(R.string.load_previous_account_ok),
-                    isEnable = !isLoading && code.isNotBlank(),
-                    onClick = onClicked
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 16.dp)
+                ) {
+                    LargeButton.NoIconPrimary(
+                        buttonText = stringResource(R.string.load_previous_account_ok),
+                        isEnable = !isLoading && code.isNotBlank(),
+                        onClick = onClicked
+                    )
+                }
             }
         }
     ) { paddingValues ->
         Column(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxSize()
                 .background(NeutralColor.WHITE)
                 .padding(paddingValues)

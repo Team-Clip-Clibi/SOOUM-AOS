@@ -253,7 +253,7 @@ internal fun TagRow(
             .fillMaxWidth()
             .horizontalScroll(scrollState)
             .padding(start = startPadding, end = endPadding),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         tags.forEach { tag ->
             Tag(
@@ -304,11 +304,13 @@ internal fun TagRow(
                 onInputFocusChanged = { focused ->
                     if (!focused) {
                         if (!awaitingFocus) {
-                            state = if (input.isBlank()) {
-                                TagState.AddNew
-                            } else {
-                                TagState.Input
+                            val candidate = TagPolicy.sanitize(input)
+                            if (candidate.isNotEmpty() && TagPolicy.isValid(candidate)) {
+                                onAdd(candidate)
+                                input = ""
+                                onInputChange("")
                             }
+                            state = TagState.AddNew
                         }
                     } else {
                         awaitingFocus = false
