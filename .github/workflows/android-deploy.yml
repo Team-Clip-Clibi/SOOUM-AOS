@@ -32,7 +32,9 @@ jobs:
         run: echo "${{ secrets.ANDROID_KEYSTORE_FILE }}" | base64 -d > upload-keystore.jks
 
       - name: Update keystore path
-        run: echo "storeFile=../upload-keystore.jks" >> keystore.properties
+        run: |
+          echo "" >> keystore.properties
+          echo "storeFile=../upload-keystore.jks" >> keystore.properties
         
       - name: Build Signed Release AAB
         run: ./gradlew bundleProdRelease -Dorg.gradle.jvmargs=-Xmx4608m
