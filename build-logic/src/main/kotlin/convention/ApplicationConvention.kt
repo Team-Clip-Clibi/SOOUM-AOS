@@ -78,7 +78,6 @@ class ApplicationConvention : Plugin<Project> {
                 }
                 create("prod") {
                     dimension = "environment"
-                    versionNameSuffix = "-prod"
                 }
             }
             compileOptions {
