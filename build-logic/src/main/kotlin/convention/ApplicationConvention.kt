@@ -36,6 +36,8 @@ class ApplicationConvention : Plugin<Project> {
                 versionCode = 1
                 versionName = "1.0.19"
                 testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+                val appLink = properties.getProperty("playStore_app_url", "")
+                buildConfigField("String", "PLAY_STORE_LINK", appLink)
             }
             signingConfigs {
                 create("release") {

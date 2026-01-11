@@ -57,6 +57,7 @@ import com.phew.network.dto.response.FavoriteTagsResponseDTO
 import com.phew.network.dto.response.RejoinableDateResponseDTO
 import com.phew.network.dto.request.feed.CheckBanedDTO
 import com.phew.network.dto.request.feed.ImageInfoDTO
+import com.phew.network.dto.request.feed.UploadCardImageInfoDTO
 import com.phew.network.dto.request.feed.TagInfoDTO
 import com.phew.network.dto.request.feed.TagInfoListDTO
 import com.phew.network.dto.response.TagCardsResponseDTO
@@ -229,6 +230,13 @@ internal fun TagInfoDTO.toDomain(): TagInfo {
 }
 
 internal fun ImageInfoDTO.toDomain(): CardImageDefault {
+    return CardImageDefault(
+        imageName = this.imgName,
+        url = this.url
+    )
+}
+
+internal fun UploadCardImageInfoDTO.toDomain(): CardImageDefault {
     return CardImageDefault(
         imageName = this.imgName,
         url = this.url

@@ -52,17 +52,13 @@ class SplashViewModel @Inject constructor(
                         _uiState.value = UiState.Update
                         return@launch
                     }
-                    if (result.data == AppVersionStatusType.PENDING) {
-                        _uiState.value = UiState.Recommend
-                        return@launch
-                    }
                     updateFcmToken()
                 }
             }
         }
     }
 
-    fun updateFcmToken() {
+    private fun updateFcmToken() {
         viewModelScope.launch(Dispatchers.IO) {
             when (val result = updateFcm()) {
                 is DomainResult.Failure -> {
@@ -116,6 +112,5 @@ sealed interface UiState {
     data object SignUpPage : UiState
     data object FeedPage : UiState
     data object Update : UiState
-    data object Recommend : UiState
     data class Error(val error: String) : UiState
 }

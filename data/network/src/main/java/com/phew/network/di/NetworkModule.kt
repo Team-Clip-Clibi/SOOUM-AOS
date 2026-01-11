@@ -1,5 +1,6 @@
 package com.phew.network.di
 
+import com.phew.core_common.IsDebug
 import com.phew.domain.interceptor.GlobalEventBus
 import com.phew.domain.interceptor.InterceptorManger
 import com.phew.network.AuthInterceptor
@@ -90,8 +91,13 @@ object NetworkModule {
     @Named("RefreshClient")
     fun provideRefreshOkHttpClient(
         loggingInterceptor: HttpLoggingInterceptor,
+        @IsDebug isDebug: Boolean,
     ): OkHttpClient = OkHttpClient.Builder()
-        .addInterceptor(loggingInterceptor)
+        .apply {
+            if (isDebug) {
+                addInterceptor(loggingInterceptor)
+            }
+        }
         .readTimeout(20L, TimeUnit.SECONDS)
         .writeTimeout(20L, TimeUnit.SECONDS)
         .connectTimeout(20L, TimeUnit.SECONDS)
@@ -101,9 +107,10 @@ object NetworkModule {
     @Provides
     fun provideRetrofit(
         @Named("AuthClient") okHttpClient: OkHttpClient,
+        @IsDebug isDebug: Boolean,
         json: Json,
     ): Retrofit = Retrofit.Builder()
-        .baseUrl(BuildConfig.BASE_URL)
+        .baseUrl(if (isDebug) BuildConfig.BASE_URL_DEBUG else BuildConfig.BASE_URL_PROD)
         .client(okHttpClient)
         .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
         .build()
@@ -112,9 +119,10 @@ object NetworkModule {
     @Provides
     fun provideTokenRefreshApi(
         @Named("RefreshClient") okHttpClient: OkHttpClient,
+        @IsDebug isDebug: Boolean,
         json: Json,
     ): TokenRefreshHttp = Retrofit.Builder()
-        .baseUrl(BuildConfig.BASE_URL)
+        .baseUrl(if (isDebug) BuildConfig.BASE_URL_DEBUG else BuildConfig.BASE_URL_PROD)
         .client(okHttpClient)
         .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
         .build()

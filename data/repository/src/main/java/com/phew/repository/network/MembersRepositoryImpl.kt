@@ -1,6 +1,7 @@
 package com.phew.repository.network
 
 import com.phew.core_common.DataResult
+import com.phew.core_common.exception.ServerException
 import com.phew.core_common.log.SooumLog
 import com.phew.datastore_local.DataStore
 import com.phew.device_info.DeviceInfo
@@ -41,7 +42,7 @@ class MembersRepositoryImpl @Inject constructor(
         )) {
             is DataResult.Success -> Result.success(result.data)
             is DataResult.Fail -> Result.failure(
-                result.throwable ?: Exception("Failed to get transfer code: ${result.message}")
+                ServerException(result.code, result.message)
             )
         }
     }
@@ -53,7 +54,7 @@ class MembersRepositoryImpl @Inject constructor(
         )) {
             is DataResult.Success -> Result.success(result.data)
             is DataResult.Fail -> Result.failure(
-                result.throwable ?: Exception("Failed to refresh transfer code: ${result.message}")
+                ServerException(result.code, result.message)
             )
         }
     }
