@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -16,11 +17,10 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.systemGestures
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.material3.Button
@@ -59,7 +59,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -471,11 +470,12 @@ private fun CardDetailScreen(
 ) {
     SooumLog.d(TAG, "CardDetailScreen")
     var listHeightPx by remember { mutableStateOf(0) }
-    var cardDetailHeightPx by remember { mutableStateOf(0) }
+    var cardDetailActualHeightPx by remember { mutableStateOf(0) }
     val dividerHeightPx = with(density) { 1.dp.roundToPx() }
 
     Scaffold(
         modifier = modifier,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             CardDetailTopBar(
                 remainingTimeMillis = remainingTimeMillis,
@@ -492,7 +492,6 @@ private fun CardDetailScreen(
             Box(
                 modifier = Modifier
                     .padding(bottom = 10.dp)
-                    .navigationBarsPadding()
             ) {
                 Box(
                     modifier = Modifier
@@ -524,127 +523,152 @@ private fun CardDetailScreen(
     ) { paddingValues ->
         val paddingTopPx = with(density) { paddingValues.calculateTopPadding().roundToPx() }
         val paddingBottomPx = with(density) { paddingValues.calculateBottomPadding().roundToPx() }
-        val commentSectionHeight = if (listHeightPx > 0 && cardDetailHeightPx > 0) {
-            val contentHeightPx = listHeightPx - paddingTopPx - paddingBottomPx
-            val remainingPx = contentHeightPx - cardDetailHeightPx - dividerHeightPx
-            if (remainingPx > 0) with(density) { remainingPx.toDp() } else null
-        } else {
-            null
-        }
+        val navBarInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+        val gestureInset = WindowInsets.systemGestures.asPaddingValues().calculateBottomPadding()
+        val bottomInset = if (navBarInset > gestureInset) navBarInset else gestureInset
 
-        PullToRefreshBox(
-            isRefreshing = isRefreshing,
-            onRefresh = onRefresh,
-            state = refreshState,
-            modifier = Modifier
-                .fillMaxSize(),
-            indicator = {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = paddingValues.calculateTopPadding()),
-                    contentAlignment = Alignment.Center
-                ) {
-                    val distanceFraction = refreshState.distanceFraction
-                    val lottieProgress = if (isRefreshing) progress else distanceFraction
-                    LottieAnimation(
-                        composition = composition,
-                        progress = { lottieProgress },
-                        modifier = Modifier
-                            .size(44.dp)
-                            .graphicsLayer {
-                                alpha = if (isRefreshing || distanceFraction > 0f) 1f else 0f
-                            }
-                    )
-                }
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            val contentHeightPx =
+                with(density) { maxHeight.roundToPx() } - paddingTopPx - paddingBottomPx
+            val listContentHeightPx = if (listHeightPx > 0) {
+                listHeightPx - paddingTopPx - paddingBottomPx
+            } else {
+                0
             }
-        ) {
-            LazyColumn(
+            val remainingPxFromConstraints =
+                contentHeightPx - cardDetailActualHeightPx - dividerHeightPx
+            val remainingPxFromList =
+                listContentHeightPx - cardDetailActualHeightPx - dividerHeightPx
+            val remainingPx = when {
+                remainingPxFromList > 0 -> remainingPxFromList
+                remainingPxFromConstraints > 0 -> remainingPxFromConstraints
+                else -> 0
+            }
+            val commentSectionHeight = if (cardDetailActualHeightPx > 0) {
+                if (remainingPx > 0) {
+                    with(density) { remainingPx.toDp() }
+                } else {
+                    180.dp + 20.dp + bottomInset
+                }
+            } else {
+                null
+            }
+
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = onRefresh,
+                state = refreshState,
                 modifier = Modifier
-                    .background(NeutralColor.WHITE)
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .nestedScroll(nestedScrollConnection)
-                    .graphicsLayer {
+                    .fillMaxSize(),
+                indicator = {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = paddingValues.calculateTopPadding()),
+                        contentAlignment = Alignment.Center
+                    ) {
                         val distanceFraction = refreshState.distanceFraction
-                        translationY = if (isRefreshing || distanceFraction > 0f) {
-                            distanceFraction * with(density) { refreshingOffset.toPx() }
-                        } else {
-                            0f
-                        }
-                    }
-                    .onGloballyPositioned { coordinates ->
-                        listHeightPx = coordinates.size.height
-                    },
-                state = lazyListState,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                item {
-                    CardDetail(
-                        previousCommentThumbnailUri = previousCommentThumbnailUri,
-                        isPreviousCard = false,
-                        cardContent = cardContent,
-                        cardThumbnailUri = cardThumbnailUri,
-                        cardTags = cardTags.map { it.name },
-                        fontType = FontType.fromServerName(cardFont),
-                        isDeleted = isExpire,
-                        onTagClick = { tagName ->
-                            val tag = cardTags.find { it.name == tagName }
-                            if (tag != null) {
-                                onNavigateToViewTags(TagViewArgs(tagName = tag.name, tagId = tag.tagId))
-                            }
-                        },
-                        header = {
-                            CardDetailHeader(
-                                profileUri = if (isDelete) "" else profileUri,
-                                nickName = if (isDelete) stringResource(DetailR.string.card_detail_unknown_user) else nickName,
-                                distance = distance,
-                                createAt = createAt,
-                                memberId = memberId,
-                                onClick = profileClick
-                            )
-                        },
-                        bottom = {
-                            CardDetailBottom(
-                                likeCnt = likeCnt,
-                                commentCnt = commentCnt,
-                                searchCnt = searchCnt,
-                                isLikeCard = isLikeCard,
-                                onClickLike = onClickLike,
-                                onClickComment = {
-                                    onClickCommentIcon(MoveDetail.IMAGE)
+                        val lottieProgress = if (isRefreshing) progress else distanceFraction
+                        LottieAnimation(
+                            composition = composition,
+                            progress = { lottieProgress },
+                            modifier = Modifier
+                                .size(44.dp)
+                                .graphicsLayer {
+                                    alpha = if (isRefreshing || distanceFraction > 0f) 1f else 0f
                                 }
-                            )
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .onGloballyPositioned { coordinates ->
-                                cardDetailHeightPx = coordinates.size.height
-                            },
-                        onPreviousCardClick = onPreviousCardClick
-                    )
-                }
-                item {
-                    Spacer(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(1.dp)
-                            .background(GRAY_200)
-                    )
-                }
-                item {
-                    CommentPreviewSection(
-                        commentsPagingItems = commentsPagingItems,
-                        onClickCommentView = onClickCommentView,
-                        sectionHeight = commentSectionHeight
-                    )
-                }
-                if (deleteErrorDialog) {
-                    item {
-                        DeletedCardDialog(
-                            onConfirm = onClickDeleteErrorDialog,
-                            onDismiss = onClickDeleteErrorDialog
                         )
+                    }
+                }
+            ) {
+                LazyColumn(
+                    modifier = Modifier
+                        .background(NeutralColor.WHITE)
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .nestedScroll(nestedScrollConnection)
+                        .graphicsLayer {
+                            val distanceFraction = refreshState.distanceFraction
+                            translationY = if (isRefreshing || distanceFraction > 0f) {
+                                distanceFraction * with(density) { refreshingOffset.toPx() }
+                            } else {
+                                0f
+                            }
+                        }
+                        .onGloballyPositioned { coordinates ->
+                            listHeightPx = coordinates.size.height
+                        },
+                    state = lazyListState,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    item {
+                        CardDetail(
+                            previousCommentThumbnailUri = previousCommentThumbnailUri,
+                            isPreviousCard = false,
+                            cardContent = cardContent,
+                            cardThumbnailUri = cardThumbnailUri,
+                            cardTags = cardTags.map { it.name },
+                            fontType = FontType.fromServerName(cardFont),
+                            isDeleted = isExpire,
+                            onTagClick = { tagName ->
+                                val tag = cardTags.find { it.name == tagName }
+                                if (tag != null) {
+                                    onNavigateToViewTags(TagViewArgs(tagName = tag.name, tagId = tag.tagId))
+                                }
+                            },
+                            header = {
+                                CardDetailHeader(
+                                    profileUri = if (isDelete) "" else profileUri,
+                                    nickName = if (isDelete) stringResource(DetailR.string.card_detail_unknown_user) else nickName,
+                                    distance = distance,
+                                    createAt = createAt,
+                                    memberId = memberId,
+                                    onClick = profileClick
+                                )
+                            },
+                            bottom = {
+                                CardDetailBottom(
+                                    likeCnt = likeCnt,
+                                    commentCnt = commentCnt,
+                                    searchCnt = searchCnt,
+                                    isLikeCard = isLikeCard,
+                                    onClickLike = onClickLike,
+                                    onClickComment = {
+                                        onClickCommentIcon(MoveDetail.IMAGE)
+                                    }
+                                )
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .onGloballyPositioned { coordinates ->
+                                    cardDetailActualHeightPx = coordinates.size.height
+                                },
+                            onPreviousCardClick = onPreviousCardClick
+                        )
+                    }
+                    item {
+                        Spacer(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(1.dp)
+                                .background(GRAY_200)
+                        )
+                    }
+                    item {
+                        CommentPreviewSection(
+                            commentsPagingItems = commentsPagingItems,
+                            onClickCommentView = onClickCommentView,
+                            sectionHeight = commentSectionHeight,
+                            bottomInset = bottomInset
+                        )
+                    }
+                    if (deleteErrorDialog) {
+                        item {
+                            DeletedCardDialog(
+                                onConfirm = onClickDeleteErrorDialog,
+                                onDismiss = onClickDeleteErrorDialog
+                            )
+                        }
                     }
                 }
             }
@@ -749,115 +773,95 @@ private fun CardDetailScreen(
 private fun CommentPreviewSection(
     commentsPagingItems: LazyPagingItems<CardComment>,
     onClickCommentView: (Long) -> Unit,
-    sectionHeight: Dp? = null
+    sectionHeight: Dp? = null,
+    bottomInset: Dp = 0.dp
 ) {
-    val configuration = LocalConfiguration.current
-    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-
-    val landscapeMinHeightRatio = 0.45f
-    val portraitMinHeightRatio = 0.3f
-    val landscapeMaxHeight = 280.dp
-    val portraitMaxHeight = 340.dp
-
-    val minHeight = if (isLandscape) {
-        (configuration.screenWidthDp * landscapeMinHeightRatio).dp
-    } else {
-        (configuration.screenHeightDp * portraitMinHeightRatio).dp
-    }
-    val maxHeight = if (isLandscape) landscapeMaxHeight else portraitMaxHeight
-    val targetHeight = sectionHeight?.takeIf { it > 0.dp }
-    val bottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    val innerHeight = if (targetHeight != null) {
-        (targetHeight - 20.dp - bottomInset).coerceAtLeast(0.dp)
-    } else {
-        180.dp
-    }
+    val targetHeight = sectionHeight?.takeIf { it > 0.dp } ?: return
+    val insetHeight = bottomInset.coerceAtLeast(0.dp)
+    val contentHeight = (targetHeight - insetHeight).coerceAtLeast(0.dp)
+    val innerHeight = (contentHeight - 20.dp).coerceAtLeast(0.dp)
     val commentCardHeight = innerHeight
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .then(
-                if (targetHeight != null) {
-                        Modifier.height(targetHeight)
-                } else {
-                    Modifier.heightIn(min = minHeight, max = maxHeight)
-                }
-            )
-            .background(NeutralColor.GRAY_100)
-            .padding(top = 10.dp, bottom = 10.dp + bottomInset),
-        contentAlignment = Alignment.CenterStart
+            .height(targetHeight)
+            .background(NeutralColor.GRAY_100),
     ) {
         Box(
             modifier = Modifier
-                .then(
-                    if (targetHeight != null) {
-                        Modifier
-                            .height(innerHeight)
-                            .fillMaxWidth()
-                    } else {
-                        Modifier.fillMaxWidth()
-                    }
-                ),
-            contentAlignment = Alignment.Center
+                .fillMaxWidth()
+                .height(contentHeight)
+                .padding(top = 10.dp, bottom = 10.dp),
+            contentAlignment = Alignment.CenterStart
         ) {
-            when {
-                commentsPagingItems.loadState.refresh is LoadState.Loading -> {
-                    CircularProgressIndicator()
-                }
-                commentsPagingItems.itemCount == 0 -> {
-                    Text(
-                        text = stringResource(DetailR.string.card_no_comment),
-                        style = TextComponent.BODY_1_M_14,
-                        color = NeutralColor.GRAY_400
-                    )
-                }
-                else -> {
-                    LazyRow(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(commentCardHeight),
-                        contentPadding = PaddingValues(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        items(
-                            count = commentsPagingItems.itemCount,
-                            key = commentsPagingItems.itemKey { it.cardId },
-                            contentType = commentsPagingItems.itemContentType { "CardComment" }
-                        ) { index ->
-                            val comment = commentsPagingItems[index]
-                            if (comment != null) {
-                                CardViewComment(
-                                    modifier = Modifier
-                                        .height(commentCardHeight)
-                                        .aspectRatio(1f),
-                                    contentText = comment.cardContent,
-                                    thumbnailUri = comment.cardImgUrl,
-                                    distance = comment.distance ?: "",
-                                    createAt = TimeUtils.getRelativeTimeString(comment.createdAt),
-                                    likeCnt = comment.likeCount.toString(),
-                                    commentCnt = comment.commentCardCount.toString(),
-                                    font = comment.font,
-                                    onClick = { onClickCommentView(comment.cardId) }
-                                )
+            Box(
+                modifier = Modifier
+                    .height(innerHeight)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                when {
+                    commentsPagingItems.loadState.refresh is LoadState.Loading -> {
+                        CircularProgressIndicator()
+                    }
+                    commentsPagingItems.itemCount == 0 -> {
+                        Text(
+                            text = stringResource(DetailR.string.card_no_comment),
+                            style = TextComponent.BODY_1_M_14,
+                            color = NeutralColor.GRAY_400
+                        )
+                    }
+                    else -> {
+                        LazyRow(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(commentCardHeight),
+                            contentPadding = PaddingValues(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            items(
+                                count = commentsPagingItems.itemCount,
+                                key = commentsPagingItems.itemKey { it.cardId },
+                                contentType = commentsPagingItems.itemContentType { "CardComment" }
+                            ) { index ->
+                                val comment = commentsPagingItems[index]
+                                if (comment != null) {
+                                    CardViewComment(
+                                        modifier = Modifier
+                                            .height(commentCardHeight)
+                                            .aspectRatio(1f),
+                                        contentText = comment.cardContent,
+                                        thumbnailUri = comment.cardImgUrl,
+                                        distance = comment.distance ?: "",
+                                        createAt = TimeUtils.getRelativeTimeString(comment.createdAt),
+                                        likeCnt = comment.likeCount.toString(),
+                                        commentCnt = comment.commentCardCount.toString(),
+                                        font = comment.font,
+                                        onClick = { onClickCommentView(comment.cardId) }
+                                    )
+                                }
                             }
-                        }
-                        if (commentsPagingItems.loadState.append is LoadState.Loading) {
-                            item {
-                                Box(
-                                    modifier = Modifier
-                                        .height(commentCardHeight)
-                                        .padding(horizontal = 16.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    CircularProgressIndicator()
+                            if (commentsPagingItems.loadState.append is LoadState.Loading) {
+                                item {
+                                    Box(
+                                        modifier = Modifier
+                                            .height(commentCardHeight)
+                                            .padding(horizontal = 16.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        CircularProgressIndicator()
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
+        }
+        if (insetHeight > 0.dp) {
+            Spacer(modifier = Modifier.height(insetHeight))
         }
     }
 }
