@@ -2,6 +2,7 @@ package com.phew.sign_up.view
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,7 +25,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.phew.core_common.INPUT_NICK_NAME
@@ -49,6 +52,7 @@ fun NickNameView(viewModel: SignUpViewModel, onBack: () -> Unit, nextPage: () ->
     val uiState by viewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
     LaunchedEffect(uiState) {
         when (uiState.checkNickName) {
             is UiState.Fail -> {
@@ -100,6 +104,11 @@ fun NickNameView(viewModel: SignUpViewModel, onBack: () -> Unit, nextPage: () ->
             modifier = Modifier
                 .fillMaxSize()
                 .background(color = NeutralColor.WHITE)
+                .pointerInput(Unit) {
+                    detectTapGestures(onTap = {
+                        focusManager.clearFocus()
+                    })
+                }
                 .padding(
                     top = paddingValues.calculateTopPadding(),
                     start = 16.dp,
