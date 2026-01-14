@@ -18,12 +18,18 @@ import com.phew.feed.notification.NotifyView
 import com.phew.feed.viewModel.FeedViewModel
 import com.phew.presentation.detail.navigation.navigateToDetailGraph
 import com.phew.core.ui.state.SooumAppState
+import com.phew.feed.notification.WebView
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 val FEED_GRAPH = HomeTabType.FEED.graph
 
 private val FEED_HOME_ROUTE = HomeTabType.FEED.route
 
 private const val NOTIFY_ROUTE = "notify_route"
+private const val WEB_VIEW_ROUTE = "web_view_route"
+private const val WEB_VIEW_ARG_KEY = "notice_url"
+private val FEED_WEB_VIEW_ARGS = "$WEB_VIEW_ROUTE/{$WEB_VIEW_ARG_KEY}"
 
 fun NavHostController.navigateToFeedGraph(
     navOptions: NavOptions? = null,
@@ -43,6 +49,13 @@ private fun NavHostController.navigateToNotify(
     this.navigate(NOTIFY_ROUTE, navOptions)
 }
 
+private fun NavHostController.navigateToWebView(
+    url: String,
+    navOptions: NavOptions? = null,
+) {
+    val encodeUrl = URLEncoder.encode(url, StandardCharsets.UTF_8.toString())
+    this.navigate("$WEB_VIEW_ROUTE/$encodeUrl", navOptions)
+}
 
 fun NavGraphBuilder.feedGraph(
     appState: SooumAppState,
@@ -99,6 +112,26 @@ fun NavGraphBuilder.feedGraph(
                 navigateToDetail = { cardDetailArgs ->
                     navController.navigateToDetailGraph(cardDetailArgs)
                 },
+                navigateToWebView = navController::navigateToWebView
+            )
+        }
+        slideComposable(
+            route = FEED_WEB_VIEW_ARGS,
+            arguments = listOf(
+                androidx.navigation.navArgument(WEB_VIEW_ARG_KEY) {
+                    type = androidx.navigation.NavType.StringType
+                }
+            )
+        ) { nav ->
+            val navBackStackEntry =
+                remember(nav) { navController.getBackStackEntry(FEED_GRAPH) }
+            val feedViewModel: FeedViewModel = hiltViewModel(navBackStackEntry)
+            val url = nav.arguments?.getString(WEB_VIEW_ARG_KEY) ?: ""
+            val decodedUrl = java.net.URLDecoder.decode(url, StandardCharsets.UTF_8.toString())
+            WebView(
+                url = decodedUrl,
+                viewModel = feedViewModel,
+                onBack = { navController.popBackStack() }
             )
         }
     }

@@ -14,11 +14,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -365,12 +363,19 @@ object NotificationUi {
 
 
     @Composable
-    internal fun NoticeComponentView(data: Notice) {
+    internal fun NoticeComponentView(data: Notice, onClick: (String) -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(76.dp)
                 .background(color = WHITE)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = {
+                        onClick(data.url)
+                    }
+                )
                 .padding(start = 24.dp, top = 16.dp, end = 24.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Top),
             horizontalAlignment = Alignment.Start,
@@ -391,11 +396,13 @@ object NotificationUi {
                         }
                     ),
                     contentDescription = data.content,
-                    colorFilter = ColorFilter.tint(when(data.type){
-                        Notice.NoticeType.ANNOUNCEMENT -> GRAY_400
-                        Notice.NoticeType.NEWS -> MAIN
-                        Notice.NoticeType.MAINTENANCE -> M_YELLOW
-                    })
+                    colorFilter = ColorFilter.tint(
+                        when (data.type) {
+                            Notice.NoticeType.ANNOUNCEMENT -> GRAY_400
+                            Notice.NoticeType.NEWS -> MAIN
+                            Notice.NoticeType.MAINTENANCE -> M_YELLOW
+                        }
+                    )
                 )
                 Text(
                     text = stringResource(R.string.home_notice_notice),

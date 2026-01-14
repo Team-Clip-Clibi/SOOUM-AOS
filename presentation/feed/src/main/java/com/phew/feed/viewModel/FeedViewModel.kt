@@ -872,6 +872,11 @@ class FeedViewModel @Inject constructor(
         }
     }
 
+    fun setLoadNoticeView(data: Boolean) {
+        _uiState.update { state ->
+            state.copy(loadNoticeView = data)
+        }
+    }
 }
 
 sealed interface NavigationEvent {
@@ -893,6 +898,7 @@ data class Home(
     val setReadNotify: UiState<Unit> = UiState.Loading,
     val checkCardDelete: UiState<Long> = UiState.None,
     val hiddenCardIds: Set<Long> = emptySet(),
+    val loadNoticeView : Boolean = false
 ) {
     val currentPagingState: FeedPagingState
         get() = when (currentTab) {

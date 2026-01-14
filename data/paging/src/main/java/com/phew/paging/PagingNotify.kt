@@ -52,10 +52,13 @@ class PagingNotify @AssistedInject constructor(
                         )
                     }
                     delay(2000L)
+                    val isEndOfList = result.data.first == HTTP_NO_MORE_CONTENT ||
+                            result.data.second.isEmpty() ||
+                            result.data.second.size < params.loadSize
                     LoadResult.Page(
                         data = result.data.second,
                         prevKey = null,
-                        nextKey = if (key != -1 && result.data.second.last().id == key) null else result.data.second.last().id
+                        nextKey = if (isEndOfList) null else result.data.second.last().id
                     )
                 }
 
