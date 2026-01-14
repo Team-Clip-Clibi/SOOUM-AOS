@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
@@ -61,11 +60,9 @@ import com.phew.core.ui.component.home.HomeTabType
 import com.phew.core_common.BOTTOM_NAVIGATION_HEIGHT
 import com.phew.core_design.LoadingAnimation
 import com.phew.core_design.component.refresh.RefreshBox
-import com.phew.domain.dto.DistanceCard
 import com.phew.domain.dto.FeedCardType
 import com.phew.domain.dto.Latest
 import com.phew.domain.dto.Notice
-import com.phew.domain.dto.Popular
 import com.phew.feed.FeedUi
 import com.phew.feed.NAV_HOME_FEED_INDEX
 import com.phew.feed.NAV_HOME_NEAR_INDEX
@@ -79,6 +76,7 @@ import com.phew.feed.viewModel.UiState
 import com.phew.presentation.feed.R
 import com.phew.core.ui.state.SooumAppState
 import com.phew.core_design.DialogComponent.DeletedCardDialog
+import com.phew.feed.NotifyTab
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
@@ -92,7 +90,7 @@ fun FeedView(
     navController: NavHostController,
     requestPermission: () -> Unit,
     closeDialog: () -> Unit,
-    noticeClick: () -> Unit,
+    noticeClick: (String) -> Unit,
     navigateToDetail: (CardDetailArgs) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -187,7 +185,7 @@ fun FeedView(
         currentTab: FeedType,
         latestLoading: Boolean,
         latestEmpty: Boolean,
-        refresh: Boolean
+        refresh: Boolean,
     ): Boolean {
         return when (currentTab) {
             FeedType.Latest -> latestLoading && !latestEmpty
@@ -306,7 +304,7 @@ fun FeedView(
 @Composable
 private fun TopView(
     newNotice: Boolean,
-    noticeClick: () -> Unit,
+    noticeClick: (String) -> Unit,
     snackBarHostState: SnackbarHostState,
     content: @Composable (PaddingValues) -> Unit,
 ) {
@@ -316,7 +314,7 @@ private fun TopView(
         },
         topBar = {
             AppBar.HomeAppBar(
-                onClick = noticeClick,
+                onClick = { noticeClick(NotifyTab.NOTIFY_ACTIVATE.toString()) },
                 newAlarm = newNotice,
             )
         },
@@ -335,7 +333,7 @@ private fun FeedContentView(
     selectDistance: DistanceType,
     currentTab: FeedType,
     feedNotice: List<Notice>,
-    feedNoticeClick: () -> Unit,
+    feedNoticeClick: (String) -> Unit,
     latestFeedItems: LazyPagingItems<Latest>,
     onClick: (String, Boolean) -> Unit,
     onRemoveCard: (String) -> Unit,
@@ -379,7 +377,7 @@ private fun FeedContentView(
             ) {
                 FeedUi.FeedNoticeView(
                     feedNotice = feedNotice,
-                    feedNoticeClick = feedNoticeClick,
+                    feedNoticeClick = { feedNoticeClick(NotifyTab.NOTIFY_SERVICE.toString()) },
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .graphicsLayer { translationY = pullOffsetPx }
@@ -427,7 +425,9 @@ private fun FeedContentView(
                         } else {
                             if (latestFeedItems.itemCount == 0) {
                                 item(span = { GridItemSpan(maxLineSpan) }) {
-                                    Box(modifier = Modifier.graphicsLayer { translationY = pullOffsetPx }) {
+                                    Box(modifier = Modifier.graphicsLayer {
+                                        translationY = pullOffsetPx
+                                    }) {
                                         EmptyFeedView()
                                     }
                                 }
@@ -465,7 +465,9 @@ private fun FeedContentView(
                             when (val appendState = latestFeedItems.loadState.append) {
                                 is LoadState.Error -> {
                                     item(span = { GridItemSpan(maxLineSpan) }) {
-                                        Box(modifier = Modifier.graphicsLayer { translationY = pullOffsetPx }) {
+                                        Box(modifier = Modifier.graphicsLayer {
+                                            translationY = pullOffsetPx
+                                        }) {
                                             ErrorView(
                                                 message = appendState.error.message
                                                     ?: stringResource(R.string.home_feed_load_error),
@@ -578,7 +580,9 @@ private fun FeedContentView(
                     is FeedPagingState.Success -> {
                         if (currentPagingState.feedCards.isEmpty()) {
                             item(span = { GridItemSpan(maxLineSpan) }) {
-                                Box(modifier = Modifier.graphicsLayer { translationY = pullOffsetPx }) {
+                                Box(modifier = Modifier.graphicsLayer {
+                                    translationY = pullOffsetPx
+                                }) {
                                     EmptyFeedView()
                                 }
                             }

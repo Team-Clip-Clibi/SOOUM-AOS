@@ -10,16 +10,13 @@ import com.phew.core.ui.component.home.HomeTabType
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.model.navigation.CardDetailCommentArgs
 import com.phew.core.ui.state.SooumAppState
-import com.phew.core_common.CardDetailTrace
 import com.phew.core_common.log.SooumLog
-import com.phew.feed.navigation.navigateToFeedGraph
 import com.phew.home.navigation.navigateToHomeGraph
 import com.phew.presentation.detail.navigation.navigateToDetailCommentDirect
 import com.phew.presentation.detail.navigation.navigateToDetailGraph
 import com.phew.profile.TAB_FOLLOWER
 import com.phew.profile.TAB_FOLLOWING
 import com.phew.profile.navigateToFollowScreen
-import com.phew.sign_up.navigation.SIGN_UP_GRAPH
 import com.phew.splash.navigation.SPLASH_GRAPH
 import com.phew.sooum.session.TransferSuccessHandler
 import javax.inject.Inject

@@ -75,6 +75,8 @@ fun NotifyView(
     viewModel: FeedViewModel,
     backClick: () -> Unit,
     navigateToDetail: (CardDetailArgs) -> Unit,
+    navigateToWebView: (String) -> Unit,
+    userSelectIndex: NotifyTab
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val notices = viewModel.notice.collectAsLazyPagingItems()
@@ -83,7 +85,7 @@ fun NotifyView(
     val onBack by rememberUpdatedState(newValue = backClick)
     val snackBarHostState = remember { SnackbarHostState() }
     val refreshState = rememberPullToRefreshState()
-    var selectIndex by remember { mutableStateOf(NotifyTab.NOTIFY_ACTIVATE) }
+    var selectIndex by remember { mutableStateOf(userSelectIndex) }
     val isRefreshing by remember(
         key1 = notices.loadState.refresh,
         key2 = unRead.loadState.refresh,
@@ -196,7 +198,8 @@ fun NotifyView(
 
                     NotifyTab.NOTIFY_SERVICE -> NotifyViewContent(
                         data = notices,
-                        snackBarHostState = snackBarHostState
+                        snackBarHostState = snackBarHostState,
+                        onNoticeClick = navigateToWebView
                     )
                 }
             }
@@ -263,6 +266,7 @@ private fun NoticeViewTopBar(
 private fun NotifyViewContent(
     data: LazyPagingItems<Notice>,
     snackBarHostState: SnackbarHostState,
+    onNoticeClick: (String) -> Unit,
 ) {
     val context = LocalContext.current
     val nestedScrollConnection = remember { object : NestedScrollConnection {} }
@@ -306,7 +310,7 @@ private fun NotifyViewContent(
                             count = data.itemCount,
                         ) { index ->
                             val item = data[index] ?: return@items
-                            NotificationUi.NoticeComponentView(data = item)
+                            NotificationUi.NoticeComponentView(data = item, onClick = onNoticeClick)
                         }
                     }
                 }
