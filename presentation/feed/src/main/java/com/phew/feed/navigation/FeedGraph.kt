@@ -18,7 +18,6 @@ import com.phew.feed.notification.NotifyView
 import com.phew.feed.viewModel.FeedViewModel
 import com.phew.presentation.detail.navigation.navigateToDetailGraph
 import com.phew.core.ui.state.SooumAppState
-import com.phew.domain.dto.Notice
 import com.phew.feed.NotifyTab
 import com.phew.feed.notification.WebView
 import java.net.URLEncoder
