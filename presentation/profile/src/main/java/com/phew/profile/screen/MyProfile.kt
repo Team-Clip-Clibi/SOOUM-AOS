@@ -64,6 +64,7 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.paging.compose.LazyPagingItems
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
@@ -247,9 +248,10 @@ private fun MyProfileView(
     onFollowingClick: () -> Unit,
     onEditProfileClick: () -> Unit,
     onCardClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(color = NeutralColor.WHITE)
             .padding(start = 16.dp, end = 16.dp, top = 12.dp)
@@ -427,8 +429,13 @@ private fun ProfileCardView(
 ) {
     val gridState = rememberLazyGridState()
     val coroutineScope = rememberCoroutineScope()
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    var profileHeight by remember { mutableStateOf(0.dp) }
+    var tabHeight by remember { mutableStateOf(0.dp) }
     BoxWithConstraints(modifier = modifier) {
+        val screenHeight = maxHeight
         val cardWidth = (maxWidth - 2.dp) / 3
+        val bottomAreaHeight = paddingValues.calculateBottomPadding() + BOTTOM_NAVIGATION_HEIGHT.dp
         LazyVerticalGrid(
             columns = GridCells.Fixed(3),
             modifier = Modifier.fillMaxSize(),
@@ -451,15 +458,22 @@ private fun ProfileCardView(
                             delay(100)
                             gridState.animateScrollToItem(index = 1)
                         }
+                    },
+                    modifier = Modifier.onGloballyPositioned { coordinates ->
+                        profileHeight = with(density) { coordinates.size.height.toDp() }
                     }
                 )
             }
             stickyHeader {
-                ProfileComponent.CardTabView(
-                    onCommentCardClick = onCommentCardClick,
-                    onFeedCardClick = onFeedCardClick,
-                    selectIndex = selectIndex
-                )
+                Box(modifier = Modifier.onGloballyPositioned { coordinates ->
+                    tabHeight = with(density) { coordinates.size.height.toDp() }
+                }) {
+                    ProfileComponent.CardTabView(
+                        onCommentCardClick = onCommentCardClick,
+                        onFeedCardClick = onFeedCardClick,
+                        selectIndex = selectIndex
+                    )
+                }
             }
             when (cardData.loadState.refresh) {
                 LoadState.Loading -> {
@@ -503,11 +517,12 @@ private fun ProfileCardView(
                     when (cardData.itemCount) {
                         0 -> {
                             item(span = { GridItemSpan(maxLineSpan) }) {
+                                val remainingHeight = screenHeight - profileHeight - tabHeight - bottomAreaHeight
                                 EmptyCardView(
                                     selectIndex = selectIndex,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .heightIn(min = 318.dp)
+                                        .height(remainingHeight.coerceAtLeast(300.dp))
                                 )
                             }
                         }
