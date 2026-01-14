@@ -18,6 +18,8 @@ import com.phew.feed.notification.NotifyView
 import com.phew.feed.viewModel.FeedViewModel
 import com.phew.presentation.detail.navigation.navigateToDetailGraph
 import com.phew.core.ui.state.SooumAppState
+import com.phew.domain.dto.Notice
+import com.phew.feed.NotifyTab
 import com.phew.feed.notification.WebView
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -27,6 +29,9 @@ val FEED_GRAPH = HomeTabType.FEED.graph
 private val FEED_HOME_ROUTE = HomeTabType.FEED.route
 
 private const val NOTIFY_ROUTE = "notify_route"
+private const val NOTIFY_ARG_KEY = "notify_index"
+private val NOTIFY_ARGS = "$NOTIFY_ROUTE/{$NOTIFY_ARG_KEY}"
+
 private const val WEB_VIEW_ROUTE = "web_view_route"
 private const val WEB_VIEW_ARG_KEY = "notice_url"
 private val FEED_WEB_VIEW_ARGS = "$WEB_VIEW_ROUTE/{$WEB_VIEW_ARG_KEY}"
@@ -44,9 +49,10 @@ private fun NavHostController.navigateToFeedHome(
 }
 
 private fun NavHostController.navigateToNotify(
+    data : String,
     navOptions: NavOptions? = null,
 ) {
-    this.navigate(NOTIFY_ROUTE, navOptions)
+    this.navigate("$NOTIFY_ROUTE/$data", navOptions)
 }
 
 private fun NavHostController.navigateToWebView(
@@ -102,17 +108,40 @@ fun NavGraphBuilder.feedGraph(
             )
         }
 
-        slideComposable(NOTIFY_ROUTE) { nav ->
+//        slideComposable(NOTIFY_ROUTE) { nav ->
+//            val navBackStackEntry =
+//                remember(nav) { navController.getBackStackEntry(FEED_GRAPH) }
+//            val feedViewModel: FeedViewModel = hiltViewModel(navBackStackEntry)
+//            NotifyView(
+//                viewModel = feedViewModel,
+//                backClick = { navController.popBackStack() },
+//                navigateToDetail = { cardDetailArgs ->
+//                    navController.navigateToDetailGraph(cardDetailArgs)
+//                },
+//                navigateToWebView = navController::navigateToWebView,
+//                userSelectIndex = navController
+//            )
+//        }
+        slideComposable(
+            route = NOTIFY_ARGS,
+            arguments = listOf(
+                androidx.navigation.navArgument(NOTIFY_ARG_KEY) {
+                    type = androidx.navigation.NavType.StringType
+                }
+            )
+        ) { nav ->
             val navBackStackEntry =
                 remember(nav) { navController.getBackStackEntry(FEED_GRAPH) }
             val feedViewModel: FeedViewModel = hiltViewModel(navBackStackEntry)
+            val data = nav.arguments?.getString(NOTIFY_ARG_KEY) ?: ""
             NotifyView(
                 viewModel = feedViewModel,
                 backClick = { navController.popBackStack() },
                 navigateToDetail = { cardDetailArgs ->
                     navController.navigateToDetailGraph(cardDetailArgs)
                 },
-                navigateToWebView = navController::navigateToWebView
+                navigateToWebView = navController::navigateToWebView,
+                userSelectIndex = NotifyTab.from(data)
             )
         }
         slideComposable(
