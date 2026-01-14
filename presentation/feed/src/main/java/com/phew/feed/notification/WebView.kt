@@ -20,11 +20,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.phew.core_design.LoadingAnimation
 import com.phew.feed.viewModel.FeedViewModel
 import android.content.Intent
+import androidx.compose.runtime.mutableStateOf
 import androidx.core.net.toUri
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 
 @Composable
 fun WebView(url: String, viewModel: FeedViewModel, onBack: () -> Unit) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var isLoading by remember { mutableStateOf(true) }
     BackHandler(enabled = true) {
         onBack()
     }
@@ -66,12 +70,12 @@ fun WebView(url: String, viewModel: FeedViewModel, onBack: () -> Unit) {
 
                         override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                             super.onPageStarted(view, url, favicon)
-                            viewModel.setLoadNoticeView(data = true)
+                            isLoading = true
                         }
 
                         override fun onPageFinished(view: WebView?, url: String?) {
                             super.onPageFinished(view, url)
-                            viewModel.setLoadNoticeView(data = false)
+                            isLoading = false
                         }
 
                         override fun onReceivedError(
@@ -87,7 +91,7 @@ fun WebView(url: String, viewModel: FeedViewModel, onBack: () -> Unit) {
                 }
             },
         )
-        if (uiState.loadNoticeView) {
+        if (isLoading) {
             Column(modifier = Modifier.align(Alignment.Center)) {
                 LoadingAnimation.LoadingView()
             }

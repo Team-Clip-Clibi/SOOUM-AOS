@@ -35,18 +35,6 @@ private const val WEB_VIEW_ROUTE = "web_view_route"
 private const val WEB_VIEW_ARG_KEY = "notice_url"
 private val FEED_WEB_VIEW_ARGS = "$WEB_VIEW_ROUTE/{$WEB_VIEW_ARG_KEY}"
 
-fun NavHostController.navigateToFeedGraph(
-    navOptions: NavOptions? = null,
-) {
-    this.navigate(FEED_GRAPH, navOptions)
-}
-
-private fun NavHostController.navigateToFeedHome(
-    navOptions: NavOptions? = null,
-) {
-    this.navigate(FEED_HOME_ROUTE, navOptions)
-}
-
 private fun NavHostController.navigateToNotify(
     data : String,
     navOptions: NavOptions? = null,
@@ -65,7 +53,6 @@ private fun NavHostController.navigateToWebView(
 fun NavGraphBuilder.feedGraph(
     appState: SooumAppState,
     navController: NavHostController,
-    // 요기 수정 -> webView 삭제
 ) {
     navigation(
         route = FEED_GRAPH,
@@ -107,20 +94,6 @@ fun NavGraphBuilder.feedGraph(
             )
         }
 
-//        slideComposable(NOTIFY_ROUTE) { nav ->
-//            val navBackStackEntry =
-//                remember(nav) { navController.getBackStackEntry(FEED_GRAPH) }
-//            val feedViewModel: FeedViewModel = hiltViewModel(navBackStackEntry)
-//            NotifyView(
-//                viewModel = feedViewModel,
-//                backClick = { navController.popBackStack() },
-//                navigateToDetail = { cardDetailArgs ->
-//                    navController.navigateToDetailGraph(cardDetailArgs)
-//                },
-//                navigateToWebView = navController::navigateToWebView,
-//                userSelectIndex = navController
-//            )
-//        }
         slideComposable(
             route = NOTIFY_ARGS,
             arguments = listOf(

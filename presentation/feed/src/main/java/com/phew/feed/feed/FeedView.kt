@@ -265,9 +265,7 @@ fun FeedView(
                     selectDistance = uiState.distanceTab,
                     currentTab = uiState.currentTab,
                     feedNotice = feedNotice,
-                    feedNoticeClick = { result ->
-                        noticeClick(result)
-                    },
+                    feedNoticeClick = noticeClick,
                     latestFeedItems = latestFeedItems,
                     onClick = viewModel::navigateToDetail,
                     onRemoveCard = viewModel::removeFeedCard,
