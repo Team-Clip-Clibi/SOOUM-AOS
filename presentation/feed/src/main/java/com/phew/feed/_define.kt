@@ -17,4 +17,10 @@ const val NOTIFY_FEED_LIKE = "FEED_LIKE"
 enum class NotifyTab {
     NOTIFY_ACTIVATE,
     NOTIFY_SERVICE;
+
+    companion object {
+        fun from(value: String?): NotifyTab {
+            return entries.find { it.name == value } ?: NOTIFY_ACTIVATE
+        }
+    }
 }

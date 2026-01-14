@@ -203,12 +203,6 @@ class FeedViewModel @Inject constructor(
         }
     }
 
-    fun logMoveCardDetail() {
-        viewModelScope.launch(Dispatchers.IO) {
-            eventLog.moveToCardDetail()
-        }
-    }
-
     private suspend fun getLocationSafely(): Location {
         return try {
             deviceRepository.requestLocation()
@@ -871,7 +865,6 @@ class FeedViewModel @Inject constructor(
             }
         }
     }
-
 }
 
 sealed interface NavigationEvent {
