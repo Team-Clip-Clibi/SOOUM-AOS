@@ -353,6 +353,12 @@ class FeedViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(popularPagingState = FeedPagingState.LoadingMore(existingCards))
                     }
+                } else {
+                    if (!_uiState.value.refresh) {
+                        _uiState.update {
+                            it.copy(popularPagingState = FeedPagingState.Loading)
+                        }
+                    }
                 }
 
                 val location = getLocationSafely()
@@ -406,7 +412,8 @@ class FeedViewModel @Inject constructor(
                     it.copy(
                         popularPagingState = FeedPagingState.Error(
                             e.message ?: "인기 피드 로딩 실패"
-                        )
+                        ),
+                        refresh = false //요기 수정
                     )
                 }
             }
@@ -420,8 +427,11 @@ class FeedViewModel @Inject constructor(
 
             try {
                 if (!isInitial) {
-                    val existingCards =
-                        (currentState as? FeedPagingState.Success)?.feedCards ?: emptyList()
+                    val currentStateIsSuccess = currentState is FeedPagingState.Success
+                    if (!currentStateIsSuccess || !(currentState as FeedPagingState.Success).hasNextPage) {
+                        return@launch
+                    }
+                    val existingCards = currentState.feedCards
                     _uiState.update { state ->
                         val newStates = state.distancePagingStates.toMutableMap()
                         newStates[currentDistanceTab] =
@@ -429,10 +439,13 @@ class FeedViewModel @Inject constructor(
                         state.copy(distancePagingStates = newStates)
                     }
                 } else {
-                    _uiState.update { state ->
-                        val newStates = state.distancePagingStates.toMutableMap()
-                        newStates[currentDistanceTab] = FeedPagingState.Loading
-                        state.copy(distancePagingStates = newStates)
+                    // Refresh 중이 아닐 때만 Loading 상태로 변경하여 화면 깜빡임 방지
+                    if (!_uiState.value.refresh) {
+                        _uiState.update { state ->
+                            val newStates = state.distancePagingStates.toMutableMap()
+                            newStates[currentDistanceTab] = FeedPagingState.Loading
+                            state.copy(distancePagingStates = newStates)
+                        }
                     }
                 }
 
@@ -442,8 +455,8 @@ class FeedViewModel @Inject constructor(
                 }
 
                 when (val result = cardFeedRepository.requestFeedDistance(
-                    latitude = location.latitude,
-                    longitude = location.longitude,
+                    latitude = location.latitude.takeIf { it != 0.0 },
+                    longitude = location.longitude.takeIf { it != 0.0 },
                     distance = currentDistanceTab.value,
                     lastId = lastId
                 )) {
@@ -472,9 +485,10 @@ class FeedViewModel @Inject constructor(
                         
                         _uiState.update { state ->
                             val newStates = state.distancePagingStates.toMutableMap()
+                            val hasNewItems = combined.size > existingCards.size
                             newStates[currentDistanceTab] = FeedPagingState.Success(
                                 feedCards = combined,
-                                hasNextPage = result.data.isNotEmpty(),
+                                hasNextPage = result.data.isNotEmpty() && hasNewItems,
                                 lastId = result.data.lastOrNull()?.cardId?.toLongOrNull()
                             )
                             state.copy(
@@ -490,7 +504,7 @@ class FeedViewModel @Inject constructor(
                     val newStates = state.distancePagingStates.toMutableMap()
                     newStates[currentDistanceTab] =
                         FeedPagingState.Error(message = e.message ?: "거리 피드 로딩 실패")
-                    state.copy(distancePagingStates = newStates)
+                    state.copy(distancePagingStates = newStates, refresh = false) //요기 수정
                 }
             }
         }
