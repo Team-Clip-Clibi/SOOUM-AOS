@@ -495,10 +495,8 @@ private fun ProfileView(
             SubcomposeAsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(
-                        if (profile.profileImgName.isEmpty() || profile.profileImageUrl.isEmpty()) {
+                        profile.profileImageUrl.ifEmpty {
                             com.phew.core_design.R.drawable.ic_profile
-                        } else {
-                            profile.profileImageUrl
                         }
                     )
                     .crossfade(true)
