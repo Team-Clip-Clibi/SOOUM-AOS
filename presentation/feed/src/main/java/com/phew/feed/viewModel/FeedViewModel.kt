@@ -299,19 +299,20 @@ class FeedViewModel @Inject constructor(
                 )) {
                     is DataResult.Success -> {
                         val newFeedCards = mapLatestToFeedCards(result.data)
-                        val isDuplicate =
-                            newFeedCards.isNotEmpty() && newFeedCards == existingCards.takeLast(
-                                newFeedCards.size
-                            )
-                        SooumLog.d(
-                            TAG,
-                            "Latest feed duplicate check: $isDuplicate (new=${newFeedCards.size}, existing=${existingCards.size})"
-                        )
+                        // 중복 제거 강화: 기존 카드들과 새로운 카드들 합친 후 cardId로 distinct 처리
+                        val combined = (existingCards + newFeedCards).distinctBy {
+                            when (it) {
+                                is FeedCardType.BoombType -> it.cardId
+                                is FeedCardType.AdminType -> it.cardId
+                                is FeedCardType.NormalType -> it.cardId
+                            }
+                        }
+
                         _uiState.update { state ->
                             state.copy(
                                 location = location,
                                 latestPagingState = FeedPagingState.Success(
-                                    feedCards = existingCards + newFeedCards,
+                                    feedCards = combined,
                                     hasNextPage = result.data.isNotEmpty(),
                                     lastId = result.data.lastOrNull()?.cardId?.toLongOrNull()
                                 ),
@@ -367,11 +368,20 @@ class FeedViewModel @Inject constructor(
                         val existingCards = if (isInitial) emptyList() else {
                             (currentState as? FeedPagingState.Success)?.feedCards ?: emptyList()
                         }
+                        
+                        val combined = (existingCards + newFeedCards).distinctBy { 
+                            when (it) {
+                                is FeedCardType.BoombType -> it.cardId
+                                is FeedCardType.AdminType -> it.cardId
+                                is FeedCardType.NormalType -> it.cardId
+                            }
+                        }
+                        
                         _uiState.update { state ->
                             state.copy(
                                 location = location,
                                 popularPagingState = FeedPagingState.Success(
-                                    feedCards = existingCards + newFeedCards,
+                                    feedCards = combined,
                                     hasNextPage = false, // Popular는 페이징이 없음
                                     lastId = null // Popular는 페이징이 없으므로 null
                                 ),
@@ -451,10 +461,19 @@ class FeedViewModel @Inject constructor(
                         val existingCards = if (isInitial) emptyList() else {
                             (currentState as? FeedPagingState.Success)?.feedCards ?: emptyList()
                         }
+                        
+                        val combined = (existingCards + newFeedCard).distinctBy { 
+                            when (it) {
+                                is FeedCardType.BoombType -> it.cardId
+                                is FeedCardType.AdminType -> it.cardId
+                                is FeedCardType.NormalType -> it.cardId
+                            }
+                        }
+                        
                         _uiState.update { state ->
                             val newStates = state.distancePagingStates.toMutableMap()
                             newStates[currentDistanceTab] = FeedPagingState.Success(
-                                feedCards = existingCards + newFeedCard,
+                                feedCards = combined,
                                 hasNextPage = result.data.isNotEmpty(),
                                 lastId = result.data.lastOrNull()?.cardId?.toLongOrNull()
                             )
