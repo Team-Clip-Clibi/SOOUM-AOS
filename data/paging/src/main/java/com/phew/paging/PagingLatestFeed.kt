@@ -34,12 +34,18 @@ class PagingLatestFeed @Inject constructor(
             )) {
                 is DataResult.Success -> {
                     delay(2000L)
-                    val feeds = result.data
+                    val feeds = if (lastId != null) {
+                        result.data.filter { it.cardId.toLongOrNull() != lastId }
+                    } else {
+                        result.data
+                    }
+                    
                     val nextKey = feeds.asReversed()
                         .firstOrNull { it.cardId.toLongOrNull() != null }
                         ?.cardId
                         ?.toLongOrNull()
-                        ?.takeIf { it != lastId }
+                        ?.takeIf { it != lastId } // Prevent infinite loop if we get same lastId
+                        
                     LoadResult.Page(
                         data = feeds,
                         prevKey = null,
