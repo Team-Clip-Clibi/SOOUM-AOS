@@ -2,6 +2,7 @@ package com.phew.profile
 
 import android.net.Uri
 import androidx.core.net.toUri
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
@@ -9,12 +10,13 @@ import androidx.paging.cachedIn
 import androidx.paging.filter
 import com.phew.core.ui.model.CameraCaptureRequest
 import com.phew.core.ui.model.navigation.CardDetailArgs
+import com.phew.core.ui.model.navigation.FollowArgs
 import com.phew.core_common.DomainResult
-import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.domain.dto.FollowData
 import com.phew.domain.dto.ProfileInfo
 import com.phew.domain.dto.ProfileCard
 import com.phew.domain.usecase.CheckCardAlreadyDelete
+import com.phew.domain.usecase.CheckIsMyProfile
 import com.phew.domain.usecase.CheckNickName
 import com.phew.domain.usecase.CreateImageFile
 import com.phew.domain.usecase.FinishTakePicture
@@ -47,6 +49,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
     private val getMyProfile: GetMyProfileInfo,
     private val getFeedCard: GetProfileFeedCard,
     private val getCommentCard: GetProfileCommentCard,
@@ -62,12 +65,18 @@ class ProfileViewModel @Inject constructor(
     private val finishPhoto: FinishTakePicture,
     private val updateProfile: UpdateProfile,
     private val checkCardDelete: CheckCardAlreadyDelete,
+    private val checkMyProfile : CheckIsMyProfile
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(Profile())
     val uiState: StateFlow<Profile> = _uiState.asStateFlow()
 
     private val _uiEffect = MutableSharedFlow<ProfileUiEffect>()
     val uiEffect = _uiEffect.asSharedFlow()
+
+    private val rawArgs: Any? = savedStateHandle[PROFILE_ARGS_KEY]
+    private val followArgs: FollowArgs? = rawArgs as? FollowArgs
+
+    val currentUserId: Long = followArgs?.userId ?: 0L
 
     fun refreshMyProfile() {
         _uiState.update { state -> state.copy(isRefreshing = true) }
@@ -77,6 +86,36 @@ class ProfileViewModel @Inject constructor(
     fun refreshOtherProfile(profileId: Long) {
         _uiState.update { state -> state.copy(isRefreshing = true) }
         otherProfile(profileId = profileId)
+    }
+
+    fun checkIsMyProfile(userId: Long, nickname: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            when (val result = checkMyProfile(CheckIsMyProfile.Param(userId = userId, nickName = nickname))) {
+                is DomainResult.Failure -> {
+                    _uiState.update { state ->
+                        state.copy(
+                            event = UiState.Fail(result.error)
+                        )
+                    }
+                }
+
+                is DomainResult.Success -> {
+                    _uiState.update { state ->
+                        state.copy(
+                            checkIsMyProfile = UiState.Success(result.data)
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    fun initCheckIsMyProfile() {
+        _uiState.update { state ->
+            state.copy(
+                checkIsMyProfile = UiState.None
+            )
+        }
     }
 
     fun myProfile() {
@@ -489,6 +528,7 @@ data class Profile(
     val imageDialog: Boolean = false,
     val checkCardDelete: UiState<Long> = UiState.None,
     val deletedCardIds: Set<Long> = emptySet(),
+    val checkIsMyProfile: UiState<Pair<Boolean, Long>> = UiState.None,
 )
 
 sealed interface UiState<out T> {

@@ -6,4 +6,5 @@ import kotlinx.serialization.Serializable
 data class FollowArgs(
     val isMyProfile: Boolean,
     val selectTab: Int,
+    val userId: Long,
 ) : java.io.Serializable
