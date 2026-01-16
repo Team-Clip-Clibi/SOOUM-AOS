@@ -64,8 +64,10 @@ internal fun FollowerScreen(
     viewModel: ProfileViewModel,
     onBackPressed: () -> Unit,
     onLogout: () -> Unit,
-    isMyProfileView: Boolean,
     selectTab: Int,
+    myProfile : () -> Unit,
+    userId : Long,
+    otherProfile : (Long) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val follower = uiState.follow.collectAsLazyPagingItems()
@@ -79,6 +81,22 @@ internal fun FollowerScreen(
         if (uiState.event is UiState.Success) {
             follower.refresh()
             following.refresh()
+        }
+    }
+    LaunchedEffect(uiState.checkIsMyProfile) {
+        when (val result = uiState.checkIsMyProfile) {
+            is UiState.Success -> {
+                if (result.data.first) myProfile() else otherProfile(result.data.second)
+                viewModel.initCheckIsMyProfile()
+            }
+            else -> Unit
+        }
+    }
+    LaunchedEffect(userId) {
+        if (userId == 0L) {
+            viewModel.myProfile()
+        } else {
+            viewModel.otherProfile(userId)
         }
     }
     when (val result = uiState.profileInfo) {
@@ -147,9 +165,9 @@ internal fun FollowerScreen(
             ) { paddingValues ->
                 RefreshBox(
                     isRefresh = uiState.isRefreshing,
-                    onRefresh = remember(viewModel, isMyProfileView, result.data.userId) {
+                    onRefresh = remember(viewModel, userId, result.data.userId) {
                         {
-                            if (isMyProfileView) viewModel.refreshMyProfile() else viewModel.refreshOtherProfile(
+                            if (userId == 0L) viewModel.refreshMyProfile() else viewModel.refreshOtherProfile(
                                 result.data.userId
                             )
                         }
@@ -168,21 +186,23 @@ internal fun FollowerScreen(
                         onFollowerClick = { selectIndex = TAB_FOLLOWER },
                         distanceFraction = refreshState.distanceFraction,
                         density = LocalDensity.current,
-                        onChangeFollowClick = remember(selectIndex, isMyProfileView, viewModel) {
+                        showProfileClick = { result ->
+                            viewModel.checkIsMyProfile(
+                                userId = result.second,
+                                nickname = result.first
+                            )
+                        },
+                        onChangeFollowClick = remember(selectIndex, userId, viewModel) {
                             { data ->
                                 when (selectIndex) {
                                     TAB_FOLLOWING -> {
-                                        when (isMyProfileView) {
-                                            true -> {
-                                                unFollowDialogShow = true
-                                                viewModel.setFollowUserId(data)
-                                            }
-
-                                            false -> {
-                                                if (data.isFollowing) viewModel.unFollowUser(data.memberId) else viewModel.followUser(
-                                                    data.memberId
-                                                )
-                                            }
+                                        if(userId == 0L){
+                                            unFollowDialogShow = true
+                                            viewModel.setFollowUserId(data)
+                                        }else{
+                                            if (data.isFollowing) viewModel.unFollowUser(data.memberId) else viewModel.followUser(
+                                                data.memberId
+                                            )
                                         }
                                     }
 
@@ -208,12 +228,12 @@ internal fun FollowerScreen(
                             onClick = remember(
                                 viewModel::unFollowUser,
                                 uiState.userId,
-                                isMyProfileView
+                                userId
                             ) {
                                 {
                                     viewModel.unFollowUser(
                                         userId = uiState.userId,
-                                        isMyProfile = isMyProfileView
+                                        isMyProfile = userId == 0L
                                     )
                                     unFollowDialogShow = false
                                 }
@@ -268,6 +288,7 @@ private fun ContentView(
     onChangeFollowClick: (FollowData) -> Unit,
     followerCnt: Int,
     followIngCnt: Int,
+    showProfileClick: (Pair<String, Long>) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -295,12 +316,14 @@ private fun ContentView(
                 data = follow,
                 selectIndex = selectIndex,
                 profileClick = onChangeFollowClick,
+                showProfileClick = showProfileClick
             )
 
             TAB_FOLLOWING -> FollowerView(
                 data = following,
                 selectIndex = selectIndex,
                 profileClick = onChangeFollowClick,
+                showProfileClick = showProfileClick
             )
         }
     }
@@ -311,6 +334,7 @@ private fun FollowerView(
     data: LazyPagingItems<FollowData>,
     selectIndex: Int,
     profileClick: (FollowData) -> Unit,
+    showProfileClick : (Pair<String, Long>) -> Unit
 ) {
     when (val refreshState = data.loadState.refresh) {
         is LoadState.Error -> {
@@ -360,7 +384,8 @@ private fun FollowerView(
                                         profileClick(item)
                                     },
                                     isGrayColor = item.isFollowing,
-                                    isButtonShow = !item.isRequester
+                                    isButtonShow = !item.isRequester,
+                                    onShowProfile = showProfileClick
                                 )
                             }
                         }

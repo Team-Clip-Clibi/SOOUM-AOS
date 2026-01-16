@@ -79,8 +79,8 @@ internal fun OtherProfile(
     userId: Long,
     onLogOut: () -> Unit,
     onBackPress: () -> Unit,
-    onClickFollower: () -> Unit,
-    onClickFollowing: () -> Unit,
+    onClickFollower: (Long) -> Unit,
+    onClickFollowing: (Long) -> Unit,
     onClickCard: (CardDetailArgs) -> Unit,
 ) {
     if (userId == 0L) {
@@ -179,8 +179,12 @@ internal fun OtherProfile(
                     ProfileContentView(
                         profile = profileState.data,
                         cardData = feedCardData,
-                        onFollowerClick = onClickFollower,
-                        onFollowingClick = onClickFollowing,
+                        onFollowerClick = {
+                            onClickFollower(userId)
+                        },
+                        onFollowingClick = {
+                            onClickFollowing(userId)
+                        },
                         onClickFollow = remember(viewModel) {
                             { userId: Long ->
                                 val currentState = viewModel.uiState.value.profileInfo
