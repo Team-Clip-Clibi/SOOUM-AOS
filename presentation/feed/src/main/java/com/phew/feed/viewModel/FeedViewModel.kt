@@ -299,19 +299,20 @@ class FeedViewModel @Inject constructor(
                 )) {
                     is DataResult.Success -> {
                         val newFeedCards = mapLatestToFeedCards(result.data)
-                        val isDuplicate =
-                            newFeedCards.isNotEmpty() && newFeedCards == existingCards.takeLast(
-                                newFeedCards.size
-                            )
-                        SooumLog.d(
-                            TAG,
-                            "Latest feed duplicate check: $isDuplicate (new=${newFeedCards.size}, existing=${existingCards.size})"
-                        )
+                        // 중복 제거 강화: 기존 카드들과 새로운 카드들 합친 후 cardId로 distinct 처리
+                        val combined = (existingCards + newFeedCards).distinctBy {
+                            when (it) {
+                                is FeedCardType.BoombType -> it.cardId
+                                is FeedCardType.AdminType -> it.cardId
+                                is FeedCardType.NormalType -> it.cardId
+                            }
+                        }
+
                         _uiState.update { state ->
                             state.copy(
                                 location = location,
                                 latestPagingState = FeedPagingState.Success(
-                                    feedCards = existingCards + newFeedCards,
+                                    feedCards = combined,
                                     hasNextPage = result.data.isNotEmpty(),
                                     lastId = result.data.lastOrNull()?.cardId?.toLongOrNull()
                                 ),
@@ -352,6 +353,12 @@ class FeedViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(popularPagingState = FeedPagingState.LoadingMore(existingCards))
                     }
+                } else {
+                    if (!_uiState.value.refresh) {
+                        _uiState.update {
+                            it.copy(popularPagingState = FeedPagingState.Loading)
+                        }
+                    }
                 }
 
                 val location = getLocationSafely()
@@ -367,11 +374,20 @@ class FeedViewModel @Inject constructor(
                         val existingCards = if (isInitial) emptyList() else {
                             (currentState as? FeedPagingState.Success)?.feedCards ?: emptyList()
                         }
+                        
+                        val combined = (existingCards + newFeedCards).distinctBy { 
+                            when (it) {
+                                is FeedCardType.BoombType -> it.cardId
+                                is FeedCardType.AdminType -> it.cardId
+                                is FeedCardType.NormalType -> it.cardId
+                            }
+                        }
+                        
                         _uiState.update { state ->
                             state.copy(
                                 location = location,
                                 popularPagingState = FeedPagingState.Success(
-                                    feedCards = existingCards + newFeedCards,
+                                    feedCards = combined,
                                     hasNextPage = false, // Popular는 페이징이 없음
                                     lastId = null // Popular는 페이징이 없으므로 null
                                 ),
@@ -396,7 +412,8 @@ class FeedViewModel @Inject constructor(
                     it.copy(
                         popularPagingState = FeedPagingState.Error(
                             e.message ?: "인기 피드 로딩 실패"
-                        )
+                        ),
+                        refresh = false //요기 수정
                     )
                 }
             }
@@ -410,8 +427,11 @@ class FeedViewModel @Inject constructor(
 
             try {
                 if (!isInitial) {
-                    val existingCards =
-                        (currentState as? FeedPagingState.Success)?.feedCards ?: emptyList()
+                    val currentStateIsSuccess = currentState is FeedPagingState.Success
+                    if (!currentStateIsSuccess || !(currentState as FeedPagingState.Success).hasNextPage) {
+                        return@launch
+                    }
+                    val existingCards = currentState.feedCards
                     _uiState.update { state ->
                         val newStates = state.distancePagingStates.toMutableMap()
                         newStates[currentDistanceTab] =
@@ -419,10 +439,13 @@ class FeedViewModel @Inject constructor(
                         state.copy(distancePagingStates = newStates)
                     }
                 } else {
-                    _uiState.update { state ->
-                        val newStates = state.distancePagingStates.toMutableMap()
-                        newStates[currentDistanceTab] = FeedPagingState.Loading
-                        state.copy(distancePagingStates = newStates)
+                    // Refresh 중이 아닐 때만 Loading 상태로 변경하여 화면 깜빡임 방지
+                    if (!_uiState.value.refresh) {
+                        _uiState.update { state ->
+                            val newStates = state.distancePagingStates.toMutableMap()
+                            newStates[currentDistanceTab] = FeedPagingState.Loading
+                            state.copy(distancePagingStates = newStates)
+                        }
                     }
                 }
 
@@ -432,8 +455,8 @@ class FeedViewModel @Inject constructor(
                 }
 
                 when (val result = cardFeedRepository.requestFeedDistance(
-                    latitude = location.latitude,
-                    longitude = location.longitude,
+                    latitude = location.latitude.takeIf { it != 0.0 },
+                    longitude = location.longitude.takeIf { it != 0.0 },
                     distance = currentDistanceTab.value,
                     lastId = lastId
                 )) {
@@ -451,11 +474,21 @@ class FeedViewModel @Inject constructor(
                         val existingCards = if (isInitial) emptyList() else {
                             (currentState as? FeedPagingState.Success)?.feedCards ?: emptyList()
                         }
+                        
+                        val combined = (existingCards + newFeedCard).distinctBy { 
+                            when (it) {
+                                is FeedCardType.BoombType -> it.cardId
+                                is FeedCardType.AdminType -> it.cardId
+                                is FeedCardType.NormalType -> it.cardId
+                            }
+                        }
+                        
                         _uiState.update { state ->
                             val newStates = state.distancePagingStates.toMutableMap()
+                            val hasNewItems = combined.size > existingCards.size
                             newStates[currentDistanceTab] = FeedPagingState.Success(
-                                feedCards = existingCards + newFeedCard,
-                                hasNextPage = result.data.isNotEmpty(),
+                                feedCards = combined,
+                                hasNextPage = result.data.isNotEmpty() && hasNewItems,
                                 lastId = result.data.lastOrNull()?.cardId?.toLongOrNull()
                             )
                             state.copy(
@@ -471,7 +504,7 @@ class FeedViewModel @Inject constructor(
                     val newStates = state.distancePagingStates.toMutableMap()
                     newStates[currentDistanceTab] =
                         FeedPagingState.Error(message = e.message ?: "거리 피드 로딩 실패")
-                    state.copy(distancePagingStates = newStates)
+                    state.copy(distancePagingStates = newStates, refresh = false) //요기 수정
                 }
             }
         }
