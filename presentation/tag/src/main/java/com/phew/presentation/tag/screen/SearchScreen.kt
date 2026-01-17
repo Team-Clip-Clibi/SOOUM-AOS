@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberOverscrollEffect
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
@@ -67,6 +68,8 @@ import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
 import com.phew.core_design.Warning
 import com.phew.core_design.component.card.CommentBodyContent
+import com.phew.core_design.component.refresh.RefreshBox
+import com.phew.core_design.component.refresh.pullToRefreshOffset
 import com.phew.core_design.component.toast.SooumToast
 import com.phew.domain.dto.TagCardContent
 import com.phew.domain.model.TagInfo
@@ -78,6 +81,7 @@ import com.phew.presentation.tag.viewmodel.UiState
 import com.phew.core_design.R as DesignR
 
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 internal fun SearchRoute(
     modifier: Modifier = Modifier,
     viewModel: TagViewModel = hiltViewModel(),
@@ -193,6 +197,10 @@ internal fun SearchRoute(
         }
     }
 
+    // Refresh Logic
+    val isPagingRefreshing = cardDataItems.loadState.refresh is LoadState.Loading
+    val isRefreshing = uiState.isRefreshing || (uiState.searchPerformed && isPagingRefreshing)
+
     SearchScreen(
         modifier = modifier,
         searchValue = uiState.searchValue,
@@ -208,6 +216,14 @@ internal fun SearchRoute(
         onInputFieldRemoveClick = viewModel::onDeleteClick,
         onItemClick = { tag -> viewModel.performSearch(tag, isRelatedTag = true) },
         onSearch = { viewModel.performSearch(uiState.searchValue, isRelatedTag = false) },
+        onRefresh = {
+            if (uiState.searchPerformed) {
+                cardDataItems.refresh()
+            } else {
+                viewModel.refresh()
+            }
+        },
+        isRefreshing = isRefreshing,
         onClickCard = viewModel::navigateToDetail,
         onBackPressed = onBackPressed,
         isFavorite = uiState.currentTagFavoriteState,
@@ -217,7 +233,9 @@ internal fun SearchRoute(
     )
 }
 
+
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 private fun SearchScreen(
     modifier: Modifier,
     searchValue: String,
@@ -233,6 +251,8 @@ private fun SearchScreen(
     onInputFieldRemoveClick: () -> Unit,
     onItemClick: (String) -> Unit,
     onSearch: () -> Unit,
+    onRefresh: () -> Unit,
+    isRefreshing: Boolean,
     onClickCard: (Long) -> Unit,
     onBackPressed: () -> Unit,
     isFavorite: Boolean,
@@ -244,6 +264,7 @@ private fun SearchScreen(
     val focusManager = LocalFocusManager.current
     var isSearchFieldFocused by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
+    val refreshState = androidx.compose.material3.pulltorefresh.rememberPullToRefreshState()
 
     // Auto focus on search field when autoFocus is true
     LaunchedEffect(autoFocus) {
@@ -326,90 +347,103 @@ private fun SearchScreen(
                     })
                 }
         ) {
-            Spacer(Modifier.padding(top = 8.dp))
+            RefreshBox(
+                modifier = Modifier.fillMaxSize(),
+                isRefresh = isRefreshing,
+                onRefresh = onRefresh,
+                state = refreshState,
+                paddingValues = PaddingValues(0.dp)
+            ) {
+             Column(modifier = Modifier
+                .fillMaxSize()
+                .pullToRefreshOffset(refreshState, 0.dp)
+             ) {
+                Spacer(Modifier.padding(top = 8.dp))
 
-            when {
-                // 1. 로딩 중
-                isSearchLoading || (searchPerformed && isPagingLoading) -> {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        LoadingAnimation.LoadingView()
+                when {
+                    // 1. 로딩 중
+                    (isSearchLoading || (searchPerformed && isPagingLoading)) && !isRefreshing -> {
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            LoadingAnimation.LoadingView()
+                        }
                     }
-                }
-                // 2. 검색 수행 후 카드가 있음
-                searchPerformed && cardDataItems.itemCount > 0 -> {
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(3),
-                        state = gridState,
-                        modifier = modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(
-                            bottom = innerPadding.calculateBottomPadding() + 63.dp,
-                            start = 0.dp,
-                            end = 0.dp
-                        ),
-                        verticalArrangement = Arrangement.spacedBy(1.dp),
-                        horizontalArrangement = Arrangement.spacedBy(1.dp)
-                    ) {
-                        items(
-                            count = cardDataItems.itemCount,
-                            key = cardDataItems.itemKey { data -> data.cardId }
-                        ) { index ->
-                            val item = cardDataItems[index]
-                            if (item != null) {
-                                CommentBodyContent(
-                                    contentText = item.cardContent,
-                                    imgUrl = item.cardImgUrl,
-                                    fontFamily = CustomFont.findFontValueByServerName(item.font).data.previewTypeface,
-                                    textMaxLines = 4,
-                                    cardId = item.cardId,
-                                    onClick = { cardId ->
+                    // 2. 검색 수행 후 카드가 있음
+                    searchPerformed && cardDataItems.itemCount > 0 -> {
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(3),
+                            state = gridState,
+                            modifier = modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(
+                                bottom = innerPadding.calculateBottomPadding() + 63.dp,
+                                start = 0.dp,
+                                end = 0.dp
+                            ),
+                            verticalArrangement = Arrangement.spacedBy(1.dp),
+                            horizontalArrangement = Arrangement.spacedBy(1.dp)
+                        ) {
+                            items(
+                                count = cardDataItems.itemCount,
+                                key = cardDataItems.itemKey { data -> data.cardId }
+                            ) { index ->
+                                val item = cardDataItems[index]
+                                if (item != null) {
+                                    CommentBodyContent(
+                                        contentText = item.cardContent,
+                                        imgUrl = item.cardImgUrl,
+                                        fontFamily = CustomFont.findFontValueByServerName(item.font).data.previewTypeface,
+                                        textMaxLines = 4,
+                                        cardId = item.cardId,
+                                        onClick = { cardId ->
+                                            focusManager.clearFocus()
+                                            isSearchFieldFocused = false
+                                            onClickCard(cardId)
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    // 3. 검색 수행 후 카드가 없음 (더 정확한 LoadState 확인)
+                    searchPerformed && searchDataLoaded && !isSearchLoading && !isPagingLoading && cardDataItems.itemCount == 0 -> {
+                        // 추천 태그 클릭으로 검색한 경우 vs 직접 입력한 검색어로 검색한 경우 구분
+                        if (isRelatedTagSearch) {
+                            EmptyCardList() // 추천 태그를 클릭했지만 해당 태그에 카드가 없는 경우
+                        } else {
+                            EmptySearchCard() // 검색어를 입력하고 완료를 눌렀지만 관련 검색 결과가 없는 경우
+                        }
+                    }
+                    // 4. 추천 태그가 있음 (아직 검색 수행 안함)
+                    recommendedTags.isNotEmpty() -> {
+                        LazyColumn(
+                            state = listState,
+                            modifier = Modifier.fillMaxHeight()
+                        ) {
+                            itemsIndexed(
+                                items = recommendedTags,
+                                key = { _, item -> item.id }
+                            ) { _, item ->
+                                SearchListItem(
+                                    title = item.name,
+                                    content = "${item.usageCnt}",
+                                    onClick = {
                                         focusManager.clearFocus()
                                         isSearchFieldFocused = false
-                                        onClickCard(cardId)
+                                        onItemClick(item.name)
                                     }
                                 )
                             }
                         }
                     }
-                }
-                // 3. 검색 수행 후 카드가 없음 (더 정확한 LoadState 확인)
-                searchPerformed && searchDataLoaded && !isSearchLoading && !isPagingLoading && cardDataItems.itemCount == 0 -> {
-                    // 추천 태그 클릭으로 검색한 경우 vs 직접 입력한 검색어로 검색한 경우 구분
-                    if (isRelatedTagSearch) {
-                        EmptyCardList() // 추천 태그를 클릭했지만 해당 태그에 카드가 없는 경우
-                    } else {
-                        EmptySearchCard() // 검색어를 입력하고 완료를 눌렀지만 관련 검색 결과가 없는 경우
+                    // 5. 검색어는 있지만 추천 태그가 없고 검색도 안함
+                    searchValue.isNotBlank() && recommendedTags.isEmpty() && !searchPerformed && !isSearchFieldFocused -> {
+                        EmptySearchCard()
                     }
                 }
-                // 4. 추천 태그가 있음 (아직 검색 수행 안함)
-                recommendedTags.isNotEmpty() -> {
-                    LazyColumn(
-                        state = listState,
-                        modifier = Modifier.fillMaxHeight()
-                    ) {
-                        itemsIndexed(
-                            items = recommendedTags,
-                            key = { _, item -> item.id }
-                        ) { _, item ->
-                            SearchListItem(
-                                title = item.name,
-                                content = "${item.usageCnt}",
-                                onClick = {
-                                    focusManager.clearFocus()
-                                    isSearchFieldFocused = false
-                                    onItemClick(item.name)
-                                }
-                            )
-                        }
-                    }
-                }
-                // 5. 검색어는 있지만 추천 태그가 없고 검색도 안함
-                searchValue.isNotBlank() && recommendedTags.isEmpty() && !searchPerformed && !isSearchFieldFocused -> {
-                    EmptySearchCard()
-                }
+             }
             }
         }
     }

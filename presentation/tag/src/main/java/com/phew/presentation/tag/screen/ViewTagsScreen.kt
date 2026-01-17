@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -61,6 +62,7 @@ import com.phew.presentation.tag.R
 import com.phew.presentation.tag.viewmodel.TagUiEffect
 import com.phew.presentation.tag.viewmodel.TagViewModel
 import com.phew.presentation.tag.viewmodel.UiState
+import com.phew.core_design.component.refresh.pullToRefreshOffset
 import com.phew.core_design.R as DesignR
 
 
@@ -250,41 +252,43 @@ private fun ViewTagsScreen(
             state = refreshState,
             paddingValues = innerPadding
         ) {
-            // viewTagsDataLoaded: 데이터 로드 시도 여부 (초기 진입 시 깜빡임 방지)
-            // itemCount == 0: 데이터가 없음
-            // loadState.refresh !is LoadState.Loading: 로딩 중이 아님 (NotLoading 또는 Error)
-            if (viewTagsDataLoaded && cardDataItems.loadState.refresh !is LoadState.Loading && cardDataItems.itemCount == 0) {
-                EmptyViewTags()
-            } else {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(3),
-                    state = gridState,
-                    contentPadding = PaddingValues(
-                        top = innerPadding.calculateTopPadding(),
-                        start = 0.dp,
-                        end = 0.dp,
-                        bottom = innerPadding.calculateBottomPadding()
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(1.dp),
-                    horizontalArrangement = Arrangement.spacedBy(1.dp),
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(NeutralColor.WHITE)
-                ) {
-                    items(
-                        count = cardDataItems.itemCount,
-                        key = cardDataItems.itemKey { data -> data.cardId }
-                    ) { index ->
-                        val item = cardDataItems[index]
-                        if (item != null) {
-                            CommentBodyContent(
-                                contentText = item.cardContent,
-                                imgUrl = item.cardImgUrl,
-                                fontFamily = CustomFont.findFontValueByServerName(item.font).data.previewTypeface,
-                                textMaxLines = 4,
-                                cardId = item.cardId,
-                                onClick = onClickCard
-                            )
+            Box(modifier = Modifier.pullToRefreshOffset(refreshState, 0.dp)) {
+                // viewTagsDataLoaded: 데이터 로드 시도 여부 (초기 진입 시 깜빡임 방지)
+                // itemCount == 0: 데이터가 없음
+                // loadState.refresh !is LoadState.Loading: 로딩 중이 아님 (NotLoading 또는 Error)
+                if (viewTagsDataLoaded && cardDataItems.loadState.refresh !is LoadState.Loading && cardDataItems.itemCount == 0) {
+                    EmptyViewTags()
+                } else {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(3),
+                        state = gridState,
+                        contentPadding = PaddingValues(
+                            top = innerPadding.calculateTopPadding(),
+                            start = 0.dp,
+                            end = 0.dp,
+                            bottom = innerPadding.calculateBottomPadding()
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(1.dp),
+                        horizontalArrangement = Arrangement.spacedBy(1.dp),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(NeutralColor.WHITE)
+                    ) {
+                        items(
+                            count = cardDataItems.itemCount,
+                            key = cardDataItems.itemKey { data -> data.cardId }
+                        ) { index ->
+                            val item = cardDataItems[index]
+                            if (item != null) {
+                                CommentBodyContent(
+                                    contentText = item.cardContent,
+                                    imgUrl = item.cardImgUrl,
+                                    fontFamily = CustomFont.findFontValueByServerName(item.font).data.previewTypeface,
+                                    textMaxLines = 4,
+                                    cardId = item.cardId,
+                                    onClick = onClickCard
+                                )
+                            }
                         }
                     }
                 }

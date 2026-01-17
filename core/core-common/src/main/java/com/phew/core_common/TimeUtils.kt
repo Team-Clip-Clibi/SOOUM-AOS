@@ -111,6 +111,27 @@ object TimeUtils {
      */
     private val MM_DD_FORMATTER = DateTimeFormatter.ofPattern("MM월 d일")
 
+    /**
+     * ISO 8601 yyyy.MM.dd 형식 출력
+     */
+    private val DOT_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy.MM.dd")
+
+    fun formatToDotDate(createAt: String): String {
+        if (createAt.trim().isEmpty()) return ""
+        return try {
+            LocalDate.parse(createAt).format(DOT_DATE_FORMATTER)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // 파싱 실패시 ISO 8601 원본에서 날짜 부분만 추출하여 포맷팅 시도
+            try {
+                LocalDateTime.parse(createAt, DateTimeFormatter.ISO_DATE_TIME).format(DOT_DATE_FORMATTER)
+            } catch (e2: Exception) {
+                e2.printStackTrace()
+                ""
+            }
+        }
+    }
+
     fun formatToDate(createAt: String): String {
         if (createAt.trim().isEmpty()) return ""
         return try {
