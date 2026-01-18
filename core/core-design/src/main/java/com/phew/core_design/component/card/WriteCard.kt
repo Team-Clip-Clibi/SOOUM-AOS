@@ -394,8 +394,9 @@ private fun WriteCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(60.dp)
-                            .align(Alignment.BottomCenter),
-                        contentAlignment = Alignment.Center
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 16.dp),
+                        contentAlignment = Alignment.BottomCenter
                     ) {
                         TagRow(
                             tags = data.tags,
@@ -526,8 +527,9 @@ private fun ReplyCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(60.dp)
-                            .align(Alignment.BottomCenter),
-                        contentAlignment = Alignment.Center
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 16.dp),
+                        contentAlignment = Alignment.BottomCenter
                     ) {
                         TagRow(
                             tags = data.tags,
