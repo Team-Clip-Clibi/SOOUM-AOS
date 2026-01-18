@@ -253,7 +253,7 @@ internal fun TagRow(
             .fillMaxWidth()
             .horizontalScroll(scrollState)
             .padding(start = startPadding, end = endPadding),
-        horizontalArrangement = Arrangement.spacedBy(3.dp)
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         tags.forEach { tag ->
             Tag(
@@ -388,8 +388,9 @@ private fun TagAddNew(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        onClick = onClick,
-        modifier = modifier.height(TagDesignTokens.TagHeight),
+        modifier = modifier
+            .height(TagDesignTokens.TagHeight)
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(TagDesignTokens.TagRadius),
         color = TagDesignTokens.BackgroundColor
     ) {
@@ -506,21 +507,18 @@ private fun TagInputField(
             }
 
             if (isCompleted || (text.isNotEmpty() && !isFocused)) {
-                IconButton(
-                    onClick = {
-                        isCompleted = false
-                        onTextChange("")
-                        onRemove()
-                    },
-                    modifier = Modifier.size(16.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_delete),
-                        contentDescription = "태그 제거",
-                        tint = TagDesignTokens.IconTint,
-                        modifier = Modifier.size(12.dp)
-                    )
-                }
+                Icon(
+                    painter = painterResource(R.drawable.ic_delete),
+                    contentDescription = "태그 제거",
+                    tint = TagDesignTokens.IconTint,
+                    modifier = Modifier
+                        .size(16.dp)
+                        .clickable {
+                            isCompleted = false
+                            onTextChange("")
+                            onRemove()
+                        }
+                )
             }
         }
     }
@@ -581,8 +579,9 @@ private fun TagDefault(
     fontFamily: FontFamily = FontFamily.Default
 ) {
     Surface(
-        onClick = onClick,
-        modifier = modifier.height(TagDesignTokens.TagHeight),
+        modifier = modifier
+            .height(TagDesignTokens.TagHeight)
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(TagDesignTokens.TagRadius),
         color = TagDesignTokens.BackgroundColor
     ) {
@@ -610,17 +609,14 @@ private fun TagDefault(
             )
 
             if (showRemoveIcon) {
-                IconButton(
-                    onClick = onRemove,
-                    modifier = Modifier.size(16.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_delete),
-                        contentDescription = "태그 제거",
-                        tint = TagDesignTokens.IconTint,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
+                Icon(
+                    painter = painterResource(R.drawable.ic_delete),
+                    contentDescription = "태그 제거",
+                    tint = TagDesignTokens.IconTint,
+                    modifier = Modifier
+                        .size(16.dp)
+                        .clickable { onRemove() }
+                )
             }
         }
     }
@@ -636,8 +632,9 @@ private fun TagNumber(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        onClick = onClick,
-        modifier = modifier.height(TagDesignTokens.TagHeight),
+        modifier = modifier
+            .height(TagDesignTokens.TagHeight)
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(TagDesignTokens.TagRadius),
         color = TagDesignTokens.BackgroundNumberColor
     ) {
@@ -694,8 +691,9 @@ fun TagColorful(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        onClick = onClick,
-        modifier = modifier.height(TagDesignTokens.TagColorfulHeight),
+        modifier = modifier
+            .height(TagDesignTokens.TagColorfulHeight)
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(TagDesignTokens.TagColorfulRadius),
         color = TagDesignTokens.ColorfulBackground
     ) {
