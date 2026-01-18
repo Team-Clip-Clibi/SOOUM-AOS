@@ -253,7 +253,7 @@ internal fun TagRow(
             .fillMaxWidth()
             .horizontalScroll(scrollState)
             .padding(start = startPadding, end = endPadding),
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
+        horizontalArrangement = Arrangement.spacedBy(3.dp)
     ) {
         tags.forEach { tag ->
             Tag(
