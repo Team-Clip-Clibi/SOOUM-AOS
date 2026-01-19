@@ -25,7 +25,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.layout.size
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -44,6 +48,12 @@ import com.phew.presentation.settings.R
 import com.phew.presentation.settings.viewmodel.NoticeNavigationEvent
 import com.phew.presentation.settings.viewmodel.NoticeState
 import com.phew.presentation.settings.viewmodel.NoticeViewModel
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieComposition
+import com.phew.core_common.TimeUtils
 import com.phew.core_design.R as DesignR
 
 @Composable
@@ -107,9 +117,22 @@ private fun NoticeScreen(
         }
     ) { paddingValues ->
         val refreshState = rememberPullToRefreshState()
+        val isRefreshing = noticePagingItems.loadState.refresh is LoadState.Loading
+
+        val composition by rememberLottieComposition(
+            LottieCompositionSpec.RawRes(DesignR.raw.ic_refresh)
+        )
+        val progress by animateLottieCompositionAsState(
+            composition = composition,
+            iterations = LottieConstants.IterateForever,
+            isPlaying = isRefreshing
+        )
         
+        val density = LocalDensity.current
+        val refreshingOffset = 56.dp
+
         PullToRefreshBox(
-            isRefreshing = noticePagingItems.loadState.refresh is LoadState.Loading,
+            isRefreshing = isRefreshing,
             onRefresh = {
                 noticePagingItems.refresh()
                 onRefresh()
@@ -118,21 +141,50 @@ private fun NoticeScreen(
             modifier = modifier
                 .fillMaxSize()
                 .background(NeutralColor.WHITE)
-                .padding(paddingValues)
+                .padding(paddingValues),
+            indicator = {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    val distanceFraction = refreshState.distanceFraction
+                    val lottieProgress = if (isRefreshing) progress else distanceFraction
+                    LottieAnimation(
+                        composition = composition,
+                        progress = { lottieProgress },
+                        modifier = Modifier
+                            .size(44.dp)
+                            .graphicsLayer {
+                                alpha = if (isRefreshing || distanceFraction > 0f) 1f else 0f
+                            }
+                    )
+                }
+            }
         ) {
             if (uiState.isLoading && noticePagingItems.itemCount == 0) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(
-                        color = NeutralColor.GRAY_500
+                    LottieAnimation(
+                        composition = composition,
+                        progress = { progress },
+                        modifier = Modifier.size(44.dp)
                     )
                 }
             } else {
                 LazyColumn(
                     state = listState,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer {
+                            val distanceFraction = refreshState.distanceFraction
+                            translationY = if (isRefreshing || distanceFraction > 0f) {
+                                distanceFraction * with(density) { refreshingOffset.toPx() }
+                            } else {
+                                0f
+                            }
+                        }
                 ) {
                     items(
                         count = noticePagingItems.itemCount,
@@ -166,8 +218,10 @@ private fun NoticeScreen(
                                         .padding(16.dp),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    CircularProgressIndicator(
-                                        color = NeutralColor.GRAY_500
+                                    LottieAnimation(
+                                        composition = composition,
+                                        progress = { progress },
+                                        modifier = Modifier.size(44.dp)
                                     )
                                 }
                             }
@@ -217,7 +271,7 @@ private fun NoticeItem(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = notice.viewTime,
+                text = TimeUtils.formatToDotDate(notice.createdAt),
                 style = TextComponent.CAPTION_1_SB_12,
                 color = NeutralColor.GRAY_400
             )

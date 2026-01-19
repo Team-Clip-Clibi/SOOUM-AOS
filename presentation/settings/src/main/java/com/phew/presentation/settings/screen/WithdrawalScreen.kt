@@ -132,7 +132,7 @@ private fun WithdrawalScreen(
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 16.dp)
                 ) {
-                    LargeButton.NoIconSecondary(
+                    LargeButton.NoIconPrimary(
                         buttonText = stringResource(R.string.withdrawal_button),
                         isEnable = uiState.isWithdrawal && !uiState.isLoading,
                         onClick = onWithdrawal
