@@ -196,11 +196,6 @@ internal fun OtherProfile(
                                         }
 
                                         currentState.data.isAlreadyFollowing -> {
-//                                            viewModel.unFollowUser(
-//                                                userId = userId,
-//                                                isRefresh = true,
-//                                                isMyProfile = false
-//                                            )
                                             showUnFollowDialog = true
                                         }
 
