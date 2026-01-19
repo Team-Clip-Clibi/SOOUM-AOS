@@ -227,7 +227,6 @@ internal fun OtherProfile(
                                 top = paddingValues.calculateTopPadding(),
                                 bottom = paddingValues.calculateBottomPadding()
                             ),
-                        buttonIsEnable = uiState.event !is UiState.Loading
                     )
                     if (showBlockDialog) {
                         DialogComponent.DefaultButtonTwo(
@@ -324,13 +323,11 @@ private fun ProfileContentView(
     onLogout: () -> Unit,
     snackBarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
-    buttonIsEnable: Boolean,
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(1.dp),
-        verticalArrangement = Arrangement.spacedBy(1.dp),
     ) {
         item(span = { GridItemSpan(maxLineSpan) }) {
             ProfileView(
@@ -338,7 +335,6 @@ private fun ProfileContentView(
                 onFollowerClick = onFollowerClick,
                 onFollowingClick = onFollowingClick,
                 onClickFollow = onClickFollow,
-                buttonIsEnable = buttonIsEnable
             )
         }
         when (cardData.loadState.refresh) {
@@ -437,7 +433,6 @@ private fun ProfileView(
     onFollowerClick: () -> Unit,
     onFollowingClick: () -> Unit,
     onClickFollow: (userId: Long) -> Unit,
-    buttonIsEnable: Boolean,
 ) {
     Column(
         modifier = Modifier
@@ -454,7 +449,10 @@ private fun ProfileView(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier.padding(bottom = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
                         text = stringResource(R.string.profile_txt_visit_total),
                         style = TextComponent.CAPTION_2_M_12,
@@ -574,7 +572,6 @@ private fun ProfileView(
             },
             textColor = if(profile.isAlreadyFollowing) NeutralColor.BLACK else NeutralColor.WHITE,
             baseColor =if(profile.isAlreadyFollowing) NeutralColor.GRAY_100 else NeutralColor.BLACK,
-            isEnable = buttonIsEnable
         )
     }
 }
