@@ -160,13 +160,15 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun otherProfile(profileId: Long) {
+    fun otherProfile(profileId: Long , isShowLoading : Boolean = true) {
         viewModelScope.launch(Dispatchers.IO) {
-            _uiState.update { state ->
-                state.copy(
-                    profileInfo = UiState.Loading,
-                    otherProfileId = 0L
-                )
+            if(isShowLoading){
+                _uiState.update { state ->
+                    state.copy(
+                        profileInfo = UiState.Loading,
+                        otherProfileId = 0L
+                    )
+                }
             }
             when (val request = getOtherProfile(GetOtherProfile.Param(profileId = profileId))) {
                 is DomainResult.Failure -> {
@@ -246,7 +248,10 @@ class ProfileViewModel @Inject constructor(
                 is DomainResult.Success -> {
                     _uiState.update { state -> state.copy(event = UiState.Success(Unit)) }
                     if (!isRefresh) return@launch
-                    if (isMyProfile) refreshMyProfile() else otherProfile(_uiState.value.otherProfileId)
+                    if (isMyProfile) refreshMyProfile() else otherProfile(
+                        _uiState.value.otherProfileId,
+                        isShowLoading = false
+                    )
                 }
             }
         }
@@ -263,7 +268,10 @@ class ProfileViewModel @Inject constructor(
                 is DomainResult.Success -> {
                     _uiState.update { state -> state.copy(event = UiState.Success(Unit)) }
                     if (!isRefresh) return@launch
-                    if (isMyProfile) refreshMyProfile() else otherProfile(_uiState.value.otherProfileId)
+                    if (isMyProfile) refreshMyProfile() else otherProfile(
+                        _uiState.value.otherProfileId,
+                        isShowLoading = false
+                    )
                 }
             }
         }
