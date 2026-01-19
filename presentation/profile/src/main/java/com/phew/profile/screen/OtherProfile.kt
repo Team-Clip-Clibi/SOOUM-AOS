@@ -331,6 +331,7 @@ private fun ProfileContentView(
         columns = GridCells.Fixed(3),
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(1.dp),
+        verticalArrangement = Arrangement.spacedBy(1.dp),
     ) {
         item(span = { GridItemSpan(maxLineSpan) }) {
             ProfileView(
