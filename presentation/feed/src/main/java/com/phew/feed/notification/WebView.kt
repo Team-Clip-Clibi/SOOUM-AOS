@@ -16,18 +16,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.phew.core_design.LoadingAnimation
-import com.phew.feed.viewModel.FeedViewModel
 import android.content.Intent
 import androidx.compose.runtime.mutableStateOf
-import androidx.core.net.toUri
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 
 @Composable
-fun WebView(url: String, viewModel: FeedViewModel, onBack: () -> Unit) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+fun WebView(url: String, onBack: () -> Unit) {
     var isLoading by remember { mutableStateOf(true) }
     BackHandler(enabled = true) {
         onBack()
@@ -48,6 +44,7 @@ fun WebView(url: String, viewModel: FeedViewModel, onBack: () -> Unit) {
                             "Mozilla/5.0 (Linux; Android 12; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36"
                         allowFileAccess = false
                         allowContentAccess = false
+                        userAgentString = userAgentString
                     }
                     webViewClient = object : WebViewClient() {
                         override fun shouldOverrideUrlLoading(
@@ -55,14 +52,22 @@ fun WebView(url: String, viewModel: FeedViewModel, onBack: () -> Unit) {
                             request: WebResourceRequest?,
                         ): Boolean {
                             val requestUrl = request?.url?.toString() ?: return false
-                            if (requestUrl.contains("instagram.com")) {
-                                return try {
-                                    val intent = Intent(Intent.ACTION_VIEW, requestUrl.toUri())
-                                    view?.context?.startActivity(intent)
-                                    true
+                            if (requestUrl.startsWith("intent:")) {
+                                try {
+                                    val intent =
+                                        Intent.parseUri(requestUrl, Intent.URI_INTENT_SCHEME)
+                                    if (intent.resolveActivity(context.packageManager) != null) {
+                                        context.startActivity(intent)
+                                        return true
+                                    }
+
+                                    val fallbackUrl = intent.getStringExtra("browser_fallback_url")
+                                    if (fallbackUrl != null) {
+                                        view?.loadUrl(fallbackUrl)
+                                        return true
+                                    }
                                 } catch (e: Exception) {
-                                    Log.e("WebView", "External link failed", e)
-                                    false
+                                    Log.e("WebView", "Intent Error", e)
                                 }
                             }
                             return false
