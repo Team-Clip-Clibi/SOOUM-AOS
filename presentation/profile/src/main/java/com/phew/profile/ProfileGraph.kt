@@ -18,6 +18,7 @@ import com.phew.core.ui.navigation.NavArgKey
 import com.phew.core.ui.navigation.asNavArg
 import com.phew.core.ui.navigation.createNavType
 import com.phew.core.ui.navigation.getNavArg
+import com.phew.core_common.USER_ID_EMPTY
 import com.phew.presentation.settings.navigation.navigateToSettingGraph
 import com.phew.presentation.settings.navigation.settingGraph
 import com.phew.profile.screen.EditProfileScreen
@@ -105,14 +106,14 @@ fun NavGraphBuilder.profileGraph(
                     navController.navigate(FOLLOW_ROUTE_DESTINATION_ROUTE.asNavArg(FollowArgs(
                         isMyProfile = true,
                         selectTab = TAB_FOLLOWING,
-                        userId = 0L
+                        userId = USER_ID_EMPTY
                     )))
                 },
                 onClickFollower = {
                     navController.navigate(FOLLOW_ROUTE_DESTINATION_ROUTE.asNavArg(FollowArgs(
                         isMyProfile = true,
                         selectTab = TAB_FOLLOWER,
-                        userId = 0L
+                        userId = USER_ID_EMPTY
                     )))
                 },
                 onEditProfileClick = {
@@ -138,7 +139,7 @@ fun NavGraphBuilder.profileGraph(
             val userId = navBackStackEntry.arguments?.getNavArg<ProfileArgs>()
             OtherProfile(
                 viewModel = viewModel,
-                userId = userId?.userId ?: 0,
+                userId = userId?.userId ?: USER_ID_EMPTY,
                 onLogOut = onLogOut,
                 onBackPress = onBackPressed,
                 onClickFollower = { id ->
