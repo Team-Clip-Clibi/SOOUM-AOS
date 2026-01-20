@@ -52,6 +52,7 @@ import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core_common.CardDetailTrace
 import com.phew.core_common.ERROR_LOGOUT
 import com.phew.core_common.ERROR_NETWORK
+import com.phew.core_common.USER_ID_EMPTY
 import com.phew.core_design.AppBar
 import com.phew.core_design.CustomFont
 import com.phew.core_design.Danger
@@ -83,7 +84,7 @@ internal fun OtherProfile(
     onClickFollowing: (Long) -> Unit,
     onClickCard: (CardDetailArgs) -> Unit,
 ) {
-    if (userId == 0L) {
+    if (userId == USER_ID_EMPTY) {
         ErrorView(errorMessage = "Fail to get Profile")
         return
     }
@@ -227,6 +228,7 @@ internal fun OtherProfile(
                                 top = paddingValues.calculateTopPadding(),
                                 bottom = paddingValues.calculateBottomPadding()
                             ),
+                        buttonIsEnable = uiState.event !is UiState.Loading
                     )
                     if (showBlockDialog) {
                         DialogComponent.DefaultButtonTwo(
@@ -323,6 +325,7 @@ private fun ProfileContentView(
     onLogout: () -> Unit,
     snackBarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
+    buttonIsEnable: Boolean,
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
@@ -335,6 +338,7 @@ private fun ProfileContentView(
                 onFollowerClick = onFollowerClick,
                 onFollowingClick = onFollowingClick,
                 onClickFollow = onClickFollow,
+                buttonIsEnable = buttonIsEnable
             )
         }
         when (cardData.loadState.refresh) {
@@ -433,6 +437,7 @@ private fun ProfileView(
     onFollowerClick: () -> Unit,
     onFollowingClick: () -> Unit,
     onClickFollow: (userId: Long) -> Unit,
+    buttonIsEnable: Boolean,
 ) {
     Column(
         modifier = Modifier
@@ -572,6 +577,8 @@ private fun ProfileView(
             },
             textColor = if(profile.isAlreadyFollowing) NeutralColor.BLACK else NeutralColor.WHITE,
             baseColor =if(profile.isAlreadyFollowing) NeutralColor.GRAY_100 else NeutralColor.BLACK,
+            disabledColor = if(profile.isAlreadyFollowing) NeutralColor.GRAY_100 else NeutralColor.BLACK,
+            isEnable = buttonIsEnable
         )
     }
 }

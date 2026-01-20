@@ -42,6 +42,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.phew.core_common.ERROR_LOGOUT
 import com.phew.core_common.ERROR_NETWORK
+import com.phew.core_common.USER_ID_EMPTY
 import com.phew.core_design.AppBar
 import com.phew.core_design.Danger
 import com.phew.core_design.DialogComponent
@@ -94,7 +95,7 @@ internal fun FollowerScreen(
         }
     }
     LaunchedEffect(userId) {
-        if (userId == 0L) {
+        if (userId == USER_ID_EMPTY) {
             viewModel.myProfile()
         } else {
             viewModel.otherProfile(userId)
@@ -168,7 +169,7 @@ internal fun FollowerScreen(
                     isRefresh = uiState.isRefreshing,
                     onRefresh = remember(viewModel, userId, result.data.userId) {
                         {
-                            if (userId == 0L) viewModel.refreshMyProfile() else viewModel.refreshOtherProfile(
+                            if (userId == USER_ID_EMPTY) viewModel.refreshMyProfile() else viewModel.refreshOtherProfile(
                                 result.data.userId
                             )
                         }
@@ -234,7 +235,7 @@ internal fun FollowerScreen(
                                 {
                                     viewModel.unFollowUser(
                                         userId = uiState.userId,
-                                        isMyProfile = userId == 0L
+                                        isMyProfile = userId == USER_ID_EMPTY
                                     )
                                     unFollowDialogShow = false
                                 }
