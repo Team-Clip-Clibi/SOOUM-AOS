@@ -95,7 +95,6 @@ internal fun OtherProfile(
     val context = LocalContext.current
     val refreshState = rememberPullToRefreshState()
     var showBlockDialog by remember { mutableStateOf(false) }
-    var showUnFollowDialog by remember { mutableStateOf(false) }
     HandelEventError(
         event = uiState.event,
         onLogout = onLogOut,
@@ -196,7 +195,11 @@ internal fun OtherProfile(
                                         }
 
                                         currentState.data.isAlreadyFollowing -> {
-                                            showUnFollowDialog = true
+                                            viewModel.unFollowUser(
+                                                userId = userId,
+                                                isRefresh = true,
+                                                isMyProfile = false
+                                            )
                                         }
 
                                         !currentState.data.isAlreadyFollowing -> {
@@ -244,24 +247,6 @@ internal fun OtherProfile(
                             rightButtonClickColor = Danger.D_RED,
                             startButtonTextColor = NeutralColor.BLACK,
                             endButtonTextColor = NeutralColor.WHITE
-                        )
-                    }
-                    if(showUnFollowDialog){
-                        UnFollowDialog(
-                            nickName = profileState.data.nickname,
-                            onClick = remember(viewModel) {
-                                {
-                                    viewModel.unFollowUser(
-                                        userId = userId,
-                                        isRefresh = true,
-                                        isMyProfile = false
-                                    )
-                                    showUnFollowDialog = false
-                                }
-                            },
-                            onDismiss = {
-                                showUnFollowDialog = false
-                            }
                         )
                     }
                 }
@@ -589,26 +574,6 @@ private fun ProfileView(
             baseColor =if(profile.isAlreadyFollowing) NeutralColor.GRAY_100 else NeutralColor.BLACK,
         )
     }
-}
-
-@Composable
-private fun UnFollowDialog(
-    onClick: () -> Unit,
-    onDismiss: () -> Unit,
-    nickName: String,
-) {
-    DialogComponent.NoDescriptionButtonTwo(
-        title = stringResource(
-            R.string.follow_dialog_un_follow_content,
-            nickName
-        ),
-        buttonTextStart = stringResource(com.phew.core_design.R.string.common_close),
-        buttonTextEnd = stringResource(com.phew.core_design.R.string.common_cancel_polite),
-        baseColor = Danger.M_RED,
-        blinkColor = Danger.D_RED,
-        onClick = onClick,
-        onDismiss = onDismiss
-    )
 }
 
 @Composable
