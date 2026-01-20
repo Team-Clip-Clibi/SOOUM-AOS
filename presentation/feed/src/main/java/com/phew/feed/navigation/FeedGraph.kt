@@ -124,14 +124,10 @@ fun NavGraphBuilder.feedGraph(
                 }
             )
         ) { nav ->
-            val navBackStackEntry =
-                remember(nav) { navController.getBackStackEntry(FEED_GRAPH) }
-            val feedViewModel: FeedViewModel = hiltViewModel(navBackStackEntry)
             val url = nav.arguments?.getString(WEB_VIEW_ARG_KEY) ?: ""
             val decodedUrl = java.net.URLDecoder.decode(url, StandardCharsets.UTF_8.toString())
             WebView(
                 url = decodedUrl,
-                viewModel = feedViewModel,
                 onBack = { navController.popBackStack() }
             )
         }

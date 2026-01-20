@@ -1,4 +1,6 @@
 package com.phew.core_common
+//userId
+const val USER_ID_EMPTY = 0L
 
 //domain error code
 const val ERROR_FAIL_JOB = "Fail job"

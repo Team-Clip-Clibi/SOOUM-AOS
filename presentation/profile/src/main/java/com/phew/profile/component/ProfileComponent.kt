@@ -36,14 +36,20 @@ object ProfileComponent {
     fun FollowView(
         data: FollowData,
         onClick: (Long) -> Unit,
+        onShowProfile: (Pair<String, Long>) -> Unit,
         isGrayColor: Boolean,
-        isButtonShow : Boolean
+        isButtonShow: Boolean,
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(60.dp)
                 .background(color = NeutralColor.WHITE)
+                .clickable(
+                    onClick = { onShowProfile(Pair(data.nickname, data.memberId)) },
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() }
+                )
                 .padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(space = 10.dp, Alignment.Start),
             verticalAlignment = Alignment.CenterVertically,
@@ -67,7 +73,7 @@ object ProfileComponent {
                 color = NeutralColor.GRAY_600,
                 modifier = Modifier.weight(1f)
             )
-            if(isButtonShow) {
+            if (isButtonShow) {
                 SmallButton.NoIconPrimary(
                     baseColor = if (isGrayColor) NeutralColor.GRAY_100 else NeutralColor.BLACK,
                     onClick = {

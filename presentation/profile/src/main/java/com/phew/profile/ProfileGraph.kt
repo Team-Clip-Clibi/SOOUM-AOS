@@ -18,6 +18,7 @@ import com.phew.core.ui.navigation.NavArgKey
 import com.phew.core.ui.navigation.asNavArg
 import com.phew.core.ui.navigation.createNavType
 import com.phew.core.ui.navigation.getNavArg
+import com.phew.core_common.USER_ID_EMPTY
 import com.phew.presentation.settings.navigation.navigateToSettingGraph
 import com.phew.presentation.settings.navigation.settingGraph
 import com.phew.profile.screen.EditProfileScreen
@@ -25,7 +26,7 @@ import com.phew.profile.screen.FollowerScreen
 import com.phew.profile.screen.OtherProfile
 
 private val PROFILE_ROUTE = HomeTabType.MY.route
-private const val PROFILE_ARGS_KEY = NavArgKey
+const val PROFILE_ARGS_KEY = NavArgKey
 
 private const val OTHER_PROFILE_ROUTE = "OTHER_PROFILE_ROUTE"
 private val OTHER_PROFILE_ROUTE_WITH_AGS = OTHER_PROFILE_ROUTE.asNavParam()
@@ -48,13 +49,15 @@ fun NavHostController.navigateToProfileGraphWithArgs(
 fun NavHostController.navigateToFollowScreen(
     isMyProfile: Boolean,
     selectTab: Int,
+    userId : Long? = null,
     navOptions: NavOptions? = null
 ) {
     this.navigate(
         FOLLOW_ROUTE_DESTINATION_ROUTE.asNavArg(
             FollowArgs(
                 isMyProfile = isMyProfile,
-                selectTab = selectTab
+                selectTab = selectTab,
+                userId = userId ?: 0L
             )
         ),
         navOptions
@@ -102,13 +105,15 @@ fun NavGraphBuilder.profileGraph(
                 onClickFollowing = {
                     navController.navigate(FOLLOW_ROUTE_DESTINATION_ROUTE.asNavArg(FollowArgs(
                         isMyProfile = true,
-                        selectTab = TAB_FOLLOWING
+                        selectTab = TAB_FOLLOWING,
+                        userId = USER_ID_EMPTY
                     )))
                 },
                 onClickFollower = {
                     navController.navigate(FOLLOW_ROUTE_DESTINATION_ROUTE.asNavArg(FollowArgs(
                         isMyProfile = true,
-                        selectTab = TAB_FOLLOWER
+                        selectTab = TAB_FOLLOWER,
+                        userId = USER_ID_EMPTY
                     )))
                 },
                 onEditProfileClick = {
@@ -134,19 +139,21 @@ fun NavGraphBuilder.profileGraph(
             val userId = navBackStackEntry.arguments?.getNavArg<ProfileArgs>()
             OtherProfile(
                 viewModel = viewModel,
-                userId = userId?.userId ?: 0,
+                userId = userId?.userId ?: USER_ID_EMPTY,
                 onLogOut = onLogOut,
                 onBackPress = onBackPressed,
-                onClickFollower = {
+                onClickFollower = { id ->
                     navController.navigate(FOLLOW_ROUTE_DESTINATION_ROUTE.asNavArg(FollowArgs(
                         isMyProfile = false,
-                        selectTab = TAB_FOLLOWER
+                        selectTab = TAB_FOLLOWER,
+                        userId = id
                     )))
                 },
-                onClickFollowing = {
+                onClickFollowing = { id ->
                     navController.navigate(FOLLOW_ROUTE_DESTINATION_ROUTE.asNavArg(FollowArgs(
                         isMyProfile = false,
-                        selectTab = TAB_FOLLOWING
+                        selectTab = TAB_FOLLOWING,
+                        userId = id
                     )))
                 },
                 onClickCard = { id ->
@@ -165,25 +172,31 @@ fun NavGraphBuilder.profileGraph(
                 }
             )
         ) { navBackStackEntry ->
-            val parentEntry = remember(navBackStackEntry) {
-                navController.getBackStackEntry(HomeTabType.MY.graph)
-            }
-            val viewModel: ProfileViewModel = hiltViewModel(parentEntry)
+            val viewModel: ProfileViewModel = hiltViewModel()
             val followArgs = navBackStackEntry.arguments
                 ?.getNavArg<FollowArgs>()
-            val isMyProfile = followArgs?.isMyProfile ?: false
             val selectTab = followArgs?.selectTab ?: 0
+            val userId = followArgs?.userId ?: viewModel.currentUserId
             FollowerScreen(
                 viewModel = viewModel,
                 onBackPressed = onBackPressed,
                 onLogout = onLogOut,
-                isMyProfileView = isMyProfile,
-                selectTab = selectTab
+                selectTab = selectTab,
+                userId = userId,
+                myProfile = {
+                    navController.navigate(HomeTabType.MY.graph) {
+                        popUpTo(HomeTabType.MY.route)
+                        launchSingleTop = true
+                    }
+                },
+                otherProfile = { id ->
+                    navController.navigateToProfileGraphWithArgs(ProfileArgs(id))
+                }
             )
         }
         slideComposable(
             route = CHANGE_PROFILE_BASE
-        ){ navBackStackEntry ->
+        ) { navBackStackEntry ->
             val parentEntry = remember(navBackStackEntry) {
                 navController.getBackStackEntry(HomeTabType.MY.graph)
             }

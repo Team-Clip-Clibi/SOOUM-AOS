@@ -52,6 +52,7 @@ import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core_common.CardDetailTrace
 import com.phew.core_common.ERROR_LOGOUT
 import com.phew.core_common.ERROR_NETWORK
+import com.phew.core_common.USER_ID_EMPTY
 import com.phew.core_design.AppBar
 import com.phew.core_design.CustomFont
 import com.phew.core_design.Danger
@@ -79,11 +80,11 @@ internal fun OtherProfile(
     userId: Long,
     onLogOut: () -> Unit,
     onBackPress: () -> Unit,
-    onClickFollower: () -> Unit,
-    onClickFollowing: () -> Unit,
+    onClickFollower: (Long) -> Unit,
+    onClickFollowing: (Long) -> Unit,
     onClickCard: (CardDetailArgs) -> Unit,
 ) {
-    if (userId == 0L) {
+    if (userId == USER_ID_EMPTY) {
         ErrorView(errorMessage = "Fail to get Profile")
         return
     }
@@ -179,8 +180,12 @@ internal fun OtherProfile(
                     ProfileContentView(
                         profile = profileState.data,
                         cardData = feedCardData,
-                        onFollowerClick = onClickFollower,
-                        onFollowingClick = onClickFollowing,
+                        onFollowerClick = {
+                            onClickFollower(userId)
+                        },
+                        onFollowingClick = {
+                            onClickFollowing(userId)
+                        },
                         onClickFollow = remember(viewModel) {
                             { userId: Long ->
                                 val currentState = viewModel.uiState.value.profileInfo
@@ -326,7 +331,6 @@ private fun ProfileContentView(
         columns = GridCells.Fixed(3),
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(1.dp),
-        verticalArrangement = Arrangement.spacedBy(1.dp),
     ) {
         item(span = { GridItemSpan(maxLineSpan) }) {
             ProfileView(
@@ -450,7 +454,10 @@ private fun ProfileView(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier.padding(bottom = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
                         text = stringResource(R.string.profile_txt_visit_total),
                         style = TextComponent.CAPTION_2_M_12,
@@ -570,6 +577,7 @@ private fun ProfileView(
             },
             textColor = if(profile.isAlreadyFollowing) NeutralColor.BLACK else NeutralColor.WHITE,
             baseColor =if(profile.isAlreadyFollowing) NeutralColor.GRAY_100 else NeutralColor.BLACK,
+            disabledColor = if(profile.isAlreadyFollowing) NeutralColor.GRAY_100 else NeutralColor.BLACK,
             isEnable = buttonIsEnable
         )
     }
