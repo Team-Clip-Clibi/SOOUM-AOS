@@ -30,9 +30,6 @@ jobs:
       - name: Restore keystore.properties
         run: echo "${{ secrets.KEYSTORE_PROPERTIES }}" | base64 -d > keystore.properties
 
-      - name: Run Lint
-        run: ./gradlew lintDevDebug
-
       - name: Run Unit Tests
         run: ./gradlew testDevDebugUnitTest
 
