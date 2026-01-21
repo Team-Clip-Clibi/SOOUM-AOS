@@ -1,6 +1,8 @@
 name: Android CI (Feature to Main)
 
 on:
+  push:
+    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
