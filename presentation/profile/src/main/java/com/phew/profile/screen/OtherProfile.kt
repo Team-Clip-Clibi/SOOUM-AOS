@@ -575,9 +575,10 @@ private fun ProfileView(
                     stringResource(R.string.follow_btn_follow)
                 }
             },
-            textColor = if(profile.isAlreadyFollowing) NeutralColor.BLACK else NeutralColor.WHITE,
-            baseColor =if(profile.isAlreadyFollowing) NeutralColor.GRAY_100 else NeutralColor.BLACK,
-            disabledColor = if(profile.isAlreadyFollowing) NeutralColor.GRAY_100 else NeutralColor.BLACK,
+            textColor = if (profile.isAlreadyFollowing) NeutralColor.BLACK else NeutralColor.WHITE,
+            baseColor = if (profile.isAlreadyFollowing) NeutralColor.GRAY_100 else NeutralColor.BLACK,
+            disabledColor = if (profile.isAlreadyFollowing) NeutralColor.GRAY_100 else NeutralColor.BLACK,
+            blinkColor = if (profile.isAlreadyFollowing) NeutralColor.GRAY_200 else if (profile.isBlocked) NeutralColor.BLACK else NeutralColor.GRAY_600,
             isEnable = buttonIsEnable
         )
     }
