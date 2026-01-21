@@ -10,3 +10,5 @@ const val TAB_FOLLOWING = 1
 const val ITEM_ALBUM = 0
 const val ITEM_PICTURE = 1
 const val ITEM_DEFAULT = 2
+
+const val test = 21
