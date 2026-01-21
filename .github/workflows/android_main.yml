@@ -27,13 +27,8 @@ jobs:
       - name: Restore local.properties
         run: echo "${{ secrets.BUILD_PROPERTIES }}" | base64 -d > local.properties
 
-      - name: Create dummy keystore.properties
-        run: |
-          echo "storeFile=./dummy.jks" > keystore.properties
-          echo "storePassword=dummy" >> keystore.properties
-          echo "keyAlias=dummy" >> keystore.properties
-          echo "keyPassword=dummy" >> keystore.properties
-          touch dummy.jks
+      - name: Restore keystore.properties
+        run: echo "${{ secrets.KEYSTORE_PROPERTIES }}" | base64 -d > keystore.properties
 
       - name: Run Lint
         run: ./gradlew lintDevDebug
