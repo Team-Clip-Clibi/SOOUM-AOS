@@ -36,7 +36,7 @@ class SOOUMLintConvention : Plugin<Project> {
 private fun configureLint(lint: Lint) {
     lint.apply {
         disable.add("HardcodedText") //하드코딩 경고
-        disable.add("IconMissingContentDescription") //설명 누락시(contentDescription) 경고
+        disable.add("ContentDescription") //설명 누락시(contentDescription) 경고
         fatal.add("NewApi") //minSdk 보다
         fatal.add("ObsoleteSdkInt") // 오래된 방식의 버전 체크 오류
         abortOnError = true //error 또는 fatal 로 지정된 문제 발견시 빌드 중단
