@@ -33,16 +33,15 @@ class PagingFollower(
                             nextKey = null
                         )
                     }
-                    val sortedList = request.data.second.sortedBy { data -> data.memberId }
                     if (request.data.first == HTTP_NO_MORE_CONTENT) {
                         return LoadResult.Page(
-                            data = sortedList,
+                            data = request.data.second,
                             prevKey = null,
                             nextKey = null
                         )
                     }
                     return LoadResult.Page(
-                        data = sortedList,
+                        data = request.data.second,
                         prevKey = null,
                         nextKey = request.data.second.last().followId
                     )

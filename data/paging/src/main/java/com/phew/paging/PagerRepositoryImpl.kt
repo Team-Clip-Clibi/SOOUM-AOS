@@ -4,13 +4,11 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import com.phew.domain.dto.CardComment
-import com.phew.domain.dto.DistanceCard
 import com.phew.domain.dto.FollowData
 import com.phew.domain.dto.Latest
 import com.phew.domain.dto.Notice
 import com.phew.domain.dto.NoticeSource
 import com.phew.domain.dto.Notification
-import com.phew.domain.dto.Popular
 import com.phew.domain.dto.ProfileCard
 import com.phew.domain.dto.TagCardContent
 import com.phew.domain.model.BlockMember
@@ -54,7 +52,7 @@ class PagerRepositoryImpl @Inject constructor(
         ) { PagingCardComments(cardDetailRepository, cardId, latitude, longitude) }.flow
 
     override fun profileFeedCard(userId: Long): Flow<PagingData<ProfileCard>> = Pager(
-        config = PagingConfig(pageSize = 50),
+        config = PagingConfig(pageSize = 50 , initialLoadSize = 50),
         pagingSourceFactory = {
             PagingProfileFeedCard(
                 repository = profileRepository,
@@ -76,7 +74,7 @@ class PagerRepositoryImpl @Inject constructor(
     ).flow
 
     override fun follower(profileId: Long): Flow<PagingData<FollowData>> = Pager(
-        config = PagingConfig(pageSize = 50),
+        config = PagingConfig(pageSize = 50 , initialLoadSize = 50),
         pagingSourceFactory = {
             PagingFollower(repository = profileRepository, profileId = profileId)
         }
