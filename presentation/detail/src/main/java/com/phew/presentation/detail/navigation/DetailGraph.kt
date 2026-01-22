@@ -1,58 +1,62 @@
 package com.phew.presentation.detail.navigation
 
-import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
-import androidx.navigation.NavType
 import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
+import androidx.navigation.navOptions
+import com.phew.core.ui.component.home.HomeTabType
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.model.navigation.CardDetailCommentArgs
+import com.phew.core.ui.model.navigation.TagViewArgs
 import com.phew.core.ui.navigation.NavArgKey
+import com.phew.core.ui.navigation.NavigationKeys
 import com.phew.core.ui.navigation.asNavArg
 import com.phew.core.ui.navigation.asNavParam
 import com.phew.core.ui.navigation.createNavType
 import com.phew.core.ui.navigation.getNavArg
+import com.phew.core_common.CardDetailTrace
 import com.phew.core_common.log.SooumLog
 import com.phew.core_design.slideComposable
 import com.phew.presentation.detail.screen.CardDetailRoute
+import com.phew.presentation.detail.screen.CommentCardDetailScreen
 
 val DETAIL_GRAPH = "detail_graph".asNavParam()
 
 private val DETAIL_ROUTE = "detail_route".asNavParam()
-private val COMMENT_ROUTE = "comment_route".asNavParam()
+private const val COMMENT_ROUTE_BASE = "comment_route"
+private val COMMENT_ROUTE = COMMENT_ROUTE_BASE.asNavParam()
+private const val PREVIOUS_DETAIL = "detail"
 
 fun NavHostController.navigateToDetailGraph(
     cardDetailArgs: CardDetailArgs,
-    navOptions: NavOptions? = null
+    navOptions: NavOptions? = null,
 ) {
     SooumLog.i(TAG, "navigateToDetailGraph() $cardDetailArgs")
-    this.navigate(DETAIL_GRAPH.asNavArg(cardDetailArgs), navOptions)
-}
-
-fun NavHostController.navigateToWriteFromDetail(
-    cardId: Long,
-    navOptions: NavOptions? = null
-) {
-    SooumLog.i(TAG, "navigateToWriteFromDetail() cardId: $cardId")
-    // TODO: Write 모듈로 네비게이션 구현 필요
+    val resolvedOptions = navOptions ?: navOptions {
+        popUpTo(DETAIL_GRAPH) {
+            inclusive = true
+        }
+        launchSingleTop = true
+    }
+    this.navigate(DETAIL_GRAPH.asNavArg(cardDetailArgs), resolvedOptions)
 }
 
 private fun NavHostController.navigateToDetailRoute(
     cardDetailArgs: CardDetailArgs,
-    navOptions: NavOptions? = null
+    navOptions: NavOptions? = null,
 ) {
     this.navigate(DETAIL_ROUTE.asNavArg(cardDetailArgs), navOptions)
 }
 
 
-private fun NavHostController.navigateToDetailCommentRoute(
+fun NavHostController.navigateToDetailCommentDirect(
     cardDetailCommentArgs: CardDetailCommentArgs,
-    navOptions: NavOptions? = null
+    navOptions: NavOptions? = null,
 ) {
-    SooumLog.i(TAG, "navigateToDetailRoute() $cardDetailCommentArgs")
+    SooumLog.i(TAG, "navigateToDetailCommentDirect() $cardDetailCommentArgs")
     this.navigate(COMMENT_ROUTE.asNavArg(cardDetailCommentArgs), navOptions)
 }
 
@@ -61,17 +65,10 @@ fun NavGraphBuilder.detailGraph(
     onBackPressed: () -> Unit,
     onNavigateToWrite: (Long) -> Unit,
     onNavigateToReport: (Long) -> Unit,
-    onWriteComplete: () -> Unit = {},
-    detailScreen: @Composable (
-        CardDetailArgs,
-        (CardDetailCommentArgs) -> Unit,
-        () -> Unit
-    ) -> Unit = { _, _, _ -> },
-    commentScreen: @Composable (
-        CardDetailCommentArgs,
-        (CardDetailCommentArgs) -> Unit,
-        () -> Unit
-    ) -> Unit = { _, _, _ -> }
+    onNavigateToViewTags: (TagViewArgs) -> Unit,
+    navToHome: () -> Unit,
+    onTagPressed: () -> Unit = {},
+    onProfileScreen: (Long) -> Unit,
 ) {
     navigation(
         route = DETAIL_GRAPH,
@@ -95,11 +92,16 @@ fun NavGraphBuilder.detailGraph(
                     onNavigateToComment = { commentArgs ->
                         navController.navigate(COMMENT_ROUTE.asNavArg(commentArgs))
                     },
+                    onNavigateToHome = navToHome,
                     onNavigateToWrite = { cardId ->
                         onNavigateToWrite(cardId)
                     },
                     onNavigateToReport = onNavigateToReport,
-                    onBackPressed = onBackPressed
+                    onNavigateToViewTags = onNavigateToViewTags,
+                    onBackPressed = onBackPressed,
+                    profileClick = onProfileScreen,
+                    onCardChanged = { navController.markFeedCardUpdated() },
+                    cardDetailTrace = args.previousView
                 )
             }
         }
@@ -117,18 +119,70 @@ fun NavGraphBuilder.detailGraph(
                 SooumLog.e(TAG, "CardDetailCommentArgs is null")
                 navController.popBackStack()
             } else {
-                // //   TODO 스크린 개발되면 수정 예정
-//                commentScreen(
-//                    args = args,
-//                    sooumAppState = sooumAppState,
-//                    onNavigateToChildComment = { childArgs ->
-//                        navController.navigate(COMMENT_ROUTE.asNavArg(childArgs))
-//                    },
-//                    onBackPressed = { navController.popBackStack() }
-//                )
+                CommentCardDetailScreen(
+                    args = args,
+                    onNavigateToComment = { commentArgs ->
+                        navController.navigate(COMMENT_ROUTE.asNavArg(commentArgs))
+                    },
+                    onBackPressed = { parentId ->
+                        val previousRoute = navController.previousBackStackEntry?.destination?.route
+                        val hasDetailInStack =
+                            previousRoute?.contains(PREVIOUS_DETAIL, ignoreCase = true) == true
+                        val hasCommentInStack =
+                            previousRoute?.startsWith(COMMENT_ROUTE_BASE) == true
+                        val shouldNavigateToParent =
+                            parentId > 0L && !hasDetailInStack && !hasCommentInStack
+
+                        SooumLog.d(
+                            TAG,
+                            "onBackPressed() parentId=$parentId, prevRoute=$previousRoute, navigateParent=$shouldNavigateToParent"
+                        )
+
+                        if (shouldNavigateToParent) {
+                            navController.popBackStack()
+                            navController.navigate(
+                                COMMENT_ROUTE.asNavArg(
+                                    CardDetailCommentArgs(
+                                        cardId = parentId,
+                                        parentId = 0L,
+                                    )
+                                ),
+                                navOptions {
+                                    launchSingleTop = true
+                                }
+                            )
+                        } else {
+                            val popped = navController.popBackStack()
+                            if (!popped) {
+                                SooumLog.w(
+                                    TAG,
+                                    "Fail to popBackStack from comment route, navigating home"
+                                )
+                                navToHome()
+                            }
+                        }
+                    },
+                    onFeedPressed = navToHome,
+                    onNavigateToHome = navToHome,
+                    onTagPressed = onTagPressed,
+                    onNavigateToWrite = { cardId ->
+                        onNavigateToWrite(cardId)
+                    },
+                    onNavigateToReport = onNavigateToReport,
+                    onNavigateToViewTags = onNavigateToViewTags,
+                    onProfileClick = onProfileScreen,
+                    onCardChanged = { navController.markFeedCardUpdated() }
+                )
             }
         }
     }
 }
 
 private const val TAG = "CardDetailNavigation"
+
+private fun NavController.markFeedCardUpdated() {
+    val feedEntry = runCatching { getBackStackEntry(HomeTabType.FEED.route) }
+        .getOrNull()
+        ?: previousBackStackEntry
+    feedEntry?.savedStateHandle?.set(NavigationKeys.CARD_UPDATED, true)
+}

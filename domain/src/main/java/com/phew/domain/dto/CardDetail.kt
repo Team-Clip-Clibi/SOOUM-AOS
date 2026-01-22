@@ -1,5 +1,7 @@
 package com.phew.domain.dto
 
+import com.phew.core_common.TimeUtils
+
 data class CardDetail(
     val cardId: Long,
     val likeCount: Int,
@@ -20,8 +22,12 @@ data class CardDetail(
     val isOwnCard: Boolean,
     val previousCardId: String?,
     val previousCardImgUrl: String?,
-    val visitedCnt: Int
-)
+    val visitedCnt: Int,
+    val isFeedCard: Boolean = false,
+    val storyExpirationTime: String?,
+) {
+    val endTime = TimeUtils.remainingMillisUntil(storyExpirationTime)
+}
 
 data class CardDetailTag(
     val tagId: Long,

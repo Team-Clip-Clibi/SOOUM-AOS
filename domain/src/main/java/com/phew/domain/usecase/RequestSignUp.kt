@@ -12,6 +12,9 @@ import com.phew.core_common.ERROR
 import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.ERROR_FAIL_PACKAGE_IMAGE
 import com.phew.core_common.ERROR_NETWORK
+import com.phew.core_common.ERROR_UN_GOOD_IMAGE
+import com.phew.core_common.HTTP_NOT_FOUND
+import com.phew.core_common.HTTP_UN_GOOD_IMAGE
 import com.phew.domain.BuildConfig
 import com.phew.domain.dto.Token
 import com.phew.domain.repository.DeviceRepository
@@ -62,18 +65,24 @@ class RequestSignUp @Inject constructor(
             if (requestImageUploadUrl is DataResult.Fail) return DomainResult.Failure(ERROR_NETWORK)
             fileName = (requestImageUploadUrl as DataResult.Success).data.imgName
             val uploadImageUrl = requestImageUploadUrl.data.imgUrl
-            val file = try{
+            val file = try {
                 context.contentResolver.readAsCompressedJpegRequestBody(uri = data.profileImage.toUri())
-            }catch (e: IOException){
+            } catch (e: IOException) {
                 return DomainResult.Failure(ERROR_FAIL_PACKAGE_IMAGE)
-            }catch (e : OutOfMemoryError){
+            } catch (e: OutOfMemoryError) {
                 return DomainResult.Failure(ERROR_FAIL_JOB)
             }
             val requestImageUpload = repository.requestUploadImage(
                 data = file,
                 url = uploadImageUrl
             )
-            if (requestImageUpload is DataResult.Fail) return DomainResult.Failure(ERROR_NETWORK)
+            if (requestImageUpload is DataResult.Fail){
+                return when(requestImageUpload.code){
+                    HTTP_NOT_FOUND -> DomainResult.Failure(ERROR_NETWORK)
+                    HTTP_UN_GOOD_IMAGE -> DomainResult.Failure(ERROR_UN_GOOD_IMAGE)
+                    else -> DomainResult.Failure(ERROR_FAIL_JOB)
+                }
+            }
         } else {
             fileName = null
         }
@@ -91,7 +100,11 @@ class RequestSignUp @Inject constructor(
         )
         when (request) {
             is DataResult.Fail -> {
-                return DomainResult.Failure(ERROR_NETWORK)
+                return when(request.code){
+                    HTTP_NOT_FOUND -> DomainResult.Failure(ERROR_NETWORK)
+                    HTTP_UN_GOOD_IMAGE -> DomainResult.Failure(ERROR_UN_GOOD_IMAGE)
+                    else -> DomainResult.Failure(ERROR_FAIL_JOB)
+                }
             }
 
             is DataResult.Success -> {
@@ -112,6 +125,11 @@ class RequestSignUp @Inject constructor(
                     )
                 )
                 if (!saveToken) return DomainResult.Failure(ERROR_FAIL_JOB)
+                val saveProfile = deviceRepository.saveProfileInfo(
+                    profileKey = BuildConfig.PROFILE_KEY,
+                    nickName = data.nickName
+                )
+                if (!saveProfile) return DomainResult.Failure(ERROR_FAIL_JOB)
                 return DomainResult.Success(Unit)
             }
         }

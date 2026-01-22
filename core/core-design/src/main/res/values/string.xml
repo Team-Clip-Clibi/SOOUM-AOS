@@ -2,11 +2,16 @@
 <resources>
     <string name="common_okay">확인</string>
     <string name="common_next">다음</string>
+    <string name="common_cancel">취소</string>
+    <string name="common_cancel_polite">취소하기</string>
+    <string name="common_close">닫기</string>
     <string name="common_finish">완료</string>
     <string name="common_skip">건너뛰기</string>
     <string name="common_permission">권한 승인이 필요합니다.</string>
     <string name="error_network">네트워크 에러</string>
+    <string name="error_auth_code_invalid">코드 검증 실패 코드를 확인 해 주세요</string>
     <string name="error_app">앱 ERROR로 작업을 완료 못했습니다.</string>
+    <string name="error_log_out">로그인 기간 만료로 로그아웃 합니다.</string>
     <string name="bottom_view_home">홈</string>
     <string name="bottom_view_add_card">카드추가</string>
     <string name="bottom_view_tag">태그</string>
@@ -15,7 +20,12 @@
     <string name="card_deleted">삭제된 카드예요</string>
     <string name="camera_picker_album">앨범에서 사진 선택</string>
     <string name="camera_picker_camera">사진 찍기</string>
+    <string name="camera_picker_default">기본 이미지 적용</string>
     <string name="write_card_content_placeholder">숨에서 편하게 이야기 나눠요</string>
     <string name="permission_settings_positive">설정 이동</string>
     <string name="permission_settings_negative">취소</string>
+    <string name="btn_save">저장</string>
+    <string name="amount_txt_thousand">%.1f천</string>
+    <string name="amount_txt_ten_thousand">%.1f만</string>
+    <string name="amount_txt_thousand_plus">1000+</string>
 </resources>

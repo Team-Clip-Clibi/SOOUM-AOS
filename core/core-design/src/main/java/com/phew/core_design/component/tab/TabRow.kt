@@ -39,6 +39,7 @@ import androidx.compose.ui.util.fastFold
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastForEachIndexed
 import com.phew.core_design.NeutralColor
+import com.phew.core_design.component.tab.SooumTabRowDefaults.BottomStokeHeight
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -53,14 +54,16 @@ fun SooumTabRow(
     indicator: @Composable (tabPositions: List<SooumTabPosition>) -> Unit = @Composable { tabPositions ->
         if (selectedTabIndex < tabPositions.size) {
             val currentTab = tabPositions[selectedTabIndex]
-            val targetIndicatorWidth = (currentTab.contentWidth - SooumTabRowDefaults.IndicatorHorizontalPadding * 2)
-                .coerceAtLeast(SooumTabRowDefaults.MinimumIndicatorWidth)
+            val targetIndicatorWidth =
+                (currentTab.contentWidth - SooumTabRowDefaults.IndicatorHorizontalPadding * 2)
+                    .coerceAtLeast(SooumTabRowDefaults.MinimumIndicatorWidth)
             val indicatorWidth by animateDpAsState(
                 targetValue = targetIndicatorWidth,
                 animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing),
                 label = ""
             )
-            val targetIndicatorOffset = currentTab.left + (currentTab.width - targetIndicatorWidth) / 2
+            val targetIndicatorOffset =
+                currentTab.left + (currentTab.width - targetIndicatorWidth) / 2
             val indicatorOffset by animateDpAsState(
                 targetValue = targetIndicatorOffset,
                 animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing),
@@ -73,16 +76,14 @@ fun SooumTabRow(
                     .offset(x = indicatorOffset)
                     .width(indicatorWidth),
                 width = indicatorWidth,
-                height = 2.dp
+                height = SooumTabRowDefaults.ActiveIndicatorHeight
             )
         }
     },
-    divider: @Composable () -> Unit = @Composable {
-        HorizontalDivider(
-            color = NeutralColor.GRAY_200,
-            thickness = SooumTabRowDefaults.ActiveIndicatorHeight
-        )
-    },
+    divider: @Composable () -> Unit = @Composable { HorizontalDivider(
+        color = NeutralColor.GRAY_200,
+        thickness = BottomStokeHeight
+    ) },
     tabs: @Composable () -> Unit
 ) {
     SooumScrollableTabRowImpl(
@@ -106,12 +107,7 @@ private fun SooumScrollableTabRowImpl(
     containerColor: Color = SooumTabRowDefaults.containerColor,
     contentColor: Color = SooumTabRowDefaults.contentSelectedColor,
     edgePadding: Dp = SooumTabRowDefaults.ScrollableTabRowEdgeStartPadding,
-    divider: @Composable () -> Unit = @Composable {
-        HorizontalDivider(
-            modifier = modifier.fillMaxWidth(),
-            color = NeutralColor.GRAY_400
-        )
-    },
+    divider: @Composable () -> Unit = @Composable { },
     tabs: @Composable () -> Unit,
     scrollState: ScrollState,
 ) {
@@ -127,98 +123,86 @@ private fun SooumScrollableTabRowImpl(
                 coroutineScope = coroutineScope
             )
         }
-        Box(
-            contentAlignment = Alignment.BottomCenter
-        ) {
-            //  Tab Indicator line fill max width
-            Box(
-                modifier = Modifier
-                    .height(2.dp)
-                    .background(NeutralColor.GRAY_200)
-                    .fillMaxWidth()
+        SubcomposeLayout(
+            Modifier
+                .fillMaxWidth()
+                .wrapContentSize(align = Alignment.CenterStart)
+                .horizontalScroll(scrollState)
+                .selectableGroup()
+                .clipToBounds()
+        ) { constraints ->
+            val minTabWidth = ScrollableTabRowMinimumTabWidth.roundToPx()
+            val padding = edgePadding.roundToPx()
+
+            val tabMeasurables = subcompose(TabSlots.Tabs, tabs)
+
+            val layoutHeight = 56.dp.roundToPx()
+
+            val tabConstraints = constraints.copy(
+                minWidth = minTabWidth,
+                minHeight = layoutHeight,
+                maxHeight = layoutHeight,
             )
 
-            SubcomposeLayout(
-                Modifier
-                    .fillMaxWidth()
-                    .wrapContentSize(align = Alignment.CenterStart)
-                    .horizontalScroll(scrollState)
-                    .selectableGroup()
-                    .clipToBounds()
-            ) { constraints ->
-                val minTabWidth = ScrollableTabRowMinimumTabWidth.roundToPx()
-                val padding = edgePadding.roundToPx()
+            val tabPlaceables = mutableListOf<Placeable>()
+            val tabContentWidths = mutableListOf<Dp>()
+            tabMeasurables.fastForEach {
+                val placeable = it.measure(tabConstraints)
+                val contentWidth = it.maxIntrinsicWidth(placeable.height).toDp()
+                tabPlaceables.add(placeable)
+                tabContentWidths.add(contentWidth)
+            }
 
-                val tabMeasurables = subcompose(TabSlots.Tabs, tabs)
-
-                val layoutHeight = 56.dp.roundToPx()
-
-                val tabConstraints = constraints.copy(
-                    minWidth = minTabWidth,
-                    minHeight = layoutHeight,
-                    maxHeight = layoutHeight,
-                )
-
-                val tabPlaceables = mutableListOf<Placeable>()
-                val tabContentWidths = mutableListOf<Dp>()
-                tabMeasurables.fastForEach {
-                    val placeable = it.measure(tabConstraints)
-                    val contentWidth = it.maxIntrinsicWidth(placeable.height).toDp()
-                    tabPlaceables.add(placeable)
-                    tabContentWidths.add(contentWidth)
+            val layoutWidth =
+                tabPlaceables.fastFold(initial = padding * 2) { curr, measurable ->
+                    curr + measurable.width
                 }
 
-                val layoutWidth =
-                    tabPlaceables.fastFold(initial = padding * 2) { curr, measurable ->
-                        curr + measurable.width
-                    }
+            // Position the children.
+            layout(layoutWidth, layoutHeight) {
+                // Place the tabs
+                val tabPositions = mutableListOf<SooumTabPosition>()
+                var left = padding
+                tabPlaceables.fastForEachIndexed { index, placeable ->
+                    placeable.placeRelative(left, 0)
 
-                // Position the children.
-                layout(layoutWidth, layoutHeight) {
-                    // Place the tabs
-                    val tabPositions = mutableListOf<SooumTabPosition>()
-                    var left = padding
-                    tabPlaceables.fastForEachIndexed { index, placeable ->
-                        placeable.placeRelative(left, 0)
-
-                        tabPositions.add(
-                            SooumTabPosition(
-                                left = left.toDp(),
-                                width = placeable.width.toDp(),
-                                contentWidth = tabContentWidths[index]
-                            )
+                    tabPositions.add(
+                        SooumTabPosition(
+                            left = left.toDp(),
+                            width = placeable.width.toDp(),
+                            contentWidth = tabContentWidths[index]
                         )
-                        left += placeable.width
-                    }
-
-                    // The divider is measured with its own height, and width equal to the total width
-                    // of the tab row, and then placed on top of the tabs.
-                    subcompose(TabSlots.Divider, divider).fastForEach {
-                        val placeable = it.measure(
-                            constraints.copy(
-                                minHeight = 0,
-                                minWidth = layoutWidth,
-                                maxWidth = layoutWidth
-                            )
-                        )
-                        placeable.placeRelative(0, layoutHeight - placeable.height)
-                    }
-
-                    // The indicator container is measured to fill the entire space occupied by the tab
-                    // row, and then placed on top of the divider.
-                    subcompose(TabSlots.Indicator) {
-                        indicator(tabPositions)
-                    }.fastForEach {
-                        it.measure(Constraints.fixed(layoutWidth, layoutHeight)).placeRelative(0, 0)
-                    }
-
-                    scrollableTabData.onLaidOut(
-                        density = this@SubcomposeLayout,
-                        edgeOffset = padding,
-                        tabPositions = tabPositions,
-                        selectedTab = selectedTabIndex
                     )
+                    left += placeable.width
                 }
+
+                // The divider is measured with its own height, and width equal to the total width
+                // of the tab row, and then placed on top of the tabs.
+                subcompose(TabSlots.Divider, divider).fastForEach {
+                    val placeable = it.measure(
+                        constraints.copy(
+                            minHeight = 0,
+                            minWidth = layoutWidth,
+                            maxWidth = layoutWidth
+                        )
+                    )
+                    placeable.placeRelative(0, layoutHeight - placeable.height)
+                }
+
+                // The indicator container is measured to fill the entire space occupied by the tab
+                // row, and then placed on top of the divider.
+                subcompose(TabSlots.Indicator) {
+                    indicator(tabPositions)
+                }.fastForEach {
+                    it.measure(Constraints.fixed(layoutWidth, layoutHeight)).placeRelative(0, 0)
+                }
+
+                scrollableTabData.onLaidOut(
+                    density = this@SubcomposeLayout,
+                    edgeOffset = padding,
+                    tabPositions = tabPositions,
+                    selectedTab = selectedTabIndex
+                )
             }
         }
     }
@@ -256,9 +240,10 @@ object SooumTabRowDefaults {
     /**
      * The default padding from the starting edge before a tab in a [ScrollableTabRow].
      */
-    val ScrollableTabRowEdgeStartPadding = 16.dp
+    val ScrollableTabRowEdgeStartPadding = 0.dp
 
     val ActiveIndicatorHeight = 2.0.dp
+    val BottomStokeHeight = 0.5.dp
     val IndicatorHorizontalPadding = 16.dp
     val MinimumIndicatorWidth = 8.dp
 

@@ -154,7 +154,7 @@ private fun TabBaselineLayout(
                 Box(
                     Modifier
                         .layoutId("text")
-                        .padding(start = 16.dp, end = 16.dp)
+                        .padding(horizontal = 16.dp)
                         .widthIn(max = TabMaxWidth),
                     contentAlignment = Alignment.Center
                 ) { text() }
@@ -191,7 +191,7 @@ private fun Placeable.PlacementScope.placeText(
     textOrIconPlaceable.placeRelative(0, contentY)
 }
 
-private val TabHeight = 40.dp
+private val TabHeight = 56.dp
 private val TabMaxWidth = 200.dp
 
 // Tab transition specifications

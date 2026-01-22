@@ -2,10 +2,10 @@ package com.phew.repository.network
 
 import com.phew.core_common.APP_ERROR_CODE
 import com.phew.core_common.DataResult
-import com.phew.core_common.HTTP_NOT_FOUND
-import com.phew.core_common.HTTP_SUCCESS
+import com.phew.core_common.HTTP_NO_MORE_CONTENT
 import com.phew.domain.dto.CardDefaultImagesResponse
 import com.phew.domain.dto.CardImageDefault
+import com.phew.domain.dto.CardIdResponse
 import com.phew.domain.dto.CheckedBaned
 import com.phew.domain.dto.DistanceCard
 import com.phew.domain.dto.Latest
@@ -62,7 +62,7 @@ class CardFeedRepositoryImpl @Inject constructor(
     override suspend fun requestFeedLatest(
         latitude: Double?,
         longitude: Double?,
-        lastId: Int?
+        lastId: Long?
     ): DataResult<List<Latest>> {
         return try {
 
@@ -71,13 +71,12 @@ class CardFeedRepositoryImpl @Inject constructor(
                 longitude = longitude,
                 lastId = lastId
             )
-
             val response = if (feedDto.lastId != null) {
                 // 페이징이 있는 경우 - 다음 페이지 요청
                 feedHttp.requestLatestFeed(
+                    lastId = feedDto.lastId,
                     latitude = feedDto.latitude,
-                    longitude = feedDto.longitude,
-                    lastId = feedDto.lastId
+                    longitude = feedDto.longitude
                 )
             } else {
                 // 페이징이 없는 경우 - 첫 페이지 요청
@@ -90,6 +89,8 @@ class CardFeedRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 val latestList = response.body()?.map { it.toDomain() } ?: emptyList()
                 DataResult.Success(latestList)
+            } else if (response.code() == HTTP_NO_MORE_CONTENT) {
+                DataResult.Success(emptyList())
             } else {
                 DataResult.Fail(
                     code = response.code(),
@@ -108,7 +109,7 @@ class CardFeedRepositoryImpl @Inject constructor(
         latitude: Double?,
         longitude: Double?,
         distance: Double?,
-        lastId: Int?
+        lastId: Long?
     ): DataResult<List<DistanceCard>> {
         try {
             val response = if (lastId == null) {
@@ -125,11 +126,14 @@ class CardFeedRepositoryImpl @Inject constructor(
                     lastId = lastId
                 )
             }
-            if (!response.isSuccessful) {
+            if (response.isSuccessful) {
+                val result = response.body()?.map { data -> data.toDomain() } ?: emptyList()
+                return DataResult.Success(result)
+            } else if (response.code() == HTTP_NO_MORE_CONTENT) {
+                return DataResult.Success(emptyList())
+            } else {
                 return DataResult.Fail(code = response.code(), message = response.message())
             }
-            val result = response.body()?.map { data -> data.toDomain() } ?: emptyList()
-            return DataResult.Success(result)
         } catch (e: Exception) {
             e.printStackTrace()
             return DataResult.Fail(
@@ -159,9 +163,11 @@ class CardFeedRepositoryImpl @Inject constructor(
             },
             mapper = { result ->
                 CardDefaultImagesResponse(
-                    defaultImages = result.defaultImages.mapValues { (_, imageInfoList) ->
-                        imageInfoList.map { it.toDomain() }
-                    }
+                    defaultImages = result.defaultImages.mapNotNull { (key, imageInfoList) ->
+                        imageInfoList?.let { list ->
+                            key to list.map { it.toDomain() }
+                        }
+                    }.toMap()
                 )
             }
         )
@@ -195,8 +201,8 @@ class CardFeedRepositoryImpl @Inject constructor(
         imageName: String,
         isStory: Boolean,
         tag: List<String>
-    ): Int {
-        try {
+    ): DataResult<CardIdResponse> {
+        return try {
             val request = feedHttp.requestUploadCard(
                 RequestUploadCardDTO(
                     isDistanceShared = isDistanceShared,
@@ -210,13 +216,23 @@ class CardFeedRepositoryImpl @Inject constructor(
                     tags = tag
                 )
             )
-            if (!request.isSuccessful || request.code() != 200) {
-                return HTTP_NOT_FOUND
+            if (request.isSuccessful && request.code() == 200) {
+                request.body()?.let {
+                    DataResult.Success(it.toDomain())
+                } ?: DataResult.Fail(code = request.code(), message = "Response body is null")
+            } else {
+                DataResult.Fail(
+                    code = request.code(),
+                    message = request.message()
+                )
             }
-            return HTTP_SUCCESS
         } catch (e: Exception) {
             e.printStackTrace()
-            return APP_ERROR_CODE
+            DataResult.Fail(
+                throwable = e,
+                message = e.message,
+                code = APP_ERROR_CODE
+            )
         }
     }
 
@@ -230,8 +246,8 @@ class CardFeedRepositoryImpl @Inject constructor(
         imageType: String,
         imageName: String,
         tag: List<String>
-    ): Int {
-        try {
+    ): DataResult<CardIdResponse> {
+        return try {
             val request = feedHttp.requestUploadAnswerCard(
                 cardId = cardId,
                 request = RequestUploadCardAnswerDTO(
@@ -245,13 +261,23 @@ class CardFeedRepositoryImpl @Inject constructor(
                     tags = tag
                 )
             )
-            if (!request.isSuccessful || request.code() != 200) {
-                return HTTP_NOT_FOUND
+            if (request.isSuccessful && request.code() == 200) {
+                request.body()?.let {
+                    DataResult.Success(it.toDomain())
+                } ?: DataResult.Fail(code = request.code(), message = "Response body is null")
+            } else {
+                DataResult.Fail(
+                    code = request.code(),
+                    message = request.message()
+                )
             }
-            return HTTP_SUCCESS
         } catch (e: Exception) {
             e.printStackTrace()
-            return APP_ERROR_CODE
+            DataResult.Fail(
+                throwable = e,
+                message = e.message,
+                code = APP_ERROR_CODE
+            )
         }
     }
 
@@ -269,6 +295,13 @@ class CardFeedRepositoryImpl @Inject constructor(
         return apiCall(
             apiCall = { feedHttp.requestCheckBackgroundImage(imgName = imageName) },
             mapper = { result -> result.isAvailableImg }
+        )
+    }
+
+    override suspend fun requestCheckCardDelete(cardId: Long): DataResult<Boolean> {
+        return apiCall(
+            apiCall = { feedHttp.requestCheckCardDelete(cardId = cardId) },
+            mapper = { data -> data.isDeleted }
         )
     }
 }

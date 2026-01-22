@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -30,6 +31,11 @@ import com.phew.core_design.OpacityColor
 import com.phew.core_design.Primary
 import com.phew.core_design.TextComponent
 import com.phew.core_design.UnKnowColor
+import com.phew.core_design.R
+import com.phew.core_design.typography.FontType
+import com.phew.core_design.typography.FontTextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.TextStyle
 import com.phew.core_design.component.card.component.BottomContent
 import com.phew.core_design.component.card.component.FeedCardType
 
@@ -208,8 +214,8 @@ private fun FeedCardImpl(
                 ambientColor = UnKnowColor.color
             ),
         shape = RoundedCornerShape(16.dp),
-        color = Primary.MAIN,
-        border = BorderStroke(1.dp, NeutralColor.GRAY_200)
+        color = NeutralColor.WHITE,
+        border = BorderStroke(1.dp, NeutralColor.GRAY_100)
     ) {
         Column(
             modifier = Modifier
@@ -221,8 +227,8 @@ private fun FeedCardImpl(
             BodyContent(
                 contentText = contentText,
                 imgUrl = imgUrl,
-                fontFamily = resolveFontFamily(font = font),
-                textMaxLines = 3
+                font = font,
+                textMaxLines = 4
             )
 
             BottomContent(
@@ -257,7 +263,7 @@ private fun FeedAdminCardImpl(
                 ambientColor = UnKnowColor.color
             ),
         shape = RoundedCornerShape(16.dp),
-        color = Primary.MAIN,
+        color = NeutralColor.WHITE,
         border = BorderStroke(1.dp, NeutralColor.GRAY_200)
     ) {
         Column(
@@ -270,8 +276,8 @@ private fun FeedAdminCardImpl(
             BodyContent(
                 contentText = contentText,
                 imgUrl = imgUrl,
-                fontFamily = resolveFontFamily(font = font),
-                textMaxLines = 3
+                font = font,
+                textMaxLines = 4
             )
 
             BottomContent(
@@ -290,13 +296,20 @@ internal fun BodyContent(
     modifier: Modifier = Modifier,
     contentText: String = "",
     imgUrl: String = "",
-    fontFamily: FontFamily,
-    textMaxLines: Int
+    font: String = "",
+    textMaxLines: Int,
+    useFixedHeight: Boolean = true
 ) {
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .aspectRatio(2f) // 유지: 가로:세로 = 2:1
+            .then(
+                if (useFixedHeight) {
+                    Modifier.height(177.dp)
+                } else {
+                    Modifier.fillMaxWidth()
+                }
+            )
     ) {
         AsyncImage(
             model = imgUrl,
@@ -320,9 +333,7 @@ internal fun BodyContent(
             Text(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 20.dp), // 패딩 조정
                 text = contentText,
-                style = TextComponent.BODY_1_M_14,
-                color = NeutralColor.WHITE,
-                fontFamily = fontFamily,
+                style = resolveCardTextStyle(font = font).copy(color = NeutralColor.WHITE),
                 textAlign = TextAlign.Center,
                 maxLines = textMaxLines,
                 overflow = TextOverflow.Ellipsis
@@ -381,7 +392,15 @@ private fun Preview_FeedCard() {
     }
 }
 
-internal fun resolveFontFamily(font: String): FontFamily {
-    // TODO: 폰트 문자열 매핑 규칙 확정 시 교체
-    return FontFamily.Default
+
+@Composable
+internal fun resolveCardTextStyle(font: String): TextStyle {
+    val fontType = FontType.fromServerName(font)
+    return when (fontType) {
+        FontType.RIDIBATANG -> FontTextStyle.RIDIBATANG_CARD
+        FontType.YOON -> FontTextStyle.YOON_CARD
+        FontType.KKOKKO -> FontTextStyle.KKOKKO_CARD
+        FontType.PRETENDARD -> FontTextStyle.DEFAULT_CARD
+        null -> TextComponent.BODY_1_M_14 // 기본 스타일
+    }
 }

@@ -8,12 +8,18 @@ import android.net.Uri
 import androidx.core.net.toUri
 import com.phew.core_common.DataResult
 import com.phew.core_common.DomainResult
+import com.phew.core_common.ERROR_ACCOUNT_SUSPENDED
+import com.phew.core_common.ERROR_ALREADY_CARD_DELETE
 import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.ERROR_FAIL_PACKAGE_IMAGE
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.ERROR_UN_GOOD_IMAGE
-import com.phew.core_common.HTTP_SUCCESS
+import com.phew.core_common.HTTP_BAD_REQUEST
+import com.phew.core_common.HTTP_CARD_ALREADY_DELETE
+import com.phew.core_common.HTTP_NOT_FOUND
+import com.phew.core_common.HTTP_UN_GOOD_IMAGE
 import com.phew.domain.repository.DeviceRepository
+import com.phew.domain.repository.event.EventRepository
 import com.phew.domain.repository.network.CardFeedRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -27,6 +33,7 @@ class PostCard @Inject constructor(
     private val networkRepository: CardFeedRepository,
     @ApplicationContext private val context: Context,
     private val deviceRepository: DeviceRepository,
+    private val eventRepository: EventRepository
 ) {
     data class Param(
         val isFromDevice: Boolean, //핸드폰 디바이스에서 사진 선택했는지
@@ -40,7 +47,7 @@ class PostCard @Inject constructor(
         val tags: List<String>,
     )
 
-    suspend operator fun invoke(data: Param): DomainResult<Unit, String> {
+    suspend operator fun invoke(data: Param): DomainResult<Long, String> {
         when (val checkedPostBanned = networkRepository.requestCheckUploadCard()) {
             is DataResult.Fail -> return DomainResult.Failure(ERROR_FAIL_JOB)
             is DataResult.Success -> {
@@ -67,7 +74,7 @@ class PostCard @Inject constructor(
     private suspend fun uploadCardData(
         param: Param,
         imageInfo: UploadImageInfo,
-    ): DomainResult<Unit, String> {
+    ): DomainResult<Long, String> {
         val locationPermissionCheck = deviceRepository.getLocationPermission()
         val (latitude, longitude) = if (locationPermissionCheck) {
             val location = deviceRepository.requestLocation()
@@ -75,7 +82,7 @@ class PostCard @Inject constructor(
         } else {
             null to null
         }
-        val requestUploadCard = if (!param.answerCard) {
+        val uploadResult = if (!param.answerCard) {
             networkRepository.requestUploadCard(
                 isDistanceShared = locationPermissionCheck,
                 content = param.content,
@@ -88,9 +95,9 @@ class PostCard @Inject constructor(
                 imageType = imageInfo.type
             )
         } else {
-            if (param.cardId == null) DomainResult.Failure(ERROR_FAIL_JOB)
+            if (param.cardId == null) return DomainResult.Failure(ERROR_FAIL_JOB) // Ensure early exit for null cardId
             networkRepository.requestUploadCardAnswer(
-                cardId = param.cardId ?: 0L,
+                cardId = param.cardId,
                 content = param.content,
                 font = param.font,
                 imageName = imageInfo.name,
@@ -101,10 +108,20 @@ class PostCard @Inject constructor(
                 tag = param.tags
             )
         }
-        return if (requestUploadCard == HTTP_SUCCESS) {
-            DomainResult.Success(Unit)
-        } else {
-            DomainResult.Failure(ERROR_FAIL_JOB)
+        return when (uploadResult) {
+            is DataResult.Success -> {
+                eventRepository.logWriteCardClickFinishButton()
+                if (!locationPermissionCheck) eventRepository.logWriteDistanceSharedOff()
+                DomainResult.Success(uploadResult.data.cardId)
+            }
+
+            is DataResult.Fail -> when (uploadResult.code) {
+                HTTP_BAD_REQUEST -> DomainResult.Failure(ERROR_ACCOUNT_SUSPENDED)
+                HTTP_CARD_ALREADY_DELETE -> DomainResult.Failure(ERROR_ALREADY_CARD_DELETE)
+                HTTP_NOT_FOUND -> DomainResult.Failure(ERROR_FAIL_JOB)
+                HTTP_UN_GOOD_IMAGE -> DomainResult.Failure(ERROR_UN_GOOD_IMAGE)
+                else -> DomainResult.Failure(ERROR_FAIL_JOB)
+            }
         }
     }
 
@@ -121,24 +138,21 @@ class PostCard @Inject constructor(
                     try {
                         context.contentResolver.readAsCompressedJpegRequestBody(uri = imageUrl.toUri())
                     } catch (e: IOException) {
+                        e.printStackTrace()
                         return DomainResult.Failure(ERROR_FAIL_PACKAGE_IMAGE)
                     } catch (e: OutOfMemoryError) {
+                        e.printStackTrace()
                         return DomainResult.Failure(ERROR_FAIL_JOB)
                     }
-                when (networkRepository.requestUploadImage(data = file, url = uploadInfo.url)) {
+                when (val uploadResult =
+                    networkRepository.requestUploadImage(data = file, url = uploadInfo.url)) {
                     is DataResult.Fail -> {
-                        return DomainResult.Failure(ERROR_NETWORK)
+                        return when (uploadResult.code) {
+                            else -> DomainResult.Failure(ERROR_NETWORK)
+                        }
                     }
 
                     is DataResult.Success -> {
-                        val checkBackgroundImage =
-                            networkRepository.requestCheckImage(uploadInfo.imageName)
-                        if (checkBackgroundImage is DataResult.Fail) {
-                            return DomainResult.Failure(ERROR_NETWORK)
-                        }
-                        if (checkBackgroundImage is DataResult.Success && !checkBackgroundImage.data) {
-                            return DomainResult.Failure(ERROR_UN_GOOD_IMAGE)
-                        }
                         DomainResult.Success(
                             UploadImageInfo(
                                 uploadInfo.imageName,

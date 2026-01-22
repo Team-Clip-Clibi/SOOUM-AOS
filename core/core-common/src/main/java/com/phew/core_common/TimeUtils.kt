@@ -3,13 +3,19 @@ package com.phew.core_common
 import com.phew.core_common.log.SooumLog
 import java.text.SimpleDateFormat
 import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneId
 import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Locale
 import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 
 object TimeUtils {
+    private val DEFAULT_ZONE: ZoneId = ZoneId.of("Asia/Seoul")
     
     /**
      * ISO 8601 형식의 날짜 문자열을 파싱하는 DateFormat (UTC 기준)
@@ -18,7 +24,7 @@ object TimeUtils {
     private val iso8601Format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS", Locale.getDefault()).apply {
         timeZone = TimeZone.getTimeZone("UTC")
     }
-    
+
     /**
      * 백업용 ISO 8601 포맷 (밀리초만 있는 경우)
      */
@@ -63,6 +69,165 @@ object TimeUtils {
     }
     
     /**
+     * ISO 8601 날짜 문자열을 "yyyy년MM월dd일HH시mm분" 형식으로 포맷팅
+     * @param dateString ISO 8601 형식의 날짜 문자열 (예: "2024-12-25T14:30:00.000Z")
+     * @return "yyyy년MM월dd일HH시mm분" 형식의 문자열, 파싱 실패시 원본 반환
+     */
+    fun formatToKoreanDateTime(dateString: String): String {
+        return try {
+            if (dateString.isBlank()) {
+                return dateString
+            }
+            
+            // 기존 ISO 8601 파싱 로직 활용 (마이크로초 우선, 밀리초 폴백)
+            val parsedTime = try {
+                iso8601Format.parse(dateString)?.time
+            } catch (e: Exception) {
+                try {
+                    iso8601FormatFallback.parse(dateString)?.time
+                } catch (e: Exception) {
+                    null
+                }
+            }
+            
+            if (parsedTime != null) {
+                val outputFormat = SimpleDateFormat("yyyy년 MM월 dd일 HH시 mm분", Locale.getDefault()).apply {
+                    timeZone = TimeZone.getTimeZone("Asia/Seoul") // 한국 시간대로 출력
+                }
+                outputFormat.format(parsedTime)
+            } else {
+                SooumLog.w(TAG, "Failed to parse ISO 8601 date: $dateString")
+                dateString
+            }
+        } catch (e: Exception) {
+            SooumLog.w(TAG, "Failed to format date: $dateString, ${e.message}")
+            dateString
+        }
+    }
+
+
+    /**
+     * ISO 8601 MM.dd 형식 출력
+     */
+    private val MM_DD_FORMATTER = DateTimeFormatter.ofPattern("MM월 d일")
+
+    /**
+     * ISO 8601 yyyy.MM.dd 형식 출력
+     */
+    private val DOT_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy.MM.dd")
+
+    fun formatToDotDate(createAt: String): String {
+        if (createAt.trim().isEmpty()) return ""
+        return try {
+            LocalDate.parse(createAt).format(DOT_DATE_FORMATTER)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // 파싱 실패시 ISO 8601 원본에서 날짜 부분만 추출하여 포맷팅 시도
+            try {
+                LocalDateTime.parse(createAt, DateTimeFormatter.ISO_DATE_TIME).format(DOT_DATE_FORMATTER)
+            } catch (e2: Exception) {
+                e2.printStackTrace()
+                ""
+            }
+        }
+    }
+
+    fun formatToDate(createAt: String): String {
+        if (createAt.trim().isEmpty()) return ""
+        return try {
+            LocalDate.parse(createAt).format(MM_DD_FORMATTER)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            ""
+        }
+    }
+
+    /**
+     * ISO 8601 년 월 일 만 출력
+     */
+    fun convertIsoToDateString(isoString: String): String {
+        val parsedDate = LocalDateTime.parse(isoString, DateTimeFormatter.ISO_DATE_TIME)
+        val outputFormatter = DateTimeFormatter.ofPattern("yyyy년 MM월 dd일", Locale.KOREA)
+        return parsedDate.format(outputFormatter)
+    }
+
+    /**
+     * ISO 8601 종료 시각에서 현재까지 남은 시간을 밀리초로 환산
+     */
+    fun remainingMillisUntil(expirationIsoString: String?): Long {
+        if (expirationIsoString.isNullOrBlank()) return 0L
+        val expirationMillis = parseExpirationMillis(expirationIsoString) ?: return 0L
+        return (expirationMillis - System.currentTimeMillis()).coerceAtLeast(0L)
+    }
+
+    private fun parseExpirationMillis(value: String): Long? {
+        // OffsetDateTime + timezone
+        val offsetResult = runCatching {
+            OffsetDateTime.parse(value).toInstant().toEpochMilli()
+        }.getOrNull()
+        if (offsetResult != null) return offsetResult
+
+        // LocalDateTime with microseconds
+        val microResult = runCatching {
+            val normalized = if ('.' in value) {
+                val (head, tail) = value.split('.', limit = 2)
+                val fractional = tail.takeWhile { it.isDigit() }
+                val padded = fractional.padEnd(6, '0')
+                "$head.$padded"
+            } else {
+                "$value.000000"
+            }
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
+            LocalDateTime.parse(normalized, formatter)
+                .atZone(DEFAULT_ZONE)
+                .toInstant()
+                .toEpochMilli()
+        }.getOrNull()
+        if (microResult != null) return microResult
+
+        // LocalDateTime with milliseconds
+        val milliFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")
+        val milliResult = runCatching {
+                LocalDateTime.parse(value, milliFormatter)
+                    .atZone(DEFAULT_ZONE)
+                    .toInstant()
+                    .toEpochMilli()
+        }.getOrNull()
+        if (milliResult != null) return milliResult
+
+        SooumLog.w(TAG, "Failed to parse expiration time: $value")
+        return null
+    }
+
+    @JvmStatic
+    fun formatToWithdrawalDate(dateString: String): String {
+        try {
+            // yyyy-MM-dd 형식 처리
+            val simpleDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            val parsedTime = simpleDateFormat.parse(dateString)?.time
+            
+            if (parsedTime != null) {
+                val outputFormat = SimpleDateFormat("yyyy년 MM월 dd일", Locale.getDefault())
+                return outputFormat.format(parsedTime)
+            }
+            
+            // ISO 8601 형식도 시도
+            val isoFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS", Locale.getDefault())
+            val isoParsedTime = isoFormat.parse(dateString)?.time
+            
+            if (isoParsedTime != null) {
+                val outputFormat = SimpleDateFormat("yyyy년 MM월 dd일", Locale.getDefault())
+                return outputFormat.format(isoParsedTime)
+            }
+            
+            return dateString
+        } catch (e: Exception) {
+            SooumLog.w(TAG, "Failed to format withdrawal date: $dateString, ${e.message}")
+            return dateString
+        }
+    }
+    
+    /**
      * createAt 시간을 기반으로 상대적 시간 표시
      * 8단계 시간 표기 정책:
      * 1. ~1분: "방금전"
@@ -86,21 +251,7 @@ object TimeUtils {
             }
             
             // 여러 포맷으로 파싱 시도
-            // TODO 해당 부분 정리 필요 (서버와 다시 확인 필요)
-            val createdTime = try {
-                val time = iso8601Format.parse(createAt)?.time
-                SooumLog.d(TAG, "Parsed with main format (microseconds)")
-                time
-            } catch (e: Exception) {
-                try {
-                    val time = iso8601FormatFallback.parse(createAt)?.time
-                    SooumLog.d(TAG, "Parsed with fallback format (milliseconds)")
-                    time
-                } catch (e: Exception) {
-                    SooumLog.e(TAG, "Failed to parse date: $createAt ${e.message}")
-                    null
-                }
-            } ?: return createAt
+            val createdTime = parseExpirationMillis(createAt) ?: return createAt
             // 현재 시간도 UTC 기준으로 계산
             val currentTime = System.currentTimeMillis()
             val diffMillis = currentTime - createdTime

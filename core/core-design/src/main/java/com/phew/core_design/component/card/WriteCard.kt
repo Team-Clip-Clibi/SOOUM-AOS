@@ -2,8 +2,10 @@ package com.phew.core_design.component.card
 
 import android.annotation.SuppressLint
 import android.net.Uri
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,8 +35,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Rect
@@ -50,15 +58,21 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.isFinite
-import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.OpacityColor
 import com.phew.core_design.Primary
 import com.phew.core_design.R
 import com.phew.core_design.TextComponent
+import com.phew.core_design.component.card.CardDesignTokens.PreviousCardImageSize
 import com.phew.core_design.component.tag.TagRow
+import com.phew.core_design.typography.FontTextStyle
+import com.phew.core_design.typography.FontType
+
+// FontType을 TAG FontFamily로 매핑하는 함수
+@Composable
+private fun getTagFontFamilyFromType(fontType: FontType?): FontFamily = 
+    fontType?.getTagStyle()?.fontFamily ?: FontTextStyle.DEFAULT_TAG.fontFamily ?: FontFamily.Default
 
 // ===== 디자인 토큰 =====
 object CardDesignTokens {
@@ -66,47 +80,29 @@ object CardDesignTokens {
     val CardBackgroundCyan = Primary.MAIN
     val CardBackgroundGray = NeutralColor.GRAY_100
 
-    // 콘텐츠 박스 배경색
-    val ContentBoxDark = NeutralColor.GRAY_600
-    val ContentBoxGray = NeutralColor.GRAY_200
-
-    // 태그 배경색
-    val TagBackground = OpacityColor.blackSmallColor
 
     // 텍스트 색상
     val TextPrimary = NeutralColor.WHITE
-    val TextSecondary = NeutralColor.GRAY_400
     val TextDelete = NeutralColor.GRAY_400
-    val TextBackTint = NeutralColor.GRAY_300
 
     // 크기
-    val CardRadius = 12.dp
-    val ContentBoxRadius = 8.dp
-    val TagRadius = 4.dp
-    val AvatarSize = 40.dp
-    val CornerRadius = 12.dp
-
-    // 패딩
-    val CardPadding = 32.dp
-    val ContentPadding = 16.dp
-
-    // Typography
-    val BodyFontSize = 14.sp
-    val BodyLineHeight = 20.sp
+    val CardRadius = 16.dp
+    val CardPreviousRadius = 8.dp
+    val PreviousCardImageSize = 40.dp
 }
 
 enum class CardType {
     WRITE, REPLY, DELETED
 }
 
-// TODO 사용이 어렵군.. 수정해..
 sealed class BaseCardData(open val id: String, open val type: CardType) {
     data class Write(
         val content: String,
+        val isEditable: Boolean = true,
         val tags: List<String> = emptyList(),
         val backgroundResId: Int? = null,
         val backgroundUri: Uri? = null,
-        val fontFamily: FontFamily? = null,
+        val fontType: FontType? = null,
         val placeholder: String = "",
         val showAddButton: Boolean = true,
         val onContentChange: (String) -> Unit = {},
@@ -117,6 +113,7 @@ sealed class BaseCardData(open val id: String, open val type: CardType) {
         val onTagFocusHandled: () -> Unit = {},
         val currentTagInput: String = "",
         val onTagInputChange: (String) -> Unit = {},
+        val enterClick: () -> Unit = {},
         override val id: String = ""
     ) : BaseCardData(id, CardType.WRITE)
 
@@ -125,9 +122,14 @@ sealed class BaseCardData(open val id: String, open val type: CardType) {
         val content: String,
         val tags: List<String> = emptyList(),
         val timeAgo: String = "",
+        val isPreviousCard: Boolean = false,
         val hasPreviousCommentThumbnail: Boolean = false,
         val thumbnailUri: String = "",
-        override val id: String = ""
+        override val id: String = "",
+        val backgroundImage: Uri? = null,
+        val fontType: FontType? = null,
+        val onTagClick: (String) -> Unit = { },
+        val enterClick: () -> Unit = {},
     ) : BaseCardData(id, CardType.REPLY)
 
     data class Deleted(
@@ -136,22 +138,22 @@ sealed class BaseCardData(open val id: String, open val type: CardType) {
     ) : BaseCardData(id, CardType.DELETED)
 }
 
-data class WriteCardData(
-    val content: String,
-    val tags: List<String> = emptyList(),
-    val showAddButton: Boolean = true,
-    val hasThumbnail: Boolean = false,
-    val id: String = ""
-)
-
 @Composable
 fun CardView(
+    enterClick: () -> Unit = {},
     data: BaseCardData,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onPreviousCardClick: () -> Unit = { },
 ) {
     when (data.type) {
-        CardType.WRITE -> WriteCard(data as BaseCardData.Write, modifier)
-        CardType.REPLY -> ReplyCard(data as BaseCardData.Reply, modifier)
+        CardType.WRITE -> WriteCard(data as BaseCardData.Write, modifier, enterClick)
+        CardType.REPLY -> ReplyCard(
+            data as BaseCardData.Reply,
+            modifier,
+            onPreviousCardClick,
+            enterClick
+        )
+
         CardType.DELETED -> DeletedCard(data as BaseCardData.Deleted, modifier)
     }
 }
@@ -169,8 +171,7 @@ private fun BaseCard(
         modifier = modifier
             .fillMaxWidth()
             .defaultMinSize(
-                minWidth = 328.dp,
-                minHeight = minimumHeight
+                minWidth = 328.dp, minHeight = minimumHeight
             ),
         shape = RoundedCornerShape(CardDesignTokens.CardRadius),
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
@@ -187,22 +188,24 @@ private fun BaseCard(
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 private fun EditableWriteContentBox(
+    modifier: Modifier = Modifier,
     content: String,
     placeholder: String = "",
-    modifier: Modifier = Modifier,
     onContentChange: (String) -> Unit,
     onContentClick: () -> Unit,
-    fontFamily: FontFamily?
+    fontType: FontType?,
+    isEditable: Boolean,
+    onEnterClick: () -> Unit
 ) {
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 32.dp)
             .background(
-                color = OpacityColor.blackSmallColor,
-                shape = RoundedCornerShape(12.dp)
+                color = OpacityColor.blackSmallColor, shape = RoundedCornerShape(12.dp)
             )
             .clickable(
+                enabled = isEditable,
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = onContentClick
@@ -210,37 +213,52 @@ private fun EditableWriteContentBox(
         contentAlignment = Alignment.Center
     ) {
         val scrollState = rememberScrollState()
-        val boundedHeight = maxHeight.takeIf { it.isFinite } ?: 200.dp
+        var isFocused by remember { mutableStateOf(false) }
 
-        val baseStyle = TextComponent.BODY_1_M_14
-        val textStyle = fontFamily?.let { baseStyle.copy(fontFamily = it) } ?: baseStyle
+        if (isEditable) {
+            LaunchedEffect(content) {
+                scrollState.animateScrollTo(scrollState.maxValue)
+            }
+        }
+
+        val textStyle = fontType?.getCardStyle() ?: TextComponent.BODY_1_M_14
+
+        val maxHeight = with(androidx.compose.ui.platform.LocalDensity.current) {
+            val verticalPadding = 40.dp // 20dp top + 20dp bottom
+            (textStyle.lineHeight.toDp() * 8) + verticalPadding
+        }
 
         CompositionLocalProvider(LocalTextToolbar provides DisabledTextToolbar) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 61.dp, max = boundedHeight)
+                    .heightIn(min = 61.dp, max = maxHeight)
+                    .padding(horizontal = 24.dp, vertical = 20.dp)
                     .verticalScroll(scrollState),
                 contentAlignment = Alignment.Center
             ) {
                 BasicTextField(
                     value = content,
-                    onValueChange = { newValue ->
-                        onContentChange(newValue)
-                    },
+                    onValueChange = onContentChange,
+                    enabled = isEditable,
                     textStyle = textStyle.copy(
                         color = CardDesignTokens.TextPrimary,
                         textAlign = TextAlign.Center
                     ),
                     cursorBrush = SolidColor(CardDesignTokens.TextPrimary),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onFocusChanged { focusState ->
+                            if (isEditable) isFocused = focusState.isFocused
+                        },
                     maxLines = Int.MAX_VALUE,
                     decorationBox = { innerTextField ->
                         Box(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth(),
                             contentAlignment = Alignment.Center
                         ) {
-                            if (content.isBlank()) {
+                            if (content.isBlank() && !isFocused && isEditable) {
                                 Text(
                                     text = placeholder,
                                     style = textStyle.copy(color = NeutralColor.WHITE),
@@ -260,33 +278,42 @@ private fun EditableWriteContentBox(
 @Composable
 private fun ReadOnlyContentBox(
     content: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    fontType: FontType? = null
 ) {
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 32.dp)
             .background(
-                color = OpacityColor.blackSmallColor,
-                shape = RoundedCornerShape(12.dp)
+                color = OpacityColor.blackSmallColor, shape = RoundedCornerShape(12.dp)
             ),
         contentAlignment = Alignment.Center
     ) {
         val scrollState = rememberScrollState()
-        val boundedHeight = maxHeight.takeIf { it.isFinite } ?: 200.dp
+
+        val textStyle = fontType?.getCardStyle()?.copy(color = CardDesignTokens.TextPrimary) 
+            ?: TextComponent.BODY_1_M_14.copy(color = CardDesignTokens.TextPrimary)
+
+        val maxHeight = with(androidx.compose.ui.platform.LocalDensity.current) {
+            val verticalPadding = 40.dp // 20dp top + 20dp bottom
+            (textStyle.lineHeight.toDp() * 8) + verticalPadding
+        }
 
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 61.dp, max = boundedHeight)
+                .heightIn(min = 61.dp, max = maxHeight)
+                .padding(horizontal = 24.dp, vertical = 20.dp)
                 .verticalScroll(scrollState),
             contentAlignment = Alignment.Center
         ) {
             Text(
+                modifier = Modifier.fillMaxWidth(),
                 text = content.ifBlank { " " },
-                style = TextComponent.BODY_1_M_14.copy(color = CardDesignTokens.TextPrimary),
+                style = textStyle,
                 maxLines = Int.MAX_VALUE,
-                overflow = TextOverflow.Ellipsis,
+                overflow = TextOverflow.Clip,
                 textAlign = TextAlign.Center
             )
         }
@@ -296,13 +323,16 @@ private fun ReadOnlyContentBox(
 @Composable
 private fun WriteCard(
     data: BaseCardData.Write,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    enterClick: () -> Unit
 ) {
-    BaseCard(
-        modifier = modifier.fillMaxWidth(),
-        backgroundColor = Color.Transparent,
-        elevation = 0.dp,
-        minimumHeight = 328.dp
+    Card(
+        modifier = modifier
+            .aspectRatio(1f),
+        shape = RoundedCornerShape(CardDesignTokens.CardRadius),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = BorderStroke(1.dp, NeutralColor.GRAY_100)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             val backgroundModifier = Modifier
@@ -334,50 +364,53 @@ private fun WriteCard(
                     )
                 }
             }
-
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color.Transparent)
             ) {
-                // 상단 여백
-                Spacer(modifier = Modifier.weight(1f))
-
-                // 중앙 컨텐츠 영역
-                EditableWriteContentBox(
-                    modifier = Modifier.fillMaxWidth(),
-                    content = data.content,
-                    placeholder = data.placeholder,
-                    onContentChange = data.onContentChange,
-                    onContentClick = data.onContentClick,
-                    fontFamily = data.fontFamily
-                )
-
-                // 중간 여백 (태그와 컨텐츠 사이)
-                Spacer(modifier = Modifier.weight(1f))
+                // 중앙 컨텐츠 영역 - Box로 중앙 정렬
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.Center),
+                    contentAlignment = Alignment.Center
+                ) {
+                    EditableWriteContentBox(
+                        modifier = Modifier.fillMaxWidth(),
+                        content = data.content,
+                        placeholder = data.placeholder,
+                        onContentChange = data.onContentChange,
+                        onContentClick = data.onContentClick,
+                        fontType = data.fontType,
+                        isEditable = data.isEditable,
+                        onEnterClick = enterClick
+                    )
+                }
 
                 // 하단 태그 영역
                 if (data.tags.isNotEmpty() || data.showAddButton) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(60.dp),
-                        contentAlignment = Alignment.Center
+                            .height(60.dp)
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 16.dp),
+                        contentAlignment = Alignment.BottomCenter
                     ) {
-                    TagRow(
-                        tags = data.tags,
-                        enableAdd = data.showAddButton,
-                        onAdd = data.onAddTag,
-                        onRemove = data.onRemoveTag,
-                        shouldFocus = data.shouldFocusTagInput,
-                        onFocusHandled = data.onTagFocusHandled,
-                        currentInput = data.currentTagInput,
-                        onInputChange = data.onTagInputChange
-                    )
-                }
-            } else {
-                    // 태그가 없을 때도 동일한 높이 유지
-                    Spacer(modifier = Modifier.height(60.dp))
+                        TagRow(
+                            tags = data.tags,
+                            enableAdd = data.showAddButton,
+                            onAdd = data.onAddTag,
+                            onRemove = data.onRemoveTag,
+                            shouldFocus = data.shouldFocusTagInput,
+                            onFocusHandled = data.onTagFocusHandled,
+                            currentInput = data.currentTagInput,
+                            onInputChange = data.onTagInputChange,
+                            fontFamily = getTagFontFamilyFromType(data.fontType),
+                            enterClick = enterClick
+                        )
+                    }
                 }
             }
         }
@@ -387,93 +420,132 @@ private fun WriteCard(
 @Composable
 private fun ReplyCard(
     data: BaseCardData.Reply,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onPreviewCard: () -> Unit,
+    enterClick: () -> Unit
 ) {
-    BaseCard(
-        modifier = modifier.height(328.dp),
-        backgroundColor = CardDesignTokens.CardBackgroundCyan
+    Card(
+        modifier = modifier
+            .aspectRatio(1f)
+            .border(1.dp, NeutralColor.GRAY_100, RoundedCornerShape(CardDesignTokens.CardRadius)),
+        shape = RoundedCornerShape(CardDesignTokens.CardRadius),
+        colors = CardDefaults.cardColors(containerColor = CardDesignTokens.CardBackgroundGray),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            // 이전 댓글 썸네일 영역 (상단)
-            if (data.hasPreviousCommentThumbnail) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp),
-                    contentAlignment = Alignment.TopStart
-                ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            val backgroundModifier = Modifier
+                .matchParentSize()
+                .clip(RoundedCornerShape(CardDesignTokens.CardRadius))
+
+            when {
+                data.thumbnailUri.isNotEmpty() -> {
+                    AsyncImage(
+                        model = data.thumbnailUri,
+                        contentDescription = "background image",
+                        contentScale = ContentScale.Crop,
+                        modifier = backgroundModifier
+                    )
+                }
+
+                else -> {
                     Box(
-                        modifier = Modifier
-                            .size(32.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Surface(
-                            modifier = Modifier.matchParentSize(),
-                            color = CardDesignTokens.TextPrimary,
-                            shape = RoundedCornerShape(CardDesignTokens.CardRadius)
-                        ) { }
-
-                        if (data.previousCommentThumbnailUri?.isNotBlank() == true) {
-                            AsyncImage(
-                                model = data.previousCommentThumbnailUri,
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .matchParentSize()
-                                    .clip(RoundedCornerShape(CardDesignTokens.CardRadius))
-                            )
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .size(24.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_back_thumbnail),
-                                contentDescription = "이전 댓글 썸네일",
-                                tint = CardDesignTokens.TextSecondary
-                            )
-                        }
-                    }
+                        modifier = backgroundModifier.background(CardDesignTokens.CardBackgroundCyan)
+                    )
                 }
             }
 
-            // 상단 여백
-            Spacer(modifier = Modifier.weight(1f))
+            Box(modifier = Modifier.fillMaxSize()) {
+                // 이전 댓글 썸네일 영역 (상단)
+                if (data.isPreviousCard) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                            .align(Alignment.TopStart),
+                        contentAlignment = Alignment.TopStart
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(PreviousCardImageSize)
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                    onClick = onPreviewCard
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (data.hasPreviousCommentThumbnail) {
+                                Surface(
+                                    modifier = Modifier.matchParentSize(),
+                                    shape = RoundedCornerShape(CardDesignTokens.CardPreviousRadius)
+                                ) {
+                                    AsyncImage(
+                                        model = data.previousCommentThumbnailUri,
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier
+                                            .matchParentSize()
+                                            .clip(RoundedCornerShape(CardDesignTokens.CardPreviousRadius))
+                                    )
+                                }
+                            }
 
-            // 중앙 컨텐츠 영역
-            ReadOnlyContentBox(
-                modifier = Modifier.fillMaxWidth(),
-                content = data.content,
-            )
+                            Box(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .clip(RoundedCornerShape(CardDesignTokens.CardPreviousRadius))
+                                    .background(Color.Black.copy(alpha = 0.3f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_back_thumbnail),
+                                    contentDescription = "이전 댓글 썸네일",
+                                    tint = CardDesignTokens.TextPrimary
+                                )
+                            }
+                        }
+                    }
+                }
 
-            // 중간 여백 (태그와 컨텐츠 사이)
-            Spacer(modifier = Modifier.weight(1f))
 
-            // 하단 태그 영역
-            if (data.tags.isNotEmpty()) {
+                // 중앙 컨텐츠 영역 - Box로 중앙 정렬
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(60.dp),
+                        .align(Alignment.Center),
                     contentAlignment = Alignment.Center
                 ) {
-                    TagRow(
-                        tags = data.tags,
-                        enableAdd = false,
-                        onAdd = {},
-                        onRemove = {},
-                        currentInput = "",
-                        onInputChange = {}
-                    )
+                    ReadOnlyContentBox(
+                        modifier = Modifier.fillMaxWidth(),
+                        content = data.content,
+                        fontType = data.fontType)
                 }
-            } else {
-                // 태그가 없을 때도 동일한 높이 유지
-                Spacer(modifier = Modifier.height(60.dp))
+
+                // 하단 태그 영역
+                if (data.tags.isNotEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(60.dp)
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 16.dp),
+                        contentAlignment = Alignment.BottomCenter
+                    ) {
+                        TagRow(
+                            tags = data.tags,
+                            enableAdd = false,
+                            onAdd = { },
+                            onRemove = { },
+                            shouldFocus = false,
+                            onFocusHandled = { },
+                            currentInput = "",
+                            onInputChange = { },
+                            fontFamily = getTagFontFamilyFromType(data.fontType),
+                            onTagClick = data.onTagClick,
+                            enterClick = enterClick
+                        )
+                    }
+                }
             }
         }
     }
@@ -486,7 +558,7 @@ private fun DeletedCard(
 ) {
     BaseCard(
         modifier = modifier
-            .height(439.dp),
+            .aspectRatio(1f),
         elevation = 0.dp,
         backgroundColor = CardDesignTokens.CardBackgroundGray
     ) {
@@ -500,8 +572,6 @@ private fun DeletedCard(
         ) {
             Box(
                 modifier = Modifier
-                    .height(130.dp)
-                    .width(220.dp)
                     .background(NeutralColor.GRAY_100)
             ) {
                 Image(
@@ -528,7 +598,6 @@ private fun DeletedCard(
     }
 }
 
-
 // ===== 프리뷰 =====
 @Preview(showBackground = true, backgroundColor = 0xFFFFFFFF)
 @Composable
@@ -540,20 +609,27 @@ fun CardViewPreview() {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
-            CardView(BaseCardData.Write("짧은 글 예시입니다.\n스크롤 안전!", listOf("Tag1", "Tag2")))
-        }
-        item {
             CardView(
-                BaseCardData.Reply(
-                    previousCommentThumbnailUri = "2",
-                    content = "이건 ReplyCard 예시",
-                    tags = listOf("답변", "예시"),
-                    hasPreviousCommentThumbnail = true
-                )
+                data = BaseCardData.Write(
+                    content = "짧은 글 예시입니다.\n스크롤 안전!",
+                    tags = listOf("Tag1", "Tag2")
+                ),
+                enterClick = {}
             )
         }
         item {
-            CardView(BaseCardData.Deleted("삭제된 카드예요"))
+            CardView(
+                enterClick = {}, data = BaseCardData.Reply(
+                    previousCommentThumbnailUri = "2",
+                    content = "이건 ReplyCard 예시",
+                    tags = listOf("답변", "예시"),
+                    hasPreviousCommentThumbnail = true,
+
+                    )
+            )
+        }
+        item {
+            CardView(data = BaseCardData.Deleted("삭제된 카드예요"), enterClick = {})
         }
     }
 }

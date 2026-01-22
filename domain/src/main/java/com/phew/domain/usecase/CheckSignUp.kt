@@ -3,6 +3,7 @@ package com.phew.domain.usecase
 import com.phew.core_common.DataResult
 import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR_NETWORK
+import com.phew.core_common.TimeUtils
 import com.phew.domain.SIGN_UP_ALREADY_SIGN_UP
 import com.phew.domain.SIGN_UP_BANNED
 import com.phew.domain.SIGN_UP_OKAY
@@ -56,7 +57,12 @@ class CheckSignUp @Inject constructor(
                     data.withdrawn -> SIGN_UP_WITHDRAWN
                     else -> SIGN_UP_OKAY
                 }
-                DomainResult.Success(Pair(resultType, data.time))
+                DomainResult.Success(Pair(resultType,
+                    if (data.time.trim()
+                            .isEmpty()
+                    ) "" else TimeUtils.convertIsoToDateString(data.time)
+                )
+                )
             }
         }
     }

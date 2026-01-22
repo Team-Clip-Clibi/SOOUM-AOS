@@ -32,8 +32,16 @@ lottie = "6.6.9"
 paging-version = "3.3.6"
 play-services-location = "21.3.0"
 cropper = "4.5.0"
+foundation = "1.9.4"
+firebase-crash = "3.0.6"
+firebase-crash-libs = "20.0.3"
+clarity = "3.7.0"
+roomCompiler = "2.8.4"
+constraintlayout = "2.2.1"
+firebase-analytics = "23.0.0"
 
 [libraries]
+androidx-material3-windowSize = { group = "androidx.compose.material3", name = "material3-window-size-class" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
@@ -71,11 +79,17 @@ security-crypto = { group = "androidx.security", name = "security-crypto", versi
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase" }
 kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version = "await" }
 firebase-message = { group = "com.google.firebase", name = "firebase-messaging", version.ref = "firebase-messaging" }
+firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics", version.ref = "firebase-crash-libs" }
+firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics", version.ref = "firebase-analytics" }
 lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", version = "6.1.0" }
 paging-runtime = { group = "androidx.paging", name = "paging-runtime", version.ref = "paging-version" }
 paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "paging-version" }
 google-play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "play-services-location" }
 cropper = { group = "com.vanniktech", name = "android-image-cropper", version.ref = "cropper" }
+androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
+androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+mircrosoft-clarity = { group = "com.microsoft.clarity", name = "clarity-compose", version.ref = "clarity" }
+androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "roomCompiler" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -86,3 +100,5 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 google-gms = { id = "com.google.gms.google-services", version.ref = "gms" }
+firebase-crash = { id = "com.google.firebase.crashlytics", version.ref = "firebase-crash" }
+

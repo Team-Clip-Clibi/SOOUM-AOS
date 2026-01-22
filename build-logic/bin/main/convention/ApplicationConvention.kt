@@ -31,12 +31,45 @@ class ApplicationConvention : Plugin<Project> {
                 versionName = "1.0.0"
                 testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
             }
-            buildTypes.getByName("release").apply {
-                isMinifyEnabled = false
-                proguardFiles(
-                    getDefaultProguardFile("proguard-android-optimize.txt"),
-                    "proguard-rules.pro"
-                )
+            signingConfigs {
+                create("release") {
+                    val keystorePropertiesFile = rootProject.file("keystore.properties")
+                    if (keystorePropertiesFile.exists()) {
+                        val properties = java.util.Properties()
+                        properties.load(java.io.FileInputStream(keystorePropertiesFile))
+                        storeFile = file(properties.getProperty("storeFile"))
+                        storePassword = properties.getProperty("storePassword")
+                        keyAlias = properties.getProperty("keyAlias")
+                        keyPassword = properties.getProperty("keyPassword")
+                    }
+                }
+            }
+            buildTypes {
+                getByName("debug") {
+                    isMinifyEnabled = false
+                    isDebuggable = true
+                    versionNameSuffix = "-debug"
+                }
+                getByName("release") {
+                    isMinifyEnabled = true
+                    isDebuggable = false
+                    signingConfig = signingConfigs.getByName("release")
+                    proguardFiles(
+                        getDefaultProguardFile("proguard-android-optimize.txt"),
+                        "proguard-rules.pro"
+                    )
+                }
+            }
+            flavorDimensions += "environment"
+            productFlavors {
+                create("dev") {
+                    dimension = "environment"
+                    versionNameSuffix = "-dev"
+                }
+                create("prod") {
+                    dimension = "environment"
+                    versionNameSuffix = "-prod"
+                }
             }
             compileOptions {
                 sourceCompatibility = JavaVersion.VERSION_21
@@ -62,6 +95,7 @@ class ApplicationConvention : Plugin<Project> {
             "implementation"(libs.findLibrary("androidx-ui-graphics").get())
             "implementation"(libs.findLibrary("androidx-ui-tooling-preview").get())
             "implementation"(libs.findLibrary("androidx-material3").get())
+            "implementation"(libs.findLibrary("androidx-material3-windowSize").get())
             "debugImplementation"(libs.findLibrary("androidx-ui-tooling").get())
             "debugImplementation"(libs.findLibrary("androidx-ui-test-manifest").get())
             "androidTestImplementation"(platform(libs.findLibrary("androidx-compose-bom").get()))
@@ -102,6 +136,8 @@ class ApplicationConvention : Plugin<Project> {
             add("implementation", project(":core:ui"))
             add("implementation", project(":presentation:write"))
             add("implementation", project(":presentation:detail"))
+            add("implementation", project(":presentation:profile"))
+            add("implementation", project(":presentation:tag"))
         }
     }
 }

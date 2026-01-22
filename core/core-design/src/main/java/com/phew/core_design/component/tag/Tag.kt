@@ -9,10 +9,13 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,8 +23,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -47,10 +48,17 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -89,12 +97,13 @@ object TagDesignTokens {
     val ColorfulIconTint = Primary.MAIN
 
     // 아이콘 색상
-    val IconTint = NeutralColor.GRAY_400
+    val IconTint = NeutralColor.GRAY_300
 
     // 사이즈
     val TagRadius = 8.dp
     val TagColorfulRadius = 20.dp
     val TagHeight = 28.dp
+    val TagColorfulHeight = 21.dp
     val IconSize = 16.dp
 
     // 패딩
@@ -139,7 +148,9 @@ fun Tag(
     modifier: Modifier = Modifier,
     requestFocusKey: Int = 0,
     showRemoveIcon: Boolean = false,
-    onInputFocusChanged: (Boolean) -> Unit = {}
+    onInputFocusChanged: (Boolean) -> Unit = {},
+    fontFamily: FontFamily = FontFamily.Default,
+    hideKeyboardOnFocusLost: Boolean = true
 ) {
     when (state) {
         TagState.AddNew -> TagAddNew(onClick = onClick, modifier = modifier)
@@ -153,7 +164,9 @@ fun Tag(
             onRemove = onRemove,
             modifier = modifier,
             requestFocusKey = requestFocusKey,
-            onFocusChanged = onInputFocusChanged
+            onFocusChanged = onInputFocusChanged,
+            fontFamily = fontFamily,
+            hideKeyboardOnFocusLost = hideKeyboardOnFocusLost
         )
 
         TagState.Default -> TagDefault(
@@ -161,7 +174,8 @@ fun Tag(
             showRemoveIcon = showRemoveIcon,
             onRemove = onRemove,
             onClick = onClick,
-            modifier = modifier
+            modifier = modifier,
+            fontFamily = fontFamily
         )
 
         TagState.Number -> TagNumber(
@@ -185,7 +199,10 @@ internal fun TagRow(
     onFocusHandled: () -> Unit = {},
     currentInput: String = "",
     onInputChange: (String) -> Unit = {},
-    modifier: Modifier = Modifier
+    fontFamily: FontFamily = FontFamily.Default,
+    modifier: Modifier = Modifier,
+    onTagClick: (String) -> Unit = { },
+    enterClick: () -> Unit
 ) {
     var input by remember { mutableStateOf(currentInput) }
     var state by remember { mutableStateOf(TagState.AddNew) }
@@ -236,7 +253,7 @@ internal fun TagRow(
             .fillMaxWidth()
             .horizontalScroll(scrollState)
             .padding(start = startPadding, end = endPadding),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         tags.forEach { tag ->
             Tag(
@@ -244,7 +261,8 @@ internal fun TagRow(
                 text = tag,
                 showRemoveIcon = enableAdd,
                 onRemove = { onRemove(tag) },
-                onClick = { onRemove(tag) }
+                onClick = if (enableAdd) { { onRemove(tag) } } else { { onTagClick(tag) } },
+                fontFamily = fontFamily
             )
         }
 
@@ -269,6 +287,7 @@ internal fun TagRow(
                         state = TagState.Focus
                         awaitingFocus = true
                         focusTrigger++
+                        enterClick()
                     }
                 },
                 onRemove = {
@@ -285,18 +304,83 @@ internal fun TagRow(
                 onInputFocusChanged = { focused ->
                     if (!focused) {
                         if (!awaitingFocus) {
-                            input = ""
+                            val candidate = TagPolicy.sanitize(input)
+                            if (candidate.isNotEmpty() && TagPolicy.isValid(candidate)) {
+                                onAdd(candidate)
+                                input = ""
+                                onInputChange("")
+                            }
                             state = TagState.AddNew
                         }
                     } else {
                         awaitingFocus = false
                     }
-                }
+                },
+                fontFamily = fontFamily,
+                hideKeyboardOnFocusLost = !awaitingFocus
             )
         }
     }
 }
 
+@Composable
+fun TagRankView(
+    text: String,
+    userCount: Int,
+    index: String,
+    id: Long,
+    onClick: (Long) -> Unit,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .padding(top = 4.dp, bottom = 4.dp, end = 12.dp)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = { onClick(id) }
+            ),
+        horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.Start),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = index,
+            style = TextComponent.TITLE_2_SB_16,
+            color = Primary.DARK,
+            textAlign = TextAlign.Start,
+            modifier = Modifier.width(32.dp)
+        )
+        Column {
+            Text(
+                text = text,
+                style = TextComponent.SUBTITLE_1_M_16,
+                color = if (isPressed) NeutralColor.GRAY_400 else NeutralColor.GRAY_600
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = when {
+                    userCount < 1000 -> userCount.toString()
+                    userCount <= 1099 -> stringResource(R.string.amount_txt_thousand_plus) // "1000+"
+                    userCount < 10000 -> {
+                        val thousands = userCount / 1000.0
+                        stringResource(R.string.amount_txt_thousand, thousands)
+                    }
+
+                    else -> {
+                        val tensOfThousands = userCount / 10000.0
+                        stringResource(R.string.amount_txt_ten_thousand, tensOfThousands)
+                    }
+                },
+                style = TextComponent.CAPTION_2_M_12,
+                color = if (isPressed) NeutralColor.GRAY_300 else NeutralColor.GRAY_500
+            )
+        }
+    }
+}
 
 @Composable
 private fun TagAddNew(
@@ -304,8 +388,9 @@ private fun TagAddNew(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        onClick = onClick,
-        modifier = modifier.height(TagDesignTokens.TagHeight),
+        modifier = modifier
+            .height(TagDesignTokens.TagHeight)
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(TagDesignTokens.TagRadius),
         color = TagDesignTokens.BackgroundColor
     ) {
@@ -340,7 +425,9 @@ private fun TagInputField(
     onRemove: () -> Unit = {},
     modifier: Modifier = Modifier,
     requestFocusKey: Int = 0,
-    onFocusChanged: (Boolean) -> Unit = {}
+    onFocusChanged: (Boolean) -> Unit = {},
+    fontFamily: FontFamily = FontFamily.Default,
+    hideKeyboardOnFocusLost: Boolean = true
 ) {
     var isFocused by remember { mutableStateOf(false) }
     var isCompleted by remember { mutableStateOf(false) }
@@ -403,7 +490,8 @@ private fun TagInputField(
                         if (isFocused) append(" ")
                     },
                     style = TextComponent.CAPTION_2_M_12.copy(
-                        color = TagDesignTokens.TextTintColor
+                        color = TagDesignTokens.TextTintColor,
+                        fontFamily = fontFamily
                     )
                 )
 
@@ -419,21 +507,18 @@ private fun TagInputField(
             }
 
             if (isCompleted || (text.isNotEmpty() && !isFocused)) {
-                IconButton(
-                    onClick = {
-                        isCompleted = false
-                        onTextChange("")
-                        onRemove()
-                    },
-                    modifier = Modifier.size(16.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_delete),
-                        contentDescription = "태그 제거",
-                        tint = TagDesignTokens.IconTint,
-                        modifier = Modifier.size(12.dp)
-                    )
-                }
+                Icon(
+                    painter = painterResource(R.drawable.ic_delete),
+                    contentDescription = "태그 제거",
+                    tint = TagDesignTokens.IconTint,
+                    modifier = Modifier
+                        .size(16.dp)
+                        .clickable {
+                            isCompleted = false
+                            onTextChange("")
+                            onRemove()
+                        }
+                )
             }
         }
     }
@@ -454,8 +539,9 @@ private fun TagInputField(
                 if (it.isFocused) {
                     isCompleted = false
                 } else {
-                    // 포커스가 해제되면 키보드를 숨김
-                    keyboardController?.hide()
+                    if (hideKeyboardOnFocusLost) {
+                        keyboardController?.hide()
+                    }
                     if (text.isNotEmpty()) {
                         isCompleted = true
                     }
@@ -463,7 +549,10 @@ private fun TagInputField(
             }
             .alpha(0f)
             .size(1.dp),
-        textStyle = TextComponent.CAPTION_2_M_12.copy(color = TagDesignTokens.TextTintColor),
+        textStyle = TextComponent.CAPTION_2_M_12.copy(
+            color = TagDesignTokens.TextTintColor,
+            fontFamily = fontFamily
+        ),
         singleLine = true,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(
@@ -486,11 +575,13 @@ private fun TagDefault(
     showRemoveIcon: Boolean = false,
     onRemove: () -> Unit = {},
     onClick: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    fontFamily: FontFamily = FontFamily.Default
 ) {
     Surface(
-        onClick = onClick,
-        modifier = modifier.height(TagDesignTokens.TagHeight),
+        modifier = modifier
+            .height(TagDesignTokens.TagHeight)
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(TagDesignTokens.TagRadius),
         color = TagDesignTokens.BackgroundColor
     ) {
@@ -511,21 +602,21 @@ private fun TagDefault(
             Text(
                 text = text,
                 color = TagDesignTokens.TextTintColor,
-                style = TextComponent.CAPTION_2_M_12.copy(color = TagDesignTokens.TextTintColor)
+                style = TextComponent.CAPTION_2_M_12.copy(
+                    color = TagDesignTokens.TextTintColor,
+                    fontFamily = fontFamily
+                )
             )
 
             if (showRemoveIcon) {
-                IconButton(
-                    onClick = onRemove,
-                    modifier = Modifier.size(16.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_delete),
-                        contentDescription = "태그 제거",
-                        tint = TagDesignTokens.IconTint,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
+                Icon(
+                    painter = painterResource(R.drawable.ic_delete),
+                    contentDescription = "태그 제거",
+                    tint = TagDesignTokens.IconTint,
+                    modifier = Modifier
+                        .size(16.dp)
+                        .clickable { onRemove() }
+                )
             }
         }
     }
@@ -541,8 +632,9 @@ private fun TagNumber(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        onClick = onClick,
-        modifier = modifier.height(TagDesignTokens.TagHeight),
+        modifier = modifier
+            .height(TagDesignTokens.TagHeight)
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(TagDesignTokens.TagRadius),
         color = TagDesignTokens.BackgroundNumberColor
     ) {
@@ -599,17 +691,18 @@ fun TagColorful(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        onClick = onClick,
-        modifier = modifier.height(TagDesignTokens.TagHeight),
+        modifier = modifier
+            .height(TagDesignTokens.TagColorfulHeight)
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(TagDesignTokens.TagColorfulRadius),
         color = TagDesignTokens.ColorfulBackground
     ) {
         Row(
             modifier = Modifier
+                .fillMaxHeight()
                 .padding(
                     horizontal = TagDesignTokens.ColorfulHorizontalPadding,
-                )
-                .fillMaxHeight(),
+                ),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(IconAndTextPadding)
         ) {

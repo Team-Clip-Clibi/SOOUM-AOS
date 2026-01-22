@@ -11,4 +11,5 @@ dependencies {
     implementation(project(":domain"))
     implementation(project(":core:core-common"))
     implementation(project(":data:network"))
+    implementation(project(":data:device:device_info"))
 }

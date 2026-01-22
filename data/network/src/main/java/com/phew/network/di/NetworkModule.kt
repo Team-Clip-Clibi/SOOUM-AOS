@@ -1,15 +1,23 @@
 package com.phew.network.di
 
-import com.phew.domain.token.TokenManger
+import com.phew.core_common.IsDebug
+import com.phew.domain.interceptor.GlobalEventBus
+import com.phew.domain.interceptor.InterceptorManger
 import com.phew.network.AuthInterceptor
 import com.phew.network.BuildConfig
+import com.phew.network.TeapotInterceptor
 import com.phew.network.TokenAuthenticator
+import com.phew.network.retrofit.AppVersionHttp
+import com.phew.network.retrofit.BlockHttp
 import com.phew.network.retrofit.CardDetailsInquiryHttp
 import com.phew.network.retrofit.FeedHttp
+import com.phew.network.retrofit.MembersHttp
 import com.phew.network.retrofit.NotifyHttp
+import com.phew.network.retrofit.ProfileHttp
 import com.phew.network.retrofit.ReportHttp
 import com.phew.network.retrofit.SignUpHttp
 import com.phew.network.retrofit.SplashHttp
+import com.phew.network.retrofit.TagHttp
 import com.phew.network.retrofit.TokenRefreshHttp
 import dagger.Module
 import dagger.Provides
@@ -43,19 +51,22 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideLoggingInterceptor(): HttpLoggingInterceptor = HttpLoggingInterceptor().apply {
-        level =
-            HttpLoggingInterceptor.Level.BODY
+        level = HttpLoggingInterceptor.Level.BODY
     }
 
     @Provides
     @Singleton
-    fun provideAuthInterceptor(tokenManger: TokenManger): AuthInterceptor =
-        AuthInterceptor(tokenManger)
+    fun provideAuthInterceptor(interceptorManger: InterceptorManger): AuthInterceptor =
+        AuthInterceptor(interceptorManger)
 
     @Provides
     @Singleton
-    fun provideTokenAuthenticator(tokenManger: TokenManger): TokenAuthenticator =
-        TokenAuthenticator(tokenManger)
+    fun provideTokenAuthenticator(interceptorManger: InterceptorManger): TokenAuthenticator =
+        TokenAuthenticator(interceptorManger)
+
+    @Provides
+    @Singleton
+    fun provideGlobalEventBus(): GlobalEventBus = GlobalEventBus()
 
     @Provides
     @Singleton
@@ -63,10 +74,12 @@ object NetworkModule {
     fun provideOkHttpClient(
         loggingInterceptor: HttpLoggingInterceptor,
         authInterceptor: AuthInterceptor,
-        tokenAuthenticator: TokenAuthenticator
+        tokenAuthenticator: TokenAuthenticator,
+        teapotInterceptor: TeapotInterceptor,
     ): OkHttpClient = OkHttpClient.Builder()
         .addInterceptor(loggingInterceptor)
         .addInterceptor(authInterceptor)
+        .addInterceptor(teapotInterceptor)
         .authenticator(tokenAuthenticator)
         .readTimeout(20L, TimeUnit.SECONDS)
         .writeTimeout(20L, TimeUnit.SECONDS)
@@ -77,9 +90,14 @@ object NetworkModule {
     @Singleton
     @Named("RefreshClient")
     fun provideRefreshOkHttpClient(
-        loggingInterceptor: HttpLoggingInterceptor
+        loggingInterceptor: HttpLoggingInterceptor,
+        @IsDebug isDebug: Boolean,
     ): OkHttpClient = OkHttpClient.Builder()
-        .addInterceptor(loggingInterceptor)
+        .apply {
+            if (isDebug) {
+                addInterceptor(loggingInterceptor)
+            }
+        }
         .readTimeout(20L, TimeUnit.SECONDS)
         .writeTimeout(20L, TimeUnit.SECONDS)
         .connectTimeout(20L, TimeUnit.SECONDS)
@@ -89,9 +107,10 @@ object NetworkModule {
     @Provides
     fun provideRetrofit(
         @Named("AuthClient") okHttpClient: OkHttpClient,
-        json: Json
+        @IsDebug isDebug: Boolean,
+        json: Json,
     ): Retrofit = Retrofit.Builder()
-        .baseUrl(BuildConfig.BASE_URL)
+        .baseUrl(if (isDebug) BuildConfig.BASE_URL_DEBUG else BuildConfig.BASE_URL_PROD)
         .client(okHttpClient)
         .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
         .build()
@@ -100,9 +119,10 @@ object NetworkModule {
     @Provides
     fun provideTokenRefreshApi(
         @Named("RefreshClient") okHttpClient: OkHttpClient,
-        json: Json
+        @IsDebug isDebug: Boolean,
+        json: Json,
     ): TokenRefreshHttp = Retrofit.Builder()
-        .baseUrl(BuildConfig.BASE_URL)
+        .baseUrl(if (isDebug) BuildConfig.BASE_URL_DEBUG else BuildConfig.BASE_URL_PROD)
         .client(okHttpClient)
         .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
         .build()
@@ -132,4 +152,29 @@ object NetworkModule {
     @Provides
     fun provideCardDetailsHttp(retrofit: Retrofit): CardDetailsInquiryHttp =
         retrofit.create(CardDetailsInquiryHttp::class.java)
+
+    @Singleton
+    @Provides
+    fun provideProfileHttp(retrofit: Retrofit): ProfileHttp =
+        retrofit.create(ProfileHttp::class.java)
+
+    @Singleton
+    @Provides
+    fun provideMembersHttp(retrofit: Retrofit): MembersHttp =
+        retrofit.create(MembersHttp::class.java)
+
+    @Singleton
+    @Provides
+    fun provideAppVersionHttp(retrofit: Retrofit): AppVersionHttp =
+        retrofit.create(AppVersionHttp::class.java)
+
+    @Singleton
+    @Provides
+    fun provideBlockHttp(retrofit: Retrofit): BlockHttp =
+        retrofit.create(BlockHttp::class.java)
+
+    @Singleton
+    @Provides
+    fun provideTagHttp(retrofit: Retrofit): TagHttp =
+        retrofit.create(TagHttp::class.java)
 }

@@ -48,6 +48,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.phew.core_common.BANNER_NEWS
 import com.phew.core_common.BANNER_SERVICE
+import com.phew.core_design.AppBar.IconBothAppBar
+import com.phew.core_design.TextFiledComponent.SearchField
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -57,9 +59,10 @@ object AppBar {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp)
                 .background(color = NeutralColor.WHITE)
                 .zIndex(1f)
+                .statusBarsPadding()
+                .height(48.dp)
                 .padding(start = 16.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
@@ -88,7 +91,127 @@ object AppBar {
     }
 
     @Composable
+    fun IconRightAppBar(
+        title: String,
+        onClick: () -> Unit,
+        @DrawableRes endImage: Int = R.drawable.ic_settings_stoke,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(color = NeutralColor.WHITE)
+                .zIndex(1f)
+                .statusBarsPadding()
+                .height(48.dp)
+                .padding(start = 16.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = title,
+                style = TextComponent.HEAD_3_B_20,
+                color = NeutralColor.BLACK
+            )
+
+            Image(
+                painter = painterResource(endImage),
+                contentDescription = title,
+                modifier = Modifier
+                    .size(48.dp)
+                    .padding(12.dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = onClick
+                    )
+            )
+        }
+    }
+
+    @Composable
     fun IconBothAppBar(
+        @DrawableRes startImage: Int = R.drawable.ic_left,
+        @DrawableRes middleImage: Int = R.drawable.ic_home_stoke,
+        @DrawableRes endImage: Int = R.drawable.ic_more_stroke_circle,
+        topAppBarText: String = "Title",
+        onBackClick: () -> Unit,
+        onSecClick: () -> Unit,
+        onLastClick: () -> Unit,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+                .background(color = NeutralColor.WHITE)
+                .padding(start = 4.dp, end = 4.dp)
+        ) {
+            Row(
+                modifier = Modifier.align(Alignment.CenterStart),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .padding(
+                            start = 8.49731.dp,
+                            top = 5.00009.dp,
+                            end = 8.dp,
+                            bottom = 5.00006.dp
+                        )
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = { onBackClick() }
+                        ),
+                    painter = painterResource(startImage),
+                    contentDescription = "left icon"
+                )
+                Spacer(modifier = Modifier.size(12.dp))
+                Image(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .padding(
+                            start = 1.75.dp,
+                            top = 1.84637.dp,
+                            end = 1.75.dp,
+                            bottom = 1.74998.dp
+                        )
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = { onSecClick() }
+                        ),
+                    painter = painterResource(middleImage),
+                    contentDescription = "sec icon"
+                )
+            }
+
+            Text(
+                text = topAppBarText,
+                style = TextComponent.TITLE_1_SB_18,
+                color = NeutralColor.BLACK,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.align(Alignment.Center)
+            )
+
+            Image(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .size(48.dp)
+                    .padding(12.dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = { onLastClick() }
+                    ),
+                painter = painterResource(endImage),
+                contentDescription = "sec icon"
+            )
+        }
+    }
+
+    @Composable
+    fun TextButtonAppBar(
         @DrawableRes startImage: Int = R.drawable.ic_left,
         @DrawableRes endImage: Int = R.drawable.ic_home_stoke,
         appBarText: String = "Title",
@@ -107,7 +230,11 @@ object AppBar {
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .clickable { startClick() },
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = { startClick() }
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -126,7 +253,11 @@ object AppBar {
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .clickable { endClick() },
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = { endClick() }
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -186,11 +317,155 @@ object AppBar {
         }
     }
 
+    @Composable
+    fun IconLeftAndRightAppBar(
+        title: String,
+        @DrawableRes image: Int = R.drawable.ic_left,
+        rightIcon: @Composable () -> Unit,
+        onBackClick: () -> Unit
+    ) {
+        val interactionSource = remember { MutableInteractionSource() }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .height(48.dp)
+                .statusBarsPadding()
+                .zIndex(1f)
+                .background(NeutralColor.WHITE)
+                .padding(start = 4.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                        onClick = onBackClick
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(image),
+                    contentDescription = "left icon",
+                    modifier = Modifier
+                        .size(24.dp)
+                        .padding(6.dp)
+                )
+            }
+            Text(
+                text = title,
+                style = TextComponent.TITLE_1_SB_18,
+                color = NeutralColor.BLACK,
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.Center
+            )
+            Box(
+                modifier = Modifier.size(48.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                rightIcon()
+            }
+        }
+    }
+
+    @Composable
+    fun SearchAppBar(
+        value: String,
+        placeholder: String,
+        isIcon: Boolean,
+        @DrawableRes image: Int = R.drawable.ic_left,
+        icon: @Composable () -> Unit,
+        onBackClick: () -> Unit,
+        onValueChange: (String) -> Unit,
+        onInputFieldRemoveClick: () -> Unit,
+        onSearch: () -> Unit,
+        focusRequester: androidx.compose.ui.focus.FocusRequester? = null,
+        showDeleteIcon: Boolean = true
+    ) {
+        val interactionSource = remember { MutableInteractionSource() }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .height(48.dp)
+                .statusBarsPadding()
+                .zIndex(1f)
+                .background(NeutralColor.WHITE)
+                .padding(start = 4.dp, end = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                        onClick = onBackClick
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(image),
+                    contentDescription = "left icon",
+                    modifier = Modifier
+                        .size(24.dp)
+                        .padding(6.dp)
+                )
+            }
+            SearchField(
+                modifier = Modifier.weight(1f),
+                value = value,
+                isReadOnly = false,
+                placeHolder = placeholder,
+                onValueChange = onValueChange,
+                onDeleteClick = onInputFieldRemoveClick,
+                onSearch = onSearch,
+                focusRequester = focusRequester,
+                showDeleteIcon = showDeleteIcon
+            )
+            if (isIcon) {
+                Box(
+                    modifier = Modifier.size(48.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    icon()
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun LeftAppBar(
+        appBarText: String = "Title",
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .height(48.dp)
+                .statusBarsPadding()
+                .zIndex(1f)
+                .background(NeutralColor.WHITE)
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = appBarText,
+                style = TextComponent.HEAD_3_B_20,
+                color = NeutralColor.BLACK,
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.Left
+            )
+        }
+    }
+
     /**
      *  TODO 추후 TopAppBar 에 통합 예정
      */
     @Composable
-    fun TextButtonAppBar(
+    fun TextButtonAppBarText(
         @DrawableRes image: Int = R.drawable.ic_left,
         onClick: () -> Unit,
         appBarText: String = "Title",
@@ -209,16 +484,20 @@ object AppBar {
         ) {
             Box(
                 modifier = Modifier
-                    .width(AppBarDefaults.IconSlotSize)
-                    .fillMaxHeight()
-                    .clickable { onClick() },
+                    .size(48.dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = { onClick() }
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     painter = painterResource(image),
-                    contentDescription = "back",
-                    modifier = Modifier.size(20.dp),
-                    tint = NeutralColor.BLACK
+                    contentDescription = "back icon",
+                    modifier = Modifier
+                        .size(24.dp)
+                        .padding(6.dp)
                 )
             }
 
@@ -379,5 +658,13 @@ private fun Preview() {
         Triple(BANNER_NEWS, "테스트 제목5", "테스트 내용5"),
         Triple(BANNER_SERVICE, "테스트 제목6", "테스트 내용6")
     )
-    AppBar.HomeBanner(data = dummyData)
+    Column {
+        AppBar.HomeBanner(data = dummyData)
+        Spacer(modifier = Modifier.height(10.dp))
+        IconBothAppBar(
+            onBackClick = {},
+            onSecClick = {},
+            onLastClick = {}
+        )
+    }
 }

@@ -1,24 +1,33 @@
 package com.phew.repository.di
 
-import com.phew.core_common.IsDebug
 import com.phew.domain.repository.DeviceRepository
+import com.phew.domain.repository.event.EventRepository
+import com.phew.domain.repository.network.AppVersionRepository
+import com.phew.domain.repository.network.BlockRepository
 import com.phew.domain.repository.network.CardDetailRepository
 import com.phew.domain.repository.network.CardFeedRepository
+import com.phew.domain.repository.network.MembersRepository
 import com.phew.domain.repository.network.NotifyRepository
+import com.phew.domain.repository.network.ProfileRepository
 import com.phew.domain.repository.network.ReportsRepository
 import com.phew.domain.repository.network.SignUpRepository
 import com.phew.domain.repository.network.SplashRepository
+import com.phew.domain.repository.network.TagRepository
 import com.phew.repository.DeviceRepositoryImpl
 import com.phew.repository.NotifyRepositoryImpl
+import com.phew.repository.event.EventRepositoryImpl
+import com.phew.repository.network.AppVersionRepositoryImpl
+import com.phew.repository.network.BlockRepositoryImpl
 import com.phew.repository.network.CardDetailRepositoryImpl
 import com.phew.repository.network.CardFeedRepositoryImpl
-import com.phew.repository.network.MockCardFeedRepositoryImpl
+import com.phew.repository.network.MembersRepositoryImpl
+import com.phew.repository.network.ProfileRepositoryImpl
 import com.phew.repository.network.ReportRepositoryImpl
 import com.phew.repository.network.SignUpRepositoryImpl
 import com.phew.repository.network.SplashRepositoryImpl
+import com.phew.repository.network.TagRepositoryImpl
 import dagger.Binds
 import dagger.Module
-import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
@@ -55,21 +64,31 @@ abstract class RepositoryModule {
     @Singleton
     abstract fun bindReportsRepository(impl: ReportRepositoryImpl): ReportsRepository
 
-    companion object {
-        @Provides
-        @Singleton
-        fun provideCardFeedRepository(
-            @IsDebug isDebug: Boolean,
-            realImpl: CardFeedRepositoryImpl,
-            mockImpl: MockCardFeedRepositoryImpl,
-        ): CardFeedRepository {
-            return realImpl
-            // 임시로 mock 데이터로 확인하고 싶을떄 사용
-//            return if (isDebug) {
-//                mockImpl
-//            } else {
-//                realImpl
-//            }
-        }
-    }
+    @Binds
+    @Singleton
+    abstract fun bindProfileRepository(impl: ProfileRepositoryImpl): ProfileRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindMembersRepository(impl: MembersRepositoryImpl): MembersRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAppVersionRepository(impl: AppVersionRepositoryImpl): AppVersionRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindBlockRepository(impl: BlockRepositoryImpl): BlockRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindTagRepository(impl: TagRepositoryImpl): TagRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindCardFeedRepository(impl: CardFeedRepositoryImpl): CardFeedRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindEventLogRepository(impl : EventRepositoryImpl) : EventRepository
 }

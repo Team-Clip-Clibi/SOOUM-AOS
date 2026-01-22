@@ -5,10 +5,12 @@ import com.phew.network.dto.TagRequestDTO
 import com.phew.network.dto.request.feed.CheckBanedDTO
 import com.phew.network.dto.request.feed.DefaultImageDTO
 import com.phew.network.dto.request.feed.ImageInfoDTO
+import com.phew.network.dto.request.feed.UploadCardImageInfoDTO
 import com.phew.network.dto.request.feed.RequestUploadCardAnswerDTO
 import com.phew.network.dto.request.feed.RequestUploadCardDTO
 import com.phew.network.dto.request.feed.TagInfoListDTO
 import com.phew.network.dto.response.BackgroundImageDTO
+import com.phew.network.dto.response.CheckCardDeleteDTO
 import com.phew.network.dto.response.DistanceDTO
 import com.phew.network.dto.response.LatestDto
 import com.phew.network.dto.response.PopularDto
@@ -22,6 +24,9 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 import retrofit2.http.Url
 
+import com.phew.network.dto.response.feed.CardIdResponseDto // Added import
+import com.phew.network.NoAuth
+
 interface FeedHttp {
     /**
      * Popular Feed url
@@ -33,13 +38,22 @@ interface FeedHttp {
     ): Response<List<PopularDto>>
 
     /**
-     * Latest Feed url
+     * Latest Feed url (first page)
      */
     @GET(BuildConfig.API_URL_CARD_FEED_LATEST)
     suspend fun requestLatestFeed(
         @Query("latitude") latitude: Double? = null,
         @Query("longitude") longitude: Double? = null,
-        @Query("lastId") lastId: Int? = null,
+    ): Response<List<LatestDto>>
+
+    /**
+     * Latest Feed url (with pagination)
+     */
+    @GET("${BuildConfig.API_URL_CARD_FEED_LATEST}/{lastId}")
+    suspend fun requestLatestFeed(
+        @Path("lastId") lastId: Long? = null,
+        @Query("latitude") latitude: Double? = null,
+        @Query("longitude") longitude: Double? = null,
     ): Response<List<LatestDto>>
 
     /**
@@ -50,7 +64,7 @@ interface FeedHttp {
         @Query("latitude") latitude: Double? = null,
         @Query("longitude") longitude: Double? = null,
         @Query("distance") distance: Double? = null,
-        @Query("lastId") lastId: Int? = null,
+        @Query("lastId") lastId: Long? = null,
     ): Response<List<DistanceDTO>>
 
     /**
@@ -72,7 +86,7 @@ interface FeedHttp {
      * card background image Upload url
      */
     @GET(BuildConfig.API_URL_UPLOAD_CARD_IMAGE)
-    suspend fun requestUploadCardUrl(): Response<ImageInfoDTO>
+    suspend fun requestUploadCardUrl(): Response<UploadCardImageInfoDTO>
 
     /**
      * Card Upload url
@@ -80,7 +94,7 @@ interface FeedHttp {
     @POST(BuildConfig.API_URL_UPLOAD_CARD)
     suspend fun requestUploadCard(
         @Body request: RequestUploadCardDTO,
-    ): Response<Unit>
+    ): Response<CardIdResponseDto> // Changed return type
 
     /**
      * Card answer Upload url
@@ -89,7 +103,7 @@ interface FeedHttp {
     suspend fun requestUploadAnswerCard(
         @Path("cardId") cardId: Long,
         @Body request: RequestUploadCardAnswerDTO,
-    ): Response<Unit>
+    ): Response<CardIdResponseDto> // Changed return type
 
     /**
      * checked user baned upload card
@@ -100,6 +114,7 @@ interface FeedHttp {
     /**
      * Upload card background image
      */
+    @NoAuth
     @PUT
     suspend fun requestUploadImage(
         @Url url: String,
@@ -113,4 +128,12 @@ interface FeedHttp {
     suspend fun requestCheckBackgroundImage(
         @Path("imgName") imgName: String,
     ): Response<BackgroundImageDTO>
+
+    /**
+     * 삭제된 카드 인지 확인
+     */
+    @GET(BuildConfig.API_URL_CHECK_CARD_DELETE)
+    suspend fun requestCheckCardDelete(
+        @Path("cardId") cardId: Long,
+    ): Response<CheckCardDeleteDTO>
 }

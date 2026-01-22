@@ -34,7 +34,6 @@ fun NavGraphBuilder.splashNavGraph(
             Splash(
                 viewModel = splashViewModel,
                 signUp = {
-                    println("!! $TAG, navToOnBoarding")
                     navToOnBoarding()
                 },
                 finish = {

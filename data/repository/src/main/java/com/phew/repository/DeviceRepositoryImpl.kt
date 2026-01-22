@@ -2,6 +2,7 @@ package com.phew.repository
 
 
 import com.phew.datastore_local.DataStore
+import com.phew.datastore_local.dto.ProfileInfoDTO
 import com.phew.datastore_local.dto.UserInfoDTO
 import com.phew.device_info.DeviceInfo
 import com.phew.domain.dto.Location
@@ -37,7 +38,7 @@ class DeviceRepositoryImpl @Inject constructor(
     override suspend fun saveToken(key: String, data: Token): Boolean {
         return dataStoreLocal.insertToken(
             key = key,
-            data = Pair(data.refreshToken, data.refreshToken)
+            data = Pair(data.refreshToken, data.accessToken)
         )
     }
 
@@ -105,5 +106,28 @@ class DeviceRepositoryImpl @Inject constructor(
 
     override suspend fun getLocationPermission(): Boolean {
         return location.locationPermissionCheck()
+    }
+
+    override suspend fun getAppVersion(): String {
+        return deviceInfo.appVersion()
+    }
+
+    override suspend fun deleteAll(): Boolean {
+        return dataStoreLocal.clearAllData()
+    }
+
+    override suspend fun saveProfileInfo(
+        profileKey: String,
+        nickName: String,
+    ): Boolean {
+        return dataStoreLocal.saveNickName(
+            profileKey = profileKey, data = ProfileInfoDTO(
+                nickName = nickName
+            )
+        )
+    }
+
+    override suspend fun getProfileInfo(profileKey: String): String? {
+        return dataStoreLocal.getNickName(profileKey = profileKey)?.nickName
     }
 }

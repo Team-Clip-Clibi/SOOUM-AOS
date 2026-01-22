@@ -8,32 +8,34 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.navOptions
 import com.phew.core.ui.component.home.HomeTabType
 import com.phew.core.ui.component.home.HomeTabType.Companion.isFeedHome
 import com.phew.core.ui.state.SooumAppState
 import com.phew.core.ui.util.extension.findActivity
 import com.phew.core_common.log.SooumLog
+import com.phew.core_design.component.toast.SooumToast
+import com.phew.core.ui.R
 import kotlinx.coroutines.delay
 
 @Composable
 fun SooumBackHandler(
     appState: SooumAppState
 ) {
-    val isHomeRoute by rememberUpdatedState(newValue = appState.isHomeLevelDestination)
+    val isHomeRoute = appState.isHomeLevelDestination
+    val currentRoute = appState.currentDestination?.route
+
+    SooumLog.d(TAG, "isFeedHome? = $currentRoute")
 
     if (isHomeRoute) {
-        val currentDestination = appState.navController.currentBackStackEntry?.destination
-        val route = requireNotNull(currentDestination?.route)
-
-        SooumLog.d(TAG, "isFeedHome? = ${appState.currentDestination?.route}")
-        if (isFeedHome(appState.currentDestination?.route)) {
+        if (isFeedHome(currentRoute)) {
             SooumExitBackHandler()
         } else {
             BackHandler {
+                val route = requireNotNull(currentRoute)
                 appState.navController.navigate(
                     route = HomeTabType.FEED.route,
                     navOptions = navOptions { popUpTo(route) { inclusive = true } }
@@ -95,23 +97,20 @@ fun SooumExitBackHandler(
             backPressState = BackPressState.Idle
         }
     }
-
     BackHandler {
         SooumLog.d(TAG, "BackHandler triggered - Current backPressState: $backPressState")
         if (backPressState is BackPressState.Idle) {
             SooumLog.d(TAG, "State is Idle - changing to InitialTouch")
             backPressState = BackPressState.InitialTouch
 
-            //  TODO Snackbar로 처리
-            Toast.makeText(
+            SooumToast.makeToast(
                 context,
-                "뒤로가기 버튼을 한번 더 누르면 종료됩니다.",
-                Toast.LENGTH_SHORT
+                context.getString(R.string.back_press_exit_message),
+                SooumToast.LENGTH_SHORT
             ).show()
         } else if (backPressState is BackPressState.InitialTouch) {
             SooumLog.d(TAG, "State is InitialTouch - exiting app")
             onDismiss()
-
             context.findActivity().finish()
         } else {
             SooumLog.d(TAG, "Unexpected state: $backPressState")

@@ -6,6 +6,7 @@ import com.phew.core_common.AppVersion
 import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR
 import com.phew.core_common.IsDebug
+import com.phew.domain.model.AppVersionStatusType
 import com.phew.domain.usecase.AutoLogin
 import com.phew.domain.usecase.CheckAppVersion
 import com.phew.domain.usecase.GetFirebaseToken
@@ -47,11 +48,11 @@ class SplashViewModel @Inject constructor(
                 }
 
                 is DomainResult.Success -> {
-                    if (result.data) {
-                        updateFcmToken()
+                    if (result.data == AppVersionStatusType.UPDATE) {
+                        _uiState.value = UiState.Update
                         return@launch
                     }
-                    _uiState.value = UiState.Update
+                    updateFcmToken()
                 }
             }
         }

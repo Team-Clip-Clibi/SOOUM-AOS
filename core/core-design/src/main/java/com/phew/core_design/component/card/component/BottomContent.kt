@@ -7,13 +7,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -43,7 +44,7 @@ internal fun TimerLabel(
         Image(
             painter = painterResource(R.drawable.ic_bomb),
             contentDescription = "Time Limit card",
-            modifier = Modifier.size(12.dp)
+            modifier = Modifier.size(16.dp)
         )
         if (isExpired) {
             Text(
@@ -115,7 +116,7 @@ internal fun LocationAndWriteTimeLabel(
         }
         if (!writeTime.isNullOrEmpty()) {
             Text(
-                text = writeTime,
+                text = TimeUtils.getRelativeTimeString(writeTime),
                 style = TextComponent.CAPTION_2_M_12.copy(color = NeutralColor.GRAY_500),
                 modifier = Modifier
             )
@@ -211,17 +212,15 @@ internal fun BottomContent(
     
     // 타이머 표시 조건: FeedDeletedCard(만료된 타이머) 또는 FeedPungCard(남은 시간이 있을 때)
     val showTimer = when (cardType) {
-        FeedCardType.DELETED -> !remainingTimeMillis.isNullOrEmpty() // 만료된 타이머 표시
         FeedCardType.PUNG -> !remainingTimeMillis.isNullOrEmpty() && remaining > 0L // 남은 시간이 있을 때만
+        FeedCardType.DELETED -> !remainingTimeMillis.isNullOrEmpty() // 만료된 타이머 표시
         else -> false // DEFAULT, ADMIN은 타이머 표시 안 함
     }
 
-    SooumLog.d(TAG, "remainingTimeMillis : $remainingTimeMillis, " +
-            "likeCount : $likeCount, commentCount : $commentCount, isExpired : $isExpired, showTimer: $showTimer")
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .wrapContentHeight()
+            .height(34.dp)
             .background(color = NeutralColor.WHITE)
             .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -248,7 +247,6 @@ internal fun BottomContent(
             }
         }
         if (!showTimer) {
-            SooumLog.d(TAG, "LikeAndComment")
             LikeAndComment(
                 likeValue = likeCount,
                 commentValue = commentCount

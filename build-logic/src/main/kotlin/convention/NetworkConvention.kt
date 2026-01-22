@@ -30,7 +30,8 @@ class NetworkConvention : Plugin<Project> {
                 if (localPropsFile.exists()) {
                     localPropsFile.inputStream().use { properties.load(it) }
                 }
-                val baseUrl: String = properties.getProperty("base_url", "")
+                val baseUrlDebug: String = properties.getProperty("base_url_debug", "")
+                val baseUrlProd: String = properties.getProperty("base_url_prod", "")
                 val apiUrl: String = properties.getProperty("api_url", "")
                 val apiUrlType: String = properties.getProperty("api_url_type", "")
                 val apiUrlQuery: String = properties.getProperty("api_url_version", "")
@@ -53,6 +54,10 @@ class NetworkConvention : Plugin<Project> {
                 val popularUrl: String = properties.getProperty("api_url_card_feed_popular", "")
                 val latestUrl: String = properties.getProperty("api_url_card_feed_latest", "")
                 val relatedTag: String = properties.getProperty("api_url_tag_related", "")
+                val tags: String = properties.getProperty("api_url_tags", "")
+                val tagCards: String = properties.getProperty("api_url_tag_cards", "")
+                val tagRank: String = properties.getProperty("api_url_tag_rank", "")
+                val tagFavorite: String = properties.getProperty("api_url_tag_favorite", "")
                 val cardBackgroundImageDefault =
                     properties.getProperty("api_url_card_background_image_default", "")
                 val cardBackgroundUpload: String =
@@ -67,12 +72,39 @@ class NetworkConvention : Plugin<Project> {
                 val cardDetail: String = properties.getProperty("api_url_card_detail", "")
                 val cardDelete: String = properties.getProperty("api_url_card_delete", "")
                 val cardComment: String = properties.getProperty("api_url_card_comment", "")
-                val cardCommentMore: String = properties.getProperty("api_url_card_comment_more", "")
+                val cardCommentMore: String =
+                    properties.getProperty("api_url_card_comment_more", "")
                 val cardReports: String = properties.getProperty("api_url_reports_card", "")
                 val cardBlock: String = properties.getProperty("api_url_block_member", "")
                 val cardUnblock: String = properties.getProperty("api_url_unblock_member", "")
+                val blocks: String = properties.getProperty("api_url_blocks", "")
+                val blocksPaging: String = properties.getProperty("api_url_blocks_paging", "")
+                val myProfile: String = properties.getProperty("api_url_my_profile", "")
+                val myProfileCommentCard: String =
+                    properties.getProperty("api_url_profile_comment_card", "")
+                val myProfileCard: String = properties.getProperty("api_url_profile_card", "")
+                val following: String = properties.getProperty("api_url_following", "")
+                val followingNext: String = properties.getProperty("api_url_following_next", "")
+                val follower: String = properties.getProperty("api_url_follower", "")
+                val followerNext: String = properties.getProperty("api_url_follower_next", "")
+                val otherProfile: String = properties.getProperty("api_url_other_profile", "")
+                val follow : String = properties.getProperty("api_url_follow" , "")
+                val unFollow : String = properties.getProperty("api_url_un_follow","")
+                val updateProfile : String = properties.getProperty("api_url_update_profile" ,"")
+                val activityRestriction: String = properties.getProperty("api_url_activity_restriction", "")
+                val transferCode: String = properties.getProperty("api_url_transfer_code", "")
+                val refreshTransferCode: String = properties.getProperty("api_url_refresh_transfer_code", "")
+                val transferAccount: String = properties.getProperty("api_url_transfer_account", "")
+                val withdrawalAccount: String =
+                    properties.getProperty("api_url_withdrawal_account", "")
+                val rejoinableDate: String = properties.getProperty("api_url_rejoinable_date", "")
+                val readActivateAlarm: String = properties.getProperty("api_url_activate_read", "")
+                val checkCardDelete: String =
+                    properties.getProperty("api_url_check_card_delete", "")
+                val notifyToggle: String = properties.getProperty("api_url_notify_toggle", "")
 
-                buildConfigField("String", "BASE_URL", baseUrl)
+                buildConfigField("String", "BASE_URL_DEBUG", baseUrlDebug)
+                buildConfigField("String", "BASE_URL_PROD", baseUrlProd)
                 buildConfigField("String", "API_URL", apiUrl)
                 buildConfigField("String", "API_URL_TYPE", apiUrlType)
                 buildConfigField("String", "API_URL_QUERY", apiUrlQuery)
@@ -92,6 +124,10 @@ class NetworkConvention : Plugin<Project> {
                 buildConfigField("String", "API_URL_CARD_FEED_LATEST", latestUrl)
                 buildConfigField("String", "API_URL_CARD_FEED_DISTANCE", cardDistance)
                 buildConfigField("String", "API_URL_TAG_RELATED", relatedTag)
+                buildConfigField("String", "API_URL_TAGS", tags)
+                buildConfigField("String", "API_URL_TAG_CARDS", tagCards)
+                buildConfigField("String", "API_URL_TAG_RANK", tagRank)
+                buildConfigField("String", "API_URL_TAG_FAVORITE", tagFavorite)
                 buildConfigField("String", "API_URL_CARD_IMAGE_DEFAULT", cardBackgroundImageDefault)
                 buildConfigField("String", "API_URL_UPLOAD_CARD_IMAGE", cardBackgroundUpload)
                 buildConfigField("String", "API_URL_UPLOAD_CARD", uploadCard)
@@ -110,6 +146,29 @@ class NetworkConvention : Plugin<Project> {
                 buildConfigField("String", "API_URL_CARD_COMMENT_MORE", cardCommentMore)
                 buildConfigField("String", "API_URL_BLOCK_MEMBER", cardBlock)
                 buildConfigField("String", "API_URL_UNBLOCK_MEMBER", cardUnblock)
+                buildConfigField("String", "API_URL_BLOCKS", blocks)
+                buildConfigField("String", "API_URL_BLOCKS_PAGING", blocksPaging)
+                buildConfigField("String", "API_URL_MY_PROFILE", myProfile)
+                buildConfigField("String", "API_URL_MY_PROFILE_COMMENT_CARD", myProfileCommentCard)
+                buildConfigField("String", "API_URL_MY_PROFILE_CARD", myProfileCard)
+                buildConfigField("String", "API_URL_FOLLOWING", following)
+                buildConfigField("String", "API_URL_FOLLOWING_NEXT", followingNext)
+                buildConfigField("String", "API_URL_FOLLOWER", follower)
+                buildConfigField("String", "API_URL_FOLLOWER_NEXT", followerNext)
+                buildConfigField("String", "API_URL_OTHER_PROFILE", otherProfile)
+                buildConfigField("String", "API_URL_FOLLOW_USER", follow)
+                buildConfigField("String", "API_URL_UN_FOLLOW_USER", unFollow)
+                buildConfigField("String", "API_URL_UPDATE_PROFILE", updateProfile)
+                buildConfigField("String", "API_URL_ACTIVITY_RESTRICTION", activityRestriction)
+                buildConfigField("String", "API_URL_TRANSFER_CODE", transferCode)
+                buildConfigField("String", "API_URL_REFRESH_TRANSFER_CODE", refreshTransferCode)
+                buildConfigField("String", "API_URL_TRANSFER_ACCOUNT", transferAccount)
+                buildConfigField("String", "API_URL_WITHDRAWAL_ACCOUNT", withdrawalAccount)
+                buildConfigField("String", "API_URL_REJOINABLE_DATE", rejoinableDate)
+                buildConfigField("String", "API_URL_READ_ACTIVATE", readActivateAlarm)
+                buildConfigField("String", "API_URL_CHECK_CARD_DELETE", checkCardDelete)
+
+                buildConfigField("String", "API_URL_NOTIFY_TOGGLE", notifyToggle)
             }
             buildFeatures.buildConfig = true
             compileOptions {
@@ -130,6 +189,7 @@ class NetworkConvention : Plugin<Project> {
             "implementation"(libs.findLibrary("squareup-okhttp3-logging-interceptor").get())
             "implementation"(libs.findLibrary("jetbrains-kotlinx-serialization-json").get())
             "implementation"(libs.findLibrary("google-gson").get())
+            "implementation"(project(":core:core-common"))
         }
     }
 }

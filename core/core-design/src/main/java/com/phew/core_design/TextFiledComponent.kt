@@ -2,6 +2,7 @@ package com.phew.core_design
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -13,7 +14,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -27,6 +32,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -106,7 +112,7 @@ object TextFiledComponent {
         rightImageClick: () -> Unit,
         value: String,
         onValueChange: (String) -> Unit,
-        placeHolder: String,
+        placeHolder: String = "",
         helperUse: Boolean,
         helperText: String = "",
         helperTextColor: Color = NeutralColor.GRAY_500,
@@ -118,7 +124,7 @@ object TextFiledComponent {
                     .fillMaxWidth()
                     .height(54.dp)
                     .background(color = NeutralColor.GRAY_100, shape = RoundedCornerShape(10.dp))
-                    .padding(start = 24.dp, end = 20.dp),
+                    .padding(start = 8.dp, end = 20.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -172,7 +178,10 @@ object TextFiledComponent {
                         Icon(
                             painter = painterResource(R.drawable.ic_error_stoke),
                             contentDescription = "Error $helperText",
-                            tint = Danger.M_RED
+                            tint = Danger.M_RED,
+                            modifier = Modifier
+                                .size(16.dp)
+                                .padding(1.dp)
                         )
                     }
                     Text(
@@ -183,6 +192,96 @@ object TextFiledComponent {
                 }
             }
         }
+    }
+
+    @Composable
+    fun SearchField(
+        value: String,
+        placeHolder: String,
+        isReadOnly: Boolean = false,
+        onValueChange: (String) -> Unit = {},
+        onDeleteClick: () -> Unit = {},
+        onFieldClick: () -> Unit = {},
+        onSearch: () -> Unit = {},
+        modifier: Modifier = Modifier,
+        focusRequester: FocusRequester? = null,
+        showDeleteIcon: Boolean = true
+    ) {
+        BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = modifier
+                .fillMaxWidth()
+                .height(44.dp)
+                .let { baseModifier ->
+                    focusRequester?.let { baseModifier.focusRequester(it) } ?: baseModifier
+                },
+            singleLine = true,
+            readOnly = isReadOnly,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions(onSearch = { onSearch() }),
+            textStyle = TextComponent.SUBTITLE_1_M_16.copy(color = NeutralColor.GRAY_500),
+            decorationBox = { innerTextField ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(NeutralColor.GRAY_100)
+                        .border(
+                            width = 1.dp,
+                            color = NeutralColor.GRAY_100,
+                            shape = RoundedCornerShape(10.dp)
+                        )
+                        .let { modifier ->
+                            if (isReadOnly) {
+                                modifier.clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                    onClick = onFieldClick
+                                )
+                            } else {
+                                modifier
+                            }
+                        }
+                        .padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_search),
+                        contentDescription = "search",
+                        tint = NeutralColor.GRAY_400,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Box(modifier = Modifier.weight(1f)) {
+                        if (value.isEmpty()) {
+                            Text(
+                                text = placeHolder,
+                                style = TextComponent.SUBTITLE_1_M_16,
+                                color = NeutralColor.GRAY_500
+                            )
+                        }
+                        innerTextField()
+                    }
+                    if (value.isNotEmpty() && showDeleteIcon) {
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Icon(
+                            painter = painterResource(R.drawable.ic_delete),
+                            contentDescription = "close",
+                            tint = NeutralColor.GRAY_400,
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                    onClick = onDeleteClick
+                                )
+                        )
+                    }
+                }
+            }
+        )
     }
 
     /**

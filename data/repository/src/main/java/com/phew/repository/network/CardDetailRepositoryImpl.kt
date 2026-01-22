@@ -12,6 +12,7 @@ import com.phew.repository.mapper.apiCall
 import com.phew.repository.mapper.toDomain
 import javax.inject.Inject
 import retrofit2.Response
+import com.phew.domain.dto.CardIdResponse // Added import
 
 class CardDetailRepositoryImpl @Inject constructor(
     private val cardDetailsHttp: CardDetailsInquiryHttp
@@ -37,17 +38,19 @@ class CardDetailRepositoryImpl @Inject constructor(
     }
 
     override suspend fun postCardReply(
-        cardId: Long, 
+        cardId: Long,
         request: CardReplyRequest
-    ): DataResult<Unit> {
+    ): DataResult<CardIdResponse> { // Changed return type
         return try {
             val response = cardDetailsHttp.postCardDetail(
                 cardId = cardId,
                 body = request.toNetwork()
             )
-            
+
             if (response.isSuccessful) {
-                DataResult.Success(Unit)
+                response.body()?.let {
+                    DataResult.Success(it.toDomain()) // Extract cardId
+                } ?: DataResult.Fail(code = response.code(), message = "Response body is null")
             } else {
                 DataResult.Fail(code = response.code(), message = response.message())
             }
@@ -100,7 +103,11 @@ class CardDetailRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 DataResult.Success(Unit)
             } else {
-                DataResult.Fail(code = response.code(), message = response.message())
+                if (response.code() == com.phew.core_common.HTTP_CARD_ALREADY_DELETE) {
+                    DataResult.Fail(code = response.code(), message = com.phew.core_common.ERROR_ALREADY_CARD_DELETE)
+                } else {
+                    DataResult.Fail(code = response.code(), message = response.message())
+                }
             }
         } catch (e: Exception) {
             DataResult.Fail(code = APP_ERROR_CODE, message = e.message, throwable = e)
@@ -120,5 +127,3 @@ class CardDetailRepositoryImpl @Inject constructor(
         )
     }
 }
-
-private const val TAG = "CardDetailRepository"

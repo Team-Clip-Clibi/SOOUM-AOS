@@ -1,5 +1,13 @@
 package com.phew.core_design
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -24,13 +32,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.compose.material3.Text
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.clickable
-import androidx.compose.ui.res.painterResource
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.ui.graphics.Color
 
 object DialogComponent {
     @Composable
@@ -67,7 +72,7 @@ object DialogComponent {
                 Spacer(modifier = Modifier.height(24.dp))
                 MediumButton.NoIconPrimary(
                     buttonText = buttonText,
-                    onClick = onClick
+                    onClick = onClick,
                 )
             }
         }
@@ -115,6 +120,11 @@ object DialogComponent {
         buttonTextEnd: String,
         onClick: () -> Unit,
         onDismiss: () -> Unit,
+        rightButtonBaseColor: Color = NeutralColor.BLACK,
+        rightButtonClickColor: Color = NeutralColor.GRAY_600,
+        rightButtonDisableColor: Color = NeutralColor.GRAY_200,
+        startButtonTextColor: Color = NeutralColor.WHITE,
+        endButtonTextColor: Color = NeutralColor.WHITE,
     ) {
         Dialog(
             onDismissRequest = onDismiss
@@ -148,6 +158,7 @@ object DialogComponent {
                     Box(Modifier.weight(1f)) {
                         MediumButton.NoIconSecondary(
                             buttonText = buttonTextStart,
+                            selectTextColor = startButtonTextColor,
                             onClick = onDismiss,
 
                             )
@@ -156,6 +167,10 @@ object DialogComponent {
                         MediumButton.NoIconPrimary(
                             buttonText = buttonTextEnd,
                             onClick = onClick,
+                            baseColor = rightButtonBaseColor,
+                            blinkColor = rightButtonClickColor,
+                            disabledColor = rightButtonDisableColor,
+                            textColor = endButtonTextColor
                         )
                     }
                 }
@@ -170,12 +185,15 @@ object DialogComponent {
         buttonTextEnd: String,
         onClick: () -> Unit,
         onDismiss: () -> Unit,
+        baseColor: Color = NeutralColor.BLACK,
+        blinkColor: Color = NeutralColor.GRAY_600,
+        disabledColor: Color = NeutralColor.GRAY_200,
     ) {
         Dialog(onDismissRequest = onDismiss) {
             Column(
                 modifier = Modifier
                     .width(271.dp)
-                    .height(132.dp)
+                    .wrapContentHeight()
                     .background(
                         color = NeutralColor.WHITE,
                         shape = RoundedCornerShape(size = 20.dp)
@@ -206,6 +224,9 @@ object DialogComponent {
                         MediumButton.NoIconPrimary(
                             buttonText = buttonTextEnd,
                             onClick = onClick,
+                            baseColor = baseColor,
+                            blinkColor = blinkColor,
+                            disabledColor = disabledColor
                         )
                     }
                 }
@@ -214,9 +235,51 @@ object DialogComponent {
     }
 
     @Composable
-    fun SnackBar(
+    fun CustomAnimationSnackBarHost(
+        hostState: SnackbarHostState,
+        modifier: Modifier = Modifier,
+    ) {
+        AnimatedContent(
+            targetState = hostState.currentSnackbarData,
+            contentAlignment = Alignment.BottomCenter,
+            contentKey = { it },
+            transitionSpec = {
+                val duration = 300
+                (slideInVertically(
+                    initialOffsetY = { height -> height },
+                    animationSpec = tween(duration)
+                ) + fadeIn(
+                    animationSpec = tween(duration)
+                )).togetherWith(
+                    slideOutVertically(
+                        targetOffsetY = { height -> height },
+                        animationSpec = tween(duration)
+                    ) + fadeOut(
+                        animationSpec = tween(duration)
+                    )
+                ).using(SizeTransform(clip = false))
+            },
+            label = "snackBarAnimation",
+            modifier = modifier
+        ) { snackBarData ->
+            if (snackBarData != null) {
+                SnackbarHost(hostState) { data ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 20.dp, start = 16.dp, end = 16.dp)
+                    ) {
+                        SnackBar(data = data)
+                    }
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun SnackBar(
         data: SnackbarData,
-    ){
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -254,6 +317,19 @@ object DialogComponent {
                 )
             }
         }
+    }
+
+    @Composable
+    fun DeletedCardDialog(
+        onConfirm: () -> Unit,
+        onDismiss: () -> Unit,
+    ) {
+        NoDescriptionButtonOne(
+            title = androidx.compose.ui.res.stringResource(R.string.dialog_deleted_card_title),
+            buttonText = androidx.compose.ui.res.stringResource(R.string.common_okay),
+            onClick = onConfirm,
+            onDismiss = onDismiss
+        )
     }
 }
 

@@ -1,5 +1,6 @@
 package com.phew.core.ui.model.navigation
 
+import com.phew.core_common.CardDetailTrace
 import kotlinx.serialization.Serializable
 
 /**
@@ -8,5 +9,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class CardDetailCommentArgs(
     val cardId: Long,
-    val parentId: Long
+    val parentId: Long,
+    val backTo: String? = null,
+    val isComment: Boolean = true,
+    val previousView : CardDetailTrace = CardDetailTrace.NONE
 ): java.io.Serializable

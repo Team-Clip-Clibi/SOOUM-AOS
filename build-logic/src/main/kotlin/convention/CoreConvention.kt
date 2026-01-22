@@ -12,15 +12,13 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
 class CoreConvention : Plugin<Project> {
     override fun apply(project: Project) = with(project) {
         val libs = extensions.getByType<VersionCatalogsExtension>().named("libs")
-
         pluginManager.apply("com.android.library")
         pluginManager.apply("org.jetbrains.kotlin.android")
         pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
         pluginManager.apply("sooum.android.lint.convention")
         extensions.getByType<LibraryExtension>().apply {
-            lint{
+            lint {
                 disable.add("UnusedResources") // 사용 안하는 리소스 경고 무시
-
             }
             compileSdk = 36
             defaultConfig {
@@ -53,6 +51,8 @@ class CoreConvention : Plugin<Project> {
             add("implementation", libs.findLibrary("coil-compose").get())
             add("implementation", libs.findLibrary("coil-network").get())
             add("implementation", libs.findLibrary("compose-nav").get())
+            add("implementation", libs.findLibrary("lottie-compose").get())
+            add("implementation", libs.findLibrary("jetbrains-kotlinx-serialization-json").get())
             add("debugImplementation", libs.findLibrary("androidx-ui-tooling").get())
             add("debugImplementation", libs.findLibrary("androidx-ui-test-manifest").get())
             add("implementation", project(":core:core-common"))

@@ -2,13 +2,22 @@
 <resources>
     <string name="card_detail_bottom_search">조회</string>
     <string name="card_no_comment">첫 댓글을 남겨보세요</string>
-    <string name="card_title_comment">댓글</string>
+    <string name="card_error_comment">댓글을 불러오는데 실패했습니다.</string>
+    <string name="card_title_comment">카드</string>
     <string name="card_detail_block">차단하기</string>
     <string name="card_detail_report">신고하기</string>
-    <string name="card_detail_block_dialog_title">차단하기겠어요?</string>
+    <string name="card_detail_delete">삭제</string>
+    <string name="card_detail_block_dialog_title">차단하시겠어요?</string>
     <string name="card_detail_block_dialog_subtitle">%s님의 모든 카드를 볼 수 없어요.</string>
+    <string name="card_detail_delete_dialog_title">카드를 삭제하시겠어요</string>
+    <string name="card_detail_delete_dialog_content">삭제한 카드는 영구적으로 삭제되며, 복구할 수 없습니다.</string>
     <string name="card_detail_cancel">취소</string>
     <string name="card_detail_block_success">%s님의 카드가 목록에서 보이지 않습니다.</string>
     <string name="card_detail_error_comments">댓글을 불러올 수 없습니다</string>
     <string name="card_detail_error_load_card">카드 정보를 불러오는 중 오류가 발생했습니다</string>
+    <string name="card_detail_not_found">카드를 찾을 수 없습니다</string>
+    <string name="card_detail_go_back">돌아가기</string>
+    <string name="card_detail_comment_app_bar_title">댓글카드</string>
+    <string name="card_detail_dialog_delete_title">삭제된 카드</string>
+    <string name="card_detail_unknown_user">알 수 없는 사용자</string>
 </resources>

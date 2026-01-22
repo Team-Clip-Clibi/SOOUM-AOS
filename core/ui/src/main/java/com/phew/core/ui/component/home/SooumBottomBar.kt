@@ -8,6 +8,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -16,11 +17,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.phew.core.ui.state.SooumAppState
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import com.phew.core.ui.compose.ComposableType
 import com.phew.core.ui.compose.ComposableVisibleState
 import com.phew.core.ui.compose.LifecycleAwareComposableRegister
 import com.phew.core.ui.util.extension.isHomeLevelTab
-import com.phew.core.ui.util.extension.shouldShowBottomBar
+import com.phew.core_common.log.SooumLog
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
 import com.phew.core_design.component.bottomappbar.SooumNavigationBar
@@ -30,16 +34,14 @@ import com.phew.core_design.component.bottomappbar.SooumNavigationBarItem
 fun SooumBottomBar(
     modifier: Modifier = Modifier,
     navController: NavHostController,
+    appState: SooumAppState,
     homeTaps: List<HomeTabType> = HomeTabType.entries
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val visibleState = remember { ComposableVisibleState() }
+    val scope = rememberCoroutineScope()
 
-    val shouldShowBottomBar by remember(navBackStackEntry) {
-        derivedStateOf {
-            navBackStackEntry?.destination?.shouldShowBottomBar(homeTaps) ?: false
-        }
-    }
+    val shouldShowBottomBar = appState.shouldShowBottomBar
 
     LaunchedEffect(shouldShowBottomBar) {
         // LifecycleAware visible 상태 설정
@@ -83,29 +85,44 @@ fun SooumBottomBar(
                         )
                     },
                     onClick = {
-                        //  현재 선택이 되어 있는 탭을 제외한 클릭만 동작하도록
-                        if (!selected) {
-                            when (tab) {
-                                HomeTabType.FEED -> {
+                        when (tab) {
+                            HomeTabType.FEED -> {
+                                if (selected) {
+                                    // 이미 Feed가 선택된 상태에서 다시 클릭하면 최상단으로 이동
+                                    scope.launch {
+                                        appState.scrollFeedToTop()
+                                    }
+                                } else {
+                                    // 다른 탭에서 Feed로 이동 (기존 스크롤 위치 유지)
                                     navController.navigate(tab.graph) {
                                         popUpTo(HomeTabType.FEED.route)
                                         launchSingleTop = true
                                     }
+                                    scope.launch {
+                                        delay(150)
+                                        appState.scrollFeedToTop()
+                                    }
                                 }
+                            }
 
-                                HomeTabType.WRITE -> {
+                            HomeTabType.WRITE -> {
+                                if (!selected) {
                                     navController.navigate(tab.graph) {
-                                        popUpTo(HomeTabType.FEED.route) {
+                                        launchSingleTop = true
+                                    }
+                                }
+                            }
+
+                            HomeTabType.TAG,
+                            HomeTabType.MY -> {
+                                if (!selected) {
+                                    navController.navigate(tab.graph) {
+                                        popUpTo(HomeTabType.MY.route) {
                                             saveState = true
                                         }
                                         launchSingleTop = true
                                         restoreState = true
                                     }
-                                }
-
-                                HomeTabType.TAG,
-                                HomeTabType.MY -> {
-                                    // TODO 나머지 탭 구현 시 라우팅 처리
                                 }
                             }
                         }

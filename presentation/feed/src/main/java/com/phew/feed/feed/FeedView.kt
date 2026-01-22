@@ -1,60 +1,67 @@
 package com.phew.feed.feed
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.airbnb.lottie.LottieComposition
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.LottieConstants
-import com.airbnb.lottie.compose.animateLottieCompositionAsState
-import com.airbnb.lottie.compose.rememberLottieComposition
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.LoadState
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.paging.compose.itemContentType
+import androidx.paging.compose.itemKey
 import com.phew.core.ui.model.navigation.CardDetailArgs
+import com.phew.core.ui.navigation.NavigationKeys
 import com.phew.core_design.AppBar
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
+import com.phew.core.ui.component.home.HomeTabType
+import com.phew.core_common.BOTTOM_NAVIGATION_HEIGHT
+import com.phew.core_design.LoadingAnimation
+import com.phew.core_design.component.refresh.RefreshBox
 import com.phew.domain.dto.FeedCardType
+import com.phew.domain.dto.Latest
 import com.phew.domain.dto.Notice
 import com.phew.feed.FeedUi
 import com.phew.feed.NAV_HOME_FEED_INDEX
@@ -63,51 +70,56 @@ import com.phew.feed.NAV_HOME_POPULAR_INDEX
 import com.phew.feed.viewModel.DistanceType
 import com.phew.feed.viewModel.FeedPagingState
 import com.phew.feed.viewModel.FeedType
-import com.phew.feed.viewModel.HomeViewModel
+import com.phew.feed.viewModel.FeedViewModel
 import com.phew.feed.viewModel.NavigationEvent
 import com.phew.feed.viewModel.UiState
 import com.phew.presentation.feed.R
+import com.phew.core.ui.state.SooumAppState
+import com.phew.core_design.DialogComponent.DeletedCardDialog
+import com.phew.feed.NotifyTab
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
 import com.phew.core.ui.R as CoreUiR
 
-
-@OptIn(FlowPreview::class)
+@OptIn(FlowPreview::class, ExperimentalMaterial3Api::class)
 @Composable
 fun FeedView(
-    viewModel: HomeViewModel,
-    finish: () -> Unit,
+    appState: SooumAppState,
+    viewModel: FeedViewModel,
+    navController: NavHostController,
     requestPermission: () -> Unit,
     closeDialog: () -> Unit,
-    noticeClick: () -> Unit,
+    noticeClick: (String) -> Unit,
     navigateToDetail: (CardDetailArgs) -> Unit,
-    webViewClick: (String) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val isRefreshing = uiState.refresh is UiState.Loading
+    val unRead = viewModel.unReadActivateAlarm.collectAsLazyPagingItems()
     val feedNoticeState = uiState.feedNotification
-    val lazyListState = rememberLazyListState()
-    var isTabsVisible by remember { mutableStateOf(true) }
-    val nestedScrollConnection = remember {
-        object : NestedScrollConnection {
-            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                isTabsVisible = available.y > 0 || lazyListState.firstVisibleItemIndex == 0
-                return Offset.Zero
-            }
-        }
+    var cachedFeedNotice by remember { mutableStateOf<List<Notice>>(emptyList()) }
+    val latestFeedItems = viewModel.latestFeedPaging.collectAsLazyPagingItems()
+    val lazyGridState = rememberLazyGridState()
+    var hasScrolledToTop by rememberSaveable { mutableStateOf(false) }
+    var previousHomeTab by rememberSaveable { mutableStateOf<HomeTabType?>(null) }
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentHomeTab = remember(navBackStackEntry) {
+        HomeTabType.findHome(navBackStackEntry?.destination?.route)
+    }
+    val currentPagingState = uiState.currentPagingState
+
+    val refreshCurrentFeed: () -> Unit = {
+        viewModel.refreshCurrentTab()
+        unRead.refresh()
     }
 
-    val composition by rememberLottieComposition(
-        LottieCompositionSpec.RawRes(com.phew.core_design.R.raw.ic_refresh)
-    )
-    val progress by animateLottieCompositionAsState(
-        composition = composition,
-        iterations = LottieConstants.IterateForever,
-        isPlaying = isRefreshing
-    )
-
-    BackHandler {
-        finish()
+    LaunchedEffect(feedNoticeState) {
+        if (feedNoticeState is UiState.Success) {
+            cachedFeedNotice = feedNoticeState.data
+        }
+    }
+    val feedNotice = when (feedNoticeState) {
+        is UiState.Success -> feedNoticeState.data
+        else -> cachedFeedNotice
     }
 
     // Navigation event handling
@@ -120,204 +132,509 @@ fun FeedView(
             }
         }
     }
-
-    // 리컴포지션 최적화: 페이징 상태 직접 참조
-    val currentPagingState = uiState.currentPagingState
-
-    // 무한 스크롤 감지
-    val isLoadingMore = currentPagingState is FeedPagingState.LoadingMore
-
-    LaunchedEffect(lazyListState) {
-        snapshotFlow { lazyListState.layoutInfo.visibleItemsInfo }
-            .debounce(100)
-            .collect { visibleItems ->
-                val lastVisibleIndex = visibleItems.lastOrNull()?.index ?: 0
-                val totalItems = lazyListState.layoutInfo.totalItemsCount
-
-                val state = currentPagingState
-                if (lastVisibleIndex >= totalItems - 5 &&
-                    state is FeedPagingState.Success &&
-                    state.hasNextPage &&
-                    totalItems > 0
-                ) {
-                    viewModel.loadMoreFeeds()
-                }
+    // Refresh handling after returning from other screens
+    LaunchedEffect(navBackStackEntry) {
+        navBackStackEntry?.savedStateHandle?.let { savedStateHandle ->
+            val cardAdded = savedStateHandle.remove<Boolean>(NavigationKeys.CARD_ADDED) == true
+            val cardUpdated = savedStateHandle.remove<Boolean>(NavigationKeys.CARD_UPDATED) == true
+            val cardDeleted = savedStateHandle.remove<Boolean>(NavigationKeys.CARD_DELETED) == true
+            if (cardAdded || cardUpdated || cardDeleted) {
+                refreshCurrentFeed()
             }
+        }
+    }
+    // 하단 탭 이동 시 스크롤 초기화 플래그 갱신
+    LaunchedEffect(currentHomeTab) {
+        if (previousHomeTab != currentHomeTab) {
+            if (
+                currentHomeTab == HomeTabType.FEED &&
+                previousHomeTab != null &&
+                previousHomeTab != HomeTabType.FEED
+            ) {
+                hasScrolledToTop = false
+            }
+            previousHomeTab = currentHomeTab
+        }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(color = NeutralColor.GRAY_100)
-            .systemBarsPadding()
-    ) {
-        TopLayout(
-            currentTab = uiState.currentTab,
-            recentClick = {
-                viewModel.switchTab(FeedType.Latest)
-            },
-            popularClick = {
-                viewModel.switchTab(FeedType.Popular)
-            },
-            nearClick = viewModel::checkLocationPermission,
-            isTabsVisible = isTabsVisible,
-            notice = feedNoticeState is UiState.Success && feedNoticeState.data.isNotEmpty(),
-            noticeClick = noticeClick,
-            distanceClick = { value ->
-                viewModel.switchDistanceTab(value)
-            },
-            selectDistance = uiState.distanceTab
-        )
-
-        FeedContent(
-            currentPagingState = currentPagingState,
-            isRefreshing = isRefreshing,
-            isLoadingMore = isLoadingMore,
-            onRefresh = viewModel::refreshCurrentTab,
-            lazyListState = lazyListState,
-            nestedScrollConnection = nestedScrollConnection,
-            composition = composition,
-            progress = progress,
-            onClick = { cardId ->
-                viewModel.navigateToDetail(cardId)
-            },
-            onRemoveCard = viewModel::removeFeedCard,
-            feedNotice = if (feedNoticeState is UiState.Success) feedNoticeState.data else emptyList(),
-            feedNoticeClick = { url ->
-                webViewClick(url)
+    // 스크롤 관리: 탭 이동 시 초기화 & feedScrollToTopEvent 처리
+    LaunchedEffect(Unit) {
+        // feedScrollToTopEvent 처리
+        launch {
+            appState.feedScrollToTopEvent.collect {
+                viewModel.clickHomeTab()
+                lazyGridState.animateScrollToItem(0)
             }
-        )
-        if (uiState.shouldShowPermissionRationale) {
-            DialogComponent.DefaultButtonTwo(
-                title = stringResource(CoreUiR.string.location_permission_title),
-                description = stringResource(CoreUiR.string.location_permission_description),
-                buttonTextStart = stringResource(CoreUiR.string.location_permission_negative),
-                buttonTextEnd = stringResource(CoreUiR.string.location_permission_positive),
-                onClick = {
-                    requestPermission()
-                    closeDialog()
-                },
-                onDismiss = {
-                    closeDialog()
+        }
+
+        // 탭 이동 시 스크롤 초기화 처리
+        launch {
+            snapshotFlow { hasScrolledToTop }
+                .collect { scrolledToTop ->
+                    if (!scrolledToTop) {
+                        lazyGridState.animateScrollToItem(0)
+                        hasScrolledToTop = true
+                    }
                 }
-            )
+        }
+    }
+
+    // 헬퍼 함수 - isRefreshing 로직 단일화
+    // Latest 탭은 Paging3 상태 기반, Other 탭은 ViewModel refresh 플래그 기반으로 새로고침 감지
+    fun isRefreshing(
+        currentTab: FeedType,
+        latestLoading: Boolean,
+        latestEmpty: Boolean,
+        refresh: Boolean,
+    ): Boolean {
+        return when (currentTab) {
+            FeedType.Latest -> latestLoading && !latestEmpty
+            else -> refresh
+        }
+    }
+
+    LaunchedEffect(lazyGridState, uiState.currentTab) {
+        if (uiState.currentTab != FeedType.Latest) {
+            snapshotFlow { lazyGridState.layoutInfo.visibleItemsInfo }
+                .debounce(100)
+                .collect { visibleItems ->
+                    val lastVisibleIndex = visibleItems.lastOrNull()?.index ?: 0
+                    val totalItems = lazyGridState.layoutInfo.totalItemsCount
+
+                    val state = currentPagingState
+                    if (lastVisibleIndex >= totalItems - 5 &&
+                        state is FeedPagingState.Success &&
+                        state.hasNextPage &&
+                        totalItems > 0
+                    ) {
+                        viewModel.loadMoreFeeds()
+                    }
+                }
+        }
+    }
+    val isLatestLoading = latestFeedItems.loadState.refresh is LoadState.Loading
+    val isLatestEmpty = latestFeedItems.itemCount == 0
+
+    val snackBarHostState = remember { SnackbarHostState() }
+    val refreshState = rememberPullToRefreshState()
+    // 헬퍼 함수 사용으로 로직 단일화
+    val isRefresh = isRefreshing(
+        currentTab = uiState.currentTab,
+        latestLoading = isLatestLoading,
+        latestEmpty = isLatestEmpty,
+        refresh = uiState.refresh
+    )
+    val pullDistance = 102.dp
+    val pullOffsetPx = with(LocalDensity.current) {
+        refreshState.distanceFraction * pullDistance.toPx()
+    }
+    TopView(
+        noticeClick = noticeClick,
+        newNotice = unRead.itemCount != 0,
+        snackBarHostState = snackBarHostState
+    ) { paddingValues ->
+        RefreshBox(
+            isRefresh = isRefresh,
+            onRefresh = refreshCurrentFeed,
+            state = refreshState,
+            paddingValues = paddingValues,
+            indicatorTopPadding = 60.dp
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(color = NeutralColor.GRAY_100)
+                    .padding(
+                        top = paddingValues.calculateTopPadding(),
+                        bottom = paddingValues.calculateBottomPadding()
+                    )
+            ) {
+                FeedContentView(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer { clip = false },
+                    lazyGridState = lazyGridState,
+                    recentClick = {
+                        viewModel.switchTab(FeedType.Latest)
+                    },
+                    popularClick = {
+                        viewModel.switchTab(FeedType.Popular)
+                    },
+                    nearClick = viewModel::checkLocationPermission,
+                    distanceClick = viewModel::switchDistanceTab,
+                    selectDistance = uiState.distanceTab,
+                    currentTab = uiState.currentTab,
+                    feedNotice = feedNotice,
+                    feedNoticeClick = noticeClick,
+                    latestFeedItems = latestFeedItems,
+                    onClick = viewModel::navigateToDetail,
+                    onRemoveCard = viewModel::removeFeedCard,
+                    currentPagingState = uiState.currentPagingState,
+                    pullOffsetPx = pullOffsetPx,
+                    onRefresh = refreshCurrentFeed,
+                    hiddenCardIds = uiState.hiddenCardIds
+                )
+                if (uiState.shouldShowPermissionRationale) {
+                    DialogComponent.DefaultButtonTwo(
+                        title = stringResource(CoreUiR.string.location_permission_title),
+                        description = stringResource(CoreUiR.string.location_permission_description),
+                        buttonTextStart = stringResource(CoreUiR.string.location_permission_negative),
+                        buttonTextEnd = stringResource(CoreUiR.string.location_permission_positive),
+                        onClick = {
+                            requestPermission()
+                            closeDialog()
+                        },
+                        onDismiss = {
+                            closeDialog()
+                        },
+                        startButtonTextColor = NeutralColor.GRAY_600
+                    )
+                }
+                if (uiState.checkCardDelete is UiState.Success) {
+                    DeletedCardDialog(
+                        onDismiss = viewModel::initCheckCardDelete,
+                        onConfirm = viewModel::initCheckCardDelete
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun TopLayout(
-    currentTab: FeedType,
+private fun TopView(
+    newNotice: Boolean,
+    noticeClick: (String) -> Unit,
+    snackBarHostState: SnackbarHostState,
+    content: @Composable (PaddingValues) -> Unit,
+) {
+    Scaffold(
+        snackbarHost = {
+            DialogComponent.CustomAnimationSnackBarHost(hostState = snackBarHostState)
+        },
+        topBar = {
+            AppBar.HomeAppBar(
+                onClick = { noticeClick(NotifyTab.NOTIFY_ACTIVATE.toString()) },
+                newAlarm = newNotice,
+            )
+        },
+        content = content
+    )
+}
+
+@Composable
+private fun FeedContentView(
+    modifier: Modifier,
+    lazyGridState: LazyGridState,
     recentClick: () -> Unit,
     popularClick: () -> Unit,
     nearClick: () -> Unit,
-    isTabsVisible: Boolean,
-    notice: Boolean,
-    noticeClick: () -> Unit,
     distanceClick: (DistanceType) -> Unit,
-    selectDistance : DistanceType
+    selectDistance: DistanceType,
+    currentTab: FeedType,
+    feedNotice: List<Notice>,
+    feedNoticeClick: (String) -> Unit,
+    latestFeedItems: LazyPagingItems<Latest>,
+    onClick: (String, Boolean) -> Unit,
+    onRemoveCard: (String) -> Unit,
+    currentPagingState: FeedPagingState,
+    pullOffsetPx: Float,
+    onRefresh: () -> Unit,
+    hiddenCardIds: Set<Long>,
 ) {
     val selectIndex = when (currentTab) {
         FeedType.Latest -> NAV_HOME_FEED_INDEX
         FeedType.Popular -> NAV_HOME_POPULAR_INDEX
         FeedType.Distance -> NAV_HOME_NEAR_INDEX
     }
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight()
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(1),
+        state = lazyGridState,
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+        contentPadding = PaddingValues(bottom = BOTTOM_NAVIGATION_HEIGHT.dp)
     ) {
-        AppBar.HomeAppBar(
-            onClick = noticeClick,
-            newAlarm = notice,
-        )
-        FeedUi.AnimatedFeedTabLayout(
-            selectTabData = selectIndex,
-            recentClick = recentClick,
-            popularClick = popularClick,
-            nearClick = nearClick,
-            isTabsVisible = isTabsVisible,
-            onDistanceClick = { value ->
-                distanceClick(value)
-            },
-            selectDistanceType = selectDistance
-        )
-    }
-}
-
-@Composable
-private fun FeedContent(
-    currentPagingState: FeedPagingState,
-    isRefreshing: Boolean,
-    isLoadingMore: Boolean,
-    onRefresh: () -> Unit,
-    lazyListState: LazyListState,
-    nestedScrollConnection: NestedScrollConnection,
-    composition: LottieComposition?,
-    progress: Float,
-    onClick: (String) -> Unit,
-    onRemoveCard: (String) -> Unit,
-    feedNotice: List<Notice>,
-    feedNoticeClick: (String) -> Unit,
-) {
-    when (currentPagingState) {
-        is FeedPagingState.None,
-        is FeedPagingState.Loading,
-            -> {
-            if (isRefreshing || currentPagingState is FeedPagingState.Loading) {
-                // 로딩 UI는 PullToRefresh에서 처리 또는 초기 로딩
+        item(span = { GridItemSpan(maxLineSpan) }) {
+            Box(
+                modifier = Modifier
+                    .zIndex(1f)
+            ) {
+                FeedUi.FeedTab(
+                    selectTabData = selectIndex,
+                    recentClick = recentClick,
+                    popularClick = popularClick,
+                    nearClick = nearClick,
+                    onDistanceClick = distanceClick,
+                    selectDistanceType = selectDistance
+                )
             }
+            Spacer(modifier = Modifier.height(6.dp))
         }
-
-        is FeedPagingState.LoadingMore -> {
-            // LoadingMore일 때도 성공 상태의 데이터를 표시하고 로딩 인디케이터를 추가
-            // 하지만 현재 상태에서는 기존 데이터가 없으므로 빈 화면 표시
-            if (currentPagingState.existingData.isEmpty()) {
-                EmptyFeedView()
-            } else {
-                FeedListView(
-                    feedCards = currentPagingState.existingData,
-                    isRefreshing = isRefreshing,
-                    isLoadingMore = isLoadingMore,
-                    onRefresh = onRefresh,
-                    lazyListState = lazyListState,
-                    nestedScrollConnection = nestedScrollConnection,
-                    composition = composition,
-                    progress = progress,
-                    cardClick = onClick,
-                    onRemoveCard = onRemoveCard,
+        if (feedNotice.isNotEmpty()) {
+            item(
+                key = feedNotice.joinToString("_") { it.id.toString() },
+                span = { GridItemSpan(maxLineSpan) }
+            ) {
+                FeedUi.FeedNoticeView(
                     feedNotice = feedNotice,
-                    feedNoticeClick = feedNoticeClick
+                    feedNoticeClick = { feedNoticeClick(NotifyTab.NOTIFY_SERVICE.toString()) },
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .graphicsLayer { translationY = pullOffsetPx }
                 )
             }
         }
+        // LoadState.Loading 상태에서도 기존 목록을 유지하기 위해 로딩/노트로딩을 함께 처리한다.
+        // 단, 최초 로딩(아이템이 없는 상태)일 때만 별도 로딩뷰를 노출.
+        when (currentTab) {
+            FeedType.Latest -> {
+                when (val refreshState = latestFeedItems.loadState.refresh) {
+                    is LoadState.Error -> {
+                        item(span = { GridItemSpan(maxLineSpan) }) {
+                            Box(modifier = Modifier.graphicsLayer { translationY = pullOffsetPx }) {
+                                ErrorView(
+                                    message = refreshState.error.message
+                                        ?: stringResource(R.string.home_feed_load_error),
+                                    onRetry = {
+                                        latestFeedItems.retry()
+                                    }
+                                )
+                            }
+                        }
+                    }
 
-        is FeedPagingState.Success -> {
-            if (currentPagingState.feedCards.isEmpty()) {
-                EmptyFeedView()
-            } else {
-                FeedListView(
-                    feedCards = currentPagingState.feedCards,
-                    isRefreshing = isRefreshing,
-                    isLoadingMore = isLoadingMore,
-                    onRefresh = onRefresh,
-                    lazyListState = lazyListState,
-                    nestedScrollConnection = nestedScrollConnection,
-                    composition = composition,
-                    progress = progress,
-                    cardClick = onClick,
-                    onRemoveCard = onRemoveCard,
-                    feedNotice = feedNotice,
-                    feedNoticeClick = feedNoticeClick
-                )
+                    is LoadState.Loading,
+                    is LoadState.NotLoading,
+                        -> {
+                        val isInitialLoading =
+                            refreshState is LoadState.Loading && latestFeedItems.itemCount == 0
+
+                        if (isInitialLoading) {
+                            item(span = { GridItemSpan(maxLineSpan) }) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 20.dp)
+                                        .graphicsLayer { translationY = pullOffsetPx }
+                                ) {
+                                    LoadingAnimation.LoadingView(
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+                            }
+                        } else {
+                            if (latestFeedItems.itemCount == 0) {
+                                item(span = { GridItemSpan(maxLineSpan) }) {
+                                    Box(modifier = Modifier.graphicsLayer {
+                                        translationY = pullOffsetPx
+                                    }) {
+                                        EmptyFeedView()
+                                    }
+                                }
+                            } else {
+                                items(
+                                    count = latestFeedItems.itemCount,
+                                    key = latestFeedItems.itemKey { it.cardId },
+                                    contentType = latestFeedItems.itemContentType { "LatestFeed" }
+                                ) { index ->
+                                    latestFeedItems[index]?.let { latest ->
+                                        val cardId = latest.cardId.toLongOrNull()
+                                        // hiddenCardIds에 포함된 카드는 렌더링하지 않음
+                                        if (cardId == null || !hiddenCardIds.contains(cardId)) {
+                                            val feedCardType = classifyLatestFeedType(latest)
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .wrapContentHeight()
+                                                    .padding(horizontal = 16.dp)
+                                                    .graphicsLayer { translationY = pullOffsetPx }
+                                            ) {
+                                                FeedUi.TypedFeedCardView(
+                                                    feedCard = feedCardType,
+                                                    onClick = { id ->
+                                                        onClick(id, feedCardType.isEventCard())
+                                                    },
+                                                    onRemoveCard = onRemoveCard,
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            when (val appendState = latestFeedItems.loadState.append) {
+                                is LoadState.Error -> {
+                                    item(span = { GridItemSpan(maxLineSpan) }) {
+                                        Box(modifier = Modifier.graphicsLayer {
+                                            translationY = pullOffsetPx
+                                        }) {
+                                            ErrorView(
+                                                message = appendState.error.message
+                                                    ?: stringResource(R.string.home_feed_load_error),
+                                                onRetry = {
+                                                    latestFeedItems.retry()
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+
+                                is LoadState.Loading -> {
+                                    item(span = { GridItemSpan(maxLineSpan) }) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 20.dp)
+                                                .graphicsLayer { translationY = pullOffsetPx }
+                                        ) {
+                                            LoadingAnimation.LoadingView(
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                        }
+                                    }
+                                }
+
+                                is LoadState.NotLoading -> {
+                                    // 아무 작업 없음
+                                }
+                            }
+                        }
+                    }
+                }
             }
-        }
 
-        is FeedPagingState.Error -> {
-            ErrorView(
-                message = currentPagingState.message,
-                onRetry = onRefresh
-            )
+            else -> {
+                when (currentPagingState) {
+                    is FeedPagingState.Error -> {
+                        item(span = { GridItemSpan(maxLineSpan) }) {
+                            Box(modifier = Modifier.graphicsLayer { translationY = pullOffsetPx }) {
+                                ErrorView(
+                                    message = currentPagingState.message,
+                                    onRetry = onRefresh
+                                )
+                            }
+                        }
+                    }
+
+                    // LoadingMore 처리 개선
+                    // 기존 문제: existingData.isEmpty()일 때 EmptyFeedView 표시
+                    // 해결: 로딩 중이므로 LoadingAnimation 표시 + 하단 추가 로딩 인디케이터
+                    is FeedPagingState.LoadingMore -> {
+                        if (currentPagingState.existingData.isEmpty()) {
+                            // LoadingMore 상태에서 EmptyFeedView 대신 로딩 인디케이터 표시
+                            item(span = { GridItemSpan(maxLineSpan) }) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 20.dp)
+                                        .graphicsLayer { translationY = pullOffsetPx }
+                                ) {
+                                    LoadingAnimation.LoadingView(
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+                            }
+                        } else {
+                            itemsIndexed(
+                                items = currentPagingState.existingData,
+                                key = { _, feedCard ->
+                                    when (feedCard) {
+                                        is FeedCardType.BoombType -> feedCard.cardId
+                                        is FeedCardType.AdminType -> feedCard.cardId
+                                        is FeedCardType.NormalType -> feedCard.cardId
+                                    }
+                                }
+                            ) { _, feedCard ->
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .wrapContentHeight()
+                                        .padding(horizontal = 16.dp)
+                                        .graphicsLayer { translationY = pullOffsetPx }
+                                ) {
+                                    FeedUi.TypedFeedCardView(
+                                        feedCard = feedCard,
+                                        onClick = { id ->
+                                            onClick(id, feedCard.isEventCard())
+                                        },
+                                        onRemoveCard = onRemoveCard,
+                                    )
+                                }
+                            }
+                            // 하단에 추가 로딩 인디케이터 표시
+                            item(span = { GridItemSpan(maxLineSpan) }) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 20.dp)
+                                        .graphicsLayer { translationY = pullOffsetPx }
+                                ) {
+                                    LoadingAnimation.LoadingView(
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    is FeedPagingState.Success -> {
+                        if (currentPagingState.feedCards.isEmpty()) {
+                            item(span = { GridItemSpan(maxLineSpan) }) {
+                                Box(modifier = Modifier.graphicsLayer {
+                                    translationY = pullOffsetPx
+                                }) {
+                                    EmptyFeedView()
+                                }
+                            }
+                        } else {
+
+                            itemsIndexed(
+                                items = currentPagingState.feedCards,
+                                key = { _, feedCard ->
+                                    when (feedCard) {
+                                        is FeedCardType.BoombType -> feedCard.cardId
+                                        is FeedCardType.AdminType -> feedCard.cardId
+                                        is FeedCardType.NormalType -> feedCard.cardId
+                                    }
+                                }
+                            ) { _, feedCard ->
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .wrapContentHeight()
+                                        .padding(horizontal = 16.dp)
+                                        .graphicsLayer { translationY = pullOffsetPx }
+                                ) {
+                                    FeedUi.TypedFeedCardView(
+                                        feedCard = feedCard,
+                                        onClick = { id ->
+                                            onClick(id, feedCard.isEventCard())
+                                        },
+                                        onRemoveCard = onRemoveCard,
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    is FeedPagingState.Loading -> {
+                        item(span = { GridItemSpan(maxLineSpan) }) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 20.dp)
+                                    .graphicsLayer { translationY = pullOffsetPx }
+                            ) {
+                                LoadingAnimation.LoadingView(
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                        }
+                    }
+
+                    else -> Unit
+                }
+            }
         }
     }
 }
@@ -325,7 +642,9 @@ private fun FeedContent(
 @Composable
 private fun EmptyFeedView() {
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(vertical = 100.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -346,119 +665,10 @@ private fun EmptyFeedView() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun FeedListView(
-    feedCards: List<FeedCardType>,
-    isRefreshing: Boolean,
-    isLoadingMore: Boolean,
-    onRefresh: () -> Unit,
-    lazyListState: LazyListState,
-    nestedScrollConnection: NestedScrollConnection,
-    composition: LottieComposition?,
-    progress: Float,
-    cardClick: (String) -> Unit,
-    onRemoveCard: (String) -> Unit,
-    feedNotice: List<Notice>,
-    feedNoticeClick: (String) -> Unit,
-) {
-    val refreshingOffset = 56.dp
-    val refreshState = rememberPullToRefreshState()
-    val density = LocalDensity.current
-
-    PullToRefreshBox(
-        isRefreshing = isRefreshing,
-        onRefresh = onRefresh,
-        state = refreshState,
-        indicator = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(refreshingOffset + 20.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                val lottieProgress = if (isRefreshing) {
-                    progress
-                } else {
-                    refreshState.distanceFraction
-                }
-                if (isRefreshing) {
-                    LottieAnimation(
-                        composition = composition,
-                        progress = { lottieProgress },
-                        modifier = Modifier.size(60.dp)
-                    )
-                }
-            }
-        }
-    ) {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .nestedScroll(nestedScrollConnection)
-                .padding(start = 16.dp, end = 16.dp, bottom = 60.dp)
-                .graphicsLayer {
-                    translationY = if (isRefreshing) {
-                        refreshState.distanceFraction * with(density) { refreshingOffset.toPx() }
-                    } else {
-                        0f
-                    }
-                },
-            state = lazyListState
-        ) {
-            item {
-                // 더 좋은 방법이 있으면 수정 필요
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-
-            item {
-                FeedUi.FeedNoticeView(
-                    feedNotice = feedNotice,
-                    feedNoticeClick = feedNoticeClick
-                )
-            }
-            item {
-                Spacer(modifier = Modifier.height(10.dp))
-            }
-            itemsIndexed(
-                items = feedCards,
-                key = { _, feedCard ->
-                    when (feedCard) {
-                        is FeedCardType.BoombType -> feedCard.cardId
-                        is FeedCardType.AdminType -> feedCard.cardId
-                        is FeedCardType.NormalType -> feedCard.cardId
-                    }
-                }
-            ) { _, feedCard ->
-                FeedUi.TypedFeedCardView(
-                    feedCard = feedCard,
-                    onClick = cardClick,
-                    onRemoveCard = onRemoveCard
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-            }
-
-            // 더 로딩 중일 때 로딩 인디케이터
-            if (isLoadingMore) {
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        androidx.compose.material3.CircularProgressIndicator()
-                    }
-                }
-            }
-        }
-    }
-}
-
 @Composable
 private fun ErrorView(
     message: String,
-    onRetry: () -> Unit
+    onRetry: () -> Unit,
 ) {
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -472,12 +682,51 @@ private fun ErrorView(
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(16.dp))
-        androidx.compose.material3.Button(
+        Button(
             onClick = onRetry
         ) {
-            Text("다시 시도")
+            Text(stringResource(R.string.retry))
         }
     }
 }
 
-private const val TAG = "FeedView"
+private fun classifyLatestFeedType(item: Latest): FeedCardType {
+    return when {
+        !item.storyExpirationTime.isNullOrEmpty() -> FeedCardType.BoombType(
+            cardId = item.cardId,
+            storyExpirationTime = item.storyExpirationTime,
+            content = item.cardContent,
+            imageUrl = item.cardImgUrl,
+            likeValue = item.likeCount.toString(),
+            imageName = item.cardImageName,
+            font = item.font,
+            location = item.distance,
+            writeTime = item.createAt,
+            commentValue = item.commentCardCount.toString()
+        )
+
+        item.isAdminCard -> FeedCardType.AdminType(
+            cardId = item.cardId,
+            content = item.cardContent,
+            imageUrl = item.cardImgUrl,
+            imageName = item.cardImageName,
+            font = item.font,
+            location = item.distance,
+            writeTime = item.createAt,
+            commentValue = item.commentCardCount.toString(),
+            likeValue = item.likeCount.toString()
+        )
+
+        else -> FeedCardType.NormalType(
+            cardId = item.cardId,
+            content = item.cardContent,
+            imageUrl = item.cardImgUrl,
+            imageName = item.cardImageName,
+            font = item.font,
+            location = item.distance,
+            writeTime = item.createAt,
+            commentValue = item.commentCardCount.toString(),
+            likeValue = item.likeCount.toString()
+        )
+    }
+}

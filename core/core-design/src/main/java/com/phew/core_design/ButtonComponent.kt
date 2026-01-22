@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -19,12 +20,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,9 +34,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
-
-const val blinkTime = 120
 
 /**
  * button 중복 클래스 에러 발생시 아래의 명령어 터미널 작성
@@ -51,6 +45,7 @@ object LargeButton {
 
     @Composable
     private fun BlinkLargeButton(
+        modifier: Modifier = Modifier,
         enabled: Boolean = true,
         baseColor: Color = NeutralColor.BLACK,
         blinkColor: Color = NeutralColor.GRAY_600,
@@ -62,7 +57,7 @@ object LargeButton {
         val isPressed by interactionSource.collectIsPressedAsState()
 
         Row(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
                 .height(56.dp)
                 .clip(shape = RoundedCornerShape(10.dp))
@@ -163,11 +158,13 @@ object LargeButton {
 
     @Composable
     fun NoIconSecondary(
+        modifier: Modifier = Modifier,
         buttonText: String,
         onClick: () -> Unit,
         isEnable: Boolean = true,
     ) {
         BlinkLargeButton(
+            modifier = modifier,
             baseColor = NeutralColor.GRAY_100,
             blinkColor = NeutralColor.GRAY_200,
             disabledColor = NeutralColor.GRAY_200,
@@ -337,6 +334,8 @@ object MediumButton {
         disabledColor: Color = NeutralColor.GRAY_200,
         borderColor: Color = baseColor,
         onClick: () -> Unit,
+        showStroke : Boolean = true,
+        horizontalArrangement: Arrangement.Horizontal = Arrangement.Center,
         content: @Composable RowScope.() -> Unit,
     ) {
         val interactionSource = remember { MutableInteractionSource() }
@@ -347,7 +346,17 @@ object MediumButton {
                 .fillMaxWidth()
                 .height(48.dp)
                 .clip(shape = RoundedCornerShape(10.dp))
-                .border(width = 1.dp, color = borderColor, shape = RoundedCornerShape(10.dp))
+                .then(
+                    if (showStroke) {
+                        Modifier.border(
+                            width = 1.dp,
+                            color = borderColor,
+                            shape = RoundedCornerShape(10.dp)
+                        )
+                    } else {
+                        Modifier
+                    }
+                )
                 .drawBehind {
                     val color = when {
                         !enabled -> disabledColor
@@ -364,7 +373,7 @@ object MediumButton {
                 )
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+            horizontalArrangement = horizontalArrangement
         ) {
             content()
         }
@@ -375,15 +384,22 @@ object MediumButton {
         buttonText: String,
         onClick: () -> Unit,
         isEnable: Boolean = true,
+        textColor: Color = NeutralColor.WHITE,
+        baseColor: Color = NeutralColor.BLACK,
+        blinkColor: Color = NeutralColor.GRAY_600,
+        disabledColor: Color = NeutralColor.GRAY_200,
     ) {
         BlinkMediumButton(
             onClick = onClick,
-            enabled = isEnable
+            enabled = isEnable,
+            baseColor = baseColor,
+            blinkColor = blinkColor,
+            disabledColor = disabledColor
         ) {
             Text(
                 text = buttonText,
                 style = TextComponent.SUBTITLE_1_M_16,
-                color = if (isEnable) NeutralColor.WHITE else NeutralColor.GRAY_400
+                color = textColor
             )
         }
     }
@@ -445,6 +461,36 @@ object MediumButton {
     }
 
     @Composable
+    fun IconPrimary(
+        onClick: () -> Unit,
+        icon: @Composable () -> Unit
+    ) {
+        val interactionSource = remember { MutableInteractionSource() }
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(shape = RoundedCornerShape(10.dp))
+                .background(
+                    color = NeutralColor.WHITE,
+                    shape = RoundedCornerShape(10.dp)
+                )
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = onClick
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                modifier = Modifier.size(24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                icon()
+            }
+        }
+    }
+
+    @Composable
     fun NoIconSecondary(
         buttonText: String,
         onClick: () -> Unit,
@@ -464,7 +510,8 @@ object MediumButton {
             disabledColor = disabledColor,
             borderColor = borderColor,
             onClick = onClick,
-            enabled = isEnable
+            enabled = isEnable,
+            showStroke = false
         ) {
             Text(
                 text = buttonText,
@@ -481,24 +528,29 @@ object MediumButton {
         buttonText: String,
         onClick: () -> Unit,
         isEnable: Boolean = true,
+        textAlign: TextAlign = TextAlign.Start,
         fontFamily: FontFamily = FontFamily(Font(R.font.medium)),
+        textStyle: TextStyle? = null,
     ) {
         BlinkMediumButton(
             baseColor = Primary.LIGHT_1,
-            blinkColor = Primary.DARK,
+            blinkColor = Primary.LIGHT_1,
             disabledColor = NeutralColor.GRAY_100,
-            borderColor = Primary.DARK,
+            borderColor = Primary.MAIN,
             onClick = onClick,
-            enabled = isEnable
+            enabled = isEnable,
+            horizontalArrangement = if (textAlign == TextAlign.Start) Arrangement.Start else Arrangement.Center
         ) {
             Text(
                 text = buttonText,
-                style = TextComponent.SUBTITLE_1_M_16.let { textStyle: TextStyle ->
-                    textStyle.copy(
+                style = textStyle ?: TextComponent.SUBTITLE_1_M_16.let { defaultStyle: TextStyle ->
+                    defaultStyle.copy(
                         fontFamily = fontFamily
                     )
                 },
-                color = if (isEnable) NeutralColor.GRAY_600 else NeutralColor.GRAY_400
+                textAlign = textAlign,
+                color = if (isEnable) NeutralColor.GRAY_600 else NeutralColor.GRAY_400,
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }
@@ -508,23 +560,30 @@ object MediumButton {
         buttonText: String,
         onClick: () -> Unit,
         isEnable: Boolean = true,
+        textAlign: TextAlign = TextAlign.Start,
         fontFamily: FontFamily = FontFamily(Font(R.font.medium)),
+        textStyle: TextStyle? = null,
     ) {
         BlinkMediumButton(
-            baseColor = NeutralColor.GRAY_200,
-            disabledColor = NeutralColor.GRAY_200,
-            borderColor = NeutralColor.GRAY_200,
+            baseColor = NeutralColor.GRAY_100,
+            blinkColor = NeutralColor.GRAY_200,
+            disabledColor = NeutralColor.GRAY_100,
+            borderColor = NeutralColor.GRAY_100,
             onClick = onClick,
-            enabled = isEnable
+            showStroke = false,
+            enabled = isEnable,
+            horizontalArrangement = if (textAlign == TextAlign.Start) Arrangement.Start else Arrangement.Center
         ) {
             Text(
                 text = buttonText,
-                style = TextComponent.SUBTITLE_1_M_16.let { textStyle: TextStyle ->
-                    textStyle.copy(
+                style = textStyle ?: TextComponent.SUBTITLE_1_M_16.let { defaultStyle: TextStyle ->
+                    defaultStyle.copy(
                         fontFamily = fontFamily
                     )
                 },
-                color = if (isEnable) NeutralColor.GRAY_600 else NeutralColor.GRAY_400
+                textAlign = textAlign,
+                color = if (isEnable) NeutralColor.GRAY_600 else NeutralColor.GRAY_400,
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }
@@ -684,13 +743,15 @@ object SmallButton {
         blinkColor: Color = NeutralColor.GRAY_600,
         disabledColor: Color = NeutralColor.GRAY_200,
         onClick: () -> Unit,
+        modifier: Modifier,
         content: @Composable RowScope.() -> Unit,
-    ) {
+
+        ) {
         val interactionSource = remember { MutableInteractionSource() }
         val isPressed by interactionSource.collectIsPressedAsState()
 
         Row(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
                 .height(32.dp)
                 .clip(shape = RoundedCornerShape(8.dp))
@@ -719,16 +780,19 @@ object SmallButton {
     fun NoIconPrimary(
         buttonText: String,
         onClick: () -> Unit,
-        isEnable: Boolean = true,
+        textColor: Color = NeutralColor.WHITE,
+        baseColor: Color = NeutralColor.BLACK,
+        modifier: Modifier
     ) {
         BlinkSmallButton(
             onClick = onClick,
-            enabled = isEnable
+            baseColor = baseColor,
+            modifier = modifier
         ) {
             Text(
                 text = buttonText,
                 style = TextComponent.BODY_1_M_14,
-                color = if (isEnable) NeutralColor.WHITE else NeutralColor.GRAY_400
+                color = textColor,
             )
         }
     }
@@ -738,13 +802,15 @@ object SmallButton {
         buttonText: String,
         onClick: () -> Unit,
         isEnable: Boolean = true,
+        modifier: Modifier
     ) {
         BlinkSmallButton(
             baseColor = NeutralColor.GRAY_100,
             blinkColor = NeutralColor.GRAY_200,
             disabledColor = NeutralColor.GRAY_200,
             onClick = onClick,
-            enabled = isEnable
+            enabled = isEnable,
+            modifier = modifier
         ) {
             Text(
                 text = buttonText,
@@ -759,13 +825,15 @@ object SmallButton {
         buttonText: String,
         onClick: () -> Unit,
         isEnable: Boolean = true,
+        modifier: Modifier
     ) {
         BlinkSmallButton(
             baseColor = NeutralColor.WHITE,
             blinkColor = NeutralColor.GRAY_100,
             disabledColor = NeutralColor.GRAY_200,
             onClick = onClick,
-            enabled = isEnable
+            enabled = isEnable,
+            modifier = modifier
         ) {
             Text(
                 text = buttonText,
@@ -783,32 +851,29 @@ object SignUpAgreeButton {
         @DrawableRes image: Int = R.drawable.ic_check,
         onClick: () -> Unit,
         isSelected: Boolean = false,
-        selectColor : Color = NeutralColor.BLACK
+        selectColor: Color = NeutralColor.BLACK,
     ) {
-        var clicked by remember { mutableStateOf(false) }
-        var animating by remember { mutableStateOf(false) }
-        var backgroundColor by remember { mutableStateOf(NeutralColor.GRAY_100) }
-        val latestOnClick by rememberUpdatedState(newValue = onClick)
-        LaunchedEffect(clicked) {
-            if (clicked && !animating) {
-                animating = true
-                backgroundColor = NeutralColor.GRAY_200
-                delay(blinkTime.toLong())
-                backgroundColor = NeutralColor.GRAY_100
-                latestOnClick()
-                animating = false
-                clicked = false
-            }
-        }
+        val interactionSource = remember { MutableInteractionSource() }
+        val clicked by interactionSource.collectIsPressedAsState()
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
-                .background(color = backgroundColor, shape = RoundedCornerShape(10.dp))
+                .background(color = NeutralColor.GRAY_100, shape = RoundedCornerShape(10.dp))
                 .clip(shape = RoundedCornerShape(10.dp))
+                .drawBehind {
+                    val color = when {
+                        !clicked -> NeutralColor.GRAY_100
+                        clicked -> NeutralColor.GRAY_200
+                        else -> NeutralColor.GRAY_100
+                    }
+                    drawRect(color)
+                }
                 .clickable(
-                    enabled = !animating,
-                ) { clicked = true }
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = onClick
+                )
                 .padding(start = 24.dp, end = 24.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start
@@ -835,33 +900,31 @@ object SignUpAgreeButton {
         @DrawableRes image: Int = R.drawable.ic_check,
         @DrawableRes endImage: Int = R.drawable.ic_right,
         onClick: () -> Unit,
-        endClick : () -> Unit,
+        endClick: () -> Unit,
         isSelected: Boolean = false,
     ) {
-        var clicked by remember { mutableStateOf(false) }
-        var animating by remember { mutableStateOf(false) }
-        var backgroundColor by remember { mutableStateOf(NeutralColor.WHITE) }
-        val latestOnClick by rememberUpdatedState(newValue = onClick)
-
-        LaunchedEffect(clicked) {
-            if (clicked && !animating) {
-                animating = true
-                backgroundColor = NeutralColor.GRAY_200
-                delay(blinkTime.toLong())
-                backgroundColor = NeutralColor.WHITE
-                latestOnClick()
-                animating = false
-                clicked = false
-            }
-        }
+        val interactionSource = remember { MutableInteractionSource() }
+        val clicked by interactionSource.collectIsPressedAsState()
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
                 .clip(RoundedCornerShape(10.dp))
-                .background(color = backgroundColor, shape = RoundedCornerShape(10.dp))
-                .clickable(enabled = !animating) { clicked = true }
+                .background(color = NeutralColor.WHITE, shape = RoundedCornerShape(10.dp))
+                .drawBehind {
+                    val color = when {
+                        clicked -> NeutralColor.GRAY_200
+                        !clicked -> NeutralColor.WHITE
+                        else -> NeutralColor.WHITE
+                    }
+                    drawRect(color)
+                }
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = onClick
+                )
                 .padding(horizontal = 24.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start
@@ -869,7 +932,7 @@ object SignUpAgreeButton {
             Icon(
                 painter = painterResource(image),
                 contentDescription = null,
-                tint = if (isSelected) Primary.DARK else NeutralColor.GRAY_400,
+                tint = if (isSelected) Primary.DARK else NeutralColor.GRAY_200,
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -886,7 +949,11 @@ object SignUpAgreeButton {
                 modifier = Modifier
                     .size(32.dp)
                     .padding(vertical = 8.dp)
-                    .clickable { endClick() }
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                        onClick = endClick
+                    )
             )
         }
     }

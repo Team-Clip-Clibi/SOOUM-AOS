@@ -1,6 +1,5 @@
 package com.phew.splash
 
-
 import android.Manifest
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -8,15 +7,14 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -32,7 +30,6 @@ import androidx.compose.ui.unit.dp
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.Primary
-
 
 @Composable
 fun Splash(
@@ -51,8 +48,6 @@ fun Splash(
             viewModel.saveNotify(isGranted)
         }
     )
-
-
     LaunchedEffect(uiState) {
         when (uiState) {
             UiState.Success -> {
@@ -78,26 +73,21 @@ fun Splash(
                 )
                 viewModel.initError()
             }
+
             else -> Unit
         }
     }
-
     Scaffold(
         snackbarHost = {
-            SnackbarHost(hostState = snackBarHostState) { data ->
-                DialogComponent.SnackBar(data)
-            }
-        }
-    ) { paddingValues ->
+            DialogComponent.CustomAnimationSnackBarHost(hostState = snackBarHostState)
+        },
+        containerColor = Primary.MAIN,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
+    ) { _ ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(color = Primary.MAIN)
-                .navigationBarsPadding()
-                .padding(
-                    top = paddingValues.calculateTopPadding(),
-                    bottom = paddingValues.calculateBottomPadding()
-                ),
+                .background(color = Primary.MAIN),
             verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -115,12 +105,8 @@ fun Splash(
                     title = stringResource(R.string.splash_dialog_update_title),
                     description = stringResource(R.string.splash_dialog_update_description),
                     buttonText = stringResource(R.string.splash_dialog_update_btn),
-                    onClick = {
-                        update()
-                    },
-                    onDismiss = {
-                        finish()
-                    }
+                    onClick = { update() },
+                    onDismiss = { finish() }
                 )
             }
         }

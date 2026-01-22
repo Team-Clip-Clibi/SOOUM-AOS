@@ -6,6 +6,7 @@ import androidx.navigation.NavOptions
 import androidx.navigation.navigation
 import androidx.navigation.navArgument
 import com.phew.core.ui.component.home.HomeTabType
+import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.model.navigation.WriteArgs
 import com.phew.core.ui.navigation.NavArgKey
 import com.phew.core.ui.navigation.asNavArg
@@ -45,8 +46,9 @@ fun NavGraphBuilder.writeGraph(
     appState: SooumAppState,
     navController: NavHostController,
     onBackPressed: () -> Unit,
-    onWriteComplete: () -> Unit,
-    onDetailWriteComplete: () -> Unit = {}
+    onWriteComplete: (CardDetailArgs) -> Unit,
+    onDetailWriteComplete: () -> Unit = {},
+    onHome : () -> Unit = {}
 ) {
     navigation(
         route = WRITE_GRAPH,
@@ -55,9 +57,12 @@ fun NavGraphBuilder.writeGraph(
         // 탭에서 접근하는 경로 (파라미터 없음)
         slideComposable(route = WRITE_HOME_ROUTE) { nav ->
             WriteRoute(
+                navController = navController,
                 args = null,
                 onBackPressed = onBackPressed,
-                onWriteComplete = onWriteComplete
+                onWriteComplete = onWriteComplete,
+                onHome = onBackPressed,
+                isFromTab = true
             )
         }
         
@@ -72,6 +77,7 @@ fun NavGraphBuilder.writeGraph(
         ) { nav ->
             val args = nav.arguments?.getNavArg<WriteArgs>()
             WriteRoute(
+                navController = navController,
                 args = args,
                 onBackPressed = onBackPressed,
                 onWriteComplete = {
@@ -79,9 +85,11 @@ fun NavGraphBuilder.writeGraph(
                     if (args?.parentCardId != null) {
                         onDetailWriteComplete()
                     } else {
-                        onWriteComplete()
+                        onWriteComplete(it)
                     }
-                }
+                },
+                onHome = onHome,
+                isFromTab = false
             )
         }
     }

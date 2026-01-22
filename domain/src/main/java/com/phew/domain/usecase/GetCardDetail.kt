@@ -3,9 +3,11 @@ package com.phew.domain.usecase
 import com.phew.core_common.APP_ERROR_CODE
 import com.phew.core_common.DataResult
 import com.phew.core_common.DomainResult
+import com.phew.core_common.ERROR_ALREADY_CARD_DELETE
 import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.ERROR_LOGOUT
 import com.phew.core_common.ERROR_NETWORK
+import com.phew.core_common.HTTP_CARD_ALREADY_DELETE
 import com.phew.core_common.HTTP_INVALID_TOKEN
 import com.phew.domain.dto.CardDetail
 import com.phew.domain.repository.DeviceRepository
@@ -14,7 +16,7 @@ import javax.inject.Inject
 
 class GetCardDetail @Inject constructor(
     private val repository: CardDetailRepository,
-    private val deviceRepository: DeviceRepository
+    private val deviceRepository: DeviceRepository,
 ) {
     data class Param(
         val cardId: Long
@@ -39,6 +41,7 @@ class GetCardDetail @Inject constructor(
         return when (result.code) {
             HTTP_INVALID_TOKEN -> DomainResult.Failure(ERROR_LOGOUT)
             APP_ERROR_CODE -> DomainResult.Failure(result.message ?: ERROR_FAIL_JOB)
+            HTTP_CARD_ALREADY_DELETE -> DomainResult.Failure(ERROR_ALREADY_CARD_DELETE)
             else -> DomainResult.Failure(ERROR_NETWORK)
         }
     }
