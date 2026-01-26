@@ -26,24 +26,16 @@ class PagingFollower(
             when (request) {
                 is DataResult.Fail -> return LoadResult.Error(Throwable(request.message))
                 is DataResult.Success -> {
-                    if (request.data.second.isEmpty()) {
-                        return LoadResult.Page(
-                            data = emptyList(),
-                            prevKey = null,
-                            nextKey = null
-                        )
-                    }
-                    if (request.data.first == HTTP_NO_MORE_CONTENT) {
-                        return LoadResult.Page(
-                            data = request.data.second,
-                            prevKey = null,
-                            nextKey = null
-                        )
+                    val (status, dataList) = request.data
+                    val nextKey = if (dataList.isEmpty() || status == HTTP_NO_MORE_CONTENT) {
+                        null
+                    } else {
+                        dataList.last().followId
                     }
                     return LoadResult.Page(
                         data = request.data.second,
                         prevKey = null,
-                        nextKey = request.data.second.last().followId
+                        nextKey = nextKey
                     )
                 }
             }
