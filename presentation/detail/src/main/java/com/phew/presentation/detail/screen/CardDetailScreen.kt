@@ -491,6 +491,7 @@ private fun CardDetailScreen(
         floatingActionButton = {
             Box(
                 modifier = Modifier
+                    .windowInsetsPadding(WindowInsets.navigationBars)
                     .padding(bottom = 10.dp)
             ) {
                 Box(
