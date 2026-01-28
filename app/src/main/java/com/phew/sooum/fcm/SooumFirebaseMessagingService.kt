@@ -79,7 +79,7 @@ class SooumFirebaseMessagingService : FirebaseMessagingService() {
         SooumLog.d(TAG, "알림 타입: $notificationType, 채널 ID: $channelId")
 
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_launcher_foreground) // TODO: 앱에 맞는 알림 아이콘으로 변경
+            .setSmallIcon(R.mipmap.ic_sooum_logo)
             .setContentTitle(title)
             .setContentText(body)
             .setAutoCancel(true)

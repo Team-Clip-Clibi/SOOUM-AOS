@@ -132,10 +132,7 @@ fun NavGraphBuilder.profileGraph(
                 }
             )
         ) { navBackStackEntry ->
-            val parentEntry = remember(navBackStackEntry) {
-                navController.getBackStackEntry(HomeTabType.MY.graph)
-            }
-            val viewModel: ProfileViewModel = hiltViewModel(parentEntry)
+            val viewModel: ProfileViewModel = hiltViewModel()
             val userId = navBackStackEntry.arguments?.getNavArg<ProfileArgs>()
             OtherProfile(
                 viewModel = viewModel,

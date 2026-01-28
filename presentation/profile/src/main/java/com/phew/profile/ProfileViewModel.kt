@@ -141,10 +141,20 @@ class ProfileViewModel @Inject constructor(
                                     pagingData.filter { !deletedIds.contains(it.cardId) }
                                 },
                             profileCommentCard = getCommentCard().cachedIn(viewModelScope),
-                            follow = getFollower(profileId = request.data.userId).cachedIn(
+                            follow = getFollower(profileId = request.data.userId).map { pagingData ->
+                                val uniqueIds = mutableSetOf<Long>()
+                                pagingData.filter { user ->
+                                    uniqueIds.add(user.memberId)
+                                }
+                            }.cachedIn(
                                 viewModelScope
                             ),
-                            following = getFollowing(profileId = request.data.userId).cachedIn(
+                            following = getFollowing(profileId = request.data.userId).map { pagingData ->
+                                val uniqueIds = mutableSetOf<Long>()
+                                pagingData.filter { user ->
+                                    uniqueIds.add(user.memberId)
+                                }
+                            }.cachedIn(
                                 viewModelScope
                             ),
                             isRefreshing = false,
@@ -190,10 +200,20 @@ class ProfileViewModel @Inject constructor(
                                     pagingData.filter { !deletedIds.contains(it.cardId) }
                                 },
                             profileCommentCard = getCommentCard().cachedIn(viewModelScope),
-                            follow = getFollower(profileId = request.data.userId).cachedIn(
+                            follow = getFollower(profileId = request.data.userId).map { pagingData ->
+                                val uniqueIds = mutableSetOf<Long>()
+                                pagingData.filter { user ->
+                                    uniqueIds.add(user.memberId)
+                                }
+                            }.cachedIn(
                                 viewModelScope
                             ),
-                            following = getFollowing(profileId = request.data.userId).cachedIn(
+                            following = getFollowing(profileId = request.data.userId).map { pagingData ->
+                                val uniqueIds = mutableSetOf<Long>()
+                                pagingData.filter { user ->
+                                    uniqueIds.add(user.memberId)
+                                }
+                            }.cachedIn(
                                 viewModelScope
                             ),
                             isRefreshing = false,

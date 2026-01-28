@@ -315,6 +315,7 @@ private fun ContentView(
         )
         when (selectIndex) {
             TAB_FOLLOWER -> FollowerView(
+                modifier = Modifier.weight(1f),
                 data = follow,
                 selectIndex = selectIndex,
                 profileClick = onChangeFollowClick,
@@ -322,6 +323,7 @@ private fun ContentView(
             )
 
             TAB_FOLLOWING -> FollowerView(
+                modifier = Modifier.weight(1f),
                 data = following,
                 selectIndex = selectIndex,
                 profileClick = onChangeFollowClick,
@@ -333,6 +335,7 @@ private fun ContentView(
 
 @Composable
 private fun FollowerView(
+    modifier: Modifier = Modifier,
     data: LazyPagingItems<FollowData>,
     selectIndex: Int,
     profileClick: (FollowData) -> Unit,
@@ -341,7 +344,7 @@ private fun FollowerView(
     when (val refreshState = data.loadState.refresh) {
         is LoadState.Error -> {
             Column(
-                modifier = Modifier
+                modifier = modifier
                     .fillMaxSize(),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -363,17 +366,17 @@ private fun FollowerView(
         }
 
         LoadState.Loading -> {
-            LoadingAnimation.LoadingView()
+            LoadingAnimation.LoadingView(modifier = modifier)
         }
 
         is LoadState.NotLoading -> {
             when (data.itemCount) {
                 0 -> {
-                    EmptyView(selectIndex = selectIndex)
+                    EmptyView(modifier = modifier, selectIndex = selectIndex)
                 }
 
                 else -> {
-                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    LazyColumn(modifier = modifier.fillMaxSize()) {
                         items(
                             count = data.itemCount,
                             key = data.itemKey { user -> user.memberId }
@@ -399,9 +402,9 @@ private fun FollowerView(
 }
 
 @Composable
-private fun EmptyView(selectIndex: Int) {
+private fun EmptyView(modifier: Modifier = Modifier, selectIndex: Int) {
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
