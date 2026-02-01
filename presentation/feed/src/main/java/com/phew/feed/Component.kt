@@ -471,7 +471,7 @@ object NotificationUi {
                         is UserBlockNotification,
                         is UserDeleteNotification,
                             -> painterResource(com.phew.core_design.R.drawable.ic_danger)
-
+                        is UserTagNotification -> painterResource(com.phew.core_design.R.drawable.ic_tag_fill_blue)
                         else -> painterResource(com.phew.core_design.R.drawable.ic_card_filled_blue)
                     },
                     contentDescription = ""
@@ -583,7 +583,7 @@ object NotificationUi {
                         is UserBlockNotification,
                         is UserDeleteNotification,
                             -> painterResource(com.phew.core_design.R.drawable.ic_danger)
-
+                        is UserTagNotification -> painterResource(com.phew.core_design.R.drawable.ic_tag_fill_blue)
                         else -> painterResource(com.phew.core_design.R.drawable.ic_card_filled_blue)
                     },
                     contentDescription = ""
