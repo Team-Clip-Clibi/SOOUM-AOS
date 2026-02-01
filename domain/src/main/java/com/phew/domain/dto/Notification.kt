@@ -201,6 +201,46 @@ data class UserDeleteNotification(
     }
 }
 
+data class UserTagNotification(
+    override val notificationId: Long,
+    override val createTime: String,
+    val tagContent : String
+) : Notification() {
+    val viewTime = createTime.toViewTime()
+
+    private fun String.toViewTime(): String {
+        val pastInstant: Instant = try {
+            val localDateTime = LocalDateTime.parse(this)
+            localDateTime.toInstant(ZoneOffset.UTC)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return "날짜 오류"
+        }
+        val nowInstant: Instant = Instant.now()
+        val duration: Duration = Duration.between(pastInstant, nowInstant)
+        val totalMinutes = duration.toMinutes()
+        val totalHours = duration.toHours()
+        val totalDays = duration.toDays()
+        val pastDateTime = pastInstant.atZone(ZoneId.systemDefault())
+
+        return when {
+            totalMinutes < 10 -> "방금 전"
+            totalMinutes < 60 -> "${totalMinutes}분 전"
+            totalHours < 24 -> "${totalHours}시간 전"
+            totalDays < 30 -> "${totalDays}일 전"
+            totalDays < 365 -> {
+                val formatter = DateTimeFormatter.ofPattern("M월 d일", Locale.KOREA)
+                pastDateTime.format(formatter)
+            }
+
+            else -> {
+                val formatter = DateTimeFormatter.ofPattern("yyyy년 M월 d일", Locale.KOREA)
+                pastDateTime.format(formatter)
+            }
+        }
+    }
+}
+
 /**
  * 댓글 좋아요
  */

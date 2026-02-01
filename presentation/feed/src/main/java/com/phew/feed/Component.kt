@@ -67,6 +67,7 @@ import com.phew.domain.dto.UserBlockNotification
 import com.phew.domain.dto.UserCommentLike
 import com.phew.domain.dto.UserCommentWrite
 import com.phew.domain.dto.UserDeleteNotification
+import com.phew.domain.dto.UserTagNotification
 import com.phew.feed.FeedUi.TypedFeedCardView
 import com.phew.feed.viewModel.DistanceType
 import com.phew.presentation.feed.R
@@ -470,23 +471,24 @@ object NotificationUi {
                         is UserBlockNotification,
                         is UserDeleteNotification,
                             -> painterResource(com.phew.core_design.R.drawable.ic_danger)
-
+                        is UserTagNotification -> painterResource(com.phew.core_design.R.drawable.ic_tag_fill_blue)
                         else -> painterResource(com.phew.core_design.R.drawable.ic_card_filled_blue)
                     },
                     contentDescription = ""
                 )
                 Text(
                     text = when (data) {
-                        is FollowNotification,
+                        is FeedLikeNotification,
                         is UserCommentLike,
                         is UserCommentWrite,
-                            -> stringResource(R.string.home_notice_item_follow)
+                            -> stringResource(R.string.home_notice_item_feed_like)
 
                         is UserBlockNotification,
                         is UserDeleteNotification,
                             -> stringResource(R.string.home_notice_item_limit)
 
-                        is FeedLikeNotification -> stringResource(R.string.home_notice_item_feed_like)
+                        is FollowNotification -> stringResource(R.string.home_notice_item_follow)
+                        is UserTagNotification -> stringResource(R.string.home_notice_item_tag)
                     },
                     style = TextComponent.CAPTION_1_SB_12,
                     color = GRAY_400,
@@ -501,6 +503,7 @@ object NotificationUi {
                         is UserCommentLike -> data.viewTime
                         is UserCommentWrite -> data.viewTime
                         is UserDeleteNotification -> data.viewTime
+                        is UserTagNotification -> data.viewTime
                     },
                     style = TextComponent.CAPTION_1_SB_12,
                     color = GRAY_400
@@ -534,6 +537,7 @@ object NotificationUi {
                     )
 
                     is UserDeleteNotification -> stringResource(R.string.home_notice_delete_card)
+                    is UserTagNotification -> stringResource(R.string.home_notice_tag_card_upload , data.tagContent)
                 },
                 style = TextComponent.TITLE_2_SB_16,
                 color = GRAY_600,
@@ -545,7 +549,7 @@ object NotificationUi {
     }
 
     @Composable
-    internal fun NotifyViewRead(data: Notification , onCardClick: (cardId: Long) -> Unit) {
+    internal fun NotifyViewRead(data: Notification, onCardClick: (cardId: Long) -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -579,23 +583,24 @@ object NotificationUi {
                         is UserBlockNotification,
                         is UserDeleteNotification,
                             -> painterResource(com.phew.core_design.R.drawable.ic_danger)
-
+                        is UserTagNotification -> painterResource(com.phew.core_design.R.drawable.ic_tag_fill_blue)
                         else -> painterResource(com.phew.core_design.R.drawable.ic_card_filled_blue)
                     },
                     contentDescription = ""
                 )
                 Text(
                     text = when (data) {
-                        is FollowNotification,
+                        is FeedLikeNotification,
                         is UserCommentLike,
                         is UserCommentWrite,
-                            -> stringResource(R.string.home_notice_item_follow)
+                            -> stringResource(R.string.home_notice_item_feed_like)
 
                         is UserBlockNotification,
                         is UserDeleteNotification,
                             -> stringResource(R.string.home_notice_item_limit)
 
-                        is FeedLikeNotification -> stringResource(R.string.home_notice_item_feed_like)
+                        is FollowNotification -> stringResource(R.string.home_notice_item_follow)
+                        is UserTagNotification -> stringResource(R.string.home_notice_item_tag)
                     },
                     style = TextComponent.CAPTION_1_SB_12,
                     color = GRAY_400,
@@ -610,6 +615,7 @@ object NotificationUi {
                         is UserCommentLike -> data.viewTime
                         is UserCommentWrite -> data.viewTime
                         is UserDeleteNotification -> data.viewTime
+                        is UserTagNotification -> data.viewTime
                     },
                     style = TextComponent.CAPTION_1_SB_12,
                     color = GRAY_400
@@ -643,6 +649,10 @@ object NotificationUi {
                     )
 
                     is UserDeleteNotification -> stringResource(R.string.home_notice_delete_card)
+                    is UserTagNotification -> stringResource(
+                        R.string.home_notice_tag_card_upload,
+                        data.tagContent
+                    )
                 },
                 style = TextComponent.TITLE_2_SB_16,
                 color = GRAY_600,
