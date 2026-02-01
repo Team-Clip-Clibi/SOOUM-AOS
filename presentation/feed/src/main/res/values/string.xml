@@ -19,7 +19,7 @@
     <string name="home_notice_no_notice">아직 표시할 알림이 없어요</string>
     <string name="home_notice_item_feed_like">카드</string>
     <string name="home_notice_item_follow">팔로우</string>
-    <string name="home_notice_item_tag">테크</string>
+    <string name="home_notice_item_tag">테그</string>
     <string name="home_notice_item_limit">제한</string>
     <string name="home_notice_last_alarm">지난 알림</string>
     <string name="home_notice_follow_comment">%1$s님이 회원님을 팔로우하기 시작했어요</string>
