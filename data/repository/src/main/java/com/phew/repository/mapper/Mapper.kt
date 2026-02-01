@@ -35,6 +35,7 @@ import com.phew.domain.dto.UserCommentWrite
 import com.phew.domain.dto.UserDeleteNotification
 import com.phew.domain.dto.TagCardContent
 import com.phew.domain.dto.CardIdResponse
+import com.phew.domain.dto.UserTagNotification
 import com.phew.domain.model.AppVersionStatus
 import com.phew.domain.model.AppVersionStatusType
 import com.phew.domain.model.BlockMember
@@ -78,6 +79,7 @@ import com.phew.repository.TYPE_COMMENT_WRITE
 import com.phew.repository.TYPE_DELETE
 import com.phew.repository.TYPE_FEED_LIKE
 import com.phew.repository.TYPE_FOLLOW
+import com.phew.repository.TYPE_TAG_USAGE
 import retrofit2.Response
 
 internal fun NotificationDTO.toDomain(): Notification {
@@ -133,6 +135,14 @@ internal fun NotificationDTO.toDomain(): Notification {
             UserDeleteNotification(
                 notificationId = this.notificationId,
                 createTime = this.createTime,
+            )
+        }
+
+        TYPE_TAG_USAGE -> {
+            UserTagNotification(
+                notificationId = this.notificationId,
+                createTime = this.createTime,
+                tagContent = this.tagContent ?: "ERROR"
             )
         }
 
