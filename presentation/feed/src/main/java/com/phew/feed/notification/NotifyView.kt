@@ -516,6 +516,9 @@ private fun HandleActivateAlarm(
             else -> Unit
         }
         item(span = { GridItemSpan(maxLineSpan) }) {
+            Spacer(modifier = Modifier.padding(top = 32.dp))
+        }
+        item(span = { GridItemSpan(maxLineSpan) }) {
             Text(
                 text = stringResource(R.string.home_notice_last_alarm),
                 style = TextComponent.SUBTITLE_2_SB_14,
