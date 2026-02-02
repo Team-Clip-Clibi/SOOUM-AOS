@@ -45,5 +45,5 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.ANDROID_PUBLISHER_CREDENTIALS }}
           packageName: com.phew.sooum
           releaseFiles: app/build/outputs/bundle/prodRelease/app-prod-release.aab
-          track: alpha
-          status: draft
+          track: production
+          status: completed
