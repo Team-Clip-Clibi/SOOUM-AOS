@@ -33,7 +33,7 @@ class ApplicationConvention : Plugin<Project> {
                 applicationId = "com.phew.sooum"
                 minSdk = 31
                 targetSdk = 36
-                versionCode = 8
+                versionCode = 9
                 versionName = "1.0.2"
                 testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
                 val appLink = properties.getProperty("playStore_app_url", "")
