@@ -527,7 +527,7 @@ object NotificationUi {
                     )
 
                     is UserCommentLike -> stringResource(
-                        R.string.home_notice_limit_card_comment,
+                        R.string.home_notice_like_comment_like,
                         data.nickName
                     )
 
@@ -639,7 +639,7 @@ object NotificationUi {
                     )
 
                     is UserCommentLike -> stringResource(
-                        R.string.home_notice_limit_card_comment,
+                        R.string.home_notice_like_comment_like,
                         data.nickName
                     )
 

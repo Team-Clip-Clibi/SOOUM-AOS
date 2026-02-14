@@ -433,14 +433,6 @@ private fun HandleReadAlarm(
     val nestedScrollConnection = remember { object : NestedScrollConnection {} }
     val refreshState = rememberPullToRefreshState()
     Column(modifier = Modifier.fillMaxSize()) {
-        Text(
-            text = stringResource(R.string.home_notice_last_alarm),
-            style = TextComponent.SUBTITLE_2_SB_14,
-            color = NeutralColor.BLACK,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-        )
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -470,6 +462,16 @@ private fun HandleReadAlarm(
                 }
 
                 is LoadState.NotLoading -> {
+                    item {
+                        Text(
+                            text = stringResource(R.string.home_notice_last_alarm),
+                            style = TextComponent.SUBTITLE_2_SB_14,
+                            color = NeutralColor.BLACK,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                        )
+                    }
                     items(
                         count = readAlarm.itemCount,
                     ) { index ->
