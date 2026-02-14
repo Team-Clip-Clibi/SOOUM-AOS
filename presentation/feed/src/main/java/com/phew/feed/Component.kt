@@ -527,7 +527,7 @@ object NotificationUi {
                     )
 
                     is UserCommentLike -> stringResource(
-                        R.string.home_notice_limit_card_comment,
+                        R.string.home_notice_under_card_like_comment,
                         data.nickName
                     )
 
@@ -639,7 +639,7 @@ object NotificationUi {
                     )
 
                     is UserCommentLike -> stringResource(
-                        R.string.home_notice_limit_card_comment,
+                        R.string.home_notice_under_card_like_comment,
                         data.nickName
                     )
 
@@ -722,5 +722,3 @@ private fun NormalTypeCardPreview() {
 
     TypedFeedCardView(feedCard = sampleNormalCard, onClick = {}, onRemoveCard = {})
 }
-
-private const val TAG = "Feed Component"
