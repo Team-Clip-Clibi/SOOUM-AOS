@@ -76,6 +76,26 @@ import kotlinx.coroutines.delay
 object FeedUi {
 
     @Composable
+    internal fun FeedNoticeViewVersion2(noticeList: List<Notice>, feedNoticeClick: () -> Unit) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+                .background(color = WHITE, shape = RoundedCornerShape(16.dp))
+                .shadow(
+                    elevation = 16.dp,
+                    spotColor = UnKnowColor.color,
+                    ambientColor = UnKnowColor.color
+                )
+                .padding(start = 12.dp, top = 8.dp, end = 8.dp, bottom = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+
+        }
+    }
+
+    @Composable
     internal fun FeedNoticeView(
         feedNotice: List<Notice>,
         feedNoticeClick: () -> Unit,
