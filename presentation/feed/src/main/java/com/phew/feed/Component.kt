@@ -49,7 +49,7 @@ import com.phew.core_design.component.card.FeedDefaultCard
 import com.phew.core_design.component.card.FeedDeletedCard
 import com.phew.core_design.component.card.FeedPungCard
 import com.phew.core_design.component.card.NotiCard
-import com.phew.core_design.component.card.NotiCardData
+import com.phew.core_design.component.card.NoticeCardData
 import com.phew.core_design.component.card.component.IndicatorDot
 import com.phew.core_design.component.filter.SooumFilter
 import com.phew.core_design.component.tab.SooumTab
@@ -76,7 +76,7 @@ import kotlinx.coroutines.delay
 object FeedUi {
 
     @Composable
-    internal fun FeedNoticeViewVersion2(noticeList: List<Notice>, feedNoticeClick: () -> Unit) {
+    internal fun FeedNoticeViewVersion2(noticeList: List<Notice>, feedNoticeClick: (url : String) -> Unit) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -133,7 +133,7 @@ object FeedUi {
             ) { page ->
                 val actualIndex = page % feedNotice.size
                 val currentNotice = feedNotice[actualIndex]
-                val cardData = NotiCardData(
+                val cardData = NoticeCardData(
                     title = when (currentNotice.type) {
                         Notice.NoticeType.ANNOUNCEMENT -> stringResource(R.string.home_notice_notice)
                         Notice.NoticeType.NEWS -> stringResource(R.string.home_notice_news)
