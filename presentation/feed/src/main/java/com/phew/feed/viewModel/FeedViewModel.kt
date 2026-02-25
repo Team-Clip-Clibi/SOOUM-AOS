@@ -10,7 +10,6 @@ import com.phew.domain.dto.FeedData
 import com.phew.core_common.DataResult
 import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR_FAIL_JOB
-import com.phew.core_common.log.SooumLog
 import com.phew.domain.dto.DistanceCard
 import com.phew.domain.dto.FeedCardType
 import com.phew.domain.dto.Latest
@@ -428,7 +427,7 @@ class FeedViewModel @Inject constructor(
             try {
                 if (!isInitial) {
                     val currentStateIsSuccess = currentState is FeedPagingState.Success
-                    if (!currentStateIsSuccess || !(currentState as FeedPagingState.Success).hasNextPage) {
+                    if (!currentStateIsSuccess || !currentState.hasNextPage) {
                         return@launch
                     }
                     val existingCards = currentState.feedCards
@@ -603,12 +602,6 @@ class FeedViewModel @Inject constructor(
                 loadDistanceFeeds(isInitial = true)
             }
         }
-        refreshFeedNotice()
-    }
-
-    fun refreshFeedNotice() {
-        _uiState.update { state -> state.copy(feedNotification = UiState.Loading) }
-        getFeedNotice()
     }
 
     // TODO 개선 작업 필요 포인트
@@ -849,16 +842,12 @@ class FeedViewModel @Inject constructor(
     
     private fun removeCardFromCurrentTab(cardId: Long) {
         when (_uiState.value.currentTab) {
-            FeedType.Latest -> removeCardFromLatestTab(cardId)
             FeedType.Popular -> removeCardFromPopularTab(cardId)
             FeedType.Distance -> removeCardFromDistanceTab(cardId)
+            else -> Unit
         }
     }
-    
-    private fun removeCardFromLatestTab(cardId: Long) {
-        // Latest 탭은 UI 레벨에서 hiddenCardIds로 숨김 처리
-        // 별도 처리 불필요
-    }
+
     
     private fun removeCardFromPopularTab(cardId: Long) {
         val currentState = _uiState.value.popularPagingState
@@ -895,6 +884,24 @@ class FeedViewModel @Inject constructor(
                 state.copy(
                     distancePagingStates = newStates
                 )
+            }
+        }
+    }
+
+    fun deleteNotice(noticeId: Int) {
+        _uiState.update { currentState ->
+            // 현재 feedNotification 상태가 Success일 때만 데이터를 조작합니다.
+            if (currentState.feedNotification is UiState.Success) {
+                val currentNotices = currentState.feedNotification.data
+                // 전달받은 noticeId와 일치하지 않는 아이템들만 남겨 새로운 리스트를 생성합니다.
+                val updatedNotices = currentNotices.filter { it.id != noticeId }
+
+                // 새로운 리스트로 feedNotification 상태를 업데이트합니다.
+                currentState.copy(
+                    feedNotification = UiState.Success(updatedNotices)
+                )
+            } else {
+                currentState
             }
         }
     }
@@ -960,4 +967,4 @@ sealed interface FeedPagingState {
     data class Error(val message: String) : FeedPagingState
 }
 
-private const val TAG = "FeedViewModel"
+

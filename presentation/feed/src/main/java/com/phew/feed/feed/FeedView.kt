@@ -92,6 +92,7 @@ fun FeedView(
     closeDialog: () -> Unit,
     noticeClick: (String) -> Unit,
     navigateToDetail: (CardDetailArgs) -> Unit,
+    webViewClick : (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val unRead = viewModel.unReadActivateAlarm.collectAsLazyPagingItems()
@@ -201,10 +202,9 @@ fun FeedView(
                     val lastVisibleIndex = visibleItems.lastOrNull()?.index ?: 0
                     val totalItems = lazyGridState.layoutInfo.totalItemsCount
 
-                    val state = currentPagingState
                     if (lastVisibleIndex >= totalItems - 5 &&
-                        state is FeedPagingState.Success &&
-                        state.hasNextPage &&
+                        currentPagingState is FeedPagingState.Success &&
+                        currentPagingState.hasNextPage &&
                         totalItems > 0
                     ) {
                         viewModel.loadMoreFeeds()
@@ -265,14 +265,15 @@ fun FeedView(
                     selectDistance = uiState.distanceTab,
                     currentTab = uiState.currentTab,
                     feedNotice = feedNotice,
-                    feedNoticeClick = noticeClick,
+                    webViewClick = webViewClick,
                     latestFeedItems = latestFeedItems,
                     onClick = viewModel::navigateToDetail,
                     onRemoveCard = viewModel::removeFeedCard,
                     currentPagingState = uiState.currentPagingState,
                     pullOffsetPx = pullOffsetPx,
                     onRefresh = refreshCurrentFeed,
-                    hiddenCardIds = uiState.hiddenCardIds
+                    hiddenCardIds = uiState.hiddenCardIds,
+                    deleteNotice = viewModel::deleteNotice
                 )
                 if (uiState.shouldShowPermissionRationale) {
                     DialogComponent.DefaultButtonTwo(
@@ -333,7 +334,6 @@ private fun FeedContentView(
     selectDistance: DistanceType,
     currentTab: FeedType,
     feedNotice: List<Notice>,
-    feedNoticeClick: (String) -> Unit,
     latestFeedItems: LazyPagingItems<Latest>,
     onClick: (String, Boolean) -> Unit,
     onRemoveCard: (String) -> Unit,
@@ -341,6 +341,8 @@ private fun FeedContentView(
     pullOffsetPx: Float,
     onRefresh: () -> Unit,
     hiddenCardIds: Set<Long>,
+    webViewClick: (String) -> Unit,
+    deleteNotice : (Int) -> Unit
 ) {
     val selectIndex = when (currentTab) {
         FeedType.Latest -> NAV_HOME_FEED_INDEX
@@ -370,22 +372,20 @@ private fun FeedContentView(
             }
             Spacer(modifier = Modifier.height(6.dp))
         }
-        if (feedNotice.isNotEmpty()) {
-            item(
-                key = feedNotice.joinToString("_") { it.id.toString() },
-                span = { GridItemSpan(maxLineSpan) }
-            ) {
-                FeedUi.FeedNoticeView(
-                    feedNotice = feedNotice,
-                    feedNoticeClick = { feedNoticeClick(NotifyTab.NOTIFY_SERVICE.toString()) },
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .graphicsLayer { translationY = pullOffsetPx }
-                )
-            }
+        item(
+            key = "feed_notice_section",
+            span = { GridItemSpan(maxLineSpan) }
+        ) {
+            FeedUi.FeedNoticeViewVersion2(
+                noticeList = feedNotice,
+                feedNoticeClick = { url -> webViewClick(url) },
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .graphicsLayer { translationY = pullOffsetPx },
+                deleteNotice = deleteNotice
+            )
         }
-        // LoadState.Loading 상태에서도 기존 목록을 유지하기 위해 로딩/노트로딩을 함께 처리한다.
-        // 단, 최초 로딩(아이템이 없는 상태)일 때만 별도 로딩뷰를 노출.
+
         when (currentTab) {
             FeedType.Latest -> {
                 when (val refreshState = latestFeedItems.loadState.refresh) {
