@@ -4,6 +4,7 @@ import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -63,8 +64,10 @@ import com.phew.core_design.component.tab.SooumTab
 import com.phew.core_design.component.tab.SooumTabRow
 import com.phew.core_design.label.LabelComponent
 import com.phew.core_design.theme.GRAY_100
+import com.phew.core_design.theme.GRAY_200
 import com.phew.core_design.theme.MAIN
 import com.phew.core_design.theme.M_YELLOW
+import com.phew.core_design.theme.unknownColor
 import com.phew.domain.dto.CardArticle
 import com.phew.domain.dto.FeedCardType
 import com.phew.domain.dto.FeedLikeNotification
@@ -92,7 +95,35 @@ object FeedUi {
 
     @Composable
     private fun CardArticleTypeA(data: CardArticle.TypeA) {
-
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(72.dp)
+                .background(color = WHITE, shape = RoundedCornerShape(16.dp))
+                .border(width = 1.dp, color = GRAY_100, shape = RoundedCornerShape(16.dp))
+                .shadow(elevation = 16.dp, spotColor = unknownColor, ambientColor = unknownColor)
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.Start),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            CardArticleProfileImage(
+                profileImage = data.profileImgUrl,
+                isRead = data.isRead,
+                description = data.cardContent
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = data.nickName,
+                    style = TextComponent.CAPTION_2_M_12,
+                    color = GRAY_400
+                )
+                Text(
+                    text = data.cardContent,
+                    style = TextComponent.SUBTITLE_3_SB_14,
+                    color = GRAY_600,
+                )
+            }
+        }
     }
 
     @Composable
