@@ -29,11 +29,11 @@ private val FEED_HOME_ROUTE = HomeTabType.FEED.route
 
 private const val NOTIFY_ROUTE = "notify_route"
 private const val NOTIFY_ARG_KEY = "notify_index"
-private val NOTIFY_ARGS = "$NOTIFY_ROUTE/{$NOTIFY_ARG_KEY}"
+private const val NOTIFY_ARGS = "$NOTIFY_ROUTE/{$NOTIFY_ARG_KEY}"
 
 private const val WEB_VIEW_ROUTE = "web_view_route"
 private const val WEB_VIEW_ARG_KEY = "notice_url"
-private val FEED_WEB_VIEW_ARGS = "$WEB_VIEW_ROUTE/{$WEB_VIEW_ARG_KEY}"
+private const val FEED_WEB_VIEW_ARGS = "$WEB_VIEW_ROUTE/{$WEB_VIEW_ARG_KEY}"
 
 private fun NavHostController.navigateToNotify(
     data : String,
@@ -58,7 +58,7 @@ fun NavGraphBuilder.feedGraph(
         route = FEED_GRAPH,
         startDestination = FEED_HOME_ROUTE
     ) {
-        slideComposable(FEED_HOME_ROUTE) { nav ->
+        slideComposable(FEED_HOME_ROUTE) { _ ->
             val feedViewModel: FeedViewModel = hiltViewModel()
             remember { SnackbarHostState() }
             val locationPermission = rememberLauncherForActivityResult(
@@ -90,7 +90,8 @@ fun NavGraphBuilder.feedGraph(
                 noticeClick = navController::navigateToNotify,
                 navigateToDetail = { cardDetailArgs ->
                     navController.navigateToDetailGraph(cardDetailArgs)
-                }
+                },
+                webViewClick = navController::navigateToWebView
             )
         }
 
@@ -134,4 +135,3 @@ fun NavGraphBuilder.feedGraph(
     }
 }
 
-private const val TAG = "FeedGraph"

@@ -43,10 +43,11 @@ const val BOTTOM_NAVIGATION_HEIGHT = 62
 //Nick name length
 const val INPUT_NICK_NAME = 8
 
-const val FEED_NOTICE_EMPTY_LAZY_ITEM_KEY = "empty_feed_notice"
-
 //eventCard
 const val EVENT_CARD = "event"
+
+// A/B Test
+const val CARD_ARTICLE_TYPE_A = "A"
 
 //event Log
 object Feed {
