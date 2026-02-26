@@ -9,15 +9,22 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,13 +36,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import com.phew.core_common.TimeUtils
+import com.phew.core_design.Danger
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.NeutralColor.GRAY_400
 import com.phew.core_design.NeutralColor.GRAY_600
@@ -53,8 +69,11 @@ import com.phew.core_design.component.tab.SooumTab
 import com.phew.core_design.component.tab.SooumTabRow
 import com.phew.core_design.label.LabelComponent
 import com.phew.core_design.theme.GRAY_100
+import com.phew.core_design.theme.GRAY_500
 import com.phew.core_design.theme.MAIN
 import com.phew.core_design.theme.M_YELLOW
+import com.phew.core_design.theme.unknownColor
+import com.phew.domain.dto.CardArticle
 import com.phew.domain.dto.FeedCardType
 import com.phew.domain.dto.FeedLikeNotification
 import com.phew.domain.dto.FollowNotification
@@ -71,6 +90,195 @@ import com.phew.presentation.feed.R
 import kotlinx.coroutines.delay
 
 object FeedUi {
+
+    @Composable
+    internal fun CardArticleView(
+        data: CardArticle,
+        modifier: Modifier,
+        onCardClick: (cardId: Long) -> Unit
+    ) {
+        when (data) {
+            is CardArticle.TypeA -> CardArticleTypeA(
+                data = data,
+                modifier = modifier,
+                onCardClick = onCardClick
+            )
+
+            is CardArticle.TypeB -> CardArticleTypeB(
+                data = data,
+                modifier = modifier,
+                onCardClick = onCardClick
+            )
+        }
+    }
+
+    @Composable
+    private fun CardArticleTypeA(
+        data: CardArticle.TypeA,
+        modifier: Modifier,
+        onCardClick: (cardId: Long) -> Unit
+    ) {
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .height(72.dp)
+                .shadow(
+                    elevation = 16.dp,
+                    shape = RoundedCornerShape(16.dp),
+                    spotColor = unknownColor,
+                    ambientColor = unknownColor
+                )
+                .background(color = WHITE, shape = RoundedCornerShape(16.dp))
+                .border(width = 1.dp, color = GRAY_100, shape = RoundedCornerShape(16.dp))
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = { onCardClick(data.cardId) }
+                )
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.Start),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            CardArticleProfileImage(
+                profileImage = data.profileImgUrl,
+                isRead = data.isRead,
+                description = data.cardContent
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = data.nickName,
+                    style = TextComponent.CAPTION_2_M_12,
+                    color = GRAY_400
+                )
+                Text(
+                    text = data.cardContent,
+                    style = TextComponent.SUBTITLE_3_SB_14,
+                    color = GRAY_600,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
+
+    @Composable
+    private fun CardArticleTypeB(
+        data: CardArticle.TypeB,
+        modifier: Modifier,
+        onCardClick: (cardId: Long) -> Unit
+    ) {
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .height(83.dp)
+                .shadow(
+                    elevation = 16.dp,
+                    shape = RoundedCornerShape(16.dp),
+                    spotColor = unknownColor,
+                    ambientColor = unknownColor
+                )
+                .background(color = WHITE, shape = RoundedCornerShape(16.dp))
+                .border(width = 1.dp, color = GRAY_100, shape = RoundedCornerShape(16.dp))
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = { onCardClick(data.cardId) }
+                )
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.Start),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            CardArticleProfileImage(
+                profileImage = data.profileImgUrl,
+                isRead = data.isRead,
+                description = data.cardContent
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = data.nickName,
+                    style = TextComponent.CAPTION_2_M_12,
+                    color = GRAY_400
+                )
+                Text(
+                    text = data.cardContent,
+                    style = TextComponent.SUBTITLE_3_SB_14,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    color = GRAY_600
+                )
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy((-6).dp, Alignment.Start),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        data.writerProfileImageUrls.forEach { imageUrl ->
+                            AsyncImage(
+                                model = ImageRequest.Builder(LocalContext.current)
+                                    .data(imageUrl)
+                                    .crossfade(true)
+                                    .build(),
+                                contentDescription = data.cardContent,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(20.dp)
+                                    .clip(CircleShape)
+                                    .border(
+                                        width = 1.dp,
+                                        color = WHITE,
+                                        shape = CircleShape
+                                    )
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(1.dp))
+                    Text(
+                        text = stringResource(
+                            id = R.string.home_article_write,
+                            data.totalWriterCnt
+                        ),
+                        style = TextComponent.CAPTION_2_M_12,
+                        color = GRAY_500
+                    )
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun CardArticleProfileImage(
+        profileImage: String,
+        isRead: Boolean,
+        description: String,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .padding(1.dp)
+        ) {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current).data(profileImage)
+                    .crossfade(true).build(),
+                contentDescription = description,
+                modifier = Modifier
+                    .matchParentSize()
+                    .clip(RoundedCornerShape(12.dp))
+            )
+            if (!isRead) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .padding(1.dp)
+                        .align(Alignment.TopEnd)
+                        .offset(x = 0.dp, y = 0.dp)
+                        .background(color = Danger.M_RED, shape = CircleShape)
+                        .border(width = 1.dp, color = WHITE, shape = CircleShape)
+                )
+            }
+        }
+    }
 
     @Composable
     internal fun FeedNoticeViewVersion2(

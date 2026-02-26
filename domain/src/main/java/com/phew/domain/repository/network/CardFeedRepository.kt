@@ -1,6 +1,7 @@
 package com.phew.domain.repository.network
 
 import com.phew.core_common.DataResult
+import com.phew.domain.dto.CardArticle
 import com.phew.domain.dto.CardDefaultImagesResponse
 import com.phew.domain.dto.CardIdResponse
 import com.phew.domain.dto.CardImageDefault
@@ -61,4 +62,5 @@ interface CardFeedRepository {
     suspend fun requestUploadImage(data: RequestBody, url: String): DataResult<Unit>
     suspend fun requestCheckImage(imageName: String): DataResult<Boolean>
     suspend fun requestCheckCardDelete(cardId: Long): DataResult<Boolean>
+    suspend fun requestCardArticle(): DataResult<CardArticle>
 }

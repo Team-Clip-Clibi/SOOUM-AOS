@@ -3,6 +3,7 @@ package com.phew.repository.network
 import com.phew.core_common.APP_ERROR_CODE
 import com.phew.core_common.DataResult
 import com.phew.core_common.HTTP_NO_MORE_CONTENT
+import com.phew.domain.dto.CardArticle
 import com.phew.domain.dto.CardDefaultImagesResponse
 import com.phew.domain.dto.CardImageDefault
 import com.phew.domain.dto.CardIdResponse
@@ -302,6 +303,13 @@ class CardFeedRepositoryImpl @Inject constructor(
         return apiCall(
             apiCall = { feedHttp.requestCheckCardDelete(cardId = cardId) },
             mapper = { data -> data.isDeleted }
+        )
+    }
+
+    override suspend fun requestCardArticle(): DataResult<CardArticle> {
+        return apiCall(
+            apiCall = { feedHttp.requestCardsArticle() },
+            mapper = { data -> data.toDomain() }
         )
     }
 }

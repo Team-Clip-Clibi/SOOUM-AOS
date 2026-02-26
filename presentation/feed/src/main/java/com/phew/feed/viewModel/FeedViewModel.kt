@@ -10,6 +10,8 @@ import com.phew.domain.dto.FeedData
 import com.phew.core_common.DataResult
 import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR_FAIL_JOB
+import com.phew.core_common.ERROR_NO_DATA
+import com.phew.domain.dto.CardArticle
 import com.phew.domain.dto.DistanceCard
 import com.phew.domain.dto.FeedCardType
 import com.phew.domain.dto.Latest
@@ -23,6 +25,7 @@ import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.network.CardFeedRepository
 import com.phew.domain.usecase.CheckCardAlreadyDelete
 import com.phew.domain.usecase.CheckLocationPermission
+import com.phew.domain.usecase.GetCardArticle
 import com.phew.domain.usecase.GetFeedNotification
 import com.phew.domain.usecase.GetLatestFeed
 import com.phew.domain.usecase.GetNotification
@@ -67,6 +70,7 @@ class FeedViewModel @Inject constructor(
     private val readNotify: SetReadActivateNotify,
     private val checkCardDelete: CheckCardAlreadyDelete,
     private val eventLog: SaveEventLogFeedView,
+    private val getArticle : GetCardArticle
 ) :
     ViewModel() {
     private val _uiState = MutableStateFlow(Home())
@@ -86,15 +90,13 @@ class FeedViewModel @Inject constructor(
      */
 
     init {
-        // 병렬 초기화: 독립적인 작업들을 동시에 실행
         viewModelScope.launch {
-            // 병렬로 실행할 작업들
-            launch { loadInitialFeeds() }     // 위치 설정
-            launch { 
-                // 초기 로딩 완료 후 탭 변경 감지 시작
+            launch { loadInitialFeeds() }
+            launch {
                 startTabChangeListener()
             }
-            launch { getFeedNotice() }        // 피드 노티스 로딩 (초기 1회만)
+            launch { getFeedNotice() }
+            launch { fetchCardArticle() }
         }
     }
 
@@ -831,7 +833,31 @@ class FeedViewModel @Inject constructor(
             }
         }
     }
-    
+
+    private fun fetchCardArticle() {
+        viewModelScope.launch(Dispatchers.IO) {
+            when (val result = getArticle()) {
+                is DomainResult.Failure -> {
+                    if (result.error == ERROR_NO_DATA) {
+                        _uiState.update { state ->
+                            state.copy(cardArticle = UiState.None)
+                        }
+                        return@launch
+                    }
+                    _uiState.update { state ->
+                        state.copy(cardArticle = UiState.Fail(result.error))
+                    }
+                }
+
+                is DomainResult.Success -> {
+                    _uiState.update { state ->
+                        state.copy(cardArticle = UiState.Success(result.data))
+                    }
+                }
+            }
+        }
+    }
+
     private fun addToHiddenCards(cardId: Long) {
         _uiState.update { state ->
             state.copy(
@@ -848,7 +874,7 @@ class FeedViewModel @Inject constructor(
         }
     }
 
-    
+
     private fun removeCardFromPopularTab(cardId: Long) {
         val currentState = _uiState.value.popularPagingState
         if (currentState is FeedPagingState.Success) {
@@ -890,13 +916,9 @@ class FeedViewModel @Inject constructor(
 
     fun deleteNotice(noticeId: Int) {
         _uiState.update { currentState ->
-            // 현재 feedNotification 상태가 Success일 때만 데이터를 조작합니다.
             if (currentState.feedNotification is UiState.Success) {
                 val currentNotices = currentState.feedNotification.data
-                // 전달받은 noticeId와 일치하지 않는 아이템들만 남겨 새로운 리스트를 생성합니다.
                 val updatedNotices = currentNotices.filter { it.id != noticeId }
-
-                // 새로운 리스트로 feedNotification 상태를 업데이트합니다.
                 currentState.copy(
                     feedNotification = UiState.Success(updatedNotices)
                 )
@@ -926,6 +948,7 @@ data class Home(
     val setReadNotify: UiState<Unit> = UiState.Loading,
     val checkCardDelete: UiState<Long> = UiState.None,
     val hiddenCardIds: Set<Long> = emptySet(),
+    val cardArticle: UiState<CardArticle> = UiState.Loading,
 ) {
     val currentPagingState: FeedPagingState
         get() = when (currentTab) {
