@@ -88,12 +88,14 @@ class NetworkConvention : Plugin<Project> {
                 val follower: String = properties.getProperty("api_url_follower", "")
                 val followerNext: String = properties.getProperty("api_url_follower_next", "")
                 val otherProfile: String = properties.getProperty("api_url_other_profile", "")
-                val follow : String = properties.getProperty("api_url_follow" , "")
-                val unFollow : String = properties.getProperty("api_url_un_follow","")
-                val updateProfile : String = properties.getProperty("api_url_update_profile" ,"")
-                val activityRestriction: String = properties.getProperty("api_url_activity_restriction", "")
+                val follow: String = properties.getProperty("api_url_follow", "")
+                val unFollow: String = properties.getProperty("api_url_un_follow", "")
+                val updateProfile: String = properties.getProperty("api_url_update_profile", "")
+                val activityRestriction: String =
+                    properties.getProperty("api_url_activity_restriction", "")
                 val transferCode: String = properties.getProperty("api_url_transfer_code", "")
-                val refreshTransferCode: String = properties.getProperty("api_url_refresh_transfer_code", "")
+                val refreshTransferCode: String =
+                    properties.getProperty("api_url_refresh_transfer_code", "")
                 val transferAccount: String = properties.getProperty("api_url_transfer_account", "")
                 val withdrawalAccount: String =
                     properties.getProperty("api_url_withdrawal_account", "")
@@ -102,6 +104,7 @@ class NetworkConvention : Plugin<Project> {
                 val checkCardDelete: String =
                     properties.getProperty("api_url_check_card_delete", "")
                 val notifyToggle: String = properties.getProperty("api_url_notify_toggle", "")
+                val articleUrl: String = properties.getProperty("api_url_cards_article", "")
 
                 buildConfigField("String", "BASE_URL_DEBUG", baseUrlDebug)
                 buildConfigField("String", "BASE_URL_PROD", baseUrlProd)
@@ -167,8 +170,8 @@ class NetworkConvention : Plugin<Project> {
                 buildConfigField("String", "API_URL_REJOINABLE_DATE", rejoinableDate)
                 buildConfigField("String", "API_URL_READ_ACTIVATE", readActivateAlarm)
                 buildConfigField("String", "API_URL_CHECK_CARD_DELETE", checkCardDelete)
-
                 buildConfigField("String", "API_URL_NOTIFY_TOGGLE", notifyToggle)
+                buildConfigField("String" , "API_URL_CARDS_ARTICLE", articleUrl)
             }
             buildFeatures.buildConfig = true
             compileOptions {

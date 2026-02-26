@@ -1,21 +1,29 @@
 package com.phew.feed
 
-import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
@@ -31,33 +39,41 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import com.phew.core_common.TimeUtils
+import com.phew.core_design.Danger
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.NeutralColor.GRAY_400
 import com.phew.core_design.NeutralColor.GRAY_600
 import com.phew.core_design.NeutralColor.WHITE
 import com.phew.core_design.Primary
 import com.phew.core_design.TextComponent
-import com.phew.core_design.UnKnowColor
 import com.phew.core_design.component.card.FeedAdminCard
 import com.phew.core_design.component.card.FeedDefaultCard
 import com.phew.core_design.component.card.FeedDeletedCard
 import com.phew.core_design.component.card.FeedPungCard
-import com.phew.core_design.component.card.NotiCard
-import com.phew.core_design.component.card.NotiCardData
-import com.phew.core_design.component.card.component.IndicatorDot
+import com.phew.core_design.component.card.NoticeCardData
+import com.phew.core_design.component.card.NoticeCardVersionA
 import com.phew.core_design.component.filter.SooumFilter
 import com.phew.core_design.component.tab.SooumTab
 import com.phew.core_design.component.tab.SooumTabRow
 import com.phew.core_design.label.LabelComponent
 import com.phew.core_design.theme.GRAY_100
+import com.phew.core_design.theme.GRAY_500
 import com.phew.core_design.theme.MAIN
 import com.phew.core_design.theme.M_YELLOW
+import com.phew.core_design.theme.unknownColor
+import com.phew.domain.dto.CardArticle
 import com.phew.domain.dto.FeedCardType
 import com.phew.domain.dto.FeedLikeNotification
 import com.phew.domain.dto.FollowNotification
@@ -76,82 +92,249 @@ import kotlinx.coroutines.delay
 object FeedUi {
 
     @Composable
-    internal fun FeedNoticeView(
-        feedNotice: List<Notice>,
-        feedNoticeClick: () -> Unit,
-        modifier : Modifier = Modifier
+    internal fun CardArticleView(
+        data: CardArticle,
+        modifier: Modifier,
+        onCardClick: (cardId: Long) -> Unit
     ) {
-        if (feedNotice.isEmpty()) return
-        val pagerState = rememberPagerState(
-            initialPage = Int.MAX_VALUE / 2 - ((Int.MAX_VALUE / 2) % feedNotice.size),
-            pageCount = { Int.MAX_VALUE }
-        )
-        LaunchedEffect(Unit) {
-            while (true) {
-                delay(5000L)
-                val nextPage = pagerState.currentPage + 1
-                pagerState.animateScrollToPage(
-                    page = nextPage,
-                    animationSpec = tween(
-                        durationMillis = 500,
-                        easing = LinearOutSlowInEasing
-                    )
+        when (data) {
+            is CardArticle.TypeA -> CardArticleTypeA(
+                data = data,
+                modifier = modifier,
+                onCardClick = onCardClick
+            )
+
+            is CardArticle.TypeB -> CardArticleTypeB(
+                data = data,
+                modifier = modifier,
+                onCardClick = onCardClick
+            )
+        }
+    }
+
+    @Composable
+    private fun CardArticleTypeA(
+        data: CardArticle.TypeA,
+        modifier: Modifier,
+        onCardClick: (cardId: Long) -> Unit
+    ) {
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .height(72.dp)
+                .shadow(
+                    elevation = 16.dp,
+                    shape = RoundedCornerShape(16.dp),
+                    spotColor = unknownColor,
+                    ambientColor = unknownColor
+                )
+                .background(color = WHITE, shape = RoundedCornerShape(16.dp))
+                .border(width = 1.dp, color = GRAY_100, shape = RoundedCornerShape(16.dp))
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = { onCardClick(data.cardId) }
+                )
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.Start),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            CardArticleProfileImage(
+                profileImage = data.profileImgUrl,
+                isRead = data.isRead,
+                description = data.cardContent
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = data.nickName,
+                    style = TextComponent.CAPTION_2_M_12,
+                    color = GRAY_400
+                )
+                Text(
+                    text = data.cardContent,
+                    style = TextComponent.SUBTITLE_3_SB_14,
+                    color = GRAY_600,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
-        Box(
+    }
+
+    @Composable
+    private fun CardArticleTypeB(
+        data: CardArticle.TypeB,
+        modifier: Modifier,
+        onCardClick: (cardId: Long) -> Unit
+    ) {
+        Row(
             modifier = modifier
                 .fillMaxWidth()
-                .wrapContentHeight()
-        ) {
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight()
-                    .clip(RoundedCornerShape(16.dp))
-            ) { page ->
-                val actualIndex = page % feedNotice.size
-                val currentNotice = feedNotice[actualIndex]
-                val cardData = NotiCardData(
-                    title = when (currentNotice.type) {
-                        Notice.NoticeType.ANNOUNCEMENT -> stringResource(R.string.home_notice_notice)
-                        Notice.NoticeType.NEWS -> stringResource(R.string.home_notice_news)
-                        Notice.NoticeType.MAINTENANCE -> stringResource(R.string.home_notice_service)
-                    },
-                    description = currentNotice.content,
-                    id = currentNotice.id.toString(),
-                    iconRes = when (currentNotice.type) {
-                        Notice.NoticeType.ANNOUNCEMENT -> com.phew.core_design.R.drawable.ic_tool_filled
-                        Notice.NoticeType.NEWS -> com.phew.core_design.R.drawable.ic_mail_filled_bule
-                        Notice.NoticeType.MAINTENANCE -> com.phew.core_design.R.drawable.ic_headset_filled_yellow
-                    },
-                    iconTint = when (currentNotice.type) {
-                        Notice.NoticeType.ANNOUNCEMENT -> GRAY_400
-                        Notice.NoticeType.NEWS -> MAIN
-                        Notice.NoticeType.MAINTENANCE -> M_YELLOW
-                    },
-                    iconBackgroundColor = NeutralColor.GRAY_100,
+                .height(83.dp)
+                .shadow(
+                    elevation = 16.dp,
+                    shape = RoundedCornerShape(16.dp),
+                    spotColor = unknownColor,
+                    ambientColor = unknownColor
                 )
-                NotiCard(
-                    data = cardData,
-                    onClick = feedNoticeClick,
+                .background(color = WHITE, shape = RoundedCornerShape(16.dp))
+                .border(width = 1.dp, color = GRAY_100, shape = RoundedCornerShape(16.dp))
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = { onCardClick(data.cardId) }
+                )
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.Start),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            CardArticleProfileImage(
+                profileImage = data.profileImgUrl,
+                isRead = data.isRead,
+                description = data.cardContent
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = data.nickName,
+                    style = TextComponent.CAPTION_2_M_12,
+                    color = GRAY_400
+                )
+                Text(
+                    text = data.cardContent,
+                    style = TextComponent.SUBTITLE_3_SB_14,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    color = GRAY_600
+                )
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy((-6).dp, Alignment.Start),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        data.writerProfileImageUrls.forEach { imageUrl ->
+                            AsyncImage(
+                                model = ImageRequest.Builder(LocalContext.current)
+                                    .data(imageUrl)
+                                    .crossfade(true)
+                                    .build(),
+                                contentDescription = data.cardContent,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(20.dp)
+                                    .clip(CircleShape)
+                                    .border(
+                                        width = 1.dp,
+                                        color = WHITE,
+                                        shape = CircleShape
+                                    )
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(1.dp))
+                    Text(
+                        text = stringResource(
+                            id = R.string.home_article_write,
+                            data.totalWriterCnt
+                        ),
+                        style = TextComponent.CAPTION_2_M_12,
+                        color = GRAY_500
+                    )
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun CardArticleProfileImage(
+        profileImage: String,
+        isRead: Boolean,
+        description: String,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .padding(1.dp)
+        ) {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current).data(profileImage)
+                    .crossfade(true).build(),
+                contentDescription = description,
+                modifier = Modifier
+                    .matchParentSize()
+                    .clip(RoundedCornerShape(12.dp))
+            )
+            if (!isRead) {
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .shadow(
-                            elevation = 16.dp,
-                            spotColor = UnKnowColor.color,
-                            ambientColor = UnKnowColor.color
-                        )
+                        .size(8.dp)
+                        .padding(1.dp)
+                        .align(Alignment.TopEnd)
+                        .offset(x = 0.dp, y = 0.dp)
+                        .background(color = Danger.M_RED, shape = CircleShape)
+                        .border(width = 1.dp, color = WHITE, shape = CircleShape)
                 )
             }
-            IndicatorDot(
-                pagerState = pagerState,
-                totalSize = feedNotice.size,
-                modifier = Modifier
-                    .padding(top = 16.dp, end = 16.dp)
-                    .align(Alignment.TopEnd)
-            )
+        }
+    }
+
+    @Composable
+    internal fun FeedNoticeViewVersion2(
+        noticeList: List<Notice>,
+        feedNoticeClick: (url : String) -> Unit,
+        deleteNotice : (id : Int) -> Unit,
+        modifier: Modifier = Modifier
+    ) {
+        val currentNotice = noticeList.firstOrNull()
+        AnimatedContent(
+            targetState = currentNotice,
+            transitionSpec = {
+                val enter = scaleIn(
+                    animationSpec = tween(300, delayMillis = 300),
+                    initialScale = 0.9f
+                ) + fadeIn(animationSpec = tween(300, delayMillis = 300))
+
+                val exit = scaleOut(
+                    animationSpec = tween(300),
+                    targetScale = 0.9f
+                ) + fadeOut(animationSpec = tween(300))
+
+                (enter togetherWith exit).apply {
+                    targetContentZIndex = -1f
+                }
+            },
+            contentKey = { it?.id ?: "empty_notice" },
+            label = "NoticeTransitionAnimation",
+            modifier = modifier
+        ) { notice ->
+            if (notice != null) {
+                NoticeCardVersionA(
+                    data = NoticeCardData(
+                        id = notice.id.toString(),
+                        description = notice.content,
+                        iconRes = when (notice.type) {
+                            Notice.NoticeType.ANNOUNCEMENT -> com.phew.core_design.R.drawable.ic_tool_filled
+                            Notice.NoticeType.NEWS -> com.phew.core_design.R.drawable.ic_mail_filled_bule
+                            Notice.NoticeType.MAINTENANCE -> com.phew.core_design.R.drawable.ic_headset_filled_yellow
+                        },
+                        iconTint = when (notice.type) {
+                            Notice.NoticeType.ANNOUNCEMENT -> GRAY_400
+                            Notice.NoticeType.NEWS -> MAIN
+                            Notice.NoticeType.MAINTENANCE -> M_YELLOW
+                        },
+                        iconBackgroundColor = NeutralColor.GRAY_100,
+                    ),
+                    onClick = { feedNoticeClick(notice.url) },
+                    onCloseClick = { noticeId ->
+                        deleteNotice(noticeId)
+                    },
+                    modifier = Modifier
+                )
+            } else {
+                Spacer(modifier = Modifier.height(0.dp))
+            }
         }
     }
 
