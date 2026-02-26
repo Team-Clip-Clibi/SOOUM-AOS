@@ -211,7 +211,7 @@ object FeedUi {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy((-12).dp, Alignment.Start),
+                        horizontalArrangement = Arrangement.spacedBy((-6).dp, Alignment.Start),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         data.writerProfileImageUrls.forEach { imageUrl ->
