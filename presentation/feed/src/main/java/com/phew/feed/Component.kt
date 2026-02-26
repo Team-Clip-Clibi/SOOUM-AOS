@@ -84,6 +84,10 @@ import kotlinx.coroutines.delay
 object FeedUi {
     @Composable
     internal fun CardArticleView(data: CardArticle) {
+        when (data) {
+            is CardArticle.TypeA -> CardArticleTypeA(data)
+            is CardArticle.TypeB -> CardArticleTypeB(data)
+        }
     }
 
     @Composable
