@@ -93,6 +93,7 @@ fun FeedView(
     closeDialog: () -> Unit,
     noticeClick: (String) -> Unit,
     navigateToDetail: (CardDetailArgs) -> Unit,
+    webViewClick : (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val unRead = viewModel.unReadActivateAlarm.collectAsLazyPagingItems()
@@ -203,10 +204,9 @@ fun FeedView(
                     val lastVisibleIndex = visibleItems.lastOrNull()?.index ?: 0
                     val totalItems = lazyGridState.layoutInfo.totalItemsCount
 
-                    val state = currentPagingState
                     if (lastVisibleIndex >= totalItems - 5 &&
-                        state is FeedPagingState.Success &&
-                        state.hasNextPage &&
+                        currentPagingState is FeedPagingState.Success &&
+                        currentPagingState.hasNextPage &&
                         totalItems > 0
                     ) {
                         viewModel.loadMoreFeeds()
@@ -267,7 +267,7 @@ fun FeedView(
                     selectDistance = uiState.distanceTab,
                     currentTab = uiState.currentTab,
                     feedNotice = feedNotice,
-                    feedNoticeClick = noticeClick,
+                    webViewClick = webViewClick,
                     latestFeedItems = latestFeedItems,
                     onClick = viewModel::navigateToDetail,
                     onRemoveCard = viewModel::removeFeedCard,
@@ -275,6 +275,7 @@ fun FeedView(
                     pullOffsetPx = pullOffsetPx,
                     onRefresh = refreshCurrentFeed,
                     hiddenCardIds = uiState.hiddenCardIds,
+                    deleteNotice = viewModel::deleteNotice,
                     cardsArticle = cardArticle
                 )
                 if (uiState.shouldShowPermissionRationale) {
@@ -336,7 +337,6 @@ private fun FeedContentView(
     selectDistance: DistanceType,
     currentTab: FeedType,
     feedNotice: List<Notice>,
-    feedNoticeClick: (String) -> Unit,
     latestFeedItems: LazyPagingItems<Latest>,
     onClick: (String, Boolean) -> Unit,
     onRemoveCard: (String) -> Unit,
@@ -344,6 +344,8 @@ private fun FeedContentView(
     pullOffsetPx: Float,
     onRefresh: () -> Unit,
     hiddenCardIds: Set<Long>,
+    webViewClick: (String) -> Unit,
+    deleteNotice : (Int) -> Unit,
     cardsArticle : UiState<CardArticle>
 ) {
     val selectIndex = when (currentTab) {
@@ -374,20 +376,20 @@ private fun FeedContentView(
             }
             Spacer(modifier = Modifier.height(6.dp))
         }
-        if (feedNotice.isNotEmpty()) {
-            item(
-                key = feedNotice.joinToString("_") { it.id.toString() },
-                span = { GridItemSpan(maxLineSpan) }
-            ) {
-                FeedUi.FeedNoticeView(
-                    feedNotice = feedNotice,
-                    feedNoticeClick = { feedNoticeClick(NotifyTab.NOTIFY_SERVICE.toString()) },
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .graphicsLayer { translationY = pullOffsetPx }
-                )
-            }
+        item(
+            key = "feed_notice_section",
+            span = { GridItemSpan(maxLineSpan) }
+        ) {
+            FeedUi.FeedNoticeViewVersion2(
+                noticeList = feedNotice,
+                feedNoticeClick = { url -> webViewClick(url) },
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .graphicsLayer { translationY = pullOffsetPx },
+                deleteNotice = deleteNotice
+            )
         }
+
         item(span = { GridItemSpan(maxLineSpan) }) {
             when (cardsArticle) {
                 is UiState.Success -> FeedUi.CardArticleView(

@@ -1,14 +1,18 @@
 package com.phew.feed
 
-import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -34,8 +38,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -56,14 +58,12 @@ import com.phew.core_design.NeutralColor.GRAY_600
 import com.phew.core_design.NeutralColor.WHITE
 import com.phew.core_design.Primary
 import com.phew.core_design.TextComponent
-import com.phew.core_design.UnKnowColor
 import com.phew.core_design.component.card.FeedAdminCard
 import com.phew.core_design.component.card.FeedDefaultCard
 import com.phew.core_design.component.card.FeedDeletedCard
 import com.phew.core_design.component.card.FeedPungCard
-import com.phew.core_design.component.card.NotiCard
-import com.phew.core_design.component.card.NotiCardData
-import com.phew.core_design.component.card.component.IndicatorDot
+import com.phew.core_design.component.card.NoticeCardData
+import com.phew.core_design.component.card.NoticeCardVersionA
 import com.phew.core_design.component.filter.SooumFilter
 import com.phew.core_design.component.tab.SooumTab
 import com.phew.core_design.component.tab.SooumTabRow
@@ -281,82 +281,60 @@ object FeedUi {
     }
 
     @Composable
-    internal fun FeedNoticeView(
-        feedNotice: List<Notice>,
-        feedNoticeClick: () -> Unit,
-        modifier: Modifier = Modifier,
+    internal fun FeedNoticeViewVersion2(
+        noticeList: List<Notice>,
+        feedNoticeClick: (url : String) -> Unit,
+        deleteNotice : (id : Int) -> Unit,
+        modifier: Modifier = Modifier
     ) {
-        if (feedNotice.isEmpty()) return
-        val pagerState = rememberPagerState(
-            initialPage = Int.MAX_VALUE / 2 - ((Int.MAX_VALUE / 2) % feedNotice.size),
-            pageCount = { Int.MAX_VALUE }
-        )
-        LaunchedEffect(Unit) {
-            while (true) {
-                delay(5000L)
-                val nextPage = pagerState.currentPage + 1
-                pagerState.animateScrollToPage(
-                    page = nextPage,
-                    animationSpec = tween(
-                        durationMillis = 500,
-                        easing = LinearOutSlowInEasing
-                    )
-                )
-            }
-        }
-        Box(
+        val currentNotice = noticeList.firstOrNull()
+        AnimatedContent(
+            targetState = currentNotice,
+            transitionSpec = {
+                val enter = scaleIn(
+                    animationSpec = tween(300, delayMillis = 300),
+                    initialScale = 0.9f
+                ) + fadeIn(animationSpec = tween(300, delayMillis = 300))
+
+                val exit = scaleOut(
+                    animationSpec = tween(300),
+                    targetScale = 0.9f
+                ) + fadeOut(animationSpec = tween(300))
+
+                (enter togetherWith exit).apply {
+                    targetContentZIndex = -1f
+                }
+            },
+            contentKey = { it?.id ?: "empty_notice" },
+            label = "NoticeTransitionAnimation",
             modifier = modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-        ) {
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight()
-                    .clip(RoundedCornerShape(16.dp))
-            ) { page ->
-                val actualIndex = page % feedNotice.size
-                val currentNotice = feedNotice[actualIndex]
-                val cardData = NotiCardData(
-                    title = when (currentNotice.type) {
-                        Notice.NoticeType.ANNOUNCEMENT -> stringResource(R.string.home_notice_notice)
-                        Notice.NoticeType.NEWS -> stringResource(R.string.home_notice_news)
-                        Notice.NoticeType.MAINTENANCE -> stringResource(R.string.home_notice_service)
+        ) { notice ->
+            if (notice != null) {
+                NoticeCardVersionA(
+                    data = NoticeCardData(
+                        id = notice.id.toString(),
+                        description = notice.content,
+                        iconRes = when (notice.type) {
+                            Notice.NoticeType.ANNOUNCEMENT -> com.phew.core_design.R.drawable.ic_tool_filled
+                            Notice.NoticeType.NEWS -> com.phew.core_design.R.drawable.ic_mail_filled_bule
+                            Notice.NoticeType.MAINTENANCE -> com.phew.core_design.R.drawable.ic_headset_filled_yellow
+                        },
+                        iconTint = when (notice.type) {
+                            Notice.NoticeType.ANNOUNCEMENT -> GRAY_400
+                            Notice.NoticeType.NEWS -> MAIN
+                            Notice.NoticeType.MAINTENANCE -> M_YELLOW
+                        },
+                        iconBackgroundColor = NeutralColor.GRAY_100,
+                    ),
+                    onClick = { feedNoticeClick(notice.url) },
+                    onCloseClick = { noticeId ->
+                        deleteNotice(noticeId)
                     },
-                    description = currentNotice.content,
-                    id = currentNotice.id.toString(),
-                    iconRes = when (currentNotice.type) {
-                        Notice.NoticeType.ANNOUNCEMENT -> com.phew.core_design.R.drawable.ic_tool_filled
-                        Notice.NoticeType.NEWS -> com.phew.core_design.R.drawable.ic_mail_filled_bule
-                        Notice.NoticeType.MAINTENANCE -> com.phew.core_design.R.drawable.ic_headset_filled_yellow
-                    },
-                    iconTint = when (currentNotice.type) {
-                        Notice.NoticeType.ANNOUNCEMENT -> GRAY_400
-                        Notice.NoticeType.NEWS -> MAIN
-                        Notice.NoticeType.MAINTENANCE -> M_YELLOW
-                    },
-                    iconBackgroundColor = NeutralColor.GRAY_100,
-                )
-                NotiCard(
-                    data = cardData,
-                    onClick = feedNoticeClick,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .shadow(
-                            elevation = 16.dp,
-                            spotColor = UnKnowColor.color,
-                            ambientColor = UnKnowColor.color
-                        )
                 )
+            } else {
+                Spacer(modifier = Modifier.height(0.dp))
             }
-            IndicatorDot(
-                pagerState = pagerState,
-                totalSize = feedNotice.size,
-                modifier = Modifier
-                    .padding(top = 16.dp, end = 16.dp)
-                    .align(Alignment.TopEnd)
-            )
         }
     }
 

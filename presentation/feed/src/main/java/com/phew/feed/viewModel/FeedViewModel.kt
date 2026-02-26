@@ -429,7 +429,7 @@ class FeedViewModel @Inject constructor(
             try {
                 if (!isInitial) {
                     val currentStateIsSuccess = currentState is FeedPagingState.Success
-                    if (!currentStateIsSuccess || !(currentState as FeedPagingState.Success).hasNextPage) {
+                    if (!currentStateIsSuccess || !currentState.hasNextPage) {
                         return@launch
                     }
                     val existingCards = currentState.feedCards
@@ -604,12 +604,6 @@ class FeedViewModel @Inject constructor(
                 loadDistanceFeeds(isInitial = true)
             }
         }
-        refreshFeedNotice()
-    }
-
-    private fun refreshFeedNotice() {
-        _uiState.update { state -> state.copy(feedNotification = UiState.Loading) }
-        getFeedNotice()
     }
 
     // TODO 개선 작업 필요 포인트
@@ -863,7 +857,7 @@ class FeedViewModel @Inject constructor(
             }
         }
     }
-    
+
     private fun addToHiddenCards(cardId: Long) {
         _uiState.update { state ->
             state.copy(
@@ -879,7 +873,8 @@ class FeedViewModel @Inject constructor(
             else -> Unit
         }
     }
-    
+
+
     private fun removeCardFromPopularTab(cardId: Long) {
         val currentState = _uiState.value.popularPagingState
         if (currentState is FeedPagingState.Success) {
@@ -915,6 +910,20 @@ class FeedViewModel @Inject constructor(
                 state.copy(
                     distancePagingStates = newStates
                 )
+            }
+        }
+    }
+
+    fun deleteNotice(noticeId: Int) {
+        _uiState.update { currentState ->
+            if (currentState.feedNotification is UiState.Success) {
+                val currentNotices = currentState.feedNotification.data
+                val updatedNotices = currentNotices.filter { it.id != noticeId }
+                currentState.copy(
+                    feedNotification = UiState.Success(updatedNotices)
+                )
+            } else {
+                currentState
             }
         }
     }
@@ -980,4 +989,5 @@ sealed interface FeedPagingState {
 
     data class Error(val message: String) : FeedPagingState
 }
+
 
