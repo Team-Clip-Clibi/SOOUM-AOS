@@ -390,7 +390,7 @@ internal fun CardArticleDTO.toDomain(): CardArticle {
             profileImgUrl = this.profileImgUrl,
             nickName = this.nickname,
             cardContent = this.cardContent,
-            isRead = false
+            isRead = this.isRead
         )
 
         else -> return CardArticle.TypeB(
@@ -398,7 +398,7 @@ internal fun CardArticleDTO.toDomain(): CardArticle {
             profileImgUrl = this.profileImgUrl,
             nickName = this.nickname,
             cardContent = this.cardContent,
-            isRead = false,
+            isRead = this.isRead,
             writerProfileImageUrls = this.writerProfileImgUrls ?: emptyList(),
             totalWriterCnt = this.totalWriterCnt ?: 0
         )
