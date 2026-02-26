@@ -76,6 +76,7 @@ import com.phew.feed.viewModel.UiState
 import com.phew.presentation.feed.R
 import com.phew.core.ui.state.SooumAppState
 import com.phew.core_design.DialogComponent.DeletedCardDialog
+import com.phew.domain.dto.CardArticle
 import com.phew.feed.NotifyTab
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
@@ -95,6 +96,7 @@ fun FeedView(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val unRead = viewModel.unReadActivateAlarm.collectAsLazyPagingItems()
+    val cardArticle = uiState.cardArticle
     val feedNoticeState = uiState.feedNotification
     var cachedFeedNotice by remember { mutableStateOf<List<Notice>>(emptyList()) }
     val latestFeedItems = viewModel.latestFeedPaging.collectAsLazyPagingItems()
@@ -272,7 +274,8 @@ fun FeedView(
                     currentPagingState = uiState.currentPagingState,
                     pullOffsetPx = pullOffsetPx,
                     onRefresh = refreshCurrentFeed,
-                    hiddenCardIds = uiState.hiddenCardIds
+                    hiddenCardIds = uiState.hiddenCardIds,
+                    cardsArticle = cardArticle
                 )
                 if (uiState.shouldShowPermissionRationale) {
                     DialogComponent.DefaultButtonTwo(
@@ -341,6 +344,7 @@ private fun FeedContentView(
     pullOffsetPx: Float,
     onRefresh: () -> Unit,
     hiddenCardIds: Set<Long>,
+    cardsArticle : UiState<CardArticle>
 ) {
     val selectIndex = when (currentTab) {
         FeedType.Latest -> NAV_HOME_FEED_INDEX
@@ -382,6 +386,20 @@ private fun FeedContentView(
                         .padding(horizontal = 16.dp)
                         .graphicsLayer { translationY = pullOffsetPx }
                 )
+            }
+        }
+        item(span = { GridItemSpan(maxLineSpan) }) {
+            when (cardsArticle) {
+                is UiState.Success -> FeedUi.CardArticleView(
+                    cardsArticle.data, modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .graphicsLayer { translationY = pullOffsetPx },
+                    onCardClick = { id ->
+                        onClick(id.toString(), false)
+                    }
+                )
+
+                else -> Unit
             }
         }
         // LoadState.Loading 상태에서도 기존 목록을 유지하기 위해 로딩/노트로딩을 함께 처리한다.

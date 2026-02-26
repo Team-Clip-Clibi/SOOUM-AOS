@@ -388,18 +388,18 @@ internal fun CardArticleDTO.toDomain(): CardArticle {
         CARD_ARTICLE_TYPE_A -> return CardArticle.TypeA(
             cardId = this.cardId,
             profileImgUrl = this.profileImgUrl,
-            nickName = this.nickName,
+            nickName = this.nickname,
             cardContent = this.cardContent,
-            isRead = this.isRead
+            isRead = false
         )
 
         else -> return CardArticle.TypeB(
             cardId = this.cardId,
             profileImgUrl = this.profileImgUrl,
-            nickName = this.nickName,
+            nickName = this.nickname,
             cardContent = this.cardContent,
-            isRead = this.isRead,
-            writerProfileImageUrls = this.writerProfileImageUrls ?: emptyList(),
+            isRead = false,
+            writerProfileImageUrls = this.writerProfileImgUrls ?: emptyList(),
             totalWriterCnt = this.totalWriterCnt ?: 0
         )
     }

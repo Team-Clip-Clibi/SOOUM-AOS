@@ -7,9 +7,9 @@ data class CardArticleDTO(
     val cardId: Long,
     val abTestType: String,
     val profileImgUrl: String,
-    val nickName: String,
+    val nickname: String,
     val cardContent: String,
     val isRead: Boolean,
-    val writerProfileImageUrls: List<String>? = null,
+    val writerProfileImgUrls: List<String>? = null,
     val totalWriterCnt: Int? = null,
 )
