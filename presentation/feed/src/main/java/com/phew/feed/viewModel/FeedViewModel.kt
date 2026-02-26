@@ -10,7 +10,8 @@ import com.phew.domain.dto.FeedData
 import com.phew.core_common.DataResult
 import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR_FAIL_JOB
-import com.phew.core_common.log.SooumLog
+import com.phew.core_common.ERROR_NO_DATA
+import com.phew.domain.dto.CardArticle
 import com.phew.domain.dto.DistanceCard
 import com.phew.domain.dto.FeedCardType
 import com.phew.domain.dto.Latest
@@ -24,6 +25,7 @@ import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.network.CardFeedRepository
 import com.phew.domain.usecase.CheckCardAlreadyDelete
 import com.phew.domain.usecase.CheckLocationPermission
+import com.phew.domain.usecase.GetCardArticle
 import com.phew.domain.usecase.GetFeedNotification
 import com.phew.domain.usecase.GetLatestFeed
 import com.phew.domain.usecase.GetNotification
@@ -68,6 +70,7 @@ class FeedViewModel @Inject constructor(
     private val readNotify: SetReadActivateNotify,
     private val checkCardDelete: CheckCardAlreadyDelete,
     private val eventLog: SaveEventLogFeedView,
+    private val getArticle : GetCardArticle
 ) :
     ViewModel() {
     private val _uiState = MutableStateFlow(Home())
@@ -87,15 +90,13 @@ class FeedViewModel @Inject constructor(
      */
 
     init {
-        // 병렬 초기화: 독립적인 작업들을 동시에 실행
         viewModelScope.launch {
-            // 병렬로 실행할 작업들
-            launch { loadInitialFeeds() }     // 위치 설정
-            launch { 
-                // 초기 로딩 완료 후 탭 변경 감지 시작
+            launch { loadInitialFeeds() }
+            launch {
                 startTabChangeListener()
             }
-            launch { getFeedNotice() }        // 피드 노티스 로딩 (초기 1회만)
+            launch { getFeedNotice() }
+            launch { fetchCardArticle() }
         }
     }
 
@@ -606,7 +607,7 @@ class FeedViewModel @Inject constructor(
         refreshFeedNotice()
     }
 
-    fun refreshFeedNotice() {
+    private fun refreshFeedNotice() {
         _uiState.update { state -> state.copy(feedNotification = UiState.Loading) }
         getFeedNotice()
     }
@@ -838,6 +839,30 @@ class FeedViewModel @Inject constructor(
             }
         }
     }
+
+    private fun fetchCardArticle() {
+        viewModelScope.launch(Dispatchers.IO) {
+            when (val result = getArticle()) {
+                is DomainResult.Failure -> {
+                    if (result.error == ERROR_NO_DATA) {
+                        _uiState.update { state ->
+                            state.copy(cardArticle = UiState.None)
+                        }
+                        return@launch
+                    }
+                    _uiState.update { state ->
+                        state.copy(cardArticle = UiState.Fail(result.error))
+                    }
+                }
+
+                is DomainResult.Success -> {
+                    _uiState.update { state ->
+                        state.copy(cardArticle = UiState.Success(result.data))
+                    }
+                }
+            }
+        }
+    }
     
     private fun addToHiddenCards(cardId: Long) {
         _uiState.update { state ->
@@ -849,15 +874,10 @@ class FeedViewModel @Inject constructor(
     
     private fun removeCardFromCurrentTab(cardId: Long) {
         when (_uiState.value.currentTab) {
-            FeedType.Latest -> removeCardFromLatestTab(cardId)
             FeedType.Popular -> removeCardFromPopularTab(cardId)
             FeedType.Distance -> removeCardFromDistanceTab(cardId)
+            else -> Unit
         }
-    }
-    
-    private fun removeCardFromLatestTab(cardId: Long) {
-        // Latest 탭은 UI 레벨에서 hiddenCardIds로 숨김 처리
-        // 별도 처리 불필요
     }
     
     private fun removeCardFromPopularTab(cardId: Long) {
@@ -919,6 +939,7 @@ data class Home(
     val setReadNotify: UiState<Unit> = UiState.Loading,
     val checkCardDelete: UiState<Long> = UiState.None,
     val hiddenCardIds: Set<Long> = emptySet(),
+    val cardArticle: UiState<CardArticle> = UiState.Loading,
 ) {
     val currentPagingState: FeedPagingState
         get() = when (currentTab) {
@@ -960,4 +981,3 @@ sealed interface FeedPagingState {
     data class Error(val message: String) : FeedPagingState
 }
 
-private const val TAG = "FeedViewModel"

@@ -4,7 +4,6 @@ import com.phew.network.BuildConfig
 import com.phew.network.dto.TagRequestDTO
 import com.phew.network.dto.request.feed.CheckBanedDTO
 import com.phew.network.dto.request.feed.DefaultImageDTO
-import com.phew.network.dto.request.feed.ImageInfoDTO
 import com.phew.network.dto.request.feed.UploadCardImageInfoDTO
 import com.phew.network.dto.request.feed.RequestUploadCardAnswerDTO
 import com.phew.network.dto.request.feed.RequestUploadCardDTO
@@ -26,6 +25,7 @@ import retrofit2.http.Url
 
 import com.phew.network.dto.response.feed.CardIdResponseDto // Added import
 import com.phew.network.NoAuth
+import com.phew.network.dto.response.feed.CardArticleDTO
 
 interface FeedHttp {
     /**
@@ -136,4 +136,10 @@ interface FeedHttp {
     suspend fun requestCheckCardDelete(
         @Path("cardId") cardId: Long,
     ): Response<CheckCardDeleteDTO>
+
+    /**
+     * 아티클 조회
+     */
+    @GET(BuildConfig.API_URL_CARDS_ARTICLE)
+    suspend fun requestCardsArticle(): Response<CardArticleDTO>
 }

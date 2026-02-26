@@ -48,6 +48,9 @@ const val FEED_NOTICE_EMPTY_LAZY_ITEM_KEY = "empty_feed_notice"
 //eventCard
 const val EVENT_CARD = "event"
 
+// A/B Test
+const val CARD_ARTICLE_TYPE_A = "A"
+
 //event Log
 object Feed {
     const val LOG_FEED_MOVE_TOP_HOME = "feedMoveTop_homeBtnClick"

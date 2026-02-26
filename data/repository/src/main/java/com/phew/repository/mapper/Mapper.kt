@@ -1,6 +1,7 @@
 package com.phew.repository.mapper
 
 import com.phew.core_common.APP_ERROR_CODE
+import com.phew.core_common.CARD_ARTICLE_TYPE_A
 import com.phew.core_common.DataResult
 import com.phew.core_common.ERROR_ACCOUNT_SUSPENDED
 import com.phew.core_common.ERROR_ALREADY_CARD_DELETE
@@ -8,6 +9,7 @@ import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.HTTP_CARD_ALREADY_DELETE
 import com.phew.core_common.HTTP_NO_MORE_CONTENT
 import com.phew.core_common.WITHDRAWAL_USER
+import com.phew.domain.dto.CardArticle
 import com.phew.domain.dto.CardComment
 import com.phew.domain.dto.CardDetail
 import com.phew.domain.dto.CardDetailTag
@@ -70,6 +72,7 @@ import com.phew.network.dto.response.card.CardCommentResponseDTO
 import com.phew.network.dto.response.card.CardContentDto
 import com.phew.network.dto.response.card.CardDetailResponseDTO
 import com.phew.network.dto.response.card.CardDetailTagDTO
+import com.phew.network.dto.response.feed.CardArticleDTO
 import com.phew.network.dto.response.profile.FollowDataDTO
 import com.phew.network.dto.response.profile.ProfileDTO
 import com.phew.network.dto.response.feed.CardIdResponseDto
@@ -378,6 +381,28 @@ internal fun FollowDataDTO.toDomain(): FollowData {
         isFollowing = this.isFollowing,
         isRequester = this.isRequester
     )
+}
+
+internal fun CardArticleDTO.toDomain(): CardArticle {
+    when (this.abTestType) {
+        CARD_ARTICLE_TYPE_A -> return CardArticle.TypeA(
+            cardId = this.cardId,
+            profileImgUrl = this.profileImgUrl,
+            nickName = this.nickName,
+            cardContent = this.cardContent,
+            isRead = this.isRead
+        )
+
+        else -> return CardArticle.TypeB(
+            cardId = this.cardId,
+            profileImgUrl = this.profileImgUrl,
+            nickName = this.nickName,
+            cardContent = this.cardContent,
+            isRead = this.isRead,
+            writerProfileImageUrls = this.writerProfileImageUrls ?: emptyList(),
+            totalWriterCnt = this.totalWriterCnt ?: 0
+        )
+    }
 }
 
 suspend fun <T, R> apiCall(
