@@ -1,6 +1,5 @@
 package com.phew.feed
 
-import android.content.Context
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
