@@ -63,7 +63,7 @@ import com.phew.core_design.component.card.FeedDefaultCard
 import com.phew.core_design.component.card.FeedDeletedCard
 import com.phew.core_design.component.card.FeedPungCard
 import com.phew.core_design.component.card.NoticeCardData
-import com.phew.core_design.component.card.NoticeCardVersionA
+import com.phew.core_design.component.card.FeedNotice
 import com.phew.core_design.component.filter.SooumFilter
 import com.phew.core_design.component.tab.SooumTab
 import com.phew.core_design.component.tab.SooumTabRow
@@ -212,7 +212,7 @@ object FeedUi {
     }
 
     @Composable
-    internal fun FeedNoticeViewVersion2(
+    internal fun FeedNoticeView(
         noticeList: List<Notice>,
         feedNoticeClick: (url : String) -> Unit,
         deleteNotice : (id : Int) -> Unit,
@@ -241,19 +241,19 @@ object FeedUi {
             modifier = modifier
         ) { notice ->
             if (notice != null) {
-                NoticeCardVersionA(
+                FeedNotice(
                     data = NoticeCardData(
                         id = notice.id.toString(),
                         description = notice.content,
                         iconRes = when (notice.type) {
-                            Notice.NoticeType.ANNOUNCEMENT -> com.phew.core_design.R.drawable.ic_tool_filled
+                            Notice.NoticeType.ANNOUNCEMENT -> com.phew.core_design.R.drawable.ic_headset_filled_yellow
                             Notice.NoticeType.NEWS -> com.phew.core_design.R.drawable.ic_mail_filled_bule
-                            Notice.NoticeType.MAINTENANCE -> com.phew.core_design.R.drawable.ic_headset_filled_yellow
+                            Notice.NoticeType.MAINTENANCE -> com.phew.core_design.R.drawable.ic_tool_filled
                         },
                         iconTint = when (notice.type) {
-                            Notice.NoticeType.ANNOUNCEMENT -> GRAY_400
+                            Notice.NoticeType.ANNOUNCEMENT -> M_YELLOW
                             Notice.NoticeType.NEWS -> MAIN
-                            Notice.NoticeType.MAINTENANCE -> M_YELLOW
+                            Notice.NoticeType.MAINTENANCE -> GRAY_400
                         },
                         iconBackgroundColor = NeutralColor.GRAY_100,
                     ),

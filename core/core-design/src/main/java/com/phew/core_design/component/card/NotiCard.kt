@@ -43,7 +43,7 @@ data class NoticeCardData(
 )
 
 @Composable
-fun NoticeCardVersionA(
+fun FeedNotice(
     modifier: Modifier,
     data: NoticeCardData,
     onClick: () -> Unit,
@@ -66,6 +66,7 @@ fun NoticeCardVersionA(
         Image(
             painter = painterResource(data.iconRes),
             contentDescription = data.description,
+            colorFilter = ColorFilter.tint(data.iconTint),
             modifier = Modifier
                 .padding(1.dp)
                 .width(24.dp)
@@ -107,7 +108,7 @@ fun NoticeCardVersionA(
 // Previews
 @Preview(showBackground = true, backgroundColor = 0xFF212121)
 @Composable
-private fun Preview_NoticeCard() {
+private fun Preview_Feed_NoticeCard() {
     SooumTheme {
         Column(
             modifier = Modifier
@@ -115,7 +116,7 @@ private fun Preview_NoticeCard() {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            NoticeCardVersionA(
+            FeedNotice(
                 data = NoticeCardData(
                     id = "1",
                     description = "숨이 새로운 서비스로 찾아올 예정이에요",
