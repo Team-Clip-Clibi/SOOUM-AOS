@@ -380,7 +380,7 @@ private fun FeedContentView(
             key = "feed_notice_section",
             span = { GridItemSpan(maxLineSpan) }
         ) {
-            FeedUi.FeedNoticeViewVersion2(
+            FeedUi.FeedNoticeView(
                 noticeList = feedNotice,
                 feedNoticeClick = { url -> webViewClick(url) },
                 modifier = Modifier
