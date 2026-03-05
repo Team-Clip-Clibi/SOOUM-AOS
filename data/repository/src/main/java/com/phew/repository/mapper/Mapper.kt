@@ -1,7 +1,6 @@
 package com.phew.repository.mapper
 
 import com.phew.core_common.APP_ERROR_CODE
-import com.phew.core_common.CARD_ARTICLE_TYPE_A
 import com.phew.core_common.DataResult
 import com.phew.core_common.ERROR_ACCOUNT_SUSPENDED
 import com.phew.core_common.ERROR_ALREADY_CARD_DELETE
@@ -384,25 +383,15 @@ internal fun FollowDataDTO.toDomain(): FollowData {
 }
 
 internal fun CardArticleDTO.toDomain(): CardArticle {
-    when (this.abTestType) {
-        CARD_ARTICLE_TYPE_A -> return CardArticle.TypeA(
-            cardId = this.cardId,
-            profileImgUrl = this.profileImgUrl,
-            nickName = this.nickname,
-            cardContent = this.cardContent,
-            isRead = this.isRead
-        )
-
-        else -> return CardArticle.TypeB(
-            cardId = this.cardId,
-            profileImgUrl = this.profileImgUrl,
-            nickName = this.nickname,
-            cardContent = this.cardContent,
-            isRead = this.isRead,
-            writerProfileImageUrls = this.writerProfileImgUrls ?: emptyList(),
-            totalWriterCnt = this.totalWriterCnt ?: 0
-        )
-    }
+    return CardArticle(
+        cardId = this.cardId,
+        profileImgUrl = this.profileImgUrl,
+        nickName = this.nickname,
+        cardContent = this.cardContent,
+        isRead = this.isRead,
+        writerProfileImageUrls = this.writerProfileImgUrls ?: emptyList(),
+        totalWriterCnt = this.totalWriterCnt ?: 0
+    )
 }
 
 suspend fun <T, R> apiCall(
