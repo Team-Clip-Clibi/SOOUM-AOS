@@ -264,7 +264,7 @@ object FeedUi {
                 contentDescription = description,
                 modifier = Modifier
                     .matchParentSize()
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(16.dp))
             )
             if (!isRead) {
                 Box(
