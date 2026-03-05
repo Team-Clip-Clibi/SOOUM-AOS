@@ -92,78 +92,8 @@ import kotlinx.coroutines.delay
 object FeedUi {
 
     @Composable
-    internal fun CardArticleView(
+     fun CardArticleView(
         data: CardArticle,
-        modifier: Modifier,
-        onCardClick: (cardId: Long) -> Unit
-    ) {
-        when (data) {
-            is CardArticle.TypeA -> CardArticleTypeA(
-                data = data,
-                modifier = modifier,
-                onCardClick = onCardClick
-            )
-
-            is CardArticle.TypeB -> CardArticleTypeB(
-                data = data,
-                modifier = modifier,
-                onCardClick = onCardClick
-            )
-        }
-    }
-
-    @Composable
-    private fun CardArticleTypeA(
-        data: CardArticle.TypeA,
-        modifier: Modifier,
-        onCardClick: (cardId: Long) -> Unit
-    ) {
-        Row(
-            modifier = modifier
-                .fillMaxWidth()
-                .height(72.dp)
-                .shadow(
-                    elevation = 16.dp,
-                    shape = RoundedCornerShape(16.dp),
-                    spotColor = unknownColor,
-                    ambientColor = unknownColor
-                )
-                .background(color = WHITE, shape = RoundedCornerShape(16.dp))
-                .border(width = 1.dp, color = GRAY_100, shape = RoundedCornerShape(16.dp))
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = { onCardClick(data.cardId) }
-                )
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.Start),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            CardArticleProfileImage(
-                profileImage = data.profileImgUrl,
-                isRead = data.isRead,
-                description = data.cardContent
-            )
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = data.nickName,
-                    style = TextComponent.CAPTION_2_M_12,
-                    color = GRAY_400
-                )
-                Text(
-                    text = data.cardContent,
-                    style = TextComponent.SUBTITLE_3_SB_14,
-                    color = GRAY_600,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
-    }
-
-    @Composable
-    private fun CardArticleTypeB(
-        data: CardArticle.TypeB,
         modifier: Modifier,
         onCardClick: (cardId: Long) -> Unit
     ) {
@@ -199,6 +129,7 @@ object FeedUi {
                     style = TextComponent.CAPTION_2_M_12,
                     color = GRAY_400
                 )
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = data.cardContent,
                     style = TextComponent.SUBTITLE_3_SB_14,
