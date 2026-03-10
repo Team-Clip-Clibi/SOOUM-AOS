@@ -88,6 +88,7 @@ import com.phew.feed.FeedUi.TypedFeedCardView
 import com.phew.feed.viewModel.DistanceType
 import com.phew.presentation.feed.R
 import kotlinx.coroutines.delay
+import com.phew.core_design.R as DesignR
 
 object FeedUi {
 
@@ -131,7 +132,8 @@ object FeedUi {
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = data.cardContent,
+                    text = data.cardContent.replace("\n", " ")
+                        .let { if (it.length > 17) "${it.take(17)}..." else it },
                     style = TextComponent.SUBTITLE_3_SB_14,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -148,7 +150,7 @@ object FeedUi {
                         data.writerProfileImageUrls.forEach { imageUrl ->
                             AsyncImage(
                                 model = ImageRequest.Builder(LocalContext.current)
-                                    .data(imageUrl)
+                                    .data(imageUrl.ifEmpty { DesignR.drawable.ic_profile })
                                     .crossfade(true)
                                     .build(),
                                 contentDescription = data.cardContent,
@@ -190,7 +192,8 @@ object FeedUi {
                 .padding(1.dp)
         ) {
             AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current).data(profileImage)
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(profileImage.ifEmpty { DesignR.drawable.ic_profile })
                     .crossfade(true).build(),
                 contentDescription = description,
                 modifier = Modifier
@@ -246,9 +249,9 @@ object FeedUi {
                         id = notice.id.toString(),
                         description = notice.content,
                         iconRes = when (notice.type) {
-                            Notice.NoticeType.ANNOUNCEMENT -> com.phew.core_design.R.drawable.ic_headset_filled_yellow
-                            Notice.NoticeType.NEWS -> com.phew.core_design.R.drawable.ic_mail_filled_bule
-                            Notice.NoticeType.MAINTENANCE -> com.phew.core_design.R.drawable.ic_tool_filled
+                            Notice.NoticeType.ANNOUNCEMENT -> DesignR.drawable.ic_headset_filled_yellow
+                            Notice.NoticeType.NEWS -> DesignR.drawable.ic_mail_filled_bule
+                            Notice.NoticeType.MAINTENANCE -> DesignR.drawable.ic_tool_filled
                         },
                         iconTint = when (notice.type) {
                             Notice.NoticeType.ANNOUNCEMENT -> M_YELLOW
@@ -505,9 +508,9 @@ object NotificationUi {
                 Image(
                     painter = painterResource(
                         id = when (data.type) {
-                            Notice.NoticeType.ANNOUNCEMENT -> com.phew.core_design.R.drawable.ic_tool_filled
-                            Notice.NoticeType.NEWS -> com.phew.core_design.R.drawable.ic_mail_filled_bule
-                            Notice.NoticeType.MAINTENANCE -> com.phew.core_design.R.drawable.ic_headset_filled_yellow
+                            Notice.NoticeType.ANNOUNCEMENT -> DesignR.drawable.ic_tool_filled
+                            Notice.NoticeType.NEWS -> DesignR.drawable.ic_mail_filled_bule
+                            Notice.NoticeType.MAINTENANCE -> DesignR.drawable.ic_headset_filled_yellow
                         }
                     ),
                     contentDescription = data.content,
@@ -581,12 +584,12 @@ object NotificationUi {
             ) {
                 Image(
                     painter = when (data) {
-                        is FollowNotification -> painterResource(com.phew.core_design.R.drawable.ic_users_filled)
+                        is FollowNotification -> painterResource(DesignR.drawable.ic_users_filled)
                         is UserBlockNotification,
                         is UserDeleteNotification,
-                            -> painterResource(com.phew.core_design.R.drawable.ic_danger)
-                        is UserTagNotification -> painterResource(com.phew.core_design.R.drawable.ic_tag_fill_blue)
-                        else -> painterResource(com.phew.core_design.R.drawable.ic_card_filled_blue)
+                            -> painterResource(DesignR.drawable.ic_danger)
+                        is UserTagNotification -> painterResource(DesignR.drawable.ic_tag_fill_blue)
+                        else -> painterResource(DesignR.drawable.ic_card_filled_blue)
                     },
                     contentDescription = ""
                 )
@@ -693,12 +696,12 @@ object NotificationUi {
             ) {
                 Image(
                     painter = when (data) {
-                        is FollowNotification -> painterResource(com.phew.core_design.R.drawable.ic_users_filled)
+                        is FollowNotification -> painterResource(DesignR.drawable.ic_users_filled)
                         is UserBlockNotification,
                         is UserDeleteNotification,
-                            -> painterResource(com.phew.core_design.R.drawable.ic_danger)
-                        is UserTagNotification -> painterResource(com.phew.core_design.R.drawable.ic_tag_fill_blue)
-                        else -> painterResource(com.phew.core_design.R.drawable.ic_card_filled_blue)
+                            -> painterResource(DesignR.drawable.ic_danger)
+                        is UserTagNotification -> painterResource(DesignR.drawable.ic_tag_fill_blue)
+                        else -> painterResource(DesignR.drawable.ic_card_filled_blue)
                     },
                     contentDescription = ""
                 )
