@@ -8,5 +8,6 @@ enum class SettingItemId {
     INQUIRY,
     PRIVACY_POLICY,
     APP_UPDATE,
-    ACCOUNT_DELETION
+    ACCOUNT_DELETION,
+    ALARM
 }
