@@ -10,6 +10,7 @@ dependencies {
     implementation(project(":data:device:datastore_local"))
     implementation(project(":data:device:device_info"))
     implementation(project(":data:device:location_provider"))
+    implementation(project(":data:device:device_haptic"))
     implementation(project(":data:network"))
     implementation(project(":data:analytics"))
     implementation(project(":domain"))

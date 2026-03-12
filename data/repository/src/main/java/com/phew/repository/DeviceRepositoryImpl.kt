@@ -1,9 +1,9 @@
 package com.phew.repository
 
-
 import com.phew.datastore_local.DataStore
 import com.phew.datastore_local.dto.ProfileInfoDTO
 import com.phew.datastore_local.dto.UserInfoDTO
+import com.phew.device_haptic.HapticProvider
 import com.phew.device_info.DeviceInfo
 import com.phew.domain.dto.Location
 import com.phew.domain.dto.Token
@@ -12,11 +12,11 @@ import com.phew.domain.repository.DeviceRepository
 import com.phew.location_provider.LocationProvider
 import javax.inject.Inject
 
-
 class DeviceRepositoryImpl @Inject constructor(
     private val dataStoreLocal: DataStore,
     private val deviceInfo: DeviceInfo,
     private val location: LocationProvider,
+    private val haptic: HapticProvider
 ) : DeviceRepository {
     override suspend fun requestDeviceId(): String {
         return deviceInfo.deviceId()
@@ -129,5 +129,9 @@ class DeviceRepositoryImpl @Inject constructor(
 
     override suspend fun getProfileInfo(profileKey: String): String? {
         return dataStoreLocal.getNickName(profileKey = profileKey)?.nickName
+    }
+
+    override fun requestHaptic() {
+        haptic.haptic()
     }
 }

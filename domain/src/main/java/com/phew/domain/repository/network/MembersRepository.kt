@@ -1,6 +1,7 @@
 package com.phew.domain.repository.network
 
 import com.phew.core_common.DataResult
+import com.phew.domain.dto.Alarm
 import com.phew.domain.model.RejoinableDate
 import com.phew.domain.model.TransferCode
 
@@ -11,5 +12,6 @@ interface MembersRepository {
     suspend fun transferAccount(transferCode: String, deviceId: String): Result<Unit>
     suspend fun withdrawalAccount(reason: String): Result<Unit>
     suspend fun getRejoinableDate(): Result<RejoinableDate>
-    suspend fun toggleNotification(isAllowNotify: Boolean): DataResult<Unit>
+    suspend fun toggleNotification(isAllowNotify: Alarm): DataResult<Unit>
+    suspend fun getToggleNotification() : DataResult<Alarm>
 }

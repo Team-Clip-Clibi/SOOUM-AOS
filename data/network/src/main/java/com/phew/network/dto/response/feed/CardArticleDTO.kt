@@ -5,7 +5,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class CardArticleDTO(
     val cardId: Long,
-    val abTestType: String,
     val profileImgUrl: String,
     val nickname: String,
     val cardContent: String,

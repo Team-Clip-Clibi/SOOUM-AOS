@@ -1,9 +1,6 @@
-package com.phew.network.dto.request
+package com.phew.domain.dto
 
-import kotlinx.serialization.Serializable
-
-@Serializable
-data class NotifyToggleRequestDTO(
+data class Alarm(
     val commentCardNotify: Boolean,
     val cardLikeNotify: Boolean,
     val followUserCardNotify: Boolean,

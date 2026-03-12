@@ -8,6 +8,7 @@ import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.HTTP_CARD_ALREADY_DELETE
 import com.phew.core_common.HTTP_NO_MORE_CONTENT
 import com.phew.core_common.WITHDRAWAL_USER
+import com.phew.domain.dto.Alarm
 import com.phew.domain.dto.CardArticle
 import com.phew.domain.dto.CardComment
 import com.phew.domain.dto.CardDetail
@@ -53,6 +54,7 @@ import com.phew.network.dto.NoticeData
 import com.phew.network.dto.NotificationDTO
 import com.phew.network.dto.TokenDTO
 import com.phew.network.dto.UploadImageUrlDTO
+import com.phew.network.dto.request.NotifyToggleRequestDTO
 import com.phew.network.dto.response.BlockMemberResponseDTO
 import com.phew.network.dto.response.FavoriteTagItemDTO
 import com.phew.network.dto.response.FavoriteTagsResponseDTO
@@ -524,4 +526,32 @@ internal fun FavoriteTagItemDTO.toDomain(): FavoriteTag {
 
 internal fun CardIdResponseDto.toDomain(): CardIdResponse {
     return CardIdResponse(cardId = this.cardId)
+}
+
+internal fun Alarm.toDTO(): NotifyToggleRequestDTO {
+    return NotifyToggleRequestDTO(
+        cardNewCommentNotify = this.cardNewCommentNotify,
+        commentCardNotify = this.commentCardNotify,
+        cardLikeNotify = this.cardLikeNotify,
+        followUserCardNotify = this.followUserCardNotify,
+        newFollowerNotify = this.newFollowerNotify,
+        recommendedContentNotify = this.recommendedContentNotify,
+        favoriteTagNotify = this.favoriteTagNotify,
+        serviceUpdateNotify = this.serviceUpdateNotify,
+        policyViolationNotify = this.policyViolationNotify
+    )
+}
+
+internal fun NotifyToggleRequestDTO.toDomain(): Alarm {
+    return Alarm(
+        cardNewCommentNotify = this.cardNewCommentNotify,
+        commentCardNotify = this.commentCardNotify,
+        cardLikeNotify = this.cardLikeNotify,
+        followUserCardNotify = this.followUserCardNotify,
+        newFollowerNotify = this.newFollowerNotify,
+        recommendedContentNotify = this.recommendedContentNotify,
+        favoriteTagNotify = this.favoriteTagNotify,
+        serviceUpdateNotify = this.serviceUpdateNotify,
+        policyViolationNotify = this.policyViolationNotify
+    )
 }
