@@ -90,6 +90,7 @@ androidx-compose-foundation = { group = "androidx.compose.foundation", name = "f
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 mircrosoft-clarity = { group = "com.microsoft.clarity", name = "clarity-compose", version.ref = "clarity" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "roomCompiler" }
+coil-core = { group = "io.coil-kt.coil3", name = "coil", version.ref = "coil" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
