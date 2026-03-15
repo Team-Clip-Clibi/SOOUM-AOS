@@ -63,7 +63,7 @@ import com.phew.core_design.component.card.FeedDefaultCard
 import com.phew.core_design.component.card.FeedDeletedCard
 import com.phew.core_design.component.card.FeedPungCard
 import com.phew.core_design.component.card.NoticeCardData
-import com.phew.core_design.component.card.NoticeCardVersionA
+import com.phew.core_design.component.card.FeedNotice
 import com.phew.core_design.component.filter.SooumFilter
 import com.phew.core_design.component.tab.SooumTab
 import com.phew.core_design.component.tab.SooumTabRow
@@ -88,82 +88,13 @@ import com.phew.feed.FeedUi.TypedFeedCardView
 import com.phew.feed.viewModel.DistanceType
 import com.phew.presentation.feed.R
 import kotlinx.coroutines.delay
+import com.phew.core_design.R as DesignR
 
 object FeedUi {
 
     @Composable
-    internal fun CardArticleView(
+     fun CardArticleView(
         data: CardArticle,
-        modifier: Modifier,
-        onCardClick: (cardId: Long) -> Unit
-    ) {
-        when (data) {
-            is CardArticle.TypeA -> CardArticleTypeA(
-                data = data,
-                modifier = modifier,
-                onCardClick = onCardClick
-            )
-
-            is CardArticle.TypeB -> CardArticleTypeB(
-                data = data,
-                modifier = modifier,
-                onCardClick = onCardClick
-            )
-        }
-    }
-
-    @Composable
-    private fun CardArticleTypeA(
-        data: CardArticle.TypeA,
-        modifier: Modifier,
-        onCardClick: (cardId: Long) -> Unit
-    ) {
-        Row(
-            modifier = modifier
-                .fillMaxWidth()
-                .height(72.dp)
-                .shadow(
-                    elevation = 16.dp,
-                    shape = RoundedCornerShape(16.dp),
-                    spotColor = unknownColor,
-                    ambientColor = unknownColor
-                )
-                .background(color = WHITE, shape = RoundedCornerShape(16.dp))
-                .border(width = 1.dp, color = GRAY_100, shape = RoundedCornerShape(16.dp))
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = { onCardClick(data.cardId) }
-                )
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.Start),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            CardArticleProfileImage(
-                profileImage = data.profileImgUrl,
-                isRead = data.isRead,
-                description = data.cardContent
-            )
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = data.nickName,
-                    style = TextComponent.CAPTION_2_M_12,
-                    color = GRAY_400
-                )
-                Text(
-                    text = data.cardContent,
-                    style = TextComponent.SUBTITLE_3_SB_14,
-                    color = GRAY_600,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
-    }
-
-    @Composable
-    private fun CardArticleTypeB(
-        data: CardArticle.TypeB,
         modifier: Modifier,
         onCardClick: (cardId: Long) -> Unit
     ) {
@@ -199,8 +130,10 @@ object FeedUi {
                     style = TextComponent.CAPTION_2_M_12,
                     color = GRAY_400
                 )
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = data.cardContent,
+                    text = data.cardContent.replace("\n", " ")
+                        .let { if (it.length > 17) "${it.take(17)}..." else it },
                     style = TextComponent.SUBTITLE_3_SB_14,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -217,7 +150,7 @@ object FeedUi {
                         data.writerProfileImageUrls.forEach { imageUrl ->
                             AsyncImage(
                                 model = ImageRequest.Builder(LocalContext.current)
-                                    .data(imageUrl)
+                                    .data(imageUrl.ifEmpty { DesignR.drawable.ic_profile })
                                     .crossfade(true)
                                     .build(),
                                 contentDescription = data.cardContent,
@@ -259,20 +192,21 @@ object FeedUi {
                 .padding(1.dp)
         ) {
             AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current).data(profileImage)
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(profileImage.ifEmpty { DesignR.drawable.ic_profile })
                     .crossfade(true).build(),
                 contentDescription = description,
                 modifier = Modifier
                     .matchParentSize()
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(16.dp))
             )
             if (!isRead) {
                 Box(
                     modifier = Modifier
-                        .size(8.dp)
                         .padding(1.dp)
+                        .size(8.dp)
                         .align(Alignment.TopEnd)
-                        .offset(x = 0.dp, y = 0.dp)
+                        .offset(x = (-1).dp, y = (-2).dp)
                         .background(color = Danger.M_RED, shape = CircleShape)
                         .border(width = 1.dp, color = WHITE, shape = CircleShape)
                 )
@@ -281,7 +215,7 @@ object FeedUi {
     }
 
     @Composable
-    internal fun FeedNoticeViewVersion2(
+    internal fun FeedNoticeView(
         noticeList: List<Notice>,
         feedNoticeClick: (url : String) -> Unit,
         deleteNotice : (id : Int) -> Unit,
@@ -310,19 +244,19 @@ object FeedUi {
             modifier = modifier
         ) { notice ->
             if (notice != null) {
-                NoticeCardVersionA(
+                FeedNotice(
                     data = NoticeCardData(
                         id = notice.id.toString(),
                         description = notice.content,
                         iconRes = when (notice.type) {
-                            Notice.NoticeType.ANNOUNCEMENT -> com.phew.core_design.R.drawable.ic_tool_filled
-                            Notice.NoticeType.NEWS -> com.phew.core_design.R.drawable.ic_mail_filled_bule
-                            Notice.NoticeType.MAINTENANCE -> com.phew.core_design.R.drawable.ic_headset_filled_yellow
+                            Notice.NoticeType.ANNOUNCEMENT -> DesignR.drawable.ic_headset_filled_yellow
+                            Notice.NoticeType.NEWS -> DesignR.drawable.ic_mail_filled_bule
+                            Notice.NoticeType.MAINTENANCE -> DesignR.drawable.ic_tool_filled
                         },
                         iconTint = when (notice.type) {
-                            Notice.NoticeType.ANNOUNCEMENT -> GRAY_400
+                            Notice.NoticeType.ANNOUNCEMENT -> M_YELLOW
                             Notice.NoticeType.NEWS -> MAIN
-                            Notice.NoticeType.MAINTENANCE -> M_YELLOW
+                            Notice.NoticeType.MAINTENANCE -> GRAY_400
                         },
                         iconBackgroundColor = NeutralColor.GRAY_100,
                     ),
@@ -574,9 +508,9 @@ object NotificationUi {
                 Image(
                     painter = painterResource(
                         id = when (data.type) {
-                            Notice.NoticeType.ANNOUNCEMENT -> com.phew.core_design.R.drawable.ic_tool_filled
-                            Notice.NoticeType.NEWS -> com.phew.core_design.R.drawable.ic_mail_filled_bule
-                            Notice.NoticeType.MAINTENANCE -> com.phew.core_design.R.drawable.ic_headset_filled_yellow
+                            Notice.NoticeType.ANNOUNCEMENT -> DesignR.drawable.ic_tool_filled
+                            Notice.NoticeType.NEWS -> DesignR.drawable.ic_mail_filled_bule
+                            Notice.NoticeType.MAINTENANCE -> DesignR.drawable.ic_headset_filled_yellow
                         }
                     ),
                     contentDescription = data.content,
@@ -650,12 +584,12 @@ object NotificationUi {
             ) {
                 Image(
                     painter = when (data) {
-                        is FollowNotification -> painterResource(com.phew.core_design.R.drawable.ic_users_filled)
+                        is FollowNotification -> painterResource(DesignR.drawable.ic_users_filled)
                         is UserBlockNotification,
                         is UserDeleteNotification,
-                            -> painterResource(com.phew.core_design.R.drawable.ic_danger)
-                        is UserTagNotification -> painterResource(com.phew.core_design.R.drawable.ic_tag_fill_blue)
-                        else -> painterResource(com.phew.core_design.R.drawable.ic_card_filled_blue)
+                            -> painterResource(DesignR.drawable.ic_danger)
+                        is UserTagNotification -> painterResource(DesignR.drawable.ic_tag_fill_blue)
+                        else -> painterResource(DesignR.drawable.ic_card_filled_blue)
                     },
                     contentDescription = ""
                 )
@@ -762,12 +696,12 @@ object NotificationUi {
             ) {
                 Image(
                     painter = when (data) {
-                        is FollowNotification -> painterResource(com.phew.core_design.R.drawable.ic_users_filled)
+                        is FollowNotification -> painterResource(DesignR.drawable.ic_users_filled)
                         is UserBlockNotification,
                         is UserDeleteNotification,
-                            -> painterResource(com.phew.core_design.R.drawable.ic_danger)
-                        is UserTagNotification -> painterResource(com.phew.core_design.R.drawable.ic_tag_fill_blue)
-                        else -> painterResource(com.phew.core_design.R.drawable.ic_card_filled_blue)
+                            -> painterResource(DesignR.drawable.ic_danger)
+                        is UserTagNotification -> painterResource(DesignR.drawable.ic_tag_fill_blue)
+                        else -> painterResource(DesignR.drawable.ic_card_filled_blue)
                     },
                     contentDescription = ""
                 )

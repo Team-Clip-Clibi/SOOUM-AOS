@@ -1,7 +1,6 @@
 package com.phew.repository.mapper
 
 import com.phew.core_common.APP_ERROR_CODE
-import com.phew.core_common.CARD_ARTICLE_TYPE_A
 import com.phew.core_common.DataResult
 import com.phew.core_common.ERROR_ACCOUNT_SUSPENDED
 import com.phew.core_common.ERROR_ALREADY_CARD_DELETE
@@ -9,6 +8,7 @@ import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.HTTP_CARD_ALREADY_DELETE
 import com.phew.core_common.HTTP_NO_MORE_CONTENT
 import com.phew.core_common.WITHDRAWAL_USER
+import com.phew.domain.dto.Alarm
 import com.phew.domain.dto.CardArticle
 import com.phew.domain.dto.CardComment
 import com.phew.domain.dto.CardDetail
@@ -54,6 +54,7 @@ import com.phew.network.dto.NoticeData
 import com.phew.network.dto.NotificationDTO
 import com.phew.network.dto.TokenDTO
 import com.phew.network.dto.UploadImageUrlDTO
+import com.phew.network.dto.request.NotifyToggleRequestDTO
 import com.phew.network.dto.response.BlockMemberResponseDTO
 import com.phew.network.dto.response.FavoriteTagItemDTO
 import com.phew.network.dto.response.FavoriteTagsResponseDTO
@@ -384,25 +385,15 @@ internal fun FollowDataDTO.toDomain(): FollowData {
 }
 
 internal fun CardArticleDTO.toDomain(): CardArticle {
-    when (this.abTestType) {
-        CARD_ARTICLE_TYPE_A -> return CardArticle.TypeA(
-            cardId = this.cardId,
-            profileImgUrl = this.profileImgUrl,
-            nickName = this.nickname,
-            cardContent = this.cardContent,
-            isRead = this.isRead
-        )
-
-        else -> return CardArticle.TypeB(
-            cardId = this.cardId,
-            profileImgUrl = this.profileImgUrl,
-            nickName = this.nickname,
-            cardContent = this.cardContent,
-            isRead = this.isRead,
-            writerProfileImageUrls = this.writerProfileImgUrls ?: emptyList(),
-            totalWriterCnt = this.totalWriterCnt ?: 0
-        )
-    }
+    return CardArticle(
+        cardId = this.cardId,
+        profileImgUrl = this.profileImgUrl,
+        nickName = this.nickname,
+        cardContent = this.cardContent,
+        isRead = this.isRead,
+        writerProfileImageUrls = this.writerProfileImgUrls ?: emptyList(),
+        totalWriterCnt = this.totalWriterCnt ?: 0
+    )
 }
 
 suspend fun <T, R> apiCall(
@@ -535,4 +526,32 @@ internal fun FavoriteTagItemDTO.toDomain(): FavoriteTag {
 
 internal fun CardIdResponseDto.toDomain(): CardIdResponse {
     return CardIdResponse(cardId = this.cardId)
+}
+
+internal fun Alarm.toDTO(): NotifyToggleRequestDTO {
+    return NotifyToggleRequestDTO(
+        cardNewCommentNotify = this.cardNewCommentNotify,
+        commentCardNotify = this.commentCardNotify,
+        cardLikeNotify = this.cardLikeNotify,
+        followUserCardNotify = this.followUserCardNotify,
+        newFollowerNotify = this.newFollowerNotify,
+        recommendedContentNotify = this.recommendedContentNotify,
+        favoriteTagNotify = this.favoriteTagNotify,
+        serviceUpdateNotify = this.serviceUpdateNotify,
+        policyViolationNotify = this.policyViolationNotify
+    )
+}
+
+internal fun NotifyToggleRequestDTO.toDomain(): Alarm {
+    return Alarm(
+        cardNewCommentNotify = this.cardNewCommentNotify,
+        commentCardNotify = this.commentCardNotify,
+        cardLikeNotify = this.cardLikeNotify,
+        followUserCardNotify = this.followUserCardNotify,
+        newFollowerNotify = this.newFollowerNotify,
+        recommendedContentNotify = this.recommendedContentNotify,
+        favoriteTagNotify = this.favoriteTagNotify,
+        serviceUpdateNotify = this.serviceUpdateNotify,
+        policyViolationNotify = this.policyViolationNotify
+    )
 }

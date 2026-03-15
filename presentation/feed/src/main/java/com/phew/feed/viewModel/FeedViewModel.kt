@@ -569,9 +569,9 @@ class FeedViewModel @Inject constructor(
         }
     }
 
-    // 요기 수정 -> 새로운 함수 생성 기존 refreshCurrentTab 명칭 사용
     fun refreshCurrentTab() {
         _uiState.update { state -> state.copy(refresh = true) }
+        fetchCardArticle()
         currentTab()
     }
 

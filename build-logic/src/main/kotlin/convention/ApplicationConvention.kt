@@ -141,6 +141,7 @@ class ApplicationConvention : Plugin<Project> {
             add("implementation", project(":data:device:datastore_local"))
             add("implementation", project(":data:device:location_provider"))
             add("implementation", project(":data:device:device_info"))
+            add("implementation", project(":data:device:device_haptic"))
             add("implementation", project(":data:token"))
             add("implementation", project(":data:paging"))
             add("implementation", project(":data:analytics"))
