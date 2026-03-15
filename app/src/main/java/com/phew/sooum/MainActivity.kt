@@ -174,6 +174,9 @@ class MainActivity : ComponentActivity() {
 
                             NotificationType.COMMENT_LIKE.value,
                             NotificationType.COMMENT_WRITE.value,
+                            NotificationType.VIEW_FEED_COMMENT_WRITE.value,
+                            NotificationType.FOLLOW_CARD_UPLOAD.value,
+                            NotificationType.ARTICLE_CARD_UPLOAD.value
                                 -> {
                                 val cardId = intent.getStringExtra("targetCardId")
                                 if (cardId != null) "sooum://card/$cardId?backTo=feed&view=comment" else "sooum://feed"
