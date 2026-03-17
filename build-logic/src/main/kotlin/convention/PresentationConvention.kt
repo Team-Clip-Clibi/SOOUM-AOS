@@ -13,7 +13,16 @@ import java.util.Properties
 class PresentationConvention : Plugin<Project> {
     override fun apply(project: Project) = with(project) {
         val libs = extensions.getByType<VersionCatalogsExtension>().named("libs")
-
+        val properties = Properties()
+        val localPropsFile = rootProject.file("local.properties")
+        if (localPropsFile.exists()) {
+            localPropsFile.inputStream().use { properties.load(it) }
+        }
+        val keyProperties = Properties()
+        val keyPropsFile = rootProject.file("keystore.properties")
+        if (keyPropsFile.exists()) {
+            keyPropsFile.inputStream().use { keyProperties.load(it) }
+        }
         pluginManager.apply("com.android.library")
         pluginManager.apply("org.jetbrains.kotlin.android")
         pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
@@ -26,11 +35,6 @@ class PresentationConvention : Plugin<Project> {
                 minSdk = 31
                 testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
                 consumerProguardFiles("consumer-rules.pro")
-                val properties = Properties()
-                val localPropsFile = rootProject.file("local.properties")
-                if (localPropsFile.exists()) {
-                    localPropsFile.inputStream().use { properties.load(it) }
-                }
                 val appServicePolicy = properties.getProperty("sooum_service_policy", "")
                 val appLocationPolicy = properties.getProperty("sooum_location_policy", "")
                 val appPrivatePolicy = properties.getProperty("sooum_private_policy", "")
@@ -45,6 +49,16 @@ class PresentationConvention : Plugin<Project> {
             compileOptions {
                 sourceCompatibility = JavaVersion.VERSION_21
                 targetCompatibility = JavaVersion.VERSION_21
+            }
+            buildTypes {
+                getByName("debug") {
+                    val nativeAdsDebug = keyProperties.getProperty("google_adsMob_native_ad_debug", "")
+                    buildConfigField("String", "GOOGLE_ADS_NATIVE", "$nativeAdsDebug")
+                }
+                getByName("release") {
+                    val nativeRelease = keyProperties.getProperty("google_adsMob_native_ad_release", "")
+                    buildConfigField("String", "GOOGLE_ADS_NATIVE", "$nativeRelease")
+                }
             }
         }
 

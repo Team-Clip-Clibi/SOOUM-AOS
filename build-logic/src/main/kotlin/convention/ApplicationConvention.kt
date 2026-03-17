@@ -24,10 +24,10 @@ class ApplicationConvention : Plugin<Project> {
         extensions.getByType<ApplicationExtension>().apply {
             namespace = "com.phew.sooum"
             compileSdk = 36
-            val properties = Properties()
-            val localPropsFile = rootProject.file("keystore.properties")
-            if (localPropsFile.exists()) {
-                localPropsFile.inputStream().use { properties.load(it) }
+            val propertiesKeys = Properties()
+            val keyPropsFile = rootProject.file("keystore.properties")
+            if (keyPropsFile.exists()) {
+                keyPropsFile.inputStream().use { propertiesKeys.load(it) }
             }
             defaultConfig.apply {
                 applicationId = "com.phew.sooum"
@@ -36,16 +36,16 @@ class ApplicationConvention : Plugin<Project> {
                 versionCode = 1
                 versionName = "1.0.0"
                 testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-                val appLink = properties.getProperty("playStore_app_url", "")
+                val appLink = propertiesKeys.getProperty("playStore_app_url", "")
                 buildConfigField("String", "PLAY_STORE_LINK", appLink)
             }
             signingConfigs {
                 create("release") {
-                    if (localPropsFile.exists()) {
-                        storeFile = file(properties.getProperty("storeFile"))
-                        storePassword = properties.getProperty("storePassword")
-                        keyAlias = properties.getProperty("keyAlias")
-                        keyPassword = properties.getProperty("keyPassword")
+                    if (keyPropsFile.exists()) {
+                        storeFile = file(propertiesKeys.getProperty("storeFile"))
+                        storePassword = propertiesKeys.getProperty("storePassword")
+                        keyAlias = propertiesKeys.getProperty("keyAlias")
+                        keyPassword = propertiesKeys.getProperty("keyPassword")
                     }
                 }
             }
@@ -54,18 +54,22 @@ class ApplicationConvention : Plugin<Project> {
                     isMinifyEnabled = false
                     isDebuggable = true
                     versionNameSuffix = "-debug"
-                    val clarityKeyDebug = properties.getProperty("clarityKey_dev", "")
+                    manifestPlaceholders["ADMOB_APP_ID"] =
+                        propertiesKeys.getProperty("google_adsMob_id_debug", "")
+                    val clarityKeyDebug = propertiesKeys.getProperty("clarityKey_dev", "")
                     buildConfigField("String", "CLARITY_PROJECT_ID", clarityKeyDebug)
                 }
                 getByName("release") {
                     isMinifyEnabled = true
                     isDebuggable = false
                     signingConfig = signingConfigs.getByName("release")
+                    manifestPlaceholders["ADMOB_APP_ID"] =
+                        propertiesKeys.getProperty("google_adsMob_id_release", "")
                     proguardFiles(
                         getDefaultProguardFile("proguard-android-optimize.txt"),
                         "proguard-rules.pro"
                     )
-                    val clarityKeyProd = properties.getProperty("clarityKey_prod", "")
+                    val clarityKeyProd = propertiesKeys.getProperty("clarityKey_prod", "")
                     buildConfigField("String", "CLARITY_PROJECT_ID", clarityKeyProd)
                 }
             }
@@ -126,6 +130,8 @@ class ApplicationConvention : Plugin<Project> {
             "implementation"(libs.findLibrary("firebase-crashlytics").get())
             //Microsoft Clarity
             "implementation"(libs.findLibrary("mircrosoft-clarity").get())
+            //Google AdsMob
+            "implementation"(libs.findLibrary("google-gms-admob").get())
             //module
             add("implementation", project(":presentation"))
             add("implementation", project(":presentation:splash"))

@@ -20,6 +20,7 @@ import com.phew.presentation.detail.navigation.navigateToDetailGraph
 import com.phew.core.ui.state.SooumAppState
 import com.phew.feed.NotifyTab
 import com.phew.feed.notification.WebView
+import com.phew.presentation.feed.BuildConfig
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -60,6 +61,7 @@ fun NavGraphBuilder.feedGraph(
     ) {
         slideComposable(FEED_HOME_ROUTE) { _ ->
             val feedViewModel: FeedViewModel = hiltViewModel()
+            val adNativeId: String = BuildConfig.GOOGLE_ADS_NATIVE
             remember { SnackbarHostState() }
             val locationPermission = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.RequestMultiplePermissions(),
@@ -91,7 +93,8 @@ fun NavGraphBuilder.feedGraph(
                 navigateToDetail = { cardDetailArgs ->
                     navController.navigateToDetailGraph(cardDetailArgs)
                 },
-                webViewClick = navController::navigateToWebView
+                webViewClick = navController::navigateToWebView,
+                adUnitId = adNativeId
             )
         }
 

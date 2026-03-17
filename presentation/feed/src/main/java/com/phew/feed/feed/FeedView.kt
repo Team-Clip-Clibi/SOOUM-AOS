@@ -26,6 +26,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,6 +37,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -48,8 +50,8 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.LoadState
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.paging.compose.itemContentType
-import androidx.paging.compose.itemKey
+import com.google.android.gms.ads.AdLoader
+import com.google.android.gms.ads.AdRequest
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.navigation.NavigationKeys
 import com.phew.core_design.AppBar
@@ -82,6 +84,8 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import com.phew.core.ui.R as CoreUiR
+import com.google.android.gms.ads.nativead.NativeAd
+import com.phew.feed.FeedUi.CardFeedNativeAd
 
 @OptIn(FlowPreview::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -93,7 +97,8 @@ fun FeedView(
     closeDialog: () -> Unit,
     noticeClick: (String) -> Unit,
     navigateToDetail: (CardDetailArgs) -> Unit,
-    webViewClick : (String) -> Unit
+    webViewClick: (String) -> Unit,
+    adUnitId: String
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val unRead = viewModel.unReadActivateAlarm.collectAsLazyPagingItems()
@@ -120,6 +125,7 @@ fun FeedView(
             cachedFeedNotice = feedNoticeState.data
         }
     }
+
     val feedNotice = when (feedNoticeState) {
         is UiState.Success -> feedNoticeState.data
         else -> cachedFeedNotice
@@ -276,7 +282,8 @@ fun FeedView(
                     onRefresh = refreshCurrentFeed,
                     hiddenCardIds = uiState.hiddenCardIds,
                     deleteNotice = viewModel::deleteNotice,
-                    cardsArticle = cardArticle
+                    cardsArticle = cardArticle,
+                    adUnitId = adUnitId
                 )
                 if (uiState.shouldShowPermissionRationale) {
                     DialogComponent.DefaultButtonTwo(
@@ -345,8 +352,9 @@ private fun FeedContentView(
     onRefresh: () -> Unit,
     hiddenCardIds: Set<Long>,
     webViewClick: (String) -> Unit,
-    deleteNotice : (Int) -> Unit,
-    cardsArticle : UiState<CardArticle>
+    deleteNotice: (Int) -> Unit,
+    cardsArticle: UiState<CardArticle>,
+    adUnitId: String
 ) {
     val selectIndex = when (currentTab) {
         FeedType.Latest -> NAV_HOME_FEED_INDEX
@@ -437,9 +445,7 @@ private fun FeedContentView(
                                         .padding(vertical = 20.dp)
                                         .graphicsLayer { translationY = pullOffsetPx }
                                 ) {
-                                    LoadingAnimation.LoadingView(
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
+                                    LoadingAnimation.LoadingView(modifier = Modifier.fillMaxWidth())
                                 }
                             }
                         } else {
@@ -452,36 +458,69 @@ private fun FeedContentView(
                                     }
                                 }
                             } else {
+                                val feedItemCount = latestFeedItems.itemCount
+                                val totalAdCount = if (feedItemCount == 0) 0 else (feedItemCount + 8) / 10
+                                val uiItemCount = feedItemCount + totalAdCount
+
                                 items(
-                                    count = latestFeedItems.itemCount,
-                                    key = latestFeedItems.itemKey { it.cardId },
-                                    contentType = latestFeedItems.itemContentType { "LatestFeed" }
-                                ) { index ->
-                                    latestFeedItems[index]?.let { latest ->
-                                        val cardId = latest.cardId.toLongOrNull()
-                                        // hiddenCardIds에 포함된 카드는 렌더링하지 않음
-                                        if (cardId == null || !hiddenCardIds.contains(cardId)) {
-                                            val feedCardType = classifyLatestFeedType(latest)
-                                            Box(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .wrapContentHeight()
-                                                    .padding(horizontal = 16.dp)
-                                                    .graphicsLayer { translationY = pullOffsetPx }
-                                            ) {
-                                                FeedUi.TypedFeedCardView(
-                                                    feedCard = feedCardType,
-                                                    onClick = { id ->
-                                                        onClick(id, feedCardType.isEventCard())
-                                                    },
-                                                    onRemoveCard = onRemoveCard,
-                                                )
+                                    count = uiItemCount,
+                                    key = { uiIndex ->
+                                        if (uiIndex % 11 == 1) {
+                                            "native_ad_latest_${uiIndex / 11}"
+                                        } else {
+                                            val adCountBefore = if (uiIndex == 0) 0 else (uiIndex + 9) / 11
+                                            val pagingIndex = uiIndex - adCountBefore
+                                            latestFeedItems.peek(pagingIndex)?.cardId ?: "placeholder_$uiIndex"
+                                        }
+                                    },
+                                    contentType = { uiIndex ->
+                                        if (uiIndex % 11 == 1) "Ad" else "LatestFeed"
+                                    }
+                                ) { uiIndex ->
+                                    if (uiIndex % 11 == 1) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .wrapContentHeight()
+                                                .padding(horizontal = 16.dp)
+                                                .graphicsLayer { translationY = pullOffsetPx }
+                                        ) {
+                                            NativeAdLoaderScreen(adUnitId = adUnitId)
+                                        }
+                                    } else {
+                                        val adCountBefore = if (uiIndex == 0) 0 else (uiIndex + 9) / 11
+                                        val pagingIndex = uiIndex - adCountBefore
+                                        latestFeedItems[pagingIndex]?.let { latest ->
+                                            val cardId = latest.cardId.toLongOrNull()
+                                            if (cardId == null || !hiddenCardIds.contains(cardId)) {
+                                                val feedCardType = classifyLatestFeedType(latest)
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .wrapContentHeight()
+                                                        .padding(horizontal = 16.dp)
+                                                        .graphicsLayer {
+                                                            translationY = pullOffsetPx
+                                                        }
+                                                ) {
+                                                    FeedUi.TypedFeedCardView(
+                                                        feedCard = feedCardType,
+                                                        onClick = { id ->
+                                                            onClick(
+                                                                id,
+                                                                feedCardType.isEventCard()
+                                                            )
+                                                        },
+                                                        onRemoveCard = onRemoveCard,
+                                                    )
+                                                }
                                             }
                                         }
                                     }
                                 }
                             }
 
+                            // 하단 Append 상태 처리
                             when (val appendState = latestFeedItems.loadState.append) {
                                 is LoadState.Error -> {
                                     item(span = { GridItemSpan(maxLineSpan) }) {
@@ -491,9 +530,7 @@ private fun FeedContentView(
                                             ErrorView(
                                                 message = appendState.error.message
                                                     ?: stringResource(R.string.home_feed_load_error),
-                                                onRetry = {
-                                                    latestFeedItems.retry()
-                                                }
+                                                onRetry = { latestFeedItems.retry() }
                                             )
                                         }
                                     }
@@ -507,16 +544,12 @@ private fun FeedContentView(
                                                 .padding(vertical = 20.dp)
                                                 .graphicsLayer { translationY = pullOffsetPx }
                                         ) {
-                                            LoadingAnimation.LoadingView(
-                                                modifier = Modifier.fillMaxWidth()
-                                            )
+                                            LoadingAnimation.LoadingView(modifier = Modifier.fillMaxWidth())
                                         }
                                     }
                                 }
 
-                                is LoadState.NotLoading -> {
-                                    // 아무 작업 없음
-                                }
+                                is LoadState.NotLoading -> {}
                             }
                         }
                     }
@@ -656,6 +689,37 @@ private fun FeedContentView(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun NativeAdLoaderScreen(adUnitId: String, modifier: Modifier = Modifier) {
+    val currentContext = LocalContext.current
+    var nativeAd by remember { mutableStateOf<NativeAd?>(null) }
+    var isAdLoaded by remember { mutableStateOf(false) }
+
+    LaunchedEffect(adUnitId) {
+        val adLoader = AdLoader.Builder(currentContext, adUnitId)
+            .forNativeAd { ad: NativeAd ->
+                nativeAd = ad
+                isAdLoaded = true
+            }
+            .build()
+        adLoader.loadAd(AdRequest.Builder().build())
+    }
+    DisposableEffect(nativeAd) {
+        onDispose {
+            nativeAd?.destroy()
+        }
+    }
+    if (isAdLoaded && nativeAd != null) {
+        CardFeedNativeAd(nativeAd = nativeAd, modifier = modifier)
+    } else {
+        Box(
+            modifier = modifier
+                .fillMaxWidth()
+                .height(65.dp)
+        )
     }
 }
 
