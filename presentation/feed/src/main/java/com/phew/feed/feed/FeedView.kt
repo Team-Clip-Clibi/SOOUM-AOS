@@ -48,8 +48,6 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.LoadState
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.paging.compose.itemContentType
-import androidx.paging.compose.itemKey
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.navigation.NavigationKeys
 import com.phew.core_design.AppBar
@@ -93,7 +91,8 @@ fun FeedView(
     closeDialog: () -> Unit,
     noticeClick: (String) -> Unit,
     navigateToDetail: (CardDetailArgs) -> Unit,
-    webViewClick : (String) -> Unit
+    webViewClick: (String) -> Unit,
+    adUnitId: String
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val unRead = viewModel.unReadActivateAlarm.collectAsLazyPagingItems()
@@ -120,6 +119,7 @@ fun FeedView(
             cachedFeedNotice = feedNoticeState.data
         }
     }
+
     val feedNotice = when (feedNoticeState) {
         is UiState.Success -> feedNoticeState.data
         else -> cachedFeedNotice
@@ -276,7 +276,8 @@ fun FeedView(
                     onRefresh = refreshCurrentFeed,
                     hiddenCardIds = uiState.hiddenCardIds,
                     deleteNotice = viewModel::deleteNotice,
-                    cardsArticle = cardArticle
+                    cardsArticle = cardArticle,
+                    adUnitId = adUnitId
                 )
                 if (uiState.shouldShowPermissionRationale) {
                     DialogComponent.DefaultButtonTwo(
@@ -345,8 +346,9 @@ private fun FeedContentView(
     onRefresh: () -> Unit,
     hiddenCardIds: Set<Long>,
     webViewClick: (String) -> Unit,
-    deleteNotice : (Int) -> Unit,
-    cardsArticle : UiState<CardArticle>
+    deleteNotice: (Int) -> Unit,
+    cardsArticle: UiState<CardArticle>,
+    adUnitId: String
 ) {
     val selectIndex = when (currentTab) {
         FeedType.Latest -> NAV_HOME_FEED_INDEX
@@ -437,9 +439,7 @@ private fun FeedContentView(
                                         .padding(vertical = 20.dp)
                                         .graphicsLayer { translationY = pullOffsetPx }
                                 ) {
-                                    LoadingAnimation.LoadingView(
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
+                                    LoadingAnimation.LoadingView(modifier = Modifier.fillMaxWidth())
                                 }
                             }
                         } else {
@@ -452,36 +452,69 @@ private fun FeedContentView(
                                     }
                                 }
                             } else {
+                                val feedItemCount = latestFeedItems.itemCount
+                                val totalAdCount = if (feedItemCount == 0) 0 else (feedItemCount + 8) / 10
+                                val uiItemCount = feedItemCount + totalAdCount
+
                                 items(
-                                    count = latestFeedItems.itemCount,
-                                    key = latestFeedItems.itemKey { it.cardId },
-                                    contentType = latestFeedItems.itemContentType { "LatestFeed" }
-                                ) { index ->
-                                    latestFeedItems[index]?.let { latest ->
-                                        val cardId = latest.cardId.toLongOrNull()
-                                        // hiddenCardIds에 포함된 카드는 렌더링하지 않음
-                                        if (cardId == null || !hiddenCardIds.contains(cardId)) {
-                                            val feedCardType = classifyLatestFeedType(latest)
-                                            Box(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .wrapContentHeight()
-                                                    .padding(horizontal = 16.dp)
-                                                    .graphicsLayer { translationY = pullOffsetPx }
-                                            ) {
-                                                FeedUi.TypedFeedCardView(
-                                                    feedCard = feedCardType,
-                                                    onClick = { id ->
-                                                        onClick(id, feedCardType.isEventCard())
-                                                    },
-                                                    onRemoveCard = onRemoveCard,
-                                                )
+                                    count = uiItemCount,
+                                    key = { uiIndex ->
+                                        if (uiIndex % 11 == 1) {
+                                            "native_ad_latest_${uiIndex / 11}"
+                                        } else {
+                                            val adCountBefore = if (uiIndex == 0) 0 else (uiIndex + 9) / 11
+                                            val pagingIndex = uiIndex - adCountBefore
+                                            latestFeedItems.peek(pagingIndex)?.cardId ?: "placeholder_$uiIndex"
+                                        }
+                                    },
+                                    contentType = { uiIndex ->
+                                        if (uiIndex % 11 == 1) "Ad" else "LatestFeed"
+                                    }
+                                ) { uiIndex ->
+                                    if (uiIndex % 11 == 1) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .wrapContentHeight()
+                                                .padding(horizontal = 16.dp)
+//                                                .graphicsLayer { translationY = pullOffsetPx }
+                                        ) {
+                                            FeedUi.NativeAdLoaderScreen(adUnitId = adUnitId)
+                                        }
+                                    } else {
+                                        val adCountBefore = if (uiIndex == 0) 0 else (uiIndex + 9) / 11
+                                        val pagingIndex = uiIndex - adCountBefore
+                                        latestFeedItems[pagingIndex]?.let { latest ->
+                                            val cardId = latest.cardId.toLongOrNull()
+                                            if (cardId == null || !hiddenCardIds.contains(cardId)) {
+                                                val feedCardType = classifyLatestFeedType(latest)
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .wrapContentHeight()
+                                                        .padding(horizontal = 16.dp)
+                                                        .graphicsLayer {
+                                                            translationY = pullOffsetPx
+                                                        }
+                                                ) {
+                                                    FeedUi.TypedFeedCardView(
+                                                        feedCard = feedCardType,
+                                                        onClick = { id ->
+                                                            onClick(
+                                                                id,
+                                                                feedCardType.isEventCard()
+                                                            )
+                                                        },
+                                                        onRemoveCard = onRemoveCard,
+                                                    )
+                                                }
                                             }
                                         }
                                     }
                                 }
                             }
 
+                            // 하단 Append 상태 처리
                             when (val appendState = latestFeedItems.loadState.append) {
                                 is LoadState.Error -> {
                                     item(span = { GridItemSpan(maxLineSpan) }) {
@@ -491,9 +524,7 @@ private fun FeedContentView(
                                             ErrorView(
                                                 message = appendState.error.message
                                                     ?: stringResource(R.string.home_feed_load_error),
-                                                onRetry = {
-                                                    latestFeedItems.retry()
-                                                }
+                                                onRetry = { latestFeedItems.retry() }
                                             )
                                         }
                                     }
@@ -507,16 +538,12 @@ private fun FeedContentView(
                                                 .padding(vertical = 20.dp)
                                                 .graphicsLayer { translationY = pullOffsetPx }
                                         ) {
-                                            LoadingAnimation.LoadingView(
-                                                modifier = Modifier.fillMaxWidth()
-                                            )
+                                            LoadingAnimation.LoadingView(modifier = Modifier.fillMaxWidth())
                                         }
                                     }
                                 }
 
-                                is LoadState.NotLoading -> {
-                                    // 아무 작업 없음
-                                }
+                                is LoadState.NotLoading -> {}
                             }
                         }
                     }
@@ -658,6 +685,59 @@ private fun FeedContentView(
         }
     }
 }
+
+//@Composable
+//fun NativeAdLoaderScreen(adUnitId: String) { // 파라미터는 받지만 내부에서 테스트 ID로 강제 덮어씌웁니다.
+//    val currentContext = LocalContext.current
+//
+//    // 🚨 1. 반드시 Activity를 추출해야 합니다. (이게 없으면 클릭 시 브라우저가 안 열립니다)
+//    val activity = remember(currentContext) {
+//        var ctx = currentContext
+//        while (ctx is ContextWrapper) {
+//            if (ctx is Activity) break
+//            ctx = ctx.baseContext
+//        }
+//        ctx as? Activity
+//    }
+//
+//    if (activity == null) {
+//        Log.e("AdMob_Final", "❌ Activity Context를 찾을 수 없어 광고 로드를 중단합니다.")
+//        return
+//    }
+//
+//    var nativeAd by remember { mutableStateOf<NativeAd?>(null) }
+//
+//
+//    LaunchedEffect(adUnitId) {
+//        val adLoader = AdLoader.Builder(activity, adUnitId)
+//            .forNativeAd { ad ->
+//                nativeAd = ad
+//            }
+//            .withAdListener(object : AdListener() {
+//                override fun onAdImpression() {
+//                    Log.d("AdMob_Final", "🔥 [임프레션 성공] 구글이 정상 노출로 인정했습니다!")
+//                }
+//                override fun onAdClicked() {
+//                    Log.d("AdMob_Final", "💰 [클릭 성공] 브라우저로 이동합니다!")
+//                }
+//                override fun onAdFailedToLoad(error: LoadAdError) {
+//                    Log.e("AdMob_Final", "❌ 로드 실패: ${error.message}")
+//                }
+//            })
+//            .build()
+//        adLoader.loadAd(AdRequest.Builder().build())
+//    }
+//
+//    DisposableEffect(nativeAd) {
+//        onDispose { nativeAd?.destroy() }
+//    }
+//
+//    if (nativeAd != null) {
+//        CardFeedNativeAd(nativeAd = nativeAd!!, activity = activity)
+//    } else {
+//        Spacer(modifier = Modifier.fillMaxWidth().height(65.dp))
+//    }
+//}
 
 @Composable
 private fun EmptyFeedView() {
