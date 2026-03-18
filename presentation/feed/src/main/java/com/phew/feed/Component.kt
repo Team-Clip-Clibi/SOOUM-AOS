@@ -182,7 +182,7 @@ object FeedUi {
         ) {
             CardArticleProfileImage(
                 profileImage = data.profileImgUrl,
-                isRead = data.isRead,
+                isRead = false,
                 description = data.cardContent
             )
             Column(modifier = Modifier.weight(1f)) {
@@ -265,11 +265,11 @@ object FeedUi {
                 Box(
                     modifier = Modifier
                         .padding(1.dp)
-                        .size(8.dp)
+                        .size(10.dp)
                         .align(Alignment.TopEnd)
                         .offset(x = (-1).dp, y = (-2).dp)
                         .background(color = Danger.M_RED, shape = CircleShape)
-                        .border(width = 1.dp, color = WHITE, shape = CircleShape)
+                        .border(width = 2.dp, color = WHITE, shape = CircleShape)
                 )
             }
         }
