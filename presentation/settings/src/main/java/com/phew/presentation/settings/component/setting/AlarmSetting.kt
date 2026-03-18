@@ -53,7 +53,7 @@ internal fun AlarmViewWithSubTitle(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(48.dp)
+            .height(50.dp)
             .background(color = NeutralColor.WHITE)
             .padding(horizontal = 16.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -65,6 +65,7 @@ internal fun AlarmViewWithSubTitle(
                 style = TextComponent.BODY_1_M_14,
                 color = NeutralColor.BLACK
             )
+            Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = subTitle,
                 style = TextComponent.CAPTION_3_M_10,
