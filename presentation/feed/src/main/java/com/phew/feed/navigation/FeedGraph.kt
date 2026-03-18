@@ -76,6 +76,7 @@ fun NavGraphBuilder.feedGraph(
                     locationPermission.launch(permissions)
                 }
             }
+
             FeedView(
                 appState = appState,
                 viewModel = feedViewModel,

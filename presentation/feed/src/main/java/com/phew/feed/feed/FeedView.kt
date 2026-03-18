@@ -26,7 +26,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,7 +36,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -50,8 +48,6 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.LoadState
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.google.android.gms.ads.AdLoader
-import com.google.android.gms.ads.AdRequest
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.navigation.NavigationKeys
 import com.phew.core_design.AppBar
@@ -84,8 +80,6 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import com.phew.core.ui.R as CoreUiR
-import com.google.android.gms.ads.nativead.NativeAd
-import com.phew.feed.FeedUi.CardFeedNativeAd
 
 @OptIn(FlowPreview::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -483,9 +477,9 @@ private fun FeedContentView(
                                                 .fillMaxWidth()
                                                 .wrapContentHeight()
                                                 .padding(horizontal = 16.dp)
-                                                .graphicsLayer { translationY = pullOffsetPx }
+//                                                .graphicsLayer { translationY = pullOffsetPx }
                                         ) {
-                                            NativeAdLoaderScreen(adUnitId = adUnitId)
+                                            FeedUi.NativeAdLoaderScreen(adUnitId = adUnitId)
                                         }
                                     } else {
                                         val adCountBefore = if (uiIndex == 0) 0 else (uiIndex + 9) / 11
@@ -692,36 +686,58 @@ private fun FeedContentView(
     }
 }
 
-@Composable
-fun NativeAdLoaderScreen(adUnitId: String, modifier: Modifier = Modifier) {
-    val currentContext = LocalContext.current
-    var nativeAd by remember { mutableStateOf<NativeAd?>(null) }
-    var isAdLoaded by remember { mutableStateOf(false) }
-
-    LaunchedEffect(adUnitId) {
-        val adLoader = AdLoader.Builder(currentContext, adUnitId)
-            .forNativeAd { ad: NativeAd ->
-                nativeAd = ad
-                isAdLoaded = true
-            }
-            .build()
-        adLoader.loadAd(AdRequest.Builder().build())
-    }
-    DisposableEffect(nativeAd) {
-        onDispose {
-            nativeAd?.destroy()
-        }
-    }
-    if (isAdLoaded && nativeAd != null) {
-        CardFeedNativeAd(nativeAd = nativeAd, modifier = modifier)
-    } else {
-        Box(
-            modifier = modifier
-                .fillMaxWidth()
-                .height(65.dp)
-        )
-    }
-}
+//@Composable
+//fun NativeAdLoaderScreen(adUnitId: String) { // 파라미터는 받지만 내부에서 테스트 ID로 강제 덮어씌웁니다.
+//    val currentContext = LocalContext.current
+//
+//    // 🚨 1. 반드시 Activity를 추출해야 합니다. (이게 없으면 클릭 시 브라우저가 안 열립니다)
+//    val activity = remember(currentContext) {
+//        var ctx = currentContext
+//        while (ctx is ContextWrapper) {
+//            if (ctx is Activity) break
+//            ctx = ctx.baseContext
+//        }
+//        ctx as? Activity
+//    }
+//
+//    if (activity == null) {
+//        Log.e("AdMob_Final", "❌ Activity Context를 찾을 수 없어 광고 로드를 중단합니다.")
+//        return
+//    }
+//
+//    var nativeAd by remember { mutableStateOf<NativeAd?>(null) }
+//
+//
+//    LaunchedEffect(adUnitId) {
+//        val adLoader = AdLoader.Builder(activity, adUnitId)
+//            .forNativeAd { ad ->
+//                nativeAd = ad
+//            }
+//            .withAdListener(object : AdListener() {
+//                override fun onAdImpression() {
+//                    Log.d("AdMob_Final", "🔥 [임프레션 성공] 구글이 정상 노출로 인정했습니다!")
+//                }
+//                override fun onAdClicked() {
+//                    Log.d("AdMob_Final", "💰 [클릭 성공] 브라우저로 이동합니다!")
+//                }
+//                override fun onAdFailedToLoad(error: LoadAdError) {
+//                    Log.e("AdMob_Final", "❌ 로드 실패: ${error.message}")
+//                }
+//            })
+//            .build()
+//        adLoader.loadAd(AdRequest.Builder().build())
+//    }
+//
+//    DisposableEffect(nativeAd) {
+//        onDispose { nativeAd?.destroy() }
+//    }
+//
+//    if (nativeAd != null) {
+//        CardFeedNativeAd(nativeAd = nativeAd!!, activity = activity)
+//    } else {
+//        Spacer(modifier = Modifier.fillMaxWidth().height(65.dp))
+//    }
+//}
 
 @Composable
 private fun EmptyFeedView() {

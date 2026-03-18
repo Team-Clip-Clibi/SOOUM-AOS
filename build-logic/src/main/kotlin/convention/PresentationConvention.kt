@@ -45,6 +45,7 @@ class PresentationConvention : Plugin<Project> {
             }
             buildFeatures.buildConfig = true
             buildFeatures.compose = true
+            buildFeatures.viewBinding = true
             composeOptions.kotlinCompilerExtensionVersion = "1.5.13"
             compileOptions {
                 sourceCompatibility = JavaVersion.VERSION_21

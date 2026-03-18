@@ -1,9 +1,6 @@
 package com.phew.feed
 
-import android.util.TypedValue
-import android.view.Gravity
-import android.view.ViewGroup
-import android.widget.LinearLayout
+import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -51,12 +48,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.viewinterop.AndroidViewBinding
+import androidx.core.view.isVisible
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
-import com.google.android.gms.ads.nativead.NativeAd
-import com.google.android.gms.ads.nativead.NativeAdView
+import com.google.android.gms.ads.AdListener
+import com.google.android.gms.ads.AdLoader
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.nativead.NativeAdOptions
 import com.phew.core_common.TimeUtils
 import com.phew.core_design.Danger
 import com.phew.core_design.NeutralColor
@@ -94,232 +95,62 @@ import com.phew.domain.dto.UserTagNotification
 import com.phew.feed.FeedUi.TypedFeedCardView
 import com.phew.feed.viewModel.DistanceType
 import com.phew.presentation.feed.R
+import com.phew.presentation.feed.databinding.ItemNativeAdBinding
 import kotlinx.coroutines.delay
 import com.phew.core_design.R as DesignR
-import android.graphics.Color as AndroidColor
-import android.graphics.drawable.GradientDrawable
-import android.widget.ImageView
-import android.widget.TextView
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.ui.graphics.toArgb
-import androidx.core.widget.TextViewCompat
-import androidx.compose.ui.platform.LocalFontFamilyResolver
-import androidx.compose.ui.text.font.FontWeight
-import android.graphics.Typeface
-import android.widget.FrameLayout
-import androidx.compose.ui.platform.LocalInspectionMode
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontSynthesis
-import com.phew.core_design.UnKnowColor
-import com.phew.feed.FeedUi.CardFeedNativeAd
 
 object FeedUi {
-
     @Composable
-    fun CardFeedNativeAd(nativeAd: NativeAd? = null, modifier: Modifier = Modifier) {
-        val headlineStyle = TextComponent.SUBTITLE_3_SB_14
-        val bodyStyle = TextComponent.CAPTION_2_M_12.copy(color = GRAY_500)
-        val badgeStyle = TextComponent.CAPTION_3_M_10.copy(color = GRAY_400)
+    fun NativeAdLoaderScreen(adUnitId: String) {
 
-        val fontResolver = LocalFontFamilyResolver.current
-        val isPreview = LocalInspectionMode.current
 
-        val headlineTypeface = remember(fontResolver, headlineStyle) {
-            fontResolver.resolve(
-                fontFamily = headlineStyle.fontFamily,
-                fontWeight = headlineStyle.fontWeight ?: FontWeight.Normal,
-                fontStyle = headlineStyle.fontStyle ?: FontStyle.Normal,
-                fontSynthesis = headlineStyle.fontSynthesis ?: FontSynthesis.All
-            ).value as Typeface
-        }
-
-        val bodyTypeface = remember(fontResolver, bodyStyle) {
-            fontResolver.resolve(
-                fontFamily = bodyStyle.fontFamily,
-                fontWeight = bodyStyle.fontWeight ?: FontWeight.Normal,
-                fontStyle = bodyStyle.fontStyle ?: FontStyle.Normal,
-                fontSynthesis = bodyStyle.fontSynthesis ?: FontSynthesis.All,
-            ).value as Typeface
-        }
-
-        val badgeTypeface = remember(fontResolver, badgeStyle) {
-            fontResolver.resolve(
-                fontFamily = badgeStyle.fontFamily,
-                fontWeight = badgeStyle.fontWeight ?: FontWeight.Normal,
-                fontStyle = badgeStyle.fontStyle ?: FontStyle.Normal,
-                fontSynthesis = badgeStyle.fontSynthesis ?: FontSynthesis.All
-            ).value as Typeface
-        }
-
-        Box(
-            modifier = modifier
-                .fillMaxWidth()
-                .height(65.dp)
-                .background(color = WHITE, shape = RoundedCornerShape(16.dp))
-                .shadow(
-                    elevation = 16.dp,
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .border(width = 1.dp, color = UnKnowColor.color, shape = RoundedCornerShape(16.dp))
+        AndroidViewBinding(
+            factory = ItemNativeAdBinding::inflate
         ) {
-            AndroidView(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(RoundedCornerShape(16.dp)),
-                factory = { context ->
-                    val rootLayout = if (isPreview) {
-                        FrameLayout(context)
-                    } else {
-                        NativeAdView(context)
-                    }.apply {
-                        setBackgroundColor(AndroidColor.parseColor("#FFFFFFFF"))
+            val adView = root.also { adView ->
+                adView.bodyView = this.adBody
+                adView.callToActionView = this.adCallToAction
+                adView.headlineView = this.adHeadline
+                adView.iconView = this.adAppIcon
+            }
+
+            val adContainer = this.adContainer
+
+            val adLoader = AdLoader.Builder(adView.context, adUnitId)
+                .forNativeAd { nativeAd ->
+                    nativeAd.advertiser?.let {
+
+                    }
+                    nativeAd.body?.let { body ->
+                        this.adBody.text = body
                     }
 
-                    val container = LinearLayout(context).apply {
-                        orientation = LinearLayout.HORIZONTAL
-                        gravity = Gravity.CENTER_VERTICAL
-                        layoutParams = ViewGroup.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.MATCH_PARENT
-                        )
-                        setPadding(
-                            dpToPx(context, 16f), dpToPx(context, 12f),
-                            dpToPx(context, 16f), dpToPx(context, 12f)
-                        )
+                    nativeAd.headline?.let {
+                        this.adHeadline.text = it
+                    }
+                    nativeAd.icon?.let {
+                        this.adAppIcon.setImageDrawable(it.drawable)
+                    }
+                    adView.setNativeAd(nativeAd)
+                }.withAdListener(object : AdListener() {
+                    override fun onAdLoaded() {
+                        Log.i("Admob", "onAdLoaded : Native ad Loaded")
+                        adContainer.isVisible = true
+                        super.onAdLoaded()
                     }
 
-                    val iconSize = dpToPx(context, 24f)
-                    val iconView = ImageView(context).apply {
-                        layoutParams = LinearLayout.LayoutParams(iconSize, iconSize).apply {
-                            gravity = Gravity.CENTER_VERTICAL
-                            setMargins(0, 0, dpToPx(context, 12f), 0)
-                        }
-                        background = GradientDrawable().apply {
-                            shape = GradientDrawable.RECTANGLE
-                            cornerRadius = dpToPx(context, 6f).toFloat()
-                            setColor(AndroidColor.parseColor("#919DA9"))
-                            setStroke(dpToPx(context, 1f), AndroidColor.parseColor("#F5F7FA"))
-                        }
-                        clipToOutline = true
-                        scaleType = ImageView.ScaleType.CENTER_CROP
+                    override fun onAdFailedToLoad(error: LoadAdError) {
+                        Log.e("AdMob", "onAdFailedToLoad : ${error.message}")
+                        super.onAdFailedToLoad(error)
                     }
-
-                    val textContainer = LinearLayout(context).apply {
-                        orientation = LinearLayout.VERTICAL
-                        layoutParams = LinearLayout.LayoutParams(
-                            0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f
-                        ).apply {
-                            gravity = Gravity.CENTER_VERTICAL
-                        }
-                    }
-
-                    val headlineView = TextView(context).apply {
-                        tag = "headline"
-                        setTextSize(TypedValue.COMPLEX_UNIT_SP, headlineStyle.fontSize.value)
-                        setTextColor(headlineStyle.color.toArgb())
-                        typeface = headlineTypeface
-                        TextViewCompat.setLineHeight(
-                            this,
-                            spToPx(context, headlineStyle.lineHeight.value)
-                        )
-                        maxLines = 1
-                        ellipsize = android.text.TextUtils.TruncateAt.END
-                    }
-
-                    val bodyView = TextView(context).apply {
-                        tag = "body"
-                        setTextSize(TypedValue.COMPLEX_UNIT_SP, bodyStyle.fontSize.value)
-                        setTextColor(bodyStyle.color.toArgb())
-                        typeface = bodyTypeface
-                        TextViewCompat.setLineHeight(
-                            this,
-                            spToPx(context, bodyStyle.lineHeight.value)
-                        )
-                        maxLines = 1
-                        ellipsize = android.text.TextUtils.TruncateAt.END
-                    }
-
-                    textContainer.addView(headlineView)
-                    textContainer.addView(bodyView)
-
-                    val adBadgeView = TextView(context).apply {
-                        text = "AD"
-                        setTextSize(TypedValue.COMPLEX_UNIT_SP, badgeStyle.fontSize.value)
-                        setTextColor(badgeStyle.color.toArgb())
-                        typeface = badgeTypeface
-                        TextViewCompat.setLineHeight(
-                            this,
-                            spToPx(context, badgeStyle.lineHeight.value)
-                        )
-                        gravity = Gravity.CENTER
-                        layoutParams = LinearLayout.LayoutParams(
-                            ViewGroup.LayoutParams.WRAP_CONTENT, dpToPx(context, 20f)
-                        ).apply {
-                            gravity = Gravity.TOP
-                        }
-                        background = GradientDrawable().apply {
-                            shape = GradientDrawable.RECTANGLE
-                            cornerRadius = dpToPx(context, 100f).toFloat()
-                            setColor(AndroidColor.parseColor("#F5F7FA"))
-                        }
-                        setPadding(dpToPx(context, 8f), 0, dpToPx(context, 8f), 0)
-                    }
-
-                    container.addView(iconView)
-                    container.addView(textContainer)
-                    container.addView(adBadgeView)
-                    rootLayout.addView(container)
-
-                    if (!isPreview) {
-                        (rootLayout as NativeAdView).apply {
-                            this.iconView = iconView
-                            this.headlineView = headlineView
-                            this.bodyView = bodyView
-                            this.callToActionView = container
-                        }
-                    }
-                    rootLayout
-                },
-                update = { rootLayout ->
-                    if (isPreview) {
-                        rootLayout.findViewWithTag<TextView>("headline")?.text = "2월 올영픽 ~34% 할인 중!"
-                        rootLayout.findViewWithTag<TextView>("body")?.text = "1+1 & 한정 기획 보러가기"
-                    } else {
-                        val adView = rootLayout as NativeAdView
-                        // [핵심] NativeAd가 이전에 세팅된 것과 다를 때만(최초 1회) 세팅하도록 방어 코드 추가
-                        if (adView.tag != nativeAd) {
-                            nativeAd?.let { ad ->
-                                (adView.iconView as? ImageView)?.setImageDrawable(ad.icon?.drawable)
-                                (adView.headlineView as? TextView)?.text = ad.headline
-                                (adView.bodyView as? TextView)?.text = ad.body
-
-                                // 이 코드가 여러 번 불리는 것을 막아야 클릭 리스너가 파괴되지 않습니다.
-                                adView.setNativeAd(ad)
-
-                                // 상태 저장
-                                adView.tag = ad
-                            }
-                        }
-                    }
-                }
-            )
+                }).withNativeAdOptions(
+                    NativeAdOptions.Builder().setAdChoicesPlacement(
+                        NativeAdOptions.ADCHOICES_TOP_RIGHT
+                    ).build()
+                ).build()
+            adContainer.isVisible = true
+            adLoader.loadAd(AdRequest.Builder().build())
         }
-    }
-
-    private fun dpToPx(context: android.content.Context, dp: Float): Int {
-        return TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_DIP,
-            dp,
-            context.resources.displayMetrics
-        ).toInt()
-    }
-
-    private fun spToPx(context: android.content.Context, sp: Float): Int {
-        return TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_SP,
-            sp,
-            context.resources.displayMetrics
-        ).toInt()
     }
 
     @Composable
@@ -1068,10 +899,4 @@ private fun NormalTypeCardPreview() {
     )
 
     TypedFeedCardView(feedCard = sampleNormalCard, onClick = {}, onRemoveCard = {})
-}
-
-@Preview
-@Composable
-fun CardFeedNativeAdPreview() {
-    CardFeedNativeAd(nativeAd = null)
 }
