@@ -31,4 +31,5 @@
     <string name="home_notice_tag_card_upload">\'%1$s\' 태그가 포함된 카드가 올라왔어요.</string>
     <string name="home_feed_dialog_delete_title">삭제된 카드예요</string>
     <string name="home_article_write">%1$s명이 카드를 남겼어요</string>
+    <string name="home_article_write_first">첫 댓글을 남겨보세요</string>
 </resources>

@@ -39,6 +39,8 @@ clarity = "3.7.0"
 roomCompiler = "2.8.4"
 constraintlayout = "2.2.1"
 firebase-analytics = "23.0.0"
+google-admob = "25.0.0"
+uiViewbinding = "1.10.5"
 
 [libraries]
 androidx-material3-windowSize = { group = "androidx.compose.material3", name = "material3-window-size-class" }
@@ -91,6 +93,8 @@ androidx-constraintlayout = { group = "androidx.constraintlayout", name = "const
 mircrosoft-clarity = { group = "com.microsoft.clarity", name = "clarity-compose", version.ref = "clarity" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "roomCompiler" }
 coil-core = { group = "io.coil-kt.coil3", name = "coil", version.ref = "coil" }
+google-gms-admob = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "google-admob" }
+androidx-compose-ui-viewbinding = { group = "androidx.compose.ui", name = "ui-viewbinding", version.ref = "uiViewbinding" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

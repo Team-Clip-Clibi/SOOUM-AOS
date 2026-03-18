@@ -1,5 +1,6 @@
 package com.phew.feed
 
+import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -47,9 +48,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidViewBinding
+import androidx.core.view.isVisible
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import com.google.android.gms.ads.AdListener
+import com.google.android.gms.ads.AdLoader
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.nativead.NativeAdOptions
 import com.phew.core_common.TimeUtils
 import com.phew.core_design.Danger
 import com.phew.core_design.NeutralColor
@@ -87,10 +95,63 @@ import com.phew.domain.dto.UserTagNotification
 import com.phew.feed.FeedUi.TypedFeedCardView
 import com.phew.feed.viewModel.DistanceType
 import com.phew.presentation.feed.R
+import com.phew.presentation.feed.databinding.ItemNativeAdBinding
 import kotlinx.coroutines.delay
 import com.phew.core_design.R as DesignR
 
 object FeedUi {
+    @Composable
+    fun NativeAdLoaderScreen(adUnitId: String) {
+
+
+        AndroidViewBinding(
+            factory = ItemNativeAdBinding::inflate
+        ) {
+            val adView = root.also { adView ->
+                adView.bodyView = this.adBody
+                adView.callToActionView = this.adCallToAction
+                adView.headlineView = this.adHeadline
+                adView.iconView = this.adAppIcon
+            }
+
+            val adContainer = this.adContainer
+
+            val adLoader = AdLoader.Builder(adView.context, adUnitId)
+                .forNativeAd { nativeAd ->
+                    nativeAd.advertiser?.let {
+
+                    }
+                    nativeAd.body?.let { body ->
+                        this.adBody.text = body
+                    }
+
+                    nativeAd.headline?.let {
+                        this.adHeadline.text = it
+                    }
+                    nativeAd.icon?.let {
+                        this.adAppIcon.setImageDrawable(it.drawable)
+                    }
+                    adView.setNativeAd(nativeAd)
+                }.withAdListener(object : AdListener() {
+                    override fun onAdLoaded() {
+                        Log.i("Admob", "onAdLoaded : Native ad Loaded")
+                        adContainer.isVisible = true
+                        super.onAdLoaded()
+                    }
+
+                    override fun onAdFailedToLoad(error: LoadAdError) {
+                        Log.e("AdMob", "onAdFailedToLoad : ${error.message}")
+                        super.onAdFailedToLoad(error)
+                    }
+                }).withNativeAdOptions(
+                    NativeAdOptions.Builder().setAdChoicesPlacement(
+                        NativeAdOptions.ADCHOICES_TOP_RIGHT
+                    ).build()
+                ).build()
+            adContainer.isVisible = true
+            adLoader.loadAd(AdRequest.Builder().build())
+        }
+    }
 
     @Composable
      fun CardArticleView(
@@ -168,10 +229,14 @@ object FeedUi {
                     }
                     Spacer(modifier = Modifier.width(1.dp))
                     Text(
-                        text = stringResource(
-                            id = R.string.home_article_write,
-                            data.totalWriterCnt
-                        ),
+                        text = if (data.totalWriterCnt == 0) {
+                            stringResource(id = R.string.home_article_write_first)
+                        } else {
+                            stringResource(
+                                id = R.string.home_article_write,
+                                data.totalWriterCnt
+                            )
+                        },
                         style = TextComponent.CAPTION_2_M_12,
                         color = GRAY_500
                     )
@@ -204,11 +269,11 @@ object FeedUi {
                 Box(
                     modifier = Modifier
                         .padding(1.dp)
-                        .size(8.dp)
+                        .size(10.dp)
                         .align(Alignment.TopEnd)
                         .offset(x = (-1).dp, y = (-2).dp)
                         .background(color = Danger.M_RED, shape = CircleShape)
-                        .border(width = 1.dp, color = WHITE, shape = CircleShape)
+                        .border(width = 2.dp, color = WHITE, shape = CircleShape)
                 )
             }
         }
