@@ -182,7 +182,7 @@ object FeedUi {
         ) {
             CardArticleProfileImage(
                 profileImage = data.profileImgUrl,
-                isRead = false,
+                isRead = data.isRead,
                 description = data.cardContent
             )
             Column(modifier = Modifier.weight(1f)) {
