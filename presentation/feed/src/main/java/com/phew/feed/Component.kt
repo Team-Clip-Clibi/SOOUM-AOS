@@ -229,10 +229,14 @@ object FeedUi {
                     }
                     Spacer(modifier = Modifier.width(1.dp))
                     Text(
-                        text = stringResource(
-                            id = R.string.home_article_write,
-                            data.totalWriterCnt
-                        ),
+                        text = if (data.totalWriterCnt == 0) {
+                            stringResource(id = R.string.home_article_write_first)
+                        } else {
+                            stringResource(
+                                id = R.string.home_article_write,
+                                data.totalWriterCnt
+                            )
+                        },
                         style = TextComponent.CAPTION_2_M_12,
                         color = GRAY_500
                     )
