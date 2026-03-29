@@ -102,10 +102,8 @@ import com.phew.core_design.R as DesignR
 object FeedUi {
     @Composable
     fun NativeAdLoaderScreen(adUnitId: String) {
-
-
         AndroidViewBinding(
-            factory = ItemNativeAdBinding::inflate
+            factory = ItemNativeAdBinding::inflate,
         ) {
             val adView = root.also { adView ->
                 adView.bodyView = this.adBody

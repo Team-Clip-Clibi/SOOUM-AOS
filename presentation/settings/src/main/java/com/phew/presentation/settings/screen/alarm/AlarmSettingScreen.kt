@@ -31,6 +31,9 @@ import com.phew.presentation.settings.component.setting.AlarmView
 import com.phew.presentation.settings.component.setting.AlarmViewWithSubTitle
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import com.phew.core_design.DialogComponent
 
 @Composable
 internal fun AlarmSettingScreen(
@@ -177,6 +180,8 @@ private fun EventAlarm(
     value: Alarm,
     onValueChange: (Alarm) -> Unit,
 ) {
+    var showDialog by remember { mutableStateOf(false) }
+
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = stringResource(R.string.alarm_view_item_new_event_title),
@@ -190,11 +195,46 @@ private fun EventAlarm(
             title = stringResource(R.string.alarm_view_item_new_event),
             isActivate = value.serviceUpdateNotify,
             onClick = { result ->
-                val updatedAlarm = value.copy(serviceUpdateNotify = result)
-                onValueChange(updatedAlarm)
+                if(!result){
+                    showDialog = true
+                }else{
+                    val updatedAlarm = value.copy(serviceUpdateNotify = true)
+                    onValueChange(updatedAlarm)
+                }
+
             }
         )
     }
+    if(showDialog){
+        EventAlarmOffDialog(
+            onUserClick = {isConfirmed ->
+                showDialog = false
+                if (isConfirmed) {
+                    val updatedAlarm = value.copy(serviceUpdateNotify = false)
+                    onValueChange(updatedAlarm)
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun EventAlarmOffDialog(
+    onUserClick: (Boolean) -> Unit,
+) {
+    DialogComponent.DefaultButtonTwo(
+        title = stringResource(R.string.alarm_view_dialog_title),
+        description = stringResource(R.string.alarm_view_dialog_subtitle),
+        buttonTextStart = stringResource(R.string.alarm_view_dialog_start_btn),
+        buttonTextEnd = stringResource(R.string.alarm_view_dialog_end_btn),
+        onClick = {
+            onUserClick(true)
+        },
+        onDismiss = {
+            onUserClick(false)
+        },
+        startButtonTextColor = NeutralColor.GRAY_600
+    )
 }
 
 @Preview(showBackground = true, backgroundColor = 0xFFFFFFFF, name = "Service Alarm View")
