@@ -139,6 +139,7 @@ class ApplicationConvention : Plugin<Project> {
             add("implementation", project(":presentation:feed"))
             add("implementation", project(":presentation:home"))
             add("implementation", project(":presentation:reports"))
+            add("implementation", project(":presentation:settings"))
             add("implementation", project(":domain"))
             add("implementation", project(":data"))
             add("implementation", project(":data:repository"))

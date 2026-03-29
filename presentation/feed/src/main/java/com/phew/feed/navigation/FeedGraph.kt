@@ -54,6 +54,7 @@ private fun NavHostController.navigateToWebView(
 fun NavGraphBuilder.feedGraph(
     appState: SooumAppState,
     navController: NavHostController,
+    onAlarmClick: () -> Unit
 ) {
     navigation(
         route = FEED_GRAPH,
@@ -118,7 +119,8 @@ fun NavGraphBuilder.feedGraph(
                     navController.navigateToDetailGraph(cardDetailArgs)
                 },
                 navigateToWebView = navController::navigateToWebView,
-                userSelectIndex = NotifyTab.from(data)
+                userSelectIndex = NotifyTab.from(data),
+                onClickAlarmSetting = onAlarmClick
             )
         }
         slideComposable(
