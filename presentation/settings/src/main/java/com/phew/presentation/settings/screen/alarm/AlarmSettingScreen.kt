@@ -198,7 +198,7 @@ private fun EventAlarm(
                 if(!result){
                     showDialog = true
                 }else{
-                    val updatedAlarm = value.copy(serviceUpdateNotify = result)
+                    val updatedAlarm = value.copy(serviceUpdateNotify = true)
                     onValueChange(updatedAlarm)
                 }
 
