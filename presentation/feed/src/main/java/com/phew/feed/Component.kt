@@ -103,7 +103,6 @@ object FeedUi {
     @Composable
     fun NativeAdLoaderScreen(adUnitId: String) {
 
-
         AndroidViewBinding(
             factory = ItemNativeAdBinding::inflate
         ) {
