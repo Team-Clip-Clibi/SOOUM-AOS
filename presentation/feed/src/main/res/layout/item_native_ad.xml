@@ -28,8 +28,8 @@
 
         <ImageView
             android:id="@+id/ad_app_icon"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:background="@drawable/bg_ad_icon_shape"
             android:clipToOutline="true"
             android:scaleType="centerCrop"
@@ -60,7 +60,8 @@
                 android:maxLines="1"
                 android:textColor="#212121"
                 android:textSize="14sp"
-                android:textFontWeight="600" />
+                android:textFontWeight="600"
+                android:layout_marginBottom="4.dp"/>
 
             <TextView
                 android:id="@+id/ad_body"
