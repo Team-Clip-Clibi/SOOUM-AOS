@@ -477,7 +477,7 @@ private fun FeedContentView(
                                                 .fillMaxWidth()
                                                 .wrapContentHeight()
                                                 .padding(horizontal = 16.dp)
-//                                                .graphicsLayer { translationY = pullOffsetPx }
+                                                .graphicsLayer { translationY = pullOffsetPx }
                                         ) {
                                             FeedUi.NativeAdLoaderScreen(adUnitId = adUnitId)
                                         }
