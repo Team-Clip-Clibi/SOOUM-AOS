@@ -110,5 +110,8 @@
     <string name="alarm_view_item_banned_info_sub_title">신고된 카드로 인해 카드 추가 기능이 제한된 경우</string>
     <string name="alarm_view_item_new_event_title">혜택, 이벤트 알림</string>
     <string name="alarm_view_item_new_event">신규기능/업데이트 소식</string>
-
+    <string name="alarm_view_dialog_title">알림을 끄시겠어요?</string>
+    <string name="alarm_view_dialog_subtitle">유용한 정보나 이벤트 알림을 받지 못할 수도 있어요.</string>
+    <string name="alarm_view_dialog_start_btn">취소</string>
+    <string name="alarm_view_dialog_end_btn">알림 끄기</string>
 </resources>
