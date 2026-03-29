@@ -84,7 +84,7 @@ private fun NavHostController.navigateToAccountDeletionRoute(
     this.navigate(ACCOUNT_DELETION_ROUTE)
 }
 
-private fun NavHostController.navigateToAlarmRoute(
+fun NavHostController.navigateToAlarmRoute(
     navOptions: NavOptions? = null
 ) {
     this.navigate(ALARM_ROUTE)

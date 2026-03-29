@@ -19,8 +19,6 @@ import com.phew.core.ui.navigation.asNavArg
 import com.phew.core.ui.navigation.createNavType
 import com.phew.core.ui.navigation.getNavArg
 import com.phew.core_common.USER_ID_EMPTY
-import com.phew.presentation.settings.navigation.navigateToSettingGraph
-import com.phew.presentation.settings.navigation.settingGraph
 import com.phew.profile.screen.EditProfileScreen
 import com.phew.profile.screen.FollowerScreen
 import com.phew.profile.screen.OtherProfile
@@ -73,8 +71,8 @@ fun NavGraphBuilder.profileGraph(
     navController: NavHostController,
     onBackPressed: () -> Unit,
     onLogOut: () -> Unit,
-    onWithdrawalComplete: () -> Unit,
     cardClick: (CardDetailArgs) -> Unit,
+    onSetting: () -> Unit
 ) {
     navigation(
         route = HomeTabType.MY.graph,
@@ -99,9 +97,7 @@ fun NavGraphBuilder.profileGraph(
                 onClickCard = { args ->
                     cardClick(args)
                 },
-                onClickSetting = {
-                    navController.navigateToSettingGraph()
-                },
+                onClickSetting = onSetting,
                 onClickFollowing = {
                     navController.navigate(FOLLOW_ROUTE_DESTINATION_ROUTE.asNavArg(FollowArgs(
                         isMyProfile = true,
@@ -203,10 +199,5 @@ fun NavGraphBuilder.profileGraph(
                 onBackPress = onBackPressed
             )
         }
-        settingGraph(
-            navController = navController,
-            onBackPressed = onBackPressed,
-            onWithdrawalComplete = onWithdrawalComplete
-        )
     }
 }

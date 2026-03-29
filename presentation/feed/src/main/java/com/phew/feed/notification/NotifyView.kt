@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
@@ -57,6 +58,7 @@ import com.phew.core_design.AppBar
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.DialogComponent.DeletedCardDialog
 import com.phew.core_design.LoadingAnimation
+import com.phew.core_design.MediumButton.IconPrimary
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
 import com.phew.core_design.component.refresh.RefreshBox
@@ -76,7 +78,8 @@ fun NotifyView(
     backClick: () -> Unit,
     navigateToDetail: (CardDetailArgs) -> Unit,
     navigateToWebView: (String) -> Unit,
-    userSelectIndex: NotifyTab
+    userSelectIndex: NotifyTab,
+    onClickAlarmSetting: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val notices = viewModel.notice.collectAsLazyPagingItems()
@@ -148,9 +151,10 @@ fun NotifyView(
         onBackClick = onBack,
         snackBarHostState = snackBarHostState,
         selectIndex = selectIndex,
+        onClickAlarmSetting = onClickAlarmSetting,
         onTabClick = { data ->
             selectIndex = data
-        }
+        },
     ) { paddingValues ->
         RefreshBox(
             isRefresh = isRefreshing,
@@ -204,27 +208,27 @@ fun NotifyView(
                 }
             }
         }
-        }
-        if (uiState.checkCardDelete is UiState.Success) {
-            val onDialogHandled = {
-                viewModel.initCheckCardDelete()
-                when (selectIndex) {
-                    NotifyTab.NOTIFY_ACTIVATE -> {
-                        unRead.refresh()
-                        read.refresh()
-                    }
+    }
+    if (uiState.checkCardDelete is UiState.Success) {
+        val onDialogHandled = {
+            viewModel.initCheckCardDelete()
+            when (selectIndex) {
+                NotifyTab.NOTIFY_ACTIVATE -> {
+                    unRead.refresh()
+                    read.refresh()
+                }
 
-                    NotifyTab.NOTIFY_SERVICE -> {
-                        notices.refresh()
-                    }
+                NotifyTab.NOTIFY_SERVICE -> {
+                    notices.refresh()
                 }
             }
-            DeletedCardDialog(
-                onDismiss = onDialogHandled,
-                onConfirm = onDialogHandled
-            )
         }
+        DeletedCardDialog(
+            onDismiss = onDialogHandled,
+            onConfirm = onDialogHandled
+        )
     }
+}
 
 
 @Composable
@@ -233,6 +237,7 @@ private fun NoticeViewTopBar(
     snackBarHostState: SnackbarHostState,
     selectIndex: NotifyTab,
     onTabClick: (NotifyTab) -> Unit,
+    onClickAlarmSetting: () -> Unit,
     content: @Composable (PaddingValues) -> Unit,
 ) {
     Scaffold(
@@ -245,9 +250,21 @@ private fun NoticeViewTopBar(
                     .fillMaxWidth()
                     .background(color = NeutralColor.WHITE)
             ) {
-                AppBar.IconLeftAppBar(
-                    onClick = onBackClick,
-                    appBarText = stringResource(R.string.home_notice_top_bar)
+                AppBar.IconLeftAndRightAppBar(
+                    onBackClick = onBackClick,
+                    title = stringResource(R.string.home_notice_top_bar),
+                    rightIcon = {
+                        IconPrimary(
+                            icon = {
+                                Icon(
+                                    painter = painterResource(com.phew.core_design.R.drawable.ic_settings_stoke),
+                                    contentDescription = "AlarmSetting",
+                                    tint = NeutralColor.BLACK
+                                )
+                            },
+                            onClick = onClickAlarmSetting
+                        )
+                    }
                 )
                 Spacer(modifier = Modifier.height(9.5.dp))
                 NotificationUi.NotifyTabBar(
@@ -256,7 +273,7 @@ private fun NoticeViewTopBar(
                 )
             }
         },
-        content = content
+        content = content,
     )
 }
 

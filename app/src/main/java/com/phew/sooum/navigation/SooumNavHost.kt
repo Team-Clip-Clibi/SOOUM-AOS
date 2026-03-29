@@ -25,6 +25,8 @@ import com.phew.domain.interceptor.GlobalEvent
 import com.phew.presentation.MainViewModel
 import com.phew.presentation.detail.navigation.navigateToDetailCommentDirect
 import com.phew.presentation.detail.navigation.navigateToDetailGraph
+import com.phew.presentation.settings.navigation.navigateToAlarmRoute
+import com.phew.presentation.settings.navigation.navigateToSettingGraph
 import com.phew.presentation.tag.navigation.navigateToViewTagsWithArgs
 import com.phew.presentation.write.navigation.WRITE_GRAPH
 import com.phew.presentation.write.navigation.navigateToWriteGraphWithArgs
@@ -37,6 +39,7 @@ import com.phew.sign_up.navigation.navigateToSignUpGraph
 import com.phew.sign_up.navigation.signUpGraph
 import com.phew.splash.navigation.SPLASH_GRAPH
 import com.phew.splash.navigation.splashNavGraph
+import com.phew.presentation.settings.navigation.settingGraph
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -45,7 +48,6 @@ fun SooumNavHost(
     modifier: Modifier = Modifier,
     appVersionUpdate: () -> Unit,
     finish: () -> Unit,
-    // 요기 수정 -> webView 삭제
     mainViewModel: MainViewModel = hiltViewModel(),
 ) {
     val navController = appState.navController
@@ -87,7 +89,6 @@ fun SooumNavHost(
             homeGraph(
                 appState = appState,
                 navController = navController,
-                finish = finish,
                 onBackPressed = {
                     SooumOnBackPressed(appState = appState)
                 },
@@ -113,17 +114,6 @@ fun SooumNavHost(
                         }
                     )
                 },
-                onWithdrawalComplete = {
-                    navController.navigateToOnBoarding(
-                        args = OnBoardingArgs(showWithdrawalDialog = true),
-                        navOptions = navOptions {
-                            popUpTo(SPLASH_GRAPH) {
-                                inclusive = true
-                            }
-                            launchSingleTop = true
-                        }
-                    )
-                },
                 cardClick = { args ->
                     navController.navigateToDetailCommentDirect(
                         cardDetailCommentArgs = CardDetailCommentArgs(
@@ -132,6 +122,12 @@ fun SooumNavHost(
                             previousView = CardDetailTrace.PROFILE
                         )
                     )
+                },
+                onAlarmClick = {
+                    navController.navigateToAlarmRoute()
+                },
+                onSetting = {
+                    navController.navigateToSettingGraph()
                 }
             )
 
@@ -228,6 +224,23 @@ fun SooumNavHost(
                 onDetailWriteComplete = {
                     SooumLog.d(TAG, "onDetailWriteComplete")
                     navController.popBackStack()
+                }
+            )
+            settingGraph(
+                onBackPressed = {
+                    SooumOnBackPressed(appState = appState)
+                },
+                navController = navController,
+                onWithdrawalComplete = {
+                    navController.navigateToOnBoarding(
+                        args = OnBoardingArgs(showWithdrawalDialog = true),
+                        navOptions = navOptions {
+                            popUpTo(SPLASH_GRAPH) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    )
                 }
             )
         }
