@@ -61,7 +61,7 @@
                 android:textColor="#212121"
                 android:textSize="14sp"
                 android:textFontWeight="600"
-                android:layout_marginBottom="4.dp"/>
+                android:layout_marginBottom="4dp"/>
 
             <TextView
                 android:id="@+id/ad_body"
