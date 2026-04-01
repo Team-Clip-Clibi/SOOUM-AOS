@@ -266,10 +266,9 @@ object FeedUi {
             if (!isRead) {
                 Box(
                     modifier = Modifier
-                        .padding(1.dp)
-                        .size(10.dp)
+                        .size(12.dp)
                         .align(Alignment.TopEnd)
-                        .offset(x = (-1).dp, y = (-2).dp)
+                        .offset(x = (1).dp, y = (-1).dp)
                         .background(color = Danger.M_RED, shape = CircleShape)
                         .border(width = 2.dp, color = WHITE, shape = CircleShape)
                 )
