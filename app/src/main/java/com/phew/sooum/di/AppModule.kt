@@ -27,8 +27,8 @@ object AppModule {
 
     @Provides
     @IsDebug
-    fun provideIsDebug(): Boolean {
-        return BuildConfig.DEBUG
+    fun provideIsDebug(@ApplicationContext context: Context): Boolean {
+        return (context.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
     }
 
     @Provides
