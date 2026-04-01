@@ -228,6 +228,12 @@ internal fun BottomContent(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (showLocationAndTime) {
+                if (isAdminManger){
+                    ManagerLabel()
+                    if (!distance.isNullOrEmpty() || !timeAgo.isNullOrEmpty()) {
+                        SpotSeparator()
+                    }
+                }
                 LocationAndWriteTimeLabel(
                     location = distance?.takeIf { it.isNotEmpty() },
                     writeTime = timeAgo?.takeIf { it.isNotEmpty() }
@@ -238,12 +244,6 @@ internal fun BottomContent(
             }
             if (showTimer) {
                 TimerLabel(remainingTimeMillis = remaining, isExpired = isExpired)
-            }
-            if (isAdminManger){
-                ManagerLabel()
-                if (!distance.isNullOrEmpty() || !timeAgo.isNullOrEmpty()) {
-                    SpotSeparator()
-                }
             }
         }
         if (!showTimer) {

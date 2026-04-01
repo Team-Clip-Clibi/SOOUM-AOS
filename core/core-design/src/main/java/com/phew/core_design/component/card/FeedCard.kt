@@ -264,7 +264,7 @@ private fun FeedAdminCardImpl(
             ),
         shape = RoundedCornerShape(16.dp),
         color = NeutralColor.WHITE,
-        border = BorderStroke(1.dp, NeutralColor.GRAY_200)
+        border = BorderStroke(1.dp, Primary.MAIN)
     ) {
         Column(
             modifier = Modifier
