@@ -1,15 +1,13 @@
-name: Android CI (Feature to Main)
+name: Android Play Store Deploy (Internal Test)
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches:
+      - 'pre-release'
 
 jobs:
-  build_and_test:
+  play-store-internal-dist:
     runs-on: ubuntu-latest
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -30,19 +28,22 @@ jobs:
       - name: Restore keystore.properties
         run: echo "${{ secrets.KEYSTORE_PROPERTIES }}" | base64 -d > keystore.properties
 
-      - name: Run Unit Tests
-        run: ./gradlew testDevDebugUnitTest
+      - name: Restore Keystore File
+        run: echo "${{ secrets.ANDROID_KEYSTORE_FILE }}" | base64 -d > upload-keystore.jks
 
-      - name: Build Debug APK
-        run: ./gradlew assembleDevDebug
+      - name: Update keystore path
+        run: |
+          echo "" >> keystore.properties
+          echo "storeFile=../upload-keystore.jks" >> keystore.properties
 
-      - name: Send Slack Notification on Failure
-        if: failure()
-        uses: rtCamp/action-slack-notify@v2
-        env:
-         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-         SLACK_COLOR: '#FF0000'
-         SLACK_USERNAME: 'SOOUM CI Bot'
-         SLACK_TITLE: '🚨 CI Build/Test Failed'
-         SLACK_MESSAGE: 'SOOUM-AOS 빌드 혹은 테스트가 실패했습니다. 에러 로그를 확인해주세요.'
-         SLACK_FOOTER: 'GitHub Actions'
+      - name: Build Signed Release AAB
+        run: ./gradlew bundleProdRelease -Dorg.gradle.jvmargs=-Xmx4608m
+
+      - name: Upload to Google Play Internal Testing
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.ANDROID_PUBLISHER_CREDENTIALS }}
+          packageName: com.phew.sooum
+          releaseFiles: app/build/outputs/bundle/prodRelease/app-prod-release.aab
+          track: internal
+          status: completed
