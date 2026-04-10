@@ -686,59 +686,6 @@ private fun FeedContentView(
     }
 }
 
-//@Composable
-//fun NativeAdLoaderScreen(adUnitId: String) { // 파라미터는 받지만 내부에서 테스트 ID로 강제 덮어씌웁니다.
-//    val currentContext = LocalContext.current
-//
-//    // 🚨 1. 반드시 Activity를 추출해야 합니다. (이게 없으면 클릭 시 브라우저가 안 열립니다)
-//    val activity = remember(currentContext) {
-//        var ctx = currentContext
-//        while (ctx is ContextWrapper) {
-//            if (ctx is Activity) break
-//            ctx = ctx.baseContext
-//        }
-//        ctx as? Activity
-//    }
-//
-//    if (activity == null) {
-//        Log.e("AdMob_Final", "❌ Activity Context를 찾을 수 없어 광고 로드를 중단합니다.")
-//        return
-//    }
-//
-//    var nativeAd by remember { mutableStateOf<NativeAd?>(null) }
-//
-//
-//    LaunchedEffect(adUnitId) {
-//        val adLoader = AdLoader.Builder(activity, adUnitId)
-//            .forNativeAd { ad ->
-//                nativeAd = ad
-//            }
-//            .withAdListener(object : AdListener() {
-//                override fun onAdImpression() {
-//                    Log.d("AdMob_Final", "🔥 [임프레션 성공] 구글이 정상 노출로 인정했습니다!")
-//                }
-//                override fun onAdClicked() {
-//                    Log.d("AdMob_Final", "💰 [클릭 성공] 브라우저로 이동합니다!")
-//                }
-//                override fun onAdFailedToLoad(error: LoadAdError) {
-//                    Log.e("AdMob_Final", "❌ 로드 실패: ${error.message}")
-//                }
-//            })
-//            .build()
-//        adLoader.loadAd(AdRequest.Builder().build())
-//    }
-//
-//    DisposableEffect(nativeAd) {
-//        onDispose { nativeAd?.destroy() }
-//    }
-//
-//    if (nativeAd != null) {
-//        CardFeedNativeAd(nativeAd = nativeAd!!, activity = activity)
-//    } else {
-//        Spacer(modifier = Modifier.fillMaxWidth().height(65.dp))
-//    }
-//}
-
 @Composable
 private fun EmptyFeedView() {
     Column(
