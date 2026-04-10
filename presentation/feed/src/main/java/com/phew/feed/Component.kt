@@ -104,7 +104,7 @@ object FeedUi {
     fun NativeAdLoaderScreen(adUnitId: String) {
         var isAdFailed by remember { mutableStateOf(false) }
         if (isAdFailed) {
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(0.dp))
         } else {
             AndroidViewBinding(
                 factory = ItemNativeAdBinding::inflate,
