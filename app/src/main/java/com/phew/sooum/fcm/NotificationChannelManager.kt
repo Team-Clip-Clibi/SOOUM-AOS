@@ -50,6 +50,7 @@ class NotificationChannelManager @Inject constructor(
                 setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION), null)
                 this.lightColor = lightColor
                 enableLights(true)
+                lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
             }
             notificationManager.createNotificationChannel(channel)
         }
@@ -107,23 +108,14 @@ class NotificationChannelManager @Inject constructor(
             else -> GENERAL_CHANNEL_ID
         }
     }
-    
-    fun getChannelNameByType(notificationType: String): String {
-        return when (notificationType) {
-            "comment", "reply" -> COMMENT_CHANNEL_NAME
-            "like", "heart" -> LIKE_CHANNEL_NAME
-            "follow", "following" -> FOLLOW_CHANNEL_NAME
-            else -> GENERAL_CHANNEL_NAME
-        }
-    }
-    
+
     companion object {
         private const val TAG = "NotificationChannelManager"
         
-        const val GENERAL_CHANNEL_ID = "sooum_general_notification"
-        const val COMMENT_CHANNEL_ID = "sooum_comment_notification"
-        const val LIKE_CHANNEL_ID = "sooum_like_notification"
-        const val FOLLOW_CHANNEL_ID = "sooum_follow_notification"
+        const val GENERAL_CHANNEL_ID = "sooum_general_notification_v2"
+        const val COMMENT_CHANNEL_ID = "sooum_comment_notification_v2"
+        const val LIKE_CHANNEL_ID = "sooum_like_notification_v2"
+        const val FOLLOW_CHANNEL_ID = "sooum_follow_notification_v2"
         
         private const val GENERAL_CHANNEL_NAME = "일반 알림"
         private const val COMMENT_CHANNEL_NAME = "댓글 알림"
