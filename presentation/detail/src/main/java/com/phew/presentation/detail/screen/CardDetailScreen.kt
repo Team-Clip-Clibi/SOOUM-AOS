@@ -694,7 +694,7 @@ private fun CardDetailScreen(
                     BottomSheetItem(
                         id = MoreAction.BLOCK.ordinal,
                         title = stringResource(id = DetailR.string.card_detail_block),
-                        image = R.drawable.ic_eye,
+                        image = R.drawable.ic_eye_hide,
                         textColor = NeutralColor.GRAY_500,
                         imageColor = NeutralColor.BLACK
                     ),
