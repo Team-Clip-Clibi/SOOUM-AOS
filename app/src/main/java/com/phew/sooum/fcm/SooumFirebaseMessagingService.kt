@@ -16,8 +16,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
-
-// Coil 3.x
 import coil3.imageLoader
 import coil3.request.ImageRequest
 import coil3.request.transformations
@@ -94,6 +92,7 @@ class SooumFirebaseMessagingService : FirebaseMessagingService() {
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .setGroup(groupKey)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
 
         if (largeIconBitmap != null) {

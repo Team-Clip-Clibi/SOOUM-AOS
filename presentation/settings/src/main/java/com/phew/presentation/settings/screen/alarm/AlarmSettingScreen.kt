@@ -159,7 +159,7 @@ private fun ServiceAlarmView(
             subTitle = stringResource(R.string.alarm_view_item_tag_sub_title),
             isActivate = value.favoriteTagNotify,
             onClick = { result ->
-                val updatedAlarm = value.copy(recommendedContentNotify = result)
+                val updatedAlarm = value.copy(favoriteTagNotify = result)
                 onValueChange(updatedAlarm)
             }
         )

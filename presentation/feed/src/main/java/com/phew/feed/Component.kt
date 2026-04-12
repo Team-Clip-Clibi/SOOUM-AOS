@@ -102,54 +102,62 @@ import com.phew.core_design.R as DesignR
 object FeedUi {
     @Composable
     fun NativeAdLoaderScreen(adUnitId: String) {
-        AndroidViewBinding(
-            factory = ItemNativeAdBinding::inflate,
-        ) {
-            val adView = root.also { adView ->
-                adView.bodyView = this.adBody
-                adView.callToActionView = this.adCallToAction
-                adView.headlineView = this.adHeadline
-                adView.iconView = this.adAppIcon
-            }
+        var isAdFailed by remember { mutableStateOf(false) }
+        if (isAdFailed) {
+            Spacer(modifier = Modifier.height((-8).dp))
+        } else {
+            AndroidViewBinding(
+                factory = ItemNativeAdBinding::inflate,
+            ) {
+                val adView = root.also { adView ->
+                    adView.bodyView = this.adBody
+                    adView.callToActionView = this.adCallToAction
+                    adView.headlineView = this.adHeadline
+                    adView.iconView = this.adAppIcon
+                }
 
-            val adContainer = this.adContainer
+                val adContainer = this.adContainer
 
-            val adLoader = AdLoader.Builder(adView.context, adUnitId)
-                .forNativeAd { nativeAd ->
-                    nativeAd.advertiser?.let {
+                val adLoader = AdLoader.Builder(adView.context, adUnitId)
+                    .forNativeAd { nativeAd ->
+                        nativeAd.advertiser?.let {
 
-                    }
-                    nativeAd.body?.let { body ->
-                        this.adBody.text = body
-                    }
+                        }
+                        nativeAd.body?.let { body ->
+                            this.adBody.text = body
+                        }
 
-                    nativeAd.headline?.let {
-                        this.adHeadline.text = it
-                    }
-                    nativeAd.icon?.let {
-                        this.adAppIcon.setImageDrawable(it.drawable)
-                    }
-                    adView.setNativeAd(nativeAd)
-                }.withAdListener(object : AdListener() {
-                    override fun onAdLoaded() {
-                        Log.i("Admob", "onAdLoaded : Native ad Loaded")
-                        adContainer.isVisible = true
-                        super.onAdLoaded()
-                    }
+                        nativeAd.headline?.let {
+                            this.adHeadline.text = it
+                        }
+                        nativeAd.icon?.let {
+                            this.adAppIcon.setImageDrawable(it.drawable)
+                        }
+                        adView.setNativeAd(nativeAd)
+                    }.withAdListener(object : AdListener() {
+                        override fun onAdLoaded() {
+                            Log.i("Admob", "onAdLoaded : Native ad Loaded")
+                            adContainer.isVisible = true
+                            super.onAdLoaded()
+                        }
 
-                    override fun onAdFailedToLoad(error: LoadAdError) {
-                        Log.e("AdMob", "onAdFailedToLoad : ${error.message}")
-                        super.onAdFailedToLoad(error)
-                    }
-                }).withNativeAdOptions(
-                    NativeAdOptions.Builder().setAdChoicesPlacement(
-                        NativeAdOptions.ADCHOICES_TOP_RIGHT
+                        override fun onAdFailedToLoad(error: LoadAdError) {
+                            Log.e("AdMob", "onAdFailedToLoad : ${error.message}")
+                            isAdFailed = true
+                            super.onAdFailedToLoad(error)
+                        }
+                    }).withNativeAdOptions(
+                        NativeAdOptions.Builder().setAdChoicesPlacement(
+                            NativeAdOptions.ADCHOICES_TOP_RIGHT
+                        ).build()
                     ).build()
-                ).build()
-            adContainer.isVisible = true
-            adLoader.loadAd(AdRequest.Builder().build())
+
+                adContainer.isVisible = false
+                adLoader.loadAd(AdRequest.Builder().build())
+            }
         }
     }
+
 
     @Composable
      fun CardArticleView(
