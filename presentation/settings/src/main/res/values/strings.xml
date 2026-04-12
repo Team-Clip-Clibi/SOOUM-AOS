@@ -96,7 +96,7 @@
     <string name="block_user_dialog_disable">차단 해제</string>
 
     <!--  알람 설정 view  -->
-    <string name="alarm_view_title">알림 설정</string>
+    <string name="alarm_view_title">서비스 이용 알림</string>
     <string name="alarm_view_sub_content_service">서비스 이용 알림</string>
     <string name="alarm_view_item_write_comment">작성한 카드의 댓글</string>
     <string name="alarm_view_item_write_like">작성한 카드의 좋아요</string>
