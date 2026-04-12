@@ -765,7 +765,7 @@ private fun BottomSheetView(
                 BottomSheetItem(
                     id = MoreAction.BLOCK.ordinal,
                     title = stringResource(id = R.string.card_detail_block),
-                    image = com.phew.core_design.R.drawable.ic_eye,
+                    image = com.phew.core_design.R.drawable.ic_eye_hide,
                     textColor = NeutralColor.GRAY_500,
                     imageColor = NeutralColor.BLACK
                 ),
