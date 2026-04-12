@@ -3,6 +3,7 @@ package com.phew.presentation.settings.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.phew.core_common.DomainResult
+import com.phew.core_common.IsDebug
 import com.phew.core_common.TimeUtils
 import com.phew.domain.dto.Alarm
 import com.phew.domain.model.AppVersionStatusType
@@ -39,7 +40,8 @@ class SettingViewModel @Inject constructor(
     private val getRefreshToken: GetRefreshToken,
     private val setToggleNotification: SetToggleNotification,
     private val getToggleNotification : GetToggleNotification,
-    private val haptic : RunHaptic
+    private val haptic : RunHaptic,
+    @IsDebug private val isDebug: Boolean,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -234,7 +236,8 @@ class SettingViewModel @Inject constructor(
     private fun checkAppVersion() {
         viewModelScope.launch {
             val param = CheckAppVersionNew.Param(
-                type = "ANDROID"
+                type = "ANDROID",
+                isDebugMode = isDebug
             )
             
             when (val result = checkAppVersionNew(param)) {
