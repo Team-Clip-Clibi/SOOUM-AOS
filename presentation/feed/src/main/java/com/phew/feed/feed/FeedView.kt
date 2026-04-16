@@ -453,61 +453,38 @@ private fun FeedContentView(
                                 }
                             } else {
                                 val feedItemCount = latestFeedItems.itemCount
-                                val totalAdCount = if (feedItemCount == 0) 0 else (feedItemCount + 8) / 10
-                                val uiItemCount = feedItemCount + totalAdCount
-
                                 items(
-                                    count = uiItemCount,
-                                    key = { uiIndex ->
-                                        if (uiIndex % 11 == 1) {
-                                            "native_ad_latest_${uiIndex / 11}"
-                                        } else {
-                                            val adCountBefore = if (uiIndex == 0) 0 else (uiIndex + 9) / 11
-                                            val pagingIndex = uiIndex - adCountBefore
-                                            latestFeedItems.peek(pagingIndex)?.cardId ?: "placeholder_$uiIndex"
-                                        }
+                                    count = feedItemCount,
+                                    key = { index ->
+                                        latestFeedItems.peek(index)?.cardId ?: "placeholder_$index"
                                     },
-                                    contentType = { uiIndex ->
-                                        if (uiIndex % 11 == 1) "Ad" else "LatestFeed"
-                                    }
+                                    contentType = { "LatestFeed" }
                                 ) { uiIndex ->
-                                    if (uiIndex % 11 == 1) {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .wrapContentHeight()
-                                                .padding(horizontal = 16.dp)
-                                                .graphicsLayer { translationY = pullOffsetPx }
-                                        ) {
-                                            FeedUi.NativeAdLoaderScreen(adUnitId = adUnitId)
-                                        }
-                                    } else {
-                                        val adCountBefore = if (uiIndex == 0) 0 else (uiIndex + 9) / 11
-                                        val pagingIndex = uiIndex - adCountBefore
-                                        latestFeedItems[pagingIndex]?.let { latest ->
-                                            val cardId = latest.cardId.toLongOrNull()
-                                            if (cardId == null || !hiddenCardIds.contains(cardId)) {
-                                                val feedCardType = classifyLatestFeedType(latest)
-                                                Box(
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .wrapContentHeight()
-                                                        .padding(horizontal = 16.dp)
-                                                        .graphicsLayer {
-                                                            translationY = pullOffsetPx
-                                                        }
-                                                ) {
-                                                    FeedUi.TypedFeedCardView(
-                                                        feedCard = feedCardType,
-                                                        onClick = { id ->
-                                                            onClick(
-                                                                id,
-                                                                feedCardType.isEventCard()
-                                                            )
-                                                        },
-                                                        onRemoveCard = onRemoveCard,
-                                                    )
-                                                }
+                                    val adCountBefore = if (uiIndex == 0) 0 else (uiIndex + 9) / 11
+                                    val pagingIndex = uiIndex - adCountBefore
+                                    latestFeedItems[pagingIndex]?.let { latest ->
+                                        val cardId = latest.cardId.toLongOrNull()
+                                        if (cardId == null || !hiddenCardIds.contains(cardId)) {
+                                            val feedCardType = classifyLatestFeedType(latest)
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .wrapContentHeight()
+                                                    .padding(horizontal = 16.dp)
+                                                    .graphicsLayer {
+                                                        translationY = pullOffsetPx
+                                                    }
+                                            ) {
+                                                FeedUi.TypedFeedCardView(
+                                                    feedCard = feedCardType,
+                                                    onClick = { id ->
+                                                        onClick(
+                                                            id,
+                                                            feedCardType.isEventCard()
+                                                        )
+                                                    },
+                                                    onRemoveCard = onRemoveCard,
+                                                )
                                             }
                                         }
                                     }
