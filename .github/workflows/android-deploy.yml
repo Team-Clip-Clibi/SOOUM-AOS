@@ -3,7 +3,7 @@ name: Android Play Store Deploy (Draft)
 on:
   push:
     branches:
-      - 'release-prod' 
+      - 'release-prod'
 
 jobs:
   play-store-dist:
@@ -35,10 +35,10 @@ jobs:
         run: |
           echo "" >> keystore.properties
           echo "storeFile=../upload-keystore.jks" >> keystore.properties
-        
+
       - name: Build Signed Release AAB
         run: ./gradlew bundleProdRelease -Dorg.gradle.jvmargs=-Xmx4608m
-        
+
       - name: Upload to Google Play
         uses: r0adkll/upload-google-play@v1
         with:

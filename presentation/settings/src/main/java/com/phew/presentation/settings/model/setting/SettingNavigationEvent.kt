@@ -9,4 +9,5 @@ sealed class SettingNavigationEvent {
     data object NavigateToAccountDeletion : SettingNavigationEvent()
     data object NavigateToAppStore : SettingNavigationEvent()
     data class SendInquiryMail(val refreshToken: String) : SettingNavigationEvent()
+    data object NavigateToAlarm : SettingNavigationEvent()
 }

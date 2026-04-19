@@ -108,6 +108,7 @@ import androidx.lifecycle.flowWithLifecycle
 import com.phew.presentation.detail.viewmodel.CardDetailUiEffect
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.withTimeoutOrNull
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -380,12 +381,14 @@ internal fun CommentCardDetailScreen(
                         isOwnCard = cardDetail?.isOwnCard == true,
                         closeBottomSheet = closeBottomSheetLambda,
                         onNavigateToReport = onNavigateToReportLambda,
+                        onUnBlockUser = viewModel::unblockMember,
                         showBlockDialog = {
                             showBlockDialog = true
                         },
                         showDeleteDialog = {
                             showDeleteDialog = true
-                        }
+                        },
+                        isAlreadyBlock = uiState.blockedMemberId != null
                     )
                 }
                 if (showBlockDialog) {
@@ -744,39 +747,62 @@ private fun CardView(
 @Composable
 private fun BottomSheetView(
     isOwnCard: Boolean,
+    isAlreadyBlock: Boolean,
     closeBottomSheet: () -> Unit,
     onNavigateToReport: () -> Unit,
+    onUnBlockUser: () -> Unit,
     showBlockDialog: () -> Unit,
     showDeleteDialog: () -> Unit,
 ) {
     BottomSheetComponent.BottomSheet(
-        data = if (isOwnCard) {
-            arrayListOf(
-                BottomSheetItem(
-                    id = MoreAction.DELETE.ordinal,
-                    title = stringResource(id = R.string.card_detail_delete),
-                    image = com.phew.core_design.R.drawable.ic_trash_stoke,
-                    imageColor = Danger.M_RED,
-                    textColor = Danger.M_RED,
+        data = when {
+            isOwnCard -> {
+                arrayListOf(
+                    BottomSheetItem(
+                        id = MoreAction.DELETE.ordinal,
+                        title = stringResource(id = R.string.card_detail_delete),
+                        image = com.phew.core_design.R.drawable.ic_trash_stoke,
+                        imageColor = Danger.M_RED,
+                        textColor = Danger.M_RED,
+                    )
                 )
-            )
-        } else {
-            arrayListOf(
-                BottomSheetItem(
-                    id = MoreAction.BLOCK.ordinal,
-                    title = stringResource(id = R.string.card_detail_block),
-                    image = com.phew.core_design.R.drawable.ic_eye,
-                    textColor = NeutralColor.GRAY_500,
-                    imageColor = NeutralColor.BLACK
-                ),
-                BottomSheetItem(
-                    id = MoreAction.DANGER.ordinal,
-                    title = stringResource(id = R.string.card_detail_report),
-                    image = com.phew.core_design.R.drawable.ic_flag_stoke,
-                    imageColor = Danger.M_RED,
-                    textColor = Danger.M_RED,
+            }
+            isAlreadyBlock -> {
+                arrayListOf(
+                    BottomSheetItem(
+                        id = MoreAction.UNBLOCK.ordinal,
+                        title = stringResource(id = R.string.card_detail_un_block_user),
+                        image = com.phew.core_design.R.drawable.ic_eye,
+                        textColor = NeutralColor.GRAY_500,
+                        imageColor = NeutralColor.BLACK
+                    ),
+                    BottomSheetItem(
+                        id = MoreAction.DANGER.ordinal,
+                        title = stringResource(id = R.string.card_detail_report),
+                        image = com.phew.core_design.R.drawable.ic_flag_stoke,
+                        imageColor = Danger.M_RED,
+                        textColor = Danger.M_RED,
+                    )
                 )
-            )
+            }
+            else -> {
+                arrayListOf(
+                    BottomSheetItem(
+                        id = MoreAction.BLOCK.ordinal,
+                        title = stringResource(id = R.string.card_detail_block),
+                        image = com.phew.core_design.R.drawable.ic_eye_hide,
+                        textColor = NeutralColor.GRAY_500,
+                        imageColor = NeutralColor.BLACK
+                    ),
+                    BottomSheetItem(
+                        id = MoreAction.DANGER.ordinal,
+                        title = stringResource(id = R.string.card_detail_report),
+                        image = com.phew.core_design.R.drawable.ic_flag_stoke,
+                        imageColor = Danger.M_RED,
+                        textColor = Danger.M_RED,
+                    )
+                )
+            }
         },
         onItemClick = { id ->
             when (id) {
@@ -793,6 +819,10 @@ private fun BottomSheetView(
                 MoreAction.DELETE.ordinal -> {
                     closeBottomSheet()
                     showDeleteDialog()
+                }
+                MoreAction.UNBLOCK.ordinal -> {
+                    closeBottomSheet()
+                    onUnBlockUser()
                 }
             }
         },
@@ -916,13 +946,17 @@ private fun HandleBlockUser(
     val cancelText = stringResource(R.string.card_detail_cancel)
     LaunchedEffect(blockSuccess) {
         if (blockSuccess) {
-            val result = snackBarHostState.showSnackbar(
-                message = message,
-                actionLabel = cancelText
-            )
+            val result = withTimeoutOrNull(6000L) {
+                snackBarHostState.showSnackbar(
+                    message = message,
+                    actionLabel = cancelText,
+                    duration = SnackbarDuration.Indefinite
+                )
+            }
             if (result == SnackbarResult.ActionPerformed) {
                 unBlockMember()
             }
+            snackBarHostState.currentSnackbarData?.dismiss()
             clearBlockSuccess()
         }
     }

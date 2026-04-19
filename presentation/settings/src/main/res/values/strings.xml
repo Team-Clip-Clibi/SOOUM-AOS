@@ -2,7 +2,7 @@
 <resources>
     <!-- Screen Title -->
     <string name="setting_title">설정</string>
-    
+
     <!-- Setting Items -->
     <string name="setting_notification">알림 설정</string>
     <string name="setting_login_other_device">다른 기기에서 로그인하기</string>
@@ -37,7 +37,7 @@
     <string name="other_device_title">다른 기기로 계정을 옮길 수 있는 코드를 드릴게요</string>
     <string name="other_device_one_hour_timeout">코드는 1시간 동안 유효해요</string>
     <string name="other_device_retry_code">코드 재발급하기</string>
-    
+
     <!-- Activity Restriction -->
     <string name="activity_restriction_title">이용 제한 안내</string>
     <string name="activity_restriction_guide_message">신고된 카드로 인해 카드 추가 기능이 제한된 계정입니다.\n필요한 경우 아래 문의하기를 이용해주세요.</string>
@@ -51,11 +51,9 @@
     <string name="load_previous_account_guide_title">이전 계정 불러오기란?</string>
     <string name="load_previous_account_guide_message">기존 휴대폰의 숨 앱 [설정 &gt; 다른 기기에서 로그인하기]에서 발급한 코드를 입력하면, 기존 계정을 현재 휴대폰에서 그대로 사용할 수 있어요</string>
     <string name="load_previous_account_ok">확인</string>
-
     <string name="load_previous_account_dialog_wrong_title">잘못된 코드에요</string>
     <string name="load_previous_account_dialog_wrong_message">코드를 확인한 뒤 다시 시도해주세요.</string>
     <string name="load_previous_account_dialog_wrong_ok">확인</string>
-
     <string name="load_previous_account_dialog_success_title">이전 계정 불러오기 완료</string>
     <string name="load_previous_account_dialog_success_message">이전 계정 불러오기가 성공적으로 완료되었습니다.</string>
     <string name="load_previous_account_dialog_success_ok">확인</string>
@@ -92,10 +90,28 @@
     <string name="block_user_top_title">차단 사용자 관리</string>
     <string name="block_user_diable">차단 해제</string>
     <string name="block_no_user">차단한 사용자가 없어요</string>
-
     <string name="block_user_dialog_title">차단 해제하시겠어요?</string>
     <string name="block_user_dialog_content">%s님을 팔로우하고, 카드를 볼 수 있어요.</string>
     <string name="block_user_dialog_cancel">취소</string>
     <string name="block_user_dialog_disable">차단 해제</string>
 
+    <!--  알람 설정 view  -->
+    <string name="alarm_view_title">서비스 이용 알림</string>
+    <string name="alarm_view_sub_content_service">서비스 이용 알림</string>
+    <string name="alarm_view_item_write_comment">작성한 카드의 댓글</string>
+    <string name="alarm_view_item_write_like">작성한 카드의 좋아요</string>
+    <string name="alarm_view_item_follow_new_card">팔로우한 사람의 새로운 카드</string>
+    <string name="alarm_view_item_new_follow">새로운 팔로워</string>
+    <string name="alarm_view_item_search_new_card_comment">조회한 카드의 새로운 댓글</string>
+    <string name="alarm_view_item_recommend_card">인기카드 등 콘텐츠 추천</string>
+    <string name="alarm_view_item_tag">태그 알림</string>
+    <string name="alarm_view_item_tag_sub_title">관심 태그가 포함된 카드가 올라온 경우</string>
+    <string name="alarm_view_item_banned_info">이용 제한 안내</string>
+    <string name="alarm_view_item_banned_info_sub_title">신고된 카드로 인해 카드 추가 기능이 제한된 경우</string>
+    <string name="alarm_view_item_new_event_title">혜택, 이벤트 알림</string>
+    <string name="alarm_view_item_new_event">신규기능/업데이트 소식</string>
+    <string name="alarm_view_dialog_title">알림을 끄시겠어요?</string>
+    <string name="alarm_view_dialog_subtitle">유용한 정보나 이벤트 알림을 받지 못할 수도 있어요.</string>
+    <string name="alarm_view_dialog_start_btn">취소</string>
+    <string name="alarm_view_dialog_end_btn">알림 끄기</string>
 </resources>

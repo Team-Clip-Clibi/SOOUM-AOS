@@ -5,14 +5,15 @@ import com.phew.core_common.exception.ServerException
 import com.phew.core_common.log.SooumLog
 import com.phew.datastore_local.DataStore
 import com.phew.device_info.DeviceInfo
+import com.phew.domain.dto.Alarm
 import com.phew.domain.model.RejoinableDate
 import com.phew.domain.model.TransferCode
-import com.phew.network.dto.request.NotifyToggleRequestDTO
 import com.phew.domain.repository.network.MembersRepository
 import com.phew.network.dto.request.account.TransferAccountRequestDTO
 import com.phew.network.dto.request.account.WithdrawalRequestDTO
 import com.phew.network.retrofit.MembersHttp
 import com.phew.repository.mapper.apiCall
+import com.phew.repository.mapper.toDTO
 import com.phew.repository.mapper.toDomain
 import javax.inject.Inject
 
@@ -21,7 +22,7 @@ class MembersRepositoryImpl @Inject constructor(
     private val deviceInfo: DeviceInfo,
     private val dataStore: DataStore
 ) : MembersRepository {
-    
+
     override suspend fun getActivityRestrictionDate(): Result<String?> {
         SooumLog.d(TAG, "getActivityRestrictionDate")
         return when (val result = apiCall(
@@ -30,11 +31,12 @@ class MembersRepositoryImpl @Inject constructor(
         )) {
             is DataResult.Success -> Result.success(result.data)
             is DataResult.Fail -> Result.failure(
-                result.throwable ?: Exception("Failed to get activity restriction date: ${result.message}")
+                result.throwable
+                    ?: Exception("Failed to get activity restriction date: ${result.message}")
             )
         }
     }
-    
+
     override suspend fun getTransferCode(): Result<TransferCode> {
         return when (val result = apiCall(
             apiCall = { membersHttp.getTransferCode() },
@@ -46,7 +48,7 @@ class MembersRepositoryImpl @Inject constructor(
             )
         }
     }
-    
+
     override suspend fun refreshTransferCode(): Result<TransferCode> {
         return when (val result = apiCall(
             apiCall = { membersHttp.refreshTransferCode() },
@@ -85,20 +87,20 @@ class MembersRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
-    
+
     override suspend fun withdrawalAccount(reason: String): Result<Unit> {
         SooumLog.d(TAG, "withdrawalAccount - reason: $reason")
-        
+
         return try {
             // DataStore에서 토큰 가져오기
             val tokenData = dataStore.getToken("user_token")
-            
+
             val request = WithdrawalRequestDTO(
                 accessToken = tokenData.accessToken,
                 refreshToken = tokenData.refreshToken,
                 reason = reason
             )
-            
+
             when (val result = apiCall(
                 apiCall = { membersHttp.withdrawalAccount(request) },
                 mapper = { Unit }
@@ -109,10 +111,14 @@ class MembersRepositoryImpl @Inject constructor(
                         SooumLog.d(TAG, "Successfully cleared all data after withdrawal")
                         Result.success(Unit)
                     } else {
-                        SooumLog.w(TAG, "Failed to clear data after withdrawal, but account was withdrawn")
+                        SooumLog.w(
+                            TAG,
+                            "Failed to clear data after withdrawal, but account was withdrawn"
+                        )
                         Result.success(Unit) // 탈퇴는 성공했으므로 여전히 성공으로 처리
                     }
                 }
+
                 is DataResult.Fail -> Result.failure(
                     result.throwable ?: Exception("Failed to withdrawal account: ${result.message}")
                 )
@@ -121,10 +127,10 @@ class MembersRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
-    
+
     override suspend fun getRejoinableDate(): Result<RejoinableDate> {
         SooumLog.d(TAG, "getRejoinableDate")
-        
+
         return when (val result = apiCall(
             apiCall = { membersHttp.getRejoinableDate() },
             mapper = { it.toDomain() }
@@ -135,22 +141,20 @@ class MembersRepositoryImpl @Inject constructor(
             )
         }
     }
-    
-    override suspend fun toggleNotification(isAllowNotify: Boolean): DataResult<Unit> {
+
+    override suspend fun toggleNotification(isAllowNotify: Alarm): DataResult<Unit> {
         SooumLog.d(TAG, "toggleNotification - isAllowNotify: $isAllowNotify")
-        
-        return try {
-            val request = NotifyToggleRequestDTO(isAllowNotify = isAllowNotify)
-            when (val result = apiCall(
-                apiCall = { membersHttp.toggleNotification(request) },
-                mapper = { Unit }
-            )) {
-                is DataResult.Success -> DataResult.Success(Unit)
-                is DataResult.Fail -> result
-            }
-        } catch (e: Exception) {
-            DataResult.Fail(throwable = e)
-        }
+        return (apiCall(
+            apiCall = { membersHttp.toggleNotification(isAllowNotify.toDTO()) },
+            mapper = { _ ->  }
+        ))
+    }
+
+    override suspend fun getToggleNotification(): DataResult<Alarm> {
+        return apiCall(
+            apiCall = { membersHttp.getToggleNotification() },
+            mapper = { result -> result.toDomain() }
+        )
     }
 }
 

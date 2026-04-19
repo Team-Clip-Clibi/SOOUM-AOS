@@ -5,6 +5,7 @@
     <string name="card_error_comment">댓글을 불러오는데 실패했습니다.</string>
     <string name="card_title_comment">카드</string>
     <string name="card_detail_block">차단하기</string>
+    <string name="card_detail_un_block_user">차단해제</string>
     <string name="card_detail_report">신고하기</string>
     <string name="card_detail_delete">삭제</string>
     <string name="card_detail_block_dialog_title">차단하시겠어요?</string>

@@ -20,6 +20,7 @@ import com.phew.presentation.detail.navigation.navigateToDetailGraph
 import com.phew.core.ui.state.SooumAppState
 import com.phew.feed.NotifyTab
 import com.phew.feed.notification.WebView
+import com.phew.presentation.feed.BuildConfig
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -29,11 +30,11 @@ private val FEED_HOME_ROUTE = HomeTabType.FEED.route
 
 private const val NOTIFY_ROUTE = "notify_route"
 private const val NOTIFY_ARG_KEY = "notify_index"
-private val NOTIFY_ARGS = "$NOTIFY_ROUTE/{$NOTIFY_ARG_KEY}"
+private const val NOTIFY_ARGS = "$NOTIFY_ROUTE/{$NOTIFY_ARG_KEY}"
 
 private const val WEB_VIEW_ROUTE = "web_view_route"
 private const val WEB_VIEW_ARG_KEY = "notice_url"
-private val FEED_WEB_VIEW_ARGS = "$WEB_VIEW_ROUTE/{$WEB_VIEW_ARG_KEY}"
+private const val FEED_WEB_VIEW_ARGS = "$WEB_VIEW_ROUTE/{$WEB_VIEW_ARG_KEY}"
 
 private fun NavHostController.navigateToNotify(
     data : String,
@@ -53,13 +54,15 @@ private fun NavHostController.navigateToWebView(
 fun NavGraphBuilder.feedGraph(
     appState: SooumAppState,
     navController: NavHostController,
+    onAlarmClick: () -> Unit
 ) {
     navigation(
         route = FEED_GRAPH,
         startDestination = FEED_HOME_ROUTE
     ) {
-        slideComposable(FEED_HOME_ROUTE) { nav ->
+        slideComposable(FEED_HOME_ROUTE) { _ ->
             val feedViewModel: FeedViewModel = hiltViewModel()
+            val adNativeId: String = BuildConfig.GOOGLE_ADS_NATIVE
             remember { SnackbarHostState() }
             val locationPermission = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.RequestMultiplePermissions(),
@@ -74,6 +77,7 @@ fun NavGraphBuilder.feedGraph(
                     locationPermission.launch(permissions)
                 }
             }
+
             FeedView(
                 appState = appState,
                 viewModel = feedViewModel,
@@ -90,7 +94,9 @@ fun NavGraphBuilder.feedGraph(
                 noticeClick = navController::navigateToNotify,
                 navigateToDetail = { cardDetailArgs ->
                     navController.navigateToDetailGraph(cardDetailArgs)
-                }
+                },
+                webViewClick = navController::navigateToWebView,
+                adUnitId = adNativeId
             )
         }
 
@@ -113,7 +119,8 @@ fun NavGraphBuilder.feedGraph(
                     navController.navigateToDetailGraph(cardDetailArgs)
                 },
                 navigateToWebView = navController::navigateToWebView,
-                userSelectIndex = NotifyTab.from(data)
+                userSelectIndex = NotifyTab.from(data),
+                onClickAlarmSetting = onAlarmClick
             )
         }
         slideComposable(
@@ -134,4 +141,3 @@ fun NavGraphBuilder.feedGraph(
     }
 }
 
-private const val TAG = "FeedGraph"

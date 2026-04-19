@@ -53,6 +53,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
@@ -118,6 +119,7 @@ import com.phew.core_design.typography.FontType
 import com.phew.presentation.detail.viewmodel.CardDetailUiEffect
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -239,13 +241,17 @@ internal fun CardDetailRoute(
         
         LaunchedEffect(uiState.blockSuccess) {
             coroutineScope.launch {
-                val result = snackBarHostState.showSnackbar(
-                    message = message,
-                    actionLabel = cancelText
-                )
+                val result = withTimeoutOrNull(6000L) {
+                    snackBarHostState.showSnackbar(
+                        message = message,
+                        actionLabel = cancelText,
+                        duration = SnackbarDuration.Indefinite
+                    )
+                }
                 if (result == androidx.compose.material3.SnackbarResult.ActionPerformed) {
                     viewModel.unblockMember()
                 }
+                snackBarHostState.currentSnackbarData?.dismiss()
             }
             viewModel.clearBlockSuccess()
         }
@@ -409,7 +415,9 @@ internal fun CardDetailRoute(
         onClickDeleteErrorDialog = {
             viewModel.clearError()
             onNavigateToHome()
-        }
+        },
+        isAlreadyBlock = uiState.blockedMemberId != null,
+        onUnBlockUser = viewModel::unblockMember
     )
 }
 
@@ -454,12 +462,14 @@ private fun CardDetailScreen(
     isExpire: Boolean,
     isDelete: Boolean,
     isOwnCard: Boolean,
+    isAlreadyBlock: Boolean,
     showBottomSheet: Boolean,
     onShowBottomSheetChange: (Boolean) -> Unit,
     showBlockDialog: Boolean,
     onShowBlockDialogChange: (Boolean) -> Unit,
     showDeleteDialog: Boolean,
     onShowDeleteDialogChange: (Boolean) -> Unit,
+    onUnBlockUser : () -> Unit,
     refreshingOffset: Dp,
     refreshState: PullToRefreshState,
     density: androidx.compose.ui.unit.Density,
@@ -679,33 +689,54 @@ private fun CardDetailScreen(
     // BottomSheet
     if (showBottomSheet) {
         BottomSheetComponent.BottomSheet(
-            data = if (isOwnCard) {
-                arrayListOf(
-                    BottomSheetItem(
-                        id = MoreAction.DELETE.ordinal,
-                        title = stringResource(id = DetailR.string.card_detail_delete),
-                        image = R.drawable.ic_trash_stoke,
-                        imageColor = Danger.M_RED,
-                        textColor = Danger.M_RED,
+            data = when{
+                isOwnCard -> {
+                    arrayListOf(
+                        BottomSheetItem(
+                            id = MoreAction.DELETE.ordinal,
+                            title = stringResource(id = DetailR.string.card_detail_delete),
+                            image = R.drawable.ic_trash_stoke,
+                            imageColor = Danger.M_RED,
+                            textColor = Danger.M_RED,
+                        )
                     )
-                )
-            } else {
-                arrayListOf(
-                    BottomSheetItem(
-                        id = MoreAction.BLOCK.ordinal,
-                        title = stringResource(id = DetailR.string.card_detail_block),
-                        image = R.drawable.ic_eye,
-                        textColor = NeutralColor.GRAY_500,
-                        imageColor = NeutralColor.BLACK
-                    ),
-                    BottomSheetItem(
-                        id = MoreAction.DANGER.ordinal,
-                        title = stringResource(id = DetailR.string.card_detail_report),
-                        image = R.drawable.ic_flag_stoke,
-                        imageColor = Danger.M_RED,
-                        textColor = Danger.M_RED,
+                }
+                isAlreadyBlock -> {
+                    arrayListOf(
+                        BottomSheetItem(
+                            id = MoreAction.UNBLOCK.ordinal,
+                            title = stringResource(id = DetailR.string.card_detail_un_block_user),
+                            image = R.drawable.ic_eye,
+                            textColor = NeutralColor.GRAY_500,
+                            imageColor = NeutralColor.BLACK
+                        ),
+                        BottomSheetItem(
+                            id = MoreAction.DANGER.ordinal,
+                            title = stringResource(id = DetailR.string.card_detail_report),
+                            image = R.drawable.ic_flag_stoke,
+                            imageColor = Danger.M_RED,
+                            textColor = Danger.M_RED,
+                        )
                     )
-                )
+                }
+                else -> {
+                    arrayListOf(
+                        BottomSheetItem(
+                            id = MoreAction.BLOCK.ordinal,
+                            title = stringResource(id = DetailR.string.card_detail_block),
+                            image = R.drawable.ic_eye_hide,
+                            textColor = NeutralColor.GRAY_500,
+                            imageColor = NeutralColor.BLACK
+                        ),
+                        BottomSheetItem(
+                            id = MoreAction.DANGER.ordinal,
+                            title = stringResource(id = DetailR.string.card_detail_report),
+                            image = R.drawable.ic_flag_stoke,
+                            imageColor = Danger.M_RED,
+                            textColor = Danger.M_RED,
+                        )
+                    )
+                }
             },
             onItemClick = { id ->
                 when (id) {
@@ -722,6 +753,10 @@ private fun CardDetailScreen(
                     MoreAction.DELETE.ordinal -> {
                         onShowBottomSheetChange(false)
                         onShowDeleteDialogChange(true)
+                    }
+                    MoreAction.UNBLOCK.ordinal -> {
+                        onUnBlockUser()
+                        onShowBottomSheetChange(false)
                     }
                 }
             },

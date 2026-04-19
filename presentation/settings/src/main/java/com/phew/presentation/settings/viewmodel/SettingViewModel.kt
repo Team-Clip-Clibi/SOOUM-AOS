@@ -2,15 +2,19 @@ package com.phew.presentation.settings.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.phew.core_common.DataResult
 import com.phew.core_common.DomainResult
+import com.phew.core_common.IsDebug
 import com.phew.core_common.TimeUtils
+import com.phew.domain.dto.Alarm
 import com.phew.domain.model.AppVersionStatusType
 import com.phew.domain.usecase.CheckAppVersionNew
 import com.phew.domain.usecase.GetActivityRestrictionDate
 import com.phew.domain.usecase.GetRefreshToken
 import com.phew.domain.usecase.GetRejoinableDate
-import com.phew.domain.usecase.ToggleNotification
+import com.phew.domain.usecase.GetToggleNotification
+import com.phew.domain.usecase.RunHaptic
+import com.phew.domain.usecase.SetToggleNotification
+import com.phew.presentation.settings.component.setting.SettingItemRow
 import com.phew.presentation.settings.model.setting.SettingNavigationEvent
 import com.phew.presentation.settings.model.setting.SettingItem
 import com.phew.presentation.settings.model.setting.SettingItemId
@@ -34,14 +38,29 @@ class SettingViewModel @Inject constructor(
     private val checkAppVersionNew: CheckAppVersionNew,
     private val getRejoinableDate: GetRejoinableDate,
     private val getRefreshToken: GetRefreshToken,
-    private val toggleNotification: ToggleNotification
+    private val setToggleNotification: SetToggleNotification,
+    private val getToggleNotification : GetToggleNotification,
+    private val haptic : RunHaptic,
+    @IsDebug private val isDebug: Boolean,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
         SettingUiState(
-            settingItems = createSettingItems()
+            settingItems = createSettingItems(),
+            notificationEnabled = Alarm(
+                commentCardNotify = false,
+                cardLikeNotify = false,
+                followUserCardNotify = false,
+                newFollowerNotify = false,
+                cardNewCommentNotify = false,
+                recommendedContentNotify = false,
+                favoriteTagNotify = false,
+                serviceUpdateNotify = false,
+                policyViolationNotify = false
+            )
         )
     )
+
     val uiState: StateFlow<SettingUiState> = _uiState.asStateFlow()
 
     private val _navigationEvent = MutableSharedFlow<SettingNavigationEvent>()
@@ -54,7 +73,6 @@ class SettingViewModel @Inject constructor(
         loadActivityRestrictionDate()
         checkAppVersion()
         loadRejoinableDate()
-        loadNotificationState()
     }
 
     private fun createSettingItems(): List<SettingItem> {
@@ -98,52 +116,28 @@ class SettingViewModel @Inject constructor(
                 id = SettingItemId.ACCOUNT_DELETION,
                 title = "", // Will be set from strings in UI
                 type = SettingItemType.DANGER
+            ),
+            SettingItem(
+                id = SettingItemId.ALARM,
+                title = "",
+                type = SettingItemType.NAVIGATION
             )
         )
     }
 
-    fun onNotificationToggle(enabled: Boolean) {
+    fun onNotificationToggle(enabled: Alarm) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
-            when (val result = toggleNotification(enabled)) {
+            when (setToggleNotification(param = SetToggleNotification.Param(enabled))) {
                 is DomainResult.Success -> {
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            notificationEnabled = result.data
-                        )
-                    }
+                    haptic.invoke()
+                    _uiState.update { state -> state.copy(notificationEnabled = enabled) }
                 }
+
                 is DomainResult.Failure -> {
                     _uiState.update { it.copy(isLoading = false) }
                     _toastEvent.emit(ToastEvent.ShowNotificationToggleErrorToast)
-                }
-            }
-        }
-    }
-
-    fun checkForUpdates() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            
-            val param = CheckAppVersionNew.Param(
-                type = "ANDROID"
-            )
-            
-            when (val result = checkAppVersionNew(param)) {
-                is DomainResult.Success -> {
-                    _uiState.update { 
-                        it.copy(
-                            isLoading = false,
-                            appVersionStatus = result.data,
-                            appVersionStatusType = result.data?.status,
-                            latestVersion = result.data?.latestVersion
-                        )
-                    }
-                }
-                is DomainResult.Failure -> {
-                    _uiState.update { it.copy(isLoading = false) }
                 }
             }
         }
@@ -170,6 +164,12 @@ class SettingViewModel @Inject constructor(
     fun onNoticeClick() {
         viewModelScope.launch {
             _navigationEvent.emit(SettingNavigationEvent.NavigateToNotice)
+        }
+    }
+
+    fun onAlarmClick() {
+        viewModelScope.launch {
+            _navigationEvent.emit(SettingNavigationEvent.NavigateToAlarm)
         }
     }
 
@@ -236,7 +236,8 @@ class SettingViewModel @Inject constructor(
     private fun checkAppVersion() {
         viewModelScope.launch {
             val param = CheckAppVersionNew.Param(
-                type = "ANDROID"
+                type = "ANDROID",
+                isDebugMode = isDebug
             )
             
             when (val result = checkAppVersionNew(param)) {
@@ -244,8 +245,8 @@ class SettingViewModel @Inject constructor(
                     _uiState.update { 
                         it.copy(
                             appVersionStatus = result.data,
-                            appVersionStatusType = result.data?.status,
-                            latestVersion = result.data?.latestVersion
+                            appVersionStatusType = result.data.status,
+                            latestVersion = result.data.latestVersion
                         )
                     }
                 }
@@ -267,14 +268,15 @@ class SettingViewModel @Inject constructor(
         }
     }
     
-    private fun loadNotificationState() {
+    fun loadNotificationState() {
         viewModelScope.launch {
-            when (val result = toggleNotification()) {
+            when (val result = getToggleNotification()) {
                 is DomainResult.Success -> {
                     _uiState.update { it.copy(notificationEnabled = result.data) }
                 }
                 is DomainResult.Failure -> {
-                    // Failed to load cached notify state, keep default
+                    _uiState.update { it.copy(isLoading = false) }
+                    _toastEvent.emit(ToastEvent.ShowNotificationToggleErrorToast)
                 }
             }
         }

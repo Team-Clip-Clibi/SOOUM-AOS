@@ -1,21 +1,30 @@
 package com.phew.feed
 
-import androidx.compose.animation.core.LinearOutSlowInEasing
+import android.util.Log
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
@@ -31,33 +40,48 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidViewBinding
+import androidx.core.view.isVisible
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
+import com.google.android.gms.ads.AdListener
+import com.google.android.gms.ads.AdLoader
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.nativead.NativeAdOptions
 import com.phew.core_common.TimeUtils
+import com.phew.core_design.Danger
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.NeutralColor.GRAY_400
 import com.phew.core_design.NeutralColor.GRAY_600
 import com.phew.core_design.NeutralColor.WHITE
 import com.phew.core_design.Primary
 import com.phew.core_design.TextComponent
-import com.phew.core_design.UnKnowColor
 import com.phew.core_design.component.card.FeedAdminCard
 import com.phew.core_design.component.card.FeedDefaultCard
 import com.phew.core_design.component.card.FeedDeletedCard
 import com.phew.core_design.component.card.FeedPungCard
-import com.phew.core_design.component.card.NotiCard
-import com.phew.core_design.component.card.NotiCardData
-import com.phew.core_design.component.card.component.IndicatorDot
+import com.phew.core_design.component.card.NoticeCardData
+import com.phew.core_design.component.card.FeedNotice
 import com.phew.core_design.component.filter.SooumFilter
 import com.phew.core_design.component.tab.SooumTab
 import com.phew.core_design.component.tab.SooumTabRow
 import com.phew.core_design.label.LabelComponent
 import com.phew.core_design.theme.GRAY_100
+import com.phew.core_design.theme.GRAY_500
 import com.phew.core_design.theme.MAIN
 import com.phew.core_design.theme.M_YELLOW
+import com.phew.core_design.theme.unknownColor
+import com.phew.domain.dto.CardArticle
 import com.phew.domain.dto.FeedCardType
 import com.phew.domain.dto.FeedLikeNotification
 import com.phew.domain.dto.FollowNotification
@@ -71,87 +95,250 @@ import com.phew.domain.dto.UserTagNotification
 import com.phew.feed.FeedUi.TypedFeedCardView
 import com.phew.feed.viewModel.DistanceType
 import com.phew.presentation.feed.R
+import com.phew.presentation.feed.databinding.ItemNativeAdBinding
 import kotlinx.coroutines.delay
+import com.phew.core_design.R as DesignR
 
 object FeedUi {
+    @Composable
+    fun NativeAdLoaderScreen(adUnitId: String) {
+        var isAdFailed by remember { mutableStateOf(false) }
+        if (isAdFailed) {
+            Spacer(modifier = Modifier.height((-8).dp))
+        } else {
+            AndroidViewBinding(
+                factory = ItemNativeAdBinding::inflate,
+            ) {
+                val adView = root.also { adView ->
+                    adView.bodyView = this.adBody
+                    adView.callToActionView = this.adCallToAction
+                    adView.headlineView = this.adHeadline
+                    adView.iconView = this.adAppIcon
+                }
+
+                val adContainer = this.adContainer
+
+                val adLoader = AdLoader.Builder(adView.context, adUnitId)
+                    .forNativeAd { nativeAd ->
+                        nativeAd.advertiser?.let {
+
+                        }
+                        nativeAd.body?.let { body ->
+                            this.adBody.text = body
+                        }
+
+                        nativeAd.headline?.let {
+                            this.adHeadline.text = it
+                        }
+                        nativeAd.icon?.let {
+                            this.adAppIcon.setImageDrawable(it.drawable)
+                        }
+                        adView.setNativeAd(nativeAd)
+                    }.withAdListener(object : AdListener() {
+                        override fun onAdLoaded() {
+                            Log.i("Admob", "onAdLoaded : Native ad Loaded")
+                            adContainer.isVisible = true
+                            super.onAdLoaded()
+                        }
+
+                        override fun onAdFailedToLoad(error: LoadAdError) {
+                            Log.e("AdMob", "onAdFailedToLoad : ${error.message}")
+                            isAdFailed = true
+                            super.onAdFailedToLoad(error)
+                        }
+                    }).withNativeAdOptions(
+                        NativeAdOptions.Builder().setAdChoicesPlacement(
+                            NativeAdOptions.ADCHOICES_TOP_RIGHT
+                        ).build()
+                    ).build()
+
+                adContainer.isVisible = false
+                adLoader.loadAd(AdRequest.Builder().build())
+            }
+        }
+    }
+
 
     @Composable
-    internal fun FeedNoticeView(
-        feedNotice: List<Notice>,
-        feedNoticeClick: () -> Unit,
-        modifier : Modifier = Modifier
+     fun CardArticleView(
+        data: CardArticle,
+        modifier: Modifier,
+        onCardClick: (cardId: Long) -> Unit
     ) {
-        if (feedNotice.isEmpty()) return
-        val pagerState = rememberPagerState(
-            initialPage = Int.MAX_VALUE / 2 - ((Int.MAX_VALUE / 2) % feedNotice.size),
-            pageCount = { Int.MAX_VALUE }
-        )
-        LaunchedEffect(Unit) {
-            while (true) {
-                delay(5000L)
-                val nextPage = pagerState.currentPage + 1
-                pagerState.animateScrollToPage(
-                    page = nextPage,
-                    animationSpec = tween(
-                        durationMillis = 500,
-                        easing = LinearOutSlowInEasing
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .height(83.dp)
+                .shadow(
+                    elevation = 16.dp,
+                    shape = RoundedCornerShape(16.dp),
+                    spotColor = unknownColor,
+                    ambientColor = unknownColor
+                )
+                .background(color = WHITE, shape = RoundedCornerShape(16.dp))
+                .border(width = 1.dp, color = GRAY_100, shape = RoundedCornerShape(16.dp))
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = { onCardClick(data.cardId) }
+                )
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.Start),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            CardArticleProfileImage(
+                profileImage = data.profileImgUrl,
+                isRead = data.isRead,
+                description = data.cardContent
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = data.nickName,
+                    style = TextComponent.CAPTION_2_M_12,
+                    color = GRAY_400
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = data.cardContent.replace("\n", " ")
+                        .let { if (it.length > 17) "${it.take(17)}..." else it },
+                    style = TextComponent.SUBTITLE_3_SB_14,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    color = GRAY_600
+                )
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy((-6).dp, Alignment.Start),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        data.writerProfileImageUrls.forEach { imageUrl ->
+                            AsyncImage(
+                                model = ImageRequest.Builder(LocalContext.current)
+                                    .data(imageUrl.ifEmpty { DesignR.drawable.ic_profile })
+                                    .crossfade(true)
+                                    .build(),
+                                contentDescription = data.cardContent,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(20.dp)
+                                    .clip(CircleShape)
+                                    .border(
+                                        width = 1.dp,
+                                        color = WHITE,
+                                        shape = CircleShape
+                                    )
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(1.dp))
+                    Text(
+                        text = if (data.totalWriterCnt == 0) {
+                            stringResource(id = R.string.home_article_write_first)
+                        } else {
+                            stringResource(
+                                id = R.string.home_article_write,
+                                data.totalWriterCnt
+                            )
+                        },
+                        style = TextComponent.CAPTION_2_M_12,
+                        color = GRAY_500
                     )
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun CardArticleProfileImage(
+        profileImage: String,
+        isRead: Boolean,
+        description: String,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .padding(1.dp)
+        ) {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(profileImage.ifEmpty { DesignR.drawable.ic_profile })
+                    .crossfade(true).build(),
+                contentDescription = description,
+                modifier = Modifier
+                    .matchParentSize()
+                    .clip(RoundedCornerShape(16.dp))
+            )
+            if (!isRead) {
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .align(Alignment.TopEnd)
+                        .offset(x = (1).dp, y = (-1).dp)
+                        .background(color = Danger.M_RED, shape = CircleShape)
+                        .border(width = 2.dp, color = WHITE, shape = CircleShape)
                 )
             }
         }
-        Box(
+    }
+
+    @Composable
+    internal fun FeedNoticeView(
+        noticeList: List<Notice>,
+        feedNoticeClick: (url : String) -> Unit,
+        deleteNotice : (id : Int) -> Unit,
+        modifier: Modifier = Modifier
+    ) {
+        val currentNotice = noticeList.firstOrNull()
+        AnimatedContent(
+            targetState = currentNotice,
+            transitionSpec = {
+                val enter = scaleIn(
+                    animationSpec = tween(300, delayMillis = 300),
+                    initialScale = 0.9f
+                ) + fadeIn(animationSpec = tween(300, delayMillis = 300))
+
+                val exit = scaleOut(
+                    animationSpec = tween(300),
+                    targetScale = 0.9f
+                ) + fadeOut(animationSpec = tween(300))
+
+                (enter togetherWith exit).apply {
+                    targetContentZIndex = -1f
+                }
+            },
+            contentKey = { it?.id ?: "empty_notice" },
+            label = "NoticeTransitionAnimation",
             modifier = modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-        ) {
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight()
-                    .clip(RoundedCornerShape(16.dp))
-            ) { page ->
-                val actualIndex = page % feedNotice.size
-                val currentNotice = feedNotice[actualIndex]
-                val cardData = NotiCardData(
-                    title = when (currentNotice.type) {
-                        Notice.NoticeType.ANNOUNCEMENT -> stringResource(R.string.home_notice_notice)
-                        Notice.NoticeType.NEWS -> stringResource(R.string.home_notice_news)
-                        Notice.NoticeType.MAINTENANCE -> stringResource(R.string.home_notice_service)
+        ) { notice ->
+            if (notice != null) {
+                FeedNotice(
+                    data = NoticeCardData(
+                        id = notice.id.toString(),
+                        description = notice.content,
+                        iconRes = when (notice.type) {
+                            Notice.NoticeType.ANNOUNCEMENT -> DesignR.drawable.ic_headset_filled_yellow
+                            Notice.NoticeType.NEWS -> DesignR.drawable.ic_mail_filled_bule
+                            Notice.NoticeType.MAINTENANCE -> DesignR.drawable.ic_tool_filled
+                        },
+                        iconTint = when (notice.type) {
+                            Notice.NoticeType.ANNOUNCEMENT -> M_YELLOW
+                            Notice.NoticeType.NEWS -> MAIN
+                            Notice.NoticeType.MAINTENANCE -> GRAY_400
+                        },
+                        iconBackgroundColor = NeutralColor.GRAY_100,
+                    ),
+                    onClick = { feedNoticeClick(notice.url) },
+                    onCloseClick = { noticeId ->
+                        deleteNotice(noticeId)
                     },
-                    description = currentNotice.content,
-                    id = currentNotice.id.toString(),
-                    iconRes = when (currentNotice.type) {
-                        Notice.NoticeType.ANNOUNCEMENT -> com.phew.core_design.R.drawable.ic_tool_filled
-                        Notice.NoticeType.NEWS -> com.phew.core_design.R.drawable.ic_mail_filled_bule
-                        Notice.NoticeType.MAINTENANCE -> com.phew.core_design.R.drawable.ic_headset_filled_yellow
-                    },
-                    iconTint = when (currentNotice.type) {
-                        Notice.NoticeType.ANNOUNCEMENT -> GRAY_400
-                        Notice.NoticeType.NEWS -> MAIN
-                        Notice.NoticeType.MAINTENANCE -> M_YELLOW
-                    },
-                    iconBackgroundColor = NeutralColor.GRAY_100,
-                )
-                NotiCard(
-                    data = cardData,
-                    onClick = feedNoticeClick,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .shadow(
-                            elevation = 16.dp,
-                            spotColor = UnKnowColor.color,
-                            ambientColor = UnKnowColor.color
-                        )
                 )
+            } else {
+                Spacer(modifier = Modifier.height(0.dp))
             }
-            IndicatorDot(
-                pagerState = pagerState,
-                totalSize = feedNotice.size,
-                modifier = Modifier
-                    .padding(top = 16.dp, end = 16.dp)
-                    .align(Alignment.TopEnd)
-            )
         }
     }
 
@@ -391,9 +578,9 @@ object NotificationUi {
                 Image(
                     painter = painterResource(
                         id = when (data.type) {
-                            Notice.NoticeType.ANNOUNCEMENT -> com.phew.core_design.R.drawable.ic_tool_filled
-                            Notice.NoticeType.NEWS -> com.phew.core_design.R.drawable.ic_mail_filled_bule
-                            Notice.NoticeType.MAINTENANCE -> com.phew.core_design.R.drawable.ic_headset_filled_yellow
+                            Notice.NoticeType.ANNOUNCEMENT -> DesignR.drawable.ic_tool_filled
+                            Notice.NoticeType.NEWS -> DesignR.drawable.ic_mail_filled_bule
+                            Notice.NoticeType.MAINTENANCE -> DesignR.drawable.ic_headset_filled_yellow
                         }
                     ),
                     contentDescription = data.content,
@@ -467,12 +654,12 @@ object NotificationUi {
             ) {
                 Image(
                     painter = when (data) {
-                        is FollowNotification -> painterResource(com.phew.core_design.R.drawable.ic_users_filled)
+                        is FollowNotification -> painterResource(DesignR.drawable.ic_users_filled)
                         is UserBlockNotification,
                         is UserDeleteNotification,
-                            -> painterResource(com.phew.core_design.R.drawable.ic_danger)
-                        is UserTagNotification -> painterResource(com.phew.core_design.R.drawable.ic_tag_fill_blue)
-                        else -> painterResource(com.phew.core_design.R.drawable.ic_card_filled_blue)
+                            -> painterResource(DesignR.drawable.ic_danger)
+                        is UserTagNotification -> painterResource(DesignR.drawable.ic_tag_fill_blue)
+                        else -> painterResource(DesignR.drawable.ic_card_filled_blue)
                     },
                     contentDescription = ""
                 )
@@ -579,12 +766,12 @@ object NotificationUi {
             ) {
                 Image(
                     painter = when (data) {
-                        is FollowNotification -> painterResource(com.phew.core_design.R.drawable.ic_users_filled)
+                        is FollowNotification -> painterResource(DesignR.drawable.ic_users_filled)
                         is UserBlockNotification,
                         is UserDeleteNotification,
-                            -> painterResource(com.phew.core_design.R.drawable.ic_danger)
-                        is UserTagNotification -> painterResource(com.phew.core_design.R.drawable.ic_tag_fill_blue)
-                        else -> painterResource(com.phew.core_design.R.drawable.ic_card_filled_blue)
+                            -> painterResource(DesignR.drawable.ic_danger)
+                        is UserTagNotification -> painterResource(DesignR.drawable.ic_tag_fill_blue)
+                        else -> painterResource(DesignR.drawable.ic_card_filled_blue)
                     },
                     contentDescription = ""
                 )

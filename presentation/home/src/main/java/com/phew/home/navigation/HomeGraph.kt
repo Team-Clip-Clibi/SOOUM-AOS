@@ -28,26 +28,26 @@ fun NavHostController.navigateToReport(cardId: String, navOptions: NavOptions? =
     this.navigate("$REPORT_GRAPH_ROUTE_PREFIX/$cardId", navOptions)
 }
 
+
 /**
  *  버텀 네비게이션을 가지는 최상위 home graph
  */
 fun NavGraphBuilder.homeGraph(
     appState: SooumAppState,
     navController: NavHostController,
-    finish: () -> Unit,
     onBackPressed: () -> Unit,
-    // 요기 수정 -> webView 삭제
     onWriteComplete: (CardDetailArgs) -> Unit = {},
     cardClick: (CardDetailArgs) -> Unit,
     onLogOut: () -> Unit,
-    onWithdrawalComplete: () -> Unit,
+    onAlarmClick: () -> Unit,
+    onSetting: () -> Unit
 ) {
     navigation(route = HOME_GRAPH, startDestination = FEED_GRAPH) {
         // Feed Card Graph
         feedGraph(
             appState = appState,
             navController = navController,
-            // 요기 수정 -> webView 삭제
+            onAlarmClick = onAlarmClick
         )
 
         writeGraph(
@@ -84,10 +84,8 @@ fun NavGraphBuilder.homeGraph(
             navController = navController,
             onBackPressed = onBackPressed,
             onLogOut = onLogOut,
-            onWithdrawalComplete = onWithdrawalComplete,
-            cardClick = cardClick
+            cardClick = cardClick,
+            onSetting = onSetting
         )
-
     }
-
 }

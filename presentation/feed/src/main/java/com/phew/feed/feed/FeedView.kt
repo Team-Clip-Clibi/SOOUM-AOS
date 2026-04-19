@@ -48,8 +48,6 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.LoadState
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.paging.compose.itemContentType
-import androidx.paging.compose.itemKey
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.navigation.NavigationKeys
 import com.phew.core_design.AppBar
@@ -76,6 +74,7 @@ import com.phew.feed.viewModel.UiState
 import com.phew.presentation.feed.R
 import com.phew.core.ui.state.SooumAppState
 import com.phew.core_design.DialogComponent.DeletedCardDialog
+import com.phew.domain.dto.CardArticle
 import com.phew.feed.NotifyTab
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
@@ -92,9 +91,12 @@ fun FeedView(
     closeDialog: () -> Unit,
     noticeClick: (String) -> Unit,
     navigateToDetail: (CardDetailArgs) -> Unit,
+    webViewClick: (String) -> Unit,
+    adUnitId: String
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val unRead = viewModel.unReadActivateAlarm.collectAsLazyPagingItems()
+    val cardArticle = uiState.cardArticle
     val feedNoticeState = uiState.feedNotification
     var cachedFeedNotice by remember { mutableStateOf<List<Notice>>(emptyList()) }
     val latestFeedItems = viewModel.latestFeedPaging.collectAsLazyPagingItems()
@@ -117,6 +119,7 @@ fun FeedView(
             cachedFeedNotice = feedNoticeState.data
         }
     }
+
     val feedNotice = when (feedNoticeState) {
         is UiState.Success -> feedNoticeState.data
         else -> cachedFeedNotice
@@ -201,10 +204,9 @@ fun FeedView(
                     val lastVisibleIndex = visibleItems.lastOrNull()?.index ?: 0
                     val totalItems = lazyGridState.layoutInfo.totalItemsCount
 
-                    val state = currentPagingState
                     if (lastVisibleIndex >= totalItems - 5 &&
-                        state is FeedPagingState.Success &&
-                        state.hasNextPage &&
+                        currentPagingState is FeedPagingState.Success &&
+                        currentPagingState.hasNextPage &&
                         totalItems > 0
                     ) {
                         viewModel.loadMoreFeeds()
@@ -265,14 +267,17 @@ fun FeedView(
                     selectDistance = uiState.distanceTab,
                     currentTab = uiState.currentTab,
                     feedNotice = feedNotice,
-                    feedNoticeClick = noticeClick,
+                    webViewClick = webViewClick,
                     latestFeedItems = latestFeedItems,
                     onClick = viewModel::navigateToDetail,
                     onRemoveCard = viewModel::removeFeedCard,
                     currentPagingState = uiState.currentPagingState,
                     pullOffsetPx = pullOffsetPx,
                     onRefresh = refreshCurrentFeed,
-                    hiddenCardIds = uiState.hiddenCardIds
+                    hiddenCardIds = uiState.hiddenCardIds,
+                    deleteNotice = viewModel::deleteNotice,
+                    cardsArticle = cardArticle,
+                    adUnitId = adUnitId
                 )
                 if (uiState.shouldShowPermissionRationale) {
                     DialogComponent.DefaultButtonTwo(
@@ -333,7 +338,6 @@ private fun FeedContentView(
     selectDistance: DistanceType,
     currentTab: FeedType,
     feedNotice: List<Notice>,
-    feedNoticeClick: (String) -> Unit,
     latestFeedItems: LazyPagingItems<Latest>,
     onClick: (String, Boolean) -> Unit,
     onRemoveCard: (String) -> Unit,
@@ -341,6 +345,10 @@ private fun FeedContentView(
     pullOffsetPx: Float,
     onRefresh: () -> Unit,
     hiddenCardIds: Set<Long>,
+    webViewClick: (String) -> Unit,
+    deleteNotice: (Int) -> Unit,
+    cardsArticle: UiState<CardArticle>,
+    adUnitId: String
 ) {
     val selectIndex = when (currentTab) {
         FeedType.Latest -> NAV_HOME_FEED_INDEX
@@ -370,18 +378,32 @@ private fun FeedContentView(
             }
             Spacer(modifier = Modifier.height(6.dp))
         }
-        if (feedNotice.isNotEmpty()) {
-            item(
-                key = feedNotice.joinToString("_") { it.id.toString() },
-                span = { GridItemSpan(maxLineSpan) }
-            ) {
-                FeedUi.FeedNoticeView(
-                    feedNotice = feedNotice,
-                    feedNoticeClick = { feedNoticeClick(NotifyTab.NOTIFY_SERVICE.toString()) },
-                    modifier = Modifier
+        item(
+            key = "feed_notice_section",
+            span = { GridItemSpan(maxLineSpan) }
+        ) {
+            FeedUi.FeedNoticeView(
+                noticeList = feedNotice,
+                feedNoticeClick = { url -> webViewClick(url) },
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .graphicsLayer { translationY = pullOffsetPx },
+                deleteNotice = deleteNotice
+            )
+        }
+
+        item(span = { GridItemSpan(maxLineSpan) }) {
+            when (cardsArticle) {
+                is UiState.Success -> FeedUi.CardArticleView(
+                    cardsArticle.data, modifier = Modifier
                         .padding(horizontal = 16.dp)
-                        .graphicsLayer { translationY = pullOffsetPx }
+                        .graphicsLayer { translationY = pullOffsetPx },
+                    onCardClick = { id ->
+                        onClick(id.toString(), false)
+                    }
                 )
+
+                else -> Unit
             }
         }
         // LoadState.Loading 상태에서도 기존 목록을 유지하기 위해 로딩/노트로딩을 함께 처리한다.
@@ -417,9 +439,7 @@ private fun FeedContentView(
                                         .padding(vertical = 20.dp)
                                         .graphicsLayer { translationY = pullOffsetPx }
                                 ) {
-                                    LoadingAnimation.LoadingView(
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
+                                    LoadingAnimation.LoadingView(modifier = Modifier.fillMaxWidth())
                                 }
                             }
                         } else {
@@ -432,14 +452,18 @@ private fun FeedContentView(
                                     }
                                 }
                             } else {
+                                val feedItemCount = latestFeedItems.itemCount
                                 items(
-                                    count = latestFeedItems.itemCount,
-                                    key = latestFeedItems.itemKey { it.cardId },
-                                    contentType = latestFeedItems.itemContentType { "LatestFeed" }
-                                ) { index ->
-                                    latestFeedItems[index]?.let { latest ->
+                                    count = feedItemCount,
+                                    key = { index ->
+                                        latestFeedItems.peek(index)?.cardId ?: "placeholder_$index"
+                                    },
+                                    contentType = { "LatestFeed" }
+                                ) { uiIndex ->
+                                    val adCountBefore = if (uiIndex == 0) 0 else (uiIndex + 9) / 11
+                                    val pagingIndex = uiIndex - adCountBefore
+                                    latestFeedItems[pagingIndex]?.let { latest ->
                                         val cardId = latest.cardId.toLongOrNull()
-                                        // hiddenCardIds에 포함된 카드는 렌더링하지 않음
                                         if (cardId == null || !hiddenCardIds.contains(cardId)) {
                                             val feedCardType = classifyLatestFeedType(latest)
                                             Box(
@@ -447,12 +471,17 @@ private fun FeedContentView(
                                                     .fillMaxWidth()
                                                     .wrapContentHeight()
                                                     .padding(horizontal = 16.dp)
-                                                    .graphicsLayer { translationY = pullOffsetPx }
+                                                    .graphicsLayer {
+                                                        translationY = pullOffsetPx
+                                                    }
                                             ) {
                                                 FeedUi.TypedFeedCardView(
                                                     feedCard = feedCardType,
                                                     onClick = { id ->
-                                                        onClick(id, feedCardType.isEventCard())
+                                                        onClick(
+                                                            id,
+                                                            feedCardType.isEventCard()
+                                                        )
                                                     },
                                                     onRemoveCard = onRemoveCard,
                                                 )
@@ -462,6 +491,7 @@ private fun FeedContentView(
                                 }
                             }
 
+                            // 하단 Append 상태 처리
                             when (val appendState = latestFeedItems.loadState.append) {
                                 is LoadState.Error -> {
                                     item(span = { GridItemSpan(maxLineSpan) }) {
@@ -471,9 +501,7 @@ private fun FeedContentView(
                                             ErrorView(
                                                 message = appendState.error.message
                                                     ?: stringResource(R.string.home_feed_load_error),
-                                                onRetry = {
-                                                    latestFeedItems.retry()
-                                                }
+                                                onRetry = { latestFeedItems.retry() }
                                             )
                                         }
                                     }
@@ -487,16 +515,12 @@ private fun FeedContentView(
                                                 .padding(vertical = 20.dp)
                                                 .graphicsLayer { translationY = pullOffsetPx }
                                         ) {
-                                            LoadingAnimation.LoadingView(
-                                                modifier = Modifier.fillMaxWidth()
-                                            )
+                                            LoadingAnimation.LoadingView(modifier = Modifier.fillMaxWidth())
                                         }
                                     }
                                 }
 
-                                is LoadState.NotLoading -> {
-                                    // 아무 작업 없음
-                                }
+                                is LoadState.NotLoading -> {}
                             }
                         }
                     }

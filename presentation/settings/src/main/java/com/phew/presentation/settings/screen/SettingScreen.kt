@@ -41,7 +41,6 @@ import com.phew.core_design.R
 import com.phew.core_design.TextComponent
 import com.phew.core_design.component.toast.SooumToast
 import com.phew.presentation.settings.component.setting.SettingItemRow
-import com.phew.presentation.settings.component.setting.SettingToggleRow
 import com.phew.presentation.settings.model.setting.SettingItem
 import com.phew.presentation.settings.model.setting.SettingItemId
 import com.phew.presentation.settings.model.setting.SettingItemType
@@ -62,6 +61,7 @@ fun SettingRoute(
     onNavigateToNotice: () -> Unit = {},
     onNavigateToPrivacyPolicy: () -> Unit = {},
     onNavigateToAccountDeletion: () -> Unit = {},
+    onNavigateToAlarm: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -81,6 +81,7 @@ fun SettingRoute(
                     openAppStore(context)
                 }
 
+                SettingNavigationEvent.NavigateToAlarm -> onNavigateToAlarm()
                 is SettingNavigationEvent.SendInquiryMail -> {
                     InquiryUtils.openInquiryMail(
                         context = context,
@@ -141,14 +142,12 @@ fun SettingRoute(
 
     SettingScreen(
         modifier = modifier,
-        notificationEnabled = uiState.notificationEnabled,
         appVersion = uiState.appVersion,
-        isUpdateAvailable = uiState.isUpdateAvailable,
         settingItems = uiState.settingItems,
         activityRestrictionDate = uiState.activityRestrictionDate,
         latestVersion = uiState.latestVersion,
         onBackPressed = onBackPressed,
-        onNotificationToggle = viewModel::onNotificationToggle,
+        onAlarmClick = viewModel::onAlarmClick,
         onLoginOtherDeviceClick = viewModel::onLoginOtherDeviceClick,
         onLoadPreviousAccountClick = viewModel::onLoadPreviousAccountClick,
         onBlockedUsersClick = viewModel::onBlockedUsersClick,
@@ -186,14 +185,12 @@ fun SettingRoute(
 @Composable
 private fun SettingScreen(
     modifier: Modifier = Modifier,
-    notificationEnabled: Boolean,
     appVersion: String,
-    isUpdateAvailable: Boolean,
     settingItems: List<SettingItem>,
     activityRestrictionDate: String?,
     latestVersion: String?,
     onBackPressed: () -> Unit,
-    onNotificationToggle: (Boolean) -> Unit,
+    onAlarmClick: () -> Unit,
     onLoginOtherDeviceClick: () -> Unit,
     onLoadPreviousAccountClick: () -> Unit,
     onBlockedUsersClick: () -> Unit,
@@ -214,6 +211,7 @@ private fun SettingScreen(
             SettingItemId.PRIVACY_POLICY -> stringResource(SettingsR.string.setting_privacy_policy)
             SettingItemId.APP_UPDATE -> stringResource(SettingsR.string.setting_app_update)
             SettingItemId.ACCOUNT_DELETION -> stringResource(SettingsR.string.setting_account_deletion)
+            SettingItemId.ALARM -> stringResource(SettingsR.string.setting_notification)
         }
     }
 
@@ -269,175 +267,21 @@ private fun SettingScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(paddingValues)
         ) {
-            // 1. 알림 설정
-            SettingToggleRow(
-                title = stringResource(SettingsR.string.setting_notification),
-                checked = notificationEnabled,
-                onCheckedChange = onNotificationToggle
-            )
-
-            // 16dp 간격
-            Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(16.dp)
-                    .background(NeutralColor.GRAY_100)
-            )
-
-            // 2. 다른 기기에서 로그인하기, 이전 계정 불러오기 (그룹)
-            val loginOtherDeviceItem =
-                settingItems.find { it.id == SettingItemId.LOGIN_OTHER_DEVICE }
-            loginOtherDeviceItem?.let { item ->
+            val loadAlarmItem =
+                settingItems.find { it.id == SettingItemId.ALARM }
+            loadAlarmItem?.let { item ->
                 val localizedItem = item.copy(
                     title = getLocalizedTitle(item.id),
                     subtitle = getLocalizedSubtitle(item.id),
                     endText = getEndText(item.id)
                 )
+                // 1. 알림 설정
                 SettingItemRow(
                     item = localizedItem,
-                    onClick = onLoginOtherDeviceClick
+                    onClick = onAlarmClick
                 )
             }
 
-            val loadPreviousAccountItem =
-                settingItems.find { it.id == SettingItemId.LOAD_PREVIOUS_ACCOUNT }
-            loadPreviousAccountItem?.let { item ->
-                val localizedItem = item.copy(
-                    title = getLocalizedTitle(item.id),
-                    subtitle = getLocalizedSubtitle(item.id),
-                    endText = getEndText(item.id)
-                )
-                SettingItemRow(
-                    item = localizedItem,
-                    onClick = onLoadPreviousAccountClick
-                )
-            }
-
-            // 16dp 간격
-            Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(16.dp)
-                    .background(NeutralColor.GRAY_100)
-            )
-
-            // 3. 차단 사용자 관리
-            val blockedUsersItem = settingItems.find { it.id == SettingItemId.BLOCKED_USERS }
-            blockedUsersItem?.let { item ->
-                val localizedItem = item.copy(
-                    title = getLocalizedTitle(item.id),
-                    subtitle = getLocalizedSubtitle(item.id),
-                    endText = getEndText(item.id)
-                )
-                SettingItemRow(
-                    item = localizedItem,
-                    onClick = onBlockedUsersClick
-                )
-            }
-
-            // 16dp 간격
-            Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(16.dp)
-                    .background(NeutralColor.GRAY_100)
-            )
-
-            // 4. 공지사항, 문의하기 (그룹)
-            val noticeItem = settingItems.find { it.id == SettingItemId.NOTICE }
-            noticeItem?.let { item ->
-                val localizedItem = item.copy(
-                    title = getLocalizedTitle(item.id),
-                    subtitle = getLocalizedSubtitle(item.id),
-                    endText = getEndText(item.id)
-                )
-                SettingItemRow(
-                    item = localizedItem,
-                    onClick = onNoticeClick
-                )
-            }
-
-            val inquiryItem = settingItems.find { it.id == SettingItemId.INQUIRY }
-            inquiryItem?.let { item ->
-                val localizedItem = item.copy(
-                    title = getLocalizedTitle(item.id),
-                    subtitle = getLocalizedSubtitle(item.id),
-                    endText = getEndText(item.id)
-                )
-                SettingItemRow(
-                    item = localizedItem,
-                    onClick = onInquiryClick
-                )
-            }
-
-            // 16dp 간격
-            Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(16.dp)
-                    .background(NeutralColor.GRAY_100)
-            )
-
-            // 5. 약관 및 개인정보 처리 동의
-            val privacyItem = settingItems.find { it.id == SettingItemId.PRIVACY_POLICY }
-            privacyItem?.let { item ->
-                val localizedItem = item.copy(
-                    title = getLocalizedTitle(item.id),
-                    subtitle = getLocalizedSubtitle(item.id),
-                    endText = getEndText(item.id)
-                )
-                SettingItemRow(
-                    item = localizedItem,
-                    onClick = onPrivacyPolicyClick
-                )
-            }
-
-            // 16dp 간격
-            Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(16.dp)
-                    .background(NeutralColor.GRAY_100)
-            )
-
-            // 6. 최신버전 업데이트
-            val updateItem = settingItems.find { it.id == SettingItemId.APP_UPDATE }
-            updateItem?.let { item ->
-                val localizedItem = item.copy(
-                    title = getLocalizedTitle(item.id),
-                    subtitle = getLocalizedSubtitle(item.id),
-                    endText = getEndText(item.id)
-                )
-                SettingItemRow(
-                    item = localizedItem,
-                    onClick = onAppUpdateClick
-                )
-            }
-
-            // 16dp 간격
-            Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(16.dp)
-                    .background(NeutralColor.GRAY_100)
-            )
-
-            // 7. 탈퇴하기
-            val deletionItem = settingItems.find { it.id == SettingItemId.ACCOUNT_DELETION }
-            deletionItem?.let { item ->
-                val localizedItem = item.copy(
-                    title = getLocalizedTitle(item.id),
-                    subtitle = getLocalizedSubtitle(item.id),
-                    endText = getEndText(item.id)
-                )
-                SettingItemRow(
-                    item = localizedItem,
-                    onClick = onAccountDeletionClick
-                )
-            }
-
-            // 8. 이용제한 안내 (activityRestrictionDate가 있을 때만 표시)
-            activityRestrictionDate?.let { date ->
                 // 16dp 간격
                 Spacer(
                     modifier = Modifier
@@ -446,42 +290,208 @@ private fun SettingScreen(
                         .background(NeutralColor.GRAY_100)
                 )
 
-                // 이용제한 안내
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(NeutralColor.GRAY_100)
-                        .padding(horizontal = 16.dp)
-                ) {
-                    Text(
-                        text = stringResource(SettingsR.string.activity_restriction_title),
-                        style = TextComponent.CAPTION_1_SB_12,
-                        color = NeutralColor.BLACK
+                // 2. 다른 기기에서 로그인하기, 이전 계정 불러오기 (그룹)
+                val loginOtherDeviceItem =
+                    settingItems.find { it.id == SettingItemId.LOGIN_OTHER_DEVICE }
+                loginOtherDeviceItem?.let { item ->
+                    val localizedItem = item.copy(
+                        title = getLocalizedTitle(item.id),
+                        subtitle = getLocalizedSubtitle(item.id),
+                        endText = getEndText(item.id)
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = stringResource(SettingsR.string.activity_restriction_guide_message),
-                        style = TextComponent.CAPTION_3_M_10,
-                        color = NeutralColor.GRAY_500
-                    )
-                    Text(
-                        text = stringResource(SettingsR.string.activity_restriction_message, date),
-                        style = TextComponent.CAPTION_3_M_10,
-                        color = NeutralColor.GRAY_500
+                    SettingItemRow(
+                        item = localizedItem,
+                        onClick = onLoginOtherDeviceClick
                     )
                 }
-            }
 
-            // 탈퇴하기 밑 여백
-            Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .background(NeutralColor.GRAY_100)
-            )
+                val loadPreviousAccountItem =
+                    settingItems.find { it.id == SettingItemId.LOAD_PREVIOUS_ACCOUNT }
+                loadPreviousAccountItem?.let { item ->
+                    val localizedItem = item.copy(
+                        title = getLocalizedTitle(item.id),
+                        subtitle = getLocalizedSubtitle(item.id),
+                        endText = getEndText(item.id)
+                    )
+                    SettingItemRow(
+                        item = localizedItem,
+                        onClick = onLoadPreviousAccountClick
+                    )
+                }
+
+                // 16dp 간격
+                Spacer(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(16.dp)
+                        .background(NeutralColor.GRAY_100)
+                )
+
+                // 3. 차단 사용자 관리
+                val blockedUsersItem = settingItems.find { it.id == SettingItemId.BLOCKED_USERS }
+                blockedUsersItem?.let { item ->
+                    val localizedItem = item.copy(
+                        title = getLocalizedTitle(item.id),
+                        subtitle = getLocalizedSubtitle(item.id),
+                        endText = getEndText(item.id)
+                    )
+                    SettingItemRow(
+                        item = localizedItem,
+                        onClick = onBlockedUsersClick
+                    )
+                }
+
+                // 16dp 간격
+                Spacer(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(16.dp)
+                        .background(NeutralColor.GRAY_100)
+                )
+
+                // 4. 공지사항, 문의하기 (그룹)
+                val noticeItem = settingItems.find { it.id == SettingItemId.NOTICE }
+                noticeItem?.let { item ->
+                    val localizedItem = item.copy(
+                        title = getLocalizedTitle(item.id),
+                        subtitle = getLocalizedSubtitle(item.id),
+                        endText = getEndText(item.id)
+                    )
+                    SettingItemRow(
+                        item = localizedItem,
+                        onClick = onNoticeClick
+                    )
+                }
+
+                val inquiryItem = settingItems.find { it.id == SettingItemId.INQUIRY }
+                inquiryItem?.let { item ->
+                    val localizedItem = item.copy(
+                        title = getLocalizedTitle(item.id),
+                        subtitle = getLocalizedSubtitle(item.id),
+                        endText = getEndText(item.id)
+                    )
+                    SettingItemRow(
+                        item = localizedItem,
+                        onClick = onInquiryClick
+                    )
+                }
+
+                // 16dp 간격
+                Spacer(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(16.dp)
+                        .background(NeutralColor.GRAY_100)
+                )
+
+                // 5. 약관 및 개인정보 처리 동의
+                val privacyItem = settingItems.find { it.id == SettingItemId.PRIVACY_POLICY }
+                privacyItem?.let { item ->
+                    val localizedItem = item.copy(
+                        title = getLocalizedTitle(item.id),
+                        subtitle = getLocalizedSubtitle(item.id),
+                        endText = getEndText(item.id)
+                    )
+                    SettingItemRow(
+                        item = localizedItem,
+                        onClick = onPrivacyPolicyClick
+                    )
+                }
+
+                // 16dp 간격
+                Spacer(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(16.dp)
+                        .background(NeutralColor.GRAY_100)
+                )
+
+                // 6. 최신버전 업데이트
+                val updateItem = settingItems.find { it.id == SettingItemId.APP_UPDATE }
+                updateItem?.let { item ->
+                    val localizedItem = item.copy(
+                        title = getLocalizedTitle(item.id),
+                        subtitle = getLocalizedSubtitle(item.id),
+                        endText = getEndText(item.id)
+                    )
+                    SettingItemRow(
+                        item = localizedItem,
+                        onClick = onAppUpdateClick
+                    )
+                }
+
+                // 16dp 간격
+                Spacer(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(16.dp)
+                        .background(NeutralColor.GRAY_100)
+                )
+
+                // 7. 탈퇴하기
+                val deletionItem = settingItems.find { it.id == SettingItemId.ACCOUNT_DELETION }
+                deletionItem?.let { item ->
+                    val localizedItem = item.copy(
+                        title = getLocalizedTitle(item.id),
+                        subtitle = getLocalizedSubtitle(item.id),
+                        endText = getEndText(item.id)
+                    )
+                    SettingItemRow(
+                        item = localizedItem,
+                        onClick = onAccountDeletionClick
+                    )
+                }
+
+                // 8. 이용제한 안내 (activityRestrictionDate가 있을 때만 표시)
+                activityRestrictionDate?.let { date ->
+                    // 16dp 간격
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(16.dp)
+                            .background(NeutralColor.GRAY_100)
+                    )
+
+                    // 이용제한 안내
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(NeutralColor.GRAY_100)
+                            .padding(horizontal = 16.dp)
+                    ) {
+                        Text(
+                            text = stringResource(SettingsR.string.activity_restriction_title),
+                            style = TextComponent.CAPTION_1_SB_12,
+                            color = NeutralColor.BLACK
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = stringResource(SettingsR.string.activity_restriction_guide_message),
+                            style = TextComponent.CAPTION_3_M_10,
+                            color = NeutralColor.GRAY_500
+                        )
+                        Text(
+                            text = stringResource(
+                                SettingsR.string.activity_restriction_message,
+                                date
+                            ),
+                            style = TextComponent.CAPTION_3_M_10,
+                            color = NeutralColor.GRAY_500
+                        )
+                    }
+                }
+
+                // 탈퇴하기 밑 여백
+                Spacer(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .background(NeutralColor.GRAY_100)
+                )
+            }
         }
     }
-}
+
 
 @Preview(showBackground = true)
 @Composable
@@ -528,17 +538,20 @@ private fun SettingScreenPreview() {
             id = SettingItemId.ACCOUNT_DELETION,
             title = "탈퇴하기",
             type = SettingItemType.DANGER
+        ),
+        SettingItem(
+            id = SettingItemId.ALARM,
+            title = "알람 설정",
+            type = SettingItemType.NAVIGATION
         )
     )
 
     SettingScreen(
-        notificationEnabled = true,
         appVersion = "1.10.1",
-        isUpdateAvailable = true,
         settingItems = previewItems,
         activityRestrictionDate = "2024년 12월 25일 14시 30분",
         onBackPressed = {},
-        onNotificationToggle = {},
+        onAlarmClick = {},
         onLoginOtherDeviceClick = {},
         onLoadPreviousAccountClick = {},
         onBlockedUsersClick = {},
@@ -558,7 +571,7 @@ private fun openAppStore(context: Context) {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         context.startActivity(intent)
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         try {
             val intent = Intent(Intent.ACTION_VIEW).apply {
                 data =

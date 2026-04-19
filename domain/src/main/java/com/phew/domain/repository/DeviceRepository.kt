@@ -38,4 +38,5 @@ interface DeviceRepository {
     suspend fun getProfileInfo(
         profileKey: String,
     ): String?
+    fun requestHaptic()
 }

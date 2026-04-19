@@ -21,6 +21,7 @@ import com.phew.presentation.settings.screen.PrivacyPolicyRoute
 import com.phew.presentation.settings.screen.SettingRoute
 import com.phew.presentation.settings.screen.SooumWebViewRoute
 import com.phew.presentation.settings.screen.WithdrawalRoute
+import com.phew.presentation.settings.screen.alarm.AlarmSettingScreen
 
 const val SETTING_GRAPH = "setting_graph"
 
@@ -32,6 +33,7 @@ private const val NOTICE_ROUTE = "notice_route"
 private const val PRIVACY_POLICY_ROUTE = "privacy_policy_route"
 private const val APP_UPDATE_ROUTE = "app_update_route"
 private const val ACCOUNT_DELETION_ROUTE = "account_deletion_route"
+private const val ALARM_ROUTE = "alarm_route"
 private val WEBVIEW_ROUTE = "webview_route".asNavParam()
 
 fun NavHostController.navigateToSettingGraph(
@@ -82,6 +84,12 @@ private fun NavHostController.navigateToAccountDeletionRoute(
     this.navigate(ACCOUNT_DELETION_ROUTE)
 }
 
+fun NavHostController.navigateToAlarmRoute(
+    navOptions: NavOptions? = null
+) {
+    this.navigate(ALARM_ROUTE)
+}
+
 private fun NavHostController.navigateToWebViewRoute(
     args: WebViewUrlArgs,
     navOptions: NavOptions? = null
@@ -120,6 +128,9 @@ fun NavGraphBuilder.settingGraph(
                 },
                 onNavigateToAccountDeletion = {
                     navController.navigateToAccountDeletionRoute()
+                },
+                onNavigateToAlarm = {
+                    navController.navigateToAlarmRoute()
                 }
             )
         }
@@ -152,7 +163,7 @@ fun NavGraphBuilder.settingGraph(
         slideComposable(
             route = BLOCKED_USERS_ROUTE
         ) {
-            BlockUserManagementRoute (
+            BlockUserManagementRoute(
                 onBackPressed = {
                     navController.popBackStack()
                 }
@@ -208,6 +219,15 @@ fun NavGraphBuilder.settingGraph(
             val args = nav.arguments?.getNavArg<WebViewUrlArgs>()
             SooumWebViewRoute(
                 args = args ?: WebViewUrlArgs(url = ""),
+                onBackPressed = {
+                    navController.popBackStack()
+                }
+            )
+        }
+        slideComposable(
+            route = ALARM_ROUTE
+        ) {
+            AlarmSettingScreen(
                 onBackPressed = {
                     navController.popBackStack()
                 }
