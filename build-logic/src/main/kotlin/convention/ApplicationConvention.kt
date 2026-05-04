@@ -79,8 +79,14 @@ class ApplicationConvention : Plugin<Project> {
                     dimension = "environment"
                     applicationIdSuffix = ".dev"
                     versionNameSuffix = "-dev"
+                    manifestPlaceholders["APP_NAME"] = "[D]SOOUM"
+                    manifestPlaceholders["APP_ICON"] = "@mipmap/ic_sooum_logo_debug"
+                    manifestPlaceholders["APP_ROUND_ICON"] = "@mipmap/ic_sooum_logo_debug_round"
                 }
                 create("prod") {
+                    manifestPlaceholders["APP_NAME"] = "@string/app_name"
+                    manifestPlaceholders["APP_ICON"] = "@mipmap/ic_sooum_logo"
+                    manifestPlaceholders["APP_ROUND_ICON"] = "@mipmap/ic_sooum_logo_round"
                     dimension = "environment"
                 }
             }
