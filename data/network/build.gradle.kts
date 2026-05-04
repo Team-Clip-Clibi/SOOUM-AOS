@@ -8,4 +8,5 @@ dependencies {
     // TODO: 클린 아키텍처 개선을 위해 InterceptorManager, GlobalEventBus 등을 
     // core-common 모듈로 이동하거나 별도의 infrastructure 모듈 생성 고려
     implementation(project(":domain"))
+    implementation(project(":core:core-common"))
 }
