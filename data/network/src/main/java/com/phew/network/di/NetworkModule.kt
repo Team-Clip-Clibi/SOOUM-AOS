@@ -1,5 +1,6 @@
 package com.phew.network.di
 
+import com.phew.core_common.AppVersion
 import com.phew.core_common.IsDebug
 import com.phew.domain.interceptor.GlobalEventBus
 import com.phew.domain.interceptor.InterceptorManger
@@ -56,8 +57,11 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideAuthInterceptor(interceptorManger: InterceptorManger): AuthInterceptor =
-        AuthInterceptor(interceptorManger)
+    fun provideAuthInterceptor(
+        interceptorManger: InterceptorManger,
+        @AppVersion appVersion: String
+    ): AuthInterceptor =
+        AuthInterceptor(interceptorManger, appVersion)
 
     @Provides
     @Singleton
@@ -77,9 +81,9 @@ object NetworkModule {
         tokenAuthenticator: TokenAuthenticator,
         teapotInterceptor: TeapotInterceptor,
     ): OkHttpClient = OkHttpClient.Builder()
-        .addInterceptor(loggingInterceptor)
         .addInterceptor(authInterceptor)
         .addInterceptor(teapotInterceptor)
+        .addInterceptor(loggingInterceptor)
         .authenticator(tokenAuthenticator)
         .readTimeout(20L, TimeUnit.SECONDS)
         .writeTimeout(20L, TimeUnit.SECONDS)

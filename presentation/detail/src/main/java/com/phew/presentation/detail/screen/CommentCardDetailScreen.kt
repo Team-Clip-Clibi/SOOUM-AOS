@@ -381,7 +381,7 @@ internal fun CommentCardDetailScreen(
                         isOwnCard = cardDetail?.isOwnCard == true,
                         closeBottomSheet = closeBottomSheetLambda,
                         onNavigateToReport = onNavigateToReportLambda,
-                        onUnBlockUser = unBlockMemberLambda,
+                        onUnBlockUser = viewModel::unblockMember,
                         showBlockDialog = {
                             showBlockDialog = true
                         },

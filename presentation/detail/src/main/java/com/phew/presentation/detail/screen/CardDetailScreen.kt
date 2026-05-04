@@ -755,6 +755,7 @@ private fun CardDetailScreen(
                         onShowDeleteDialogChange(true)
                     }
                     MoreAction.UNBLOCK.ordinal -> {
+                        onUnBlockUser()
                         onShowBottomSheetChange(false)
                     }
                 }
