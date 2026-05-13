@@ -521,15 +521,25 @@ class WriteViewModel @Inject constructor(
                             DomainResult.Failure(ERROR_ALREADY_CARD_DELETE)
                         } else {
                             // 댓글 작성 (PostCardReply 사용)
-                            val (imgType, imgName) = when {
-                                state.selectedDefaultImageName != null -> "DEFAULT" to state.selectedDefaultImageName
-                                state.activeBackgroundUri != null -> "CUSTOM" to ""
-                                else -> "DEFAULT" to ""
+                            val (imgType, imgName, imageUrl) = when {
+                                state.selectedDefaultImageName != null -> Triple(
+                                    "DEFAULT",
+                                    state.selectedDefaultImageName,
+                                    null
+                                )
+
+                                state.activeBackgroundUri != null -> Triple(
+                                    "USER",
+                                    "",
+                                    state.activeBackgroundUri.toString()
+                                )
+
+                                else -> Triple("DEFAULT", "", null)
                             }
 
                             SooumLog.d(
                                 TAG,
-                                "onWriteComplete reply imgType: $imgType, imgName: $imgName"
+                                "onWriteComplete reply imgType: $imgType, imgName: $imgName, imageUrl: $imageUrl"
                             )
 
                             val replyParam = PostCardReply.Param(
@@ -538,6 +548,7 @@ class WriteViewModel @Inject constructor(
                                 font = selectedFontServerName.data.serverName,
                                 imgType = imgType,
                                 imgName = imgName,
+                                imageUrl = imageUrl,
                                 tags = state.tags,
                                 isDistanceShared = state.selectedOptionIds.contains(WriteOptions.DISTANCE_OPTION_ID)
                             )
