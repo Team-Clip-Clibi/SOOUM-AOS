@@ -38,6 +38,10 @@ class ApplicationConvention : Plugin<Project> {
                 testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
                 val appLink = propertiesKeys.getProperty("playStore_app_url", "")
                 buildConfigField("String", "PLAY_STORE_LINK", appLink)
+                val facebookAppId = propertiesKeys.getProperty("facebook_app_id", "")
+                val facebookClientToken = propertiesKeys.getProperty("facebook_client_token", "")
+                resValue("string", "facebook_app_info", facebookAppId)
+                resValue("string", "facebook_client_token_info", facebookClientToken)
             }
             signingConfigs {
                 create("release") {
@@ -58,6 +62,7 @@ class ApplicationConvention : Plugin<Project> {
                         propertiesKeys.getProperty("google_adsMob_id_debug", "")
                     val clarityKeyDebug = propertiesKeys.getProperty("clarityKey_dev", "")
                     buildConfigField("String", "CLARITY_PROJECT_ID", clarityKeyDebug)
+                    manifestPlaceholders["FACEBOOK_AUTO_LOG_APP_EVENTS"] = "true"
                 }
                 getByName("release") {
                     isMinifyEnabled = true
@@ -71,6 +76,7 @@ class ApplicationConvention : Plugin<Project> {
                     )
                     val clarityKeyProd = propertiesKeys.getProperty("clarityKey_prod", "")
                     buildConfigField("String", "CLARITY_PROJECT_ID", clarityKeyProd)
+                    manifestPlaceholders["FACEBOOK_AUTO_LOG_APP_EVENTS"] = "true"
                 }
             }
             flavorDimensions += "environment"
@@ -138,6 +144,8 @@ class ApplicationConvention : Plugin<Project> {
             "implementation"(libs.findLibrary("mircrosoft-clarity").get())
             //Google AdsMob
             "implementation"(libs.findLibrary("google-gms-admob").get())
+            //facebook sdk
+            "implementation"(libs.findLibrary("facebook-android-sdk").get())
             //module
             add("implementation", project(":presentation"))
             add("implementation", project(":presentation:splash"))

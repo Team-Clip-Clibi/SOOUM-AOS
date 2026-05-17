@@ -41,6 +41,7 @@ constraintlayout = "2.2.1"
 firebase-analytics = "23.0.0"
 google-admob = "25.0.0"
 uiViewbinding = "1.10.5"
+facebook-sdk-version = "18.2.3"
 
 [libraries]
 androidx-material3-windowSize = { group = "androidx.compose.material3", name = "material3-window-size-class" }
@@ -95,6 +96,7 @@ androidx-room-compiler = { group = "androidx.room", name = "room-compiler", vers
 coil-core = { group = "io.coil-kt.coil3", name = "coil", version.ref = "coil" }
 google-gms-admob = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "google-admob" }
 androidx-compose-ui-viewbinding = { group = "androidx.compose.ui", name = "ui-viewbinding", version.ref = "uiViewbinding" }
+facebook-android-sdk = { group = "com.facebook.android", name = "facebook-android-sdk", version.ref = "facebook-sdk-version" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
