@@ -34,7 +34,7 @@ object AppModule {
     @Provides
     @AppVersion
     fun provideAppVersion(): String {
-        return BuildConfig.VERSION_NAME
+        return BuildConfig.VERSION_NAME.substringBefore("-")
     }
 
     @Provides
