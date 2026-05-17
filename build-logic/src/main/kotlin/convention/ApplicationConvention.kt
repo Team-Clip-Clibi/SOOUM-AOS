@@ -62,7 +62,7 @@ class ApplicationConvention : Plugin<Project> {
                         propertiesKeys.getProperty("google_adsMob_id_debug", "")
                     val clarityKeyDebug = propertiesKeys.getProperty("clarityKey_dev", "")
                     buildConfigField("String", "CLARITY_PROJECT_ID", clarityKeyDebug)
-                    manifestPlaceholders["FACEBOOK_AUTO_LOG_APP_EVENTS"] = "true"
+                    manifestPlaceholders["FACEBOOK_AUTO_LOG_APP_EVENTS"] = "false"
                 }
                 getByName("release") {
                     isMinifyEnabled = true
