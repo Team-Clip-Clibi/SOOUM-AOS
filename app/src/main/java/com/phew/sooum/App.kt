@@ -1,6 +1,8 @@
 package com.phew.sooum
 
 import android.app.Application
+import com.facebook.FacebookSdk
+import com.facebook.LoggingBehavior
 import com.phew.core_design.component.toast.SooumToast
 import com.phew.sooum.clarity.ClarityInitializer
 import com.phew.sooum.fcm.NotificationChannelManager
@@ -25,5 +27,9 @@ class App : Application() {
         // Hilt로 주입받은 채널 매니저 사용
         notificationChannelManager.createNotificationChannels()
         clarityInitializer.init()
+        if (BuildConfig.DEBUG) {
+            FacebookSdk.setIsDebugEnabled(true)
+            FacebookSdk.addLoggingBehavior(LoggingBehavior.APP_EVENTS)
+        }
     }
 }
