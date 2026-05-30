@@ -19,12 +19,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -32,11 +30,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.phew.core.ui.component.camera.CameraPickerBottomSheet
 import com.phew.core.ui.component.camera.CameraPickerEffect
 import com.phew.core.ui.model.CameraPickerEffectState
-import com.phew.core_common.ERROR_NETWORK
-import com.phew.core_common.ERROR_UN_GOOD_IMAGE
 import com.phew.core_design.AppBar
 import com.phew.core_design.AvatarComponent
 import com.phew.core_design.DialogComponent
@@ -45,50 +42,30 @@ import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
 import com.phew.sign_up.Component
 import com.phew.sign_up.R
+import com.phew.sign_up.SignUpEffect
 import com.phew.sign_up.SignUpViewModel
-import com.phew.sign_up.UiState
 
 
 @Composable
 fun ProfileImageView(viewModel: SignUpViewModel, onBack: () -> Unit, nexPage: () -> Unit) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackBarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     BackHandler {
         viewModel.initProfileImage()
         onBack()
     }
-    LaunchedEffect(uiState.signUp) {
-        when (val result = uiState.signUp) {
-            is UiState.Fail -> {
-                when (result.errorMessage) {
-                    ERROR_NETWORK -> {
-                        snackBarHostState.showSnackbar(
-                            message = context.getString(com.phew.core_design.R.string.error_network),
-                            duration = SnackbarDuration.Short
-                        )
-                    }
 
-                    ERROR_UN_GOOD_IMAGE -> {
-                        viewModel.setImageDialog(true)
-                    }
-
-                    else -> {
-                        snackBarHostState.showSnackbar(
-                            message = context.getString(com.phew.core_design.R.string.error_app),
-                            duration = SnackbarDuration.Short
-                        )
-                    }
-                }
+    LaunchedEffect(viewModel) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                SignUpEffect.NavigateToFinish -> nexPage()
+                is SignUpEffect.ShowError -> snackBarHostState.showSignUpError(context, effect.error)
+                else -> Unit
             }
-
-            is UiState.Success -> {
-                nexPage()
-            }
-
-            else -> Unit
         }
     }
+
     val cameraPermissions = arrayOf(Manifest.permission.CAMERA)
     val albumPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         arrayOf(Manifest.permission.READ_MEDIA_IMAGES)

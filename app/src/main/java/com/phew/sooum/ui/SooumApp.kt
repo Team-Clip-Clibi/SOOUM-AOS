@@ -17,8 +17,6 @@ fun SooumApp(
     appVersionUpdate: () -> Unit,
     finish: () -> Unit,
     appState: SooumAppState = rememberSooumAppState(),
-    // 요기 수정 -> webView 삭제
-    isExpend: Boolean,
 ) {
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -29,7 +27,6 @@ fun SooumApp(
             appState = appState,
             appVersionUpdate = appVersionUpdate,
             finish = finish,
-            // 요기 수정 -> webView 삭제
         )
 
         SooumBottomBar(
