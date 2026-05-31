@@ -1,6 +1,8 @@
 package com.phew.paging.di
 
+import com.phew.domain.repository.FeedPagingFactory
 import com.phew.domain.repository.PagerRepository
+import com.phew.paging.FeedPagingFactoryImpl
 import com.phew.paging.PagerRepositoryImpl
 import dagger.Binds
 import dagger.Module
@@ -16,4 +18,10 @@ abstract class PagerModule {
     abstract fun providePagerRepository(
         impl : PagerRepositoryImpl
     ) : PagerRepository
+
+    @Binds
+    @Singleton
+    abstract fun provideFeedPagingFactory(
+        impl: FeedPagingFactoryImpl
+    ): FeedPagingFactory
 }
