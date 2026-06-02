@@ -5,9 +5,7 @@ import androidx.paging.PagingState
 import com.phew.core_common.DataResult
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.HTTP_INVALID_TOKEN
-import com.phew.domain.dto.DistanceCard
 import com.phew.domain.dto.FeedCardType
-import com.phew.domain.dto.Latest
 import com.phew.domain.repository.FeedPagingQuery
 import com.phew.domain.repository.network.CardFeedRepository
 import java.io.IOException
@@ -16,6 +14,7 @@ internal class FeedPagingSource(
     private val repository: CardFeedRepository,
     private val query: FeedPagingQuery,
 ) : PagingSource<Long, FeedCardType>() {
+    private val loadedCardIds = mutableSetOf<String>()
 
     override fun getRefreshKey(state: PagingState<Long, FeedCardType>): Long? = null
 
@@ -43,9 +42,9 @@ internal class FeedPagingSource(
             lastId = lastId
         )) {
             is DataResult.Success -> result.data
-                .filterNotLastId(lastId)
                 .map { it.toFeedCardType() }
-                .toPage(lastId = lastId)
+                .filterNotLoaded()
+                .toPage()
 
             is DataResult.Fail -> result.toError()
         }
@@ -56,7 +55,7 @@ internal class FeedPagingSource(
         lastId: Long?,
     ): LoadResult<Long, FeedCardType> {
         if (lastId != null) {
-            return emptyList<FeedCardType>().toPage(lastId = lastId)
+            return emptyList<FeedCardType>().toPage()
         }
 
         return when (val result = repository.requestFeedPopular(
@@ -64,7 +63,9 @@ internal class FeedPagingSource(
             longitude = query.longitude
         )) {
             is DataResult.Success -> LoadResult.Page(
-                data = result.data.map { it.toFeedCardType() },
+                data = result.data
+                    .map { it.toFeedCardType() }
+                    .filterNotLoaded(),
                 prevKey = null,
                 nextKey = null
             )
@@ -84,20 +85,17 @@ internal class FeedPagingSource(
             lastId = lastId
         )) {
             is DataResult.Success -> result.data
-                .filterNotLastId(lastId)
                 .map { it.toFeedCardType() }
-                .toPage(lastId = lastId)
+                .filterNotLoaded()
+                .toPage()
 
             is DataResult.Fail -> result.toError()
         }
     }
 
-    private fun List<FeedCardType>.toPage(
-        lastId: Long?,
-    ): LoadResult.Page<Long, FeedCardType> {
+    private fun List<FeedCardType>.toPage(): LoadResult.Page<Long, FeedCardType> {
         val nextKey = asReversed()
             .firstNotNullOfOrNull { it.cardId.toLongOrNull() }
-            ?.takeIf { it != lastId }
 
         return LoadResult.Page(
             data = this,
@@ -114,6 +112,10 @@ internal class FeedPagingSource(
         }
         return LoadResult.Error<Long, T>(exception)
     }
+
+    private fun List<FeedCardType>.filterNotLoaded(): List<FeedCardType> {
+        return filter { feedCard -> loadedCardIds.add(feedCard.cardId) }
+    }
 }
 
 private val FeedCardType.cardId: String
@@ -122,15 +124,3 @@ private val FeedCardType.cardId: String
         is FeedCardType.AdminType -> cardId
         is FeedCardType.NormalType -> cardId
     }
-
-private fun <T> List<T>.filterNotLastId(lastId: Long?): List<T> {
-    if (lastId == null) return this
-    return filterNot { item ->
-        val cardId = when (item) {
-            is Latest -> item.cardId
-            is DistanceCard -> item.cardId
-            else -> null
-        }
-        cardId?.toLongOrNull() == lastId
-    }
-}

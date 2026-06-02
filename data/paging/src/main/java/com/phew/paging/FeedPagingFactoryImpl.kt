@@ -17,6 +17,7 @@ class FeedPagingFactoryImpl @Inject constructor(
         return Pager(
             config = PagingConfig(
                 pageSize = FEED_PAGE_SIZE,
+                initialLoadSize = FEED_PAGE_SIZE,
                 enablePlaceholders = false
             ),
             pagingSourceFactory = {

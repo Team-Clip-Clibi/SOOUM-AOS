@@ -114,7 +114,7 @@ object NetworkModule {
         @IsDebug isDebug: Boolean,
         json: Json,
     ): Retrofit = Retrofit.Builder()
-        .baseUrl(if (isDebug) BuildConfig.BASE_URL_DEBUG else BuildConfig.BASE_URL_PROD)
+        .baseUrl(BuildConfig.BASE_URL_PROD)
         .client(okHttpClient)
         .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
         .build()
