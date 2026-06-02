@@ -15,12 +15,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -30,6 +28,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.phew.core_common.INPUT_NICK_NAME
 import com.phew.core_design.AppBar
 import com.phew.core_design.DialogComponent
@@ -39,6 +38,7 @@ import com.phew.core_design.TextComponent
 import com.phew.core_design.TextFiledComponent
 import com.phew.sign_up.Component
 import com.phew.sign_up.R
+import com.phew.sign_up.SignUpEffect
 import com.phew.sign_up.SignUpViewModel
 import com.phew.sign_up.UiState
 
@@ -49,20 +49,19 @@ fun NickNameView(viewModel: SignUpViewModel, onBack: () -> Unit, nextPage: () ->
         onBack()
     }
 
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackBarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
-    LaunchedEffect(uiState) {
-        when (uiState.checkNickName) {
-            is UiState.Fail -> {
-                snackBarHostState.showSnackbar(
-                    message = context.getString(com.phew.core_design.R.string.error_network),
-                    duration = SnackbarDuration.Short
-                )
-            }
+    val checkNickName = uiState.checkNickName
+    val isNickNameAvailable = checkNickName is UiState.Success && checkNickName.data
+    val isNickNameLengthValid = uiState.nickName.trim().length in 2..<9
 
-            else -> Unit
+    LaunchedEffect(viewModel) {
+        viewModel.effect.collect { effect ->
+            if (effect is SignUpEffect.ShowError) {
+                snackBarHostState.showSignUpError(context, effect.error)
+            }
         }
     }
 
@@ -92,7 +91,7 @@ fun NickNameView(viewModel: SignUpViewModel, onBack: () -> Unit, nextPage: () ->
                             nextPage()
                         }
                     },
-                    isEnable = (uiState.checkNickName is UiState.Success && (uiState.checkNickName as UiState.Success<Boolean>).data) && (uiState.nickName.trim().length in 2..<9)
+                    isEnable = isNickNameAvailable && isNickNameLengthValid
                 )
             }
         },
@@ -123,11 +122,11 @@ fun NickNameView(viewModel: SignUpViewModel, onBack: () -> Unit, nextPage: () ->
                 onValueChange = { input ->
                     viewModel.nickName(input)
                 },
-                showError = if (uiState.checkNickName is UiState.Success) !(uiState.checkNickName as UiState.Success<Boolean>).data else false,
+                showError = checkNickName is UiState.Success && !checkNickName.data,
                 hint = when {
                     uiState.nickName.length < 2 -> stringResource(R.string.signUp_nickName_helper_one_more)
-                    uiState.checkNickName is UiState.Success -> {
-                        if (!(uiState.checkNickName as UiState.Success<Boolean>).data) {
+                    checkNickName is UiState.Success -> {
+                        if (!checkNickName.data) {
                             stringResource(R.string.signUp_nickName_helper_error)
                         } else {
                             stringResource(R.string.signUp_nickName_helper)
@@ -187,4 +186,3 @@ private fun InPutNickNameView(
         showError = showError
     )
 }
-

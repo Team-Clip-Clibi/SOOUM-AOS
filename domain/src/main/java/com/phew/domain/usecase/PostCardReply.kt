@@ -48,6 +48,7 @@ class PostCardReply @Inject constructor(
     )
 
     suspend operator fun invoke(param: Param): DomainResult<Long, String> {
+        if (param.content.trim().isEmpty()) return DomainResult.Failure(ERROR_FAIL_JOB)
         val imageInfoResult = when (param.imgType) {
             IMAGE_TYPE_USER -> getImageInfoFromDevice(param.imageUrl)
             else -> DomainResult.Success(UploadImageInfo(param.imgName, IMAGE_TYPE_DEFAULT))
@@ -77,9 +78,10 @@ class PostCardReply @Inject constructor(
         return when (val result = repository.postCardReply(param.cardId, request)) {
             is DataResult.Success -> {
                 eventRepository.logWriteCardClickFinishButton()
-                if(!locationPermissionCheck) eventRepository.logWriteDistanceSharedOff()
+                if (!locationPermissionCheck) eventRepository.logWriteDistanceSharedOff()
                 DomainResult.Success(result.data.cardId)
             }
+
             is DataResult.Fail -> mapFailure(result)
         }
     }

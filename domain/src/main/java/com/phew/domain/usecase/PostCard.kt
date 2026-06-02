@@ -48,6 +48,7 @@ class PostCard @Inject constructor(
     )
 
     suspend operator fun invoke(data: Param): DomainResult<Long, String> {
+        if(data.content.trim().isEmpty()) return DomainResult.Failure(ERROR_FAIL_JOB)
         when (val checkedPostBanned = networkRepository.requestCheckUploadCard()) {
             is DataResult.Fail -> return DomainResult.Failure(ERROR_FAIL_JOB)
             is DataResult.Success -> {
