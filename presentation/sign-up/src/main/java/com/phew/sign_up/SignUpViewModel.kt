@@ -6,7 +6,12 @@ import androidx.lifecycle.viewModelScope
 import com.phew.core.ui.model.CameraCaptureRequest
 import com.phew.core.ui.model.CameraPickerAction
 import com.phew.core_common.DomainResult
-import com.phew.core_common.ERROR
+import com.phew.core_common.ERROR_NETWORK
+import com.phew.core_common.ERROR_TRANSFER_CODE_INVALID
+import com.phew.core_common.ERROR_UN_GOOD_IMAGE
+import com.phew.domain.SIGN_UP_ALREADY_SIGN_UP
+import com.phew.domain.SIGN_UP_OKAY
+import com.phew.domain.SIGN_UP_REGISTERED
 import com.phew.domain.usecase.CheckNickName
 import com.phew.domain.usecase.CheckSignUp
 import com.phew.domain.usecase.CreateImageFile
@@ -18,11 +23,17 @@ import com.phew.domain.usecase.RestoreAccount
 import com.phew.sign_up.dto.SignUpResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -37,38 +48,24 @@ class SignUpViewModel @Inject constructor(
     private val restoreAccount: RestoreAccount
 ) : ViewModel() {
 
-    private var _uiState = MutableStateFlow(SignUp())
+    private val _uiState = MutableStateFlow(SignUp())
     val uiState: StateFlow<SignUp> = _uiState.asStateFlow()
+
+    private val _effect = MutableSharedFlow<SignUpEffect>()
+    val effect: SharedFlow<SignUpEffect> = _effect.asSharedFlow()
+
+    private var checkNickNameJob: Job? = null
 
     /**
      * 닉네임 초기화 함수
      */
     fun initNickName() {
+        checkNickNameJob?.cancel()
         _uiState.update { state ->
             state.copy(
                 nickName = "",
                 checkNickName = UiState.Loading,
             )
-        }
-    }
-
-    /**
-     * SignUpResult 초기화 함수
-     */
-    fun initSignUpResult(){
-        _uiState.update { state ->
-            state.copy(
-                checkSignUp = UiState.Loading
-            )
-        }
-    }
-
-    /**
-     * restoreAccountResult 초기화 함수
-     */
-    fun initRestoreAccountResult() {
-        _uiState.update { state ->
-            state.copy(restoreAccountResult = UiState.Loading)
         }
     }
 
@@ -86,14 +83,13 @@ class SignUpViewModel @Inject constructor(
     /**
      * 동의 초기화 함수
      */
-    fun initAgreement(){
+    fun initAgreement() {
         _uiState.update { state ->
             state.copy(
                 agreementAll = false,
                 agreedToTermsOfService = false,
                 agreedToPrivacyPolicy = false,
                 agreedToLocationTerms = false,
-                checkSignUp = UiState.Loading,
             )
         }
     }
@@ -101,7 +97,7 @@ class SignUpViewModel @Inject constructor(
     /**
      * 인증 코드 초기화 함수
      */
-    fun initAuthCode(){
+    fun initAuthCode() {
         _uiState.update { state ->
             state.copy(
                 authCode = ""
@@ -116,15 +112,14 @@ class SignUpViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             when (val result = getNickName()) {
                 is DomainResult.Failure -> {
-                    _uiState.update { state ->
-                        state.copy(nickName = ERROR)
-                    }
+                    _effect.emit(SignUpEffect.ShowError(SignUpError.Network))
                 }
 
                 is DomainResult.Success -> {
                     _uiState.update { state ->
                         state.copy(nickName = result.data, checkNickName = UiState.Success(true))
                     }
+                    _effect.emit(SignUpEffect.NavigateToNickName)
                 }
             }
         }
@@ -145,15 +140,23 @@ class SignUpViewModel @Inject constructor(
                 )
             )) {
                 is DomainResult.Failure -> {
-                    _uiState.update { state ->
-                        state.copy(signUp = UiState.Fail(result.error))
+                    when (result.error) {
+                        ERROR_NETWORK -> {
+                            _effect.emit(SignUpEffect.ShowError(SignUpError.Network))
+                        }
+
+                        ERROR_UN_GOOD_IMAGE -> {
+                            setImageDialog(true)
+                        }
+
+                        else -> {
+                            _effect.emit(SignUpEffect.ShowError(SignUpError.App))
+                        }
                     }
                 }
 
                 is DomainResult.Success -> {
-                    _uiState.update { state ->
-                        state.copy(signUp = UiState.Success(Unit))
-                    }
+                    _effect.emit(SignUpEffect.NavigateToFinish)
                 }
             }
         }
@@ -162,18 +165,23 @@ class SignUpViewModel @Inject constructor(
     /**
      * 닉네임 검증 함수
      */
-    private fun checkName() {
-        viewModelScope.launch(Dispatchers.IO) {
-            when (val result = checkNickName(CheckNickName.Param(_uiState.value.nickName))) {
-                is DomainResult.Failure -> {
+    private suspend fun checkName(name: String) {
+        when (val result = withContext(Dispatchers.IO) { checkNickName(CheckNickName.Param(name)) }) {
+            is DomainResult.Failure -> {
+                if (_uiState.value.nickName == name) {
                     _uiState.update { state ->
                         state.copy(checkNickName = UiState.Fail(result.error))
                     }
+                    _effect.emit(SignUpEffect.ShowError(SignUpError.Network))
                 }
+            }
 
-                is DomainResult.Success -> {
-                    _uiState.update { state ->
+            is DomainResult.Success -> {
+                _uiState.update { state ->
+                    if (state.nickName == name) {
                         state.copy(checkNickName = UiState.Success(result.data))
+                    } else {
+                        state
                     }
                 }
             }
@@ -197,15 +205,16 @@ class SignUpViewModel @Inject constructor(
             when (val result =
                 restoreAccount(RestoreAccount.Param(_uiState.value.authCode.trim()))) {
                 is DomainResult.Failure -> {
-                    _uiState.update { state ->
-                        state.copy(restoreAccountResult = UiState.Fail(result.error))
+                    val error = when (result.error) {
+                        ERROR_NETWORK -> SignUpError.Network
+                        ERROR_TRANSFER_CODE_INVALID -> SignUpError.InvalidAuthCode
+                        else -> SignUpError.App
                     }
+                    _effect.emit(SignUpEffect.ShowError(error))
                 }
 
                 is DomainResult.Success -> {
-                    _uiState.update { state ->
-                        state.copy(restoreAccountResult = UiState.Success(Unit))
-                    }
+                    _effect.emit(SignUpEffect.RestoreSuccess)
                 }
             }
         }
@@ -261,27 +270,22 @@ class SignUpViewModel @Inject constructor(
     /**
      * 회원 가입 가능 여부 확인
      */
-     fun checkRegister() {
+    fun checkRegister() {
         viewModelScope.launch(Dispatchers.IO) {
             when (val result = checkSignUp()) {
                 is DomainResult.Failure -> {
-                    _uiState.update { state ->
-                        state.copy(
-                            checkSignUp = UiState.Fail(result.error)
-                        )
-                    }
+                    _effect.emit(SignUpEffect.ShowError(SignUpError.Network))
                 }
 
                 is DomainResult.Success -> {
-                    _uiState.update { state ->
-                        state.copy(
-                            checkSignUp = UiState.Success(
-                                SignUpResult(
-                                    time = result.data.second,
-                                    result = result.data.first
-                                )
-                            )
-                        )
+                    val signUpResult = SignUpResult(
+                        time = result.data.second,
+                        result = result.data.first
+                    )
+                    when (signUpResult.result) {
+                        SIGN_UP_OKAY -> _effect.emit(SignUpEffect.NavigateToAgreement)
+                        SIGN_UP_REGISTERED, SIGN_UP_ALREADY_SIGN_UP -> login()
+                        else -> _effect.emit(SignUpEffect.ShowDialog(signUpResult))
                     }
                 }
             }
@@ -291,21 +295,15 @@ class SignUpViewModel @Inject constructor(
     /**
      * 로그인
      */
-    fun login() {
+    private fun login() {
         viewModelScope.launch(Dispatchers.IO) {
             when (val result = requestLogin()) {
                 is DomainResult.Failure -> {
-                    _uiState.update { state ->
-                        state.copy(
-                            login = UiState.Fail(result.error)
-                        )
-                    }
+                    _effect.emit(SignUpEffect.ShowError(SignUpError.Network))
                 }
 
                 is DomainResult.Success -> {
-                    _uiState.update { state ->
-                        state.copy(login = UiState.Success(Unit))
-                    }
+                    _effect.emit(SignUpEffect.NavigateHome)
                 }
             }
         }
@@ -316,9 +314,21 @@ class SignUpViewModel @Inject constructor(
      */
     fun nickName(name: String) {
         _uiState.update { state ->
-            state.copy(nickName = name)
+            state.copy(
+                nickName = name,
+                checkNickName = UiState.Loading
+            )
         }
-        checkName()
+
+        checkNickNameJob?.cancel()
+        if (name.trim().length !in 2..8) {
+            return
+        }
+
+        checkNickNameJob = viewModelScope.launch {
+            delay(NICK_NAME_CHECK_DELAY_MILLIS)
+            checkName(name)
+        }
     }
 
     /**
@@ -335,7 +345,7 @@ class SignUpViewModel @Inject constructor(
      */
     fun updateProfileBottom() {
         _uiState.update { state ->
-            state.copy(profileBottom = !_uiState.value.profileBottom)
+            state.copy(profileBottom = !state.profileBottom)
         }
     }
 
@@ -459,7 +469,6 @@ class SignUpViewModel @Inject constructor(
                         listOf(Uri.EMPTY)
                     }
                 } else state.profile,
-                signUp = if (!result) state.signUp else UiState.Loading
             )
         }
     }
@@ -482,14 +491,9 @@ data class SignUp(
     val shouldLaunchProfileAlbum: Boolean = false,
     val shouldRequestProfileCameraPermission: Boolean = false,
     val pendingProfileCameraCapture: CameraCaptureRequest? = null,
-    val finalizePending: Boolean = false,
-    val checkSignUp: UiState<SignUpResult> = UiState.Loading,
     val checkNickName: UiState<Boolean> = UiState.Loading,
-    val login: UiState<Unit> = UiState.Loading,
-    val restoreAccountResult: UiState<Unit> = UiState.Loading,
-    val signUp: UiState<Unit> = UiState.Loading,
-    val imageDialog : Boolean = false,
-    val loadPolicyView : Boolean = false
+    val imageDialog: Boolean = false,
+    val loadPolicyView: Boolean = false
 )
 
 sealed interface UiState<out T> {
@@ -497,3 +501,21 @@ sealed interface UiState<out T> {
     data class Success<T>(val data: T) : UiState<T>
     data class Fail(val errorMessage: String) : UiState<Nothing>
 }
+
+sealed interface SignUpEffect {
+    data object NavigateToAgreement : SignUpEffect
+    data object NavigateHome : SignUpEffect
+    data object NavigateToNickName : SignUpEffect
+    data object NavigateToFinish : SignUpEffect
+    data object RestoreSuccess : SignUpEffect
+    data class ShowDialog(val result: SignUpResult) : SignUpEffect
+    data class ShowError(val error: SignUpError) : SignUpEffect
+}
+
+enum class SignUpError {
+    Network,
+    InvalidAuthCode,
+    App
+}
+
+private const val NICK_NAME_CHECK_DELAY_MILLIS = 350L
