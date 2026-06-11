@@ -6,6 +6,7 @@ import com.phew.domain.interceptor.GlobalEventBus
 import com.phew.domain.interceptor.InterceptorManger
 import com.phew.network.AuthInterceptor
 import com.phew.network.BuildConfig
+import com.phew.network.GlobalMessageInterceptor
 import com.phew.network.TeapotInterceptor
 import com.phew.network.TokenAuthenticator
 import com.phew.network.retrofit.AppVersionHttp
@@ -78,10 +79,12 @@ object NetworkModule {
     fun provideOkHttpClient(
         loggingInterceptor: HttpLoggingInterceptor,
         authInterceptor: AuthInterceptor,
+        globalMessageInterceptor: GlobalMessageInterceptor,
         tokenAuthenticator: TokenAuthenticator,
         teapotInterceptor: TeapotInterceptor,
     ): OkHttpClient = OkHttpClient.Builder()
         .addInterceptor(authInterceptor)
+        .addInterceptor(globalMessageInterceptor)
         .addInterceptor(teapotInterceptor)
         .addInterceptor(loggingInterceptor)
         .authenticator(tokenAuthenticator)
