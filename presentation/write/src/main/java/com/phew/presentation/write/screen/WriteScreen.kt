@@ -124,7 +124,7 @@ internal fun WriteRoute(
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val defaultContent = stringResource(WriteR.string.write_card_content_default_placeholder)
-    var activeDialog by remember { mutableStateOf<WriteRouteDialog?>(null) }
+    var activeDialog by remember { mutableStateOf<WriteDialog?>(null) }
 
     WriteRouteEffects(
         viewModel = viewModel,
@@ -201,7 +201,7 @@ internal fun WriteRoute(
         },
     )
 
-    WriteRouteDialog(
+    WriteDialogHost(
         dialog = activeDialog,
         activateDate = uiState.activateDate,
         onDismissAndGoHome = {
@@ -215,11 +215,11 @@ internal fun WriteRoute(
     )
 }
 
-private sealed interface WriteRouteDialog {
-    data class Error(val refreshToken: String) : WriteRouteDialog
-    data object Restricted : WriteRouteDialog
-    data object Deleted : WriteRouteDialog
-    data object BadImage : WriteRouteDialog
+private sealed interface WriteDialog {
+    data class Error(val refreshToken: String) : WriteDialog
+    data object Restricted : WriteDialog
+    data object Deleted : WriteDialog
+    data object BadImage : WriteDialog
 }
 
 @Composable
@@ -229,7 +229,7 @@ private fun WriteRouteEffects(
     args: WriteArgs?,
     isFromTab: Boolean,
     onWriteComplete: (CardDetailArgs) -> Unit,
-    onDialogRequested: (WriteRouteDialog) -> Unit,
+    onDialogRequested: (WriteDialog) -> Unit,
 ) {
     val context = LocalContext.current
     val currentOnWriteComplete by rememberUpdatedState(onWriteComplete)
@@ -279,41 +279,41 @@ private fun WriteRouteEffects(
     }
 }
 
-private fun WriteUiEffect.toRouteDialog(): WriteRouteDialog = when (this) {
-    is WriteUiEffect.ShowError -> WriteRouteDialog.Error(refreshToken)
-    WriteUiEffect.ShowRestricted -> WriteRouteDialog.Restricted
-    WriteUiEffect.ShowDeleted -> WriteRouteDialog.Deleted
-    WriteUiEffect.ShowBadImage -> WriteRouteDialog.BadImage
+private fun WriteUiEffect.toRouteDialog(): WriteDialog = when (this) {
+    is WriteUiEffect.ShowError -> WriteDialog.Error(refreshToken)
+    WriteUiEffect.ShowRestricted -> WriteDialog.Restricted
+    WriteUiEffect.ShowDeleted -> WriteDialog.Deleted
+    WriteUiEffect.ShowBadImage -> WriteDialog.BadImage
 }
 
 private fun isPermissionGranted(context: Context, permission: String): Boolean =
     ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
 
 @Composable
-private fun WriteRouteDialog(
-    dialog: WriteRouteDialog?,
+private fun WriteDialogHost(
+    dialog: WriteDialog?,
     activateDate: UiState<String>,
     onDismissAndGoHome: () -> Unit,
     onBadImageDismissed: () -> Unit,
 ) {
     when (dialog) {
         null -> Unit
-        WriteRouteDialog.Restricted -> RestrictedWriteDialog(
+        WriteDialog.Restricted -> RestrictedWriteDialog(
             activateDate = activateDate,
             onDismiss = onDismissAndGoHome,
         )
-        WriteRouteDialog.Deleted -> DeletedCardDialog(
+        WriteDialog.Deleted -> DeletedCardDialog(
             onConfirm = onDismissAndGoHome,
             onDismiss = onDismissAndGoHome,
         )
-        WriteRouteDialog.BadImage -> DialogComponent.DefaultButtonOne(
+        WriteDialog.BadImage -> DialogComponent.DefaultButtonOne(
             title = stringResource(WriteR.string.write_screen_picture_dialog_image_title),
             description = stringResource(WriteR.string.write_screen_picture_dialog_image_content),
             buttonText = stringResource(com.phew.core_design.R.string.common_okay),
             onClick = onBadImageDismissed,
             onDismiss = onBadImageDismissed,
         )
-        is WriteRouteDialog.Error -> {
+        is WriteDialog.Error -> {
             val keyboard = LocalSoftwareKeyboardController.current
             val focusManager = LocalFocusManager.current
             ErrorDialog(
@@ -757,10 +757,7 @@ private fun isGalleryPermissionGranted(context: Context): Boolean {
     } else {
         Manifest.permission.READ_EXTERNAL_STORAGE
     }
-    return ContextCompat.checkSelfPermission(
-        context,
-        permission
-    ) == PackageManager.PERMISSION_GRANTED
+    return isPermissionGranted(context, permission)
 }
 
 private enum class SettingsTarget {
