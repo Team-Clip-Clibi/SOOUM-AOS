@@ -7,6 +7,7 @@ import androidx.paging.cachedIn
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core_common.CardDetailTrace
 import com.phew.core_common.DomainResult
+import com.phew.core_common.ERROR_ALREADY_CARD_DELETE
 import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.ERROR_NO_DATA
 import com.phew.domain.dto.CardArticle
@@ -21,13 +22,16 @@ import com.phew.domain.repository.FeedPagingQuery
 import com.phew.domain.usecase.CheckCardAlreadyDelete
 import com.phew.domain.usecase.CheckLocationPermission
 import com.phew.domain.usecase.GetCardArticle
+import com.phew.domain.usecase.GetCardDetail
 import com.phew.domain.usecase.GetFeedNotification
 import com.phew.domain.usecase.GetNotification
 import com.phew.domain.usecase.GetReadNotification
 import com.phew.domain.usecase.GetUnReadNotification
+import com.phew.domain.usecase.LikeCard
 import com.phew.domain.usecase.SaveEventLogFeedView
 import com.phew.domain.usecase.SetReadActivateNotify
 import com.phew.domain.usecase.SetReadActivateNotify.*
+import com.phew.domain.usecase.UnlikeCard
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -59,7 +63,10 @@ class FeedViewModel @Inject constructor(
     private val readNotify: SetReadActivateNotify,
     private val checkCardDelete: CheckCardAlreadyDelete,
     private val eventLog: SaveEventLogFeedView,
-    private val getArticle: GetCardArticle
+    private val getArticle: GetCardArticle,
+    private val getCardDetail: GetCardDetail,
+    private val likeCard: LikeCard,
+    private val unlikeCard: UnlikeCard,
 ) :
     ViewModel() {
     private val _uiState = MutableStateFlow(Home())
@@ -290,6 +297,123 @@ class FeedViewModel @Inject constructor(
         updateFeedSelection(refresh = true)
     }
 
+    fun verifyAndToggleLike(
+        cardId: Long,
+        initialLikeCount: Int,
+    ) {
+        val currentState = _uiState.value.feedLikeStates[cardId]
+        if (currentState?.isLoading == true) return
+
+        updateFeedLikeState(
+            cardId = cardId,
+            state = currentState?.copy(isLoading = true)
+                ?: FeedLikeUiState(
+                    isLike = false,
+                    likeCount = initialLikeCount,
+                    isLoading = true,
+                )
+        )
+        viewModelScope.launch {
+            when (val checkResult = checkCardDelete(CheckCardAlreadyDelete.Param(cardId))) {
+                is DomainResult.Success -> {
+                    if (checkResult.data) {
+                        updateFeedLikeLoading(cardId, false)
+                        _uiState.update { state ->
+                            state.copy(checkCardDelete = UiState.Success(cardId))
+                        }
+                        return@launch
+                    }
+                }
+
+                is DomainResult.Failure -> {
+                    updateFeedLikeLoading(cardId, false)
+                    _uiState.update { state ->
+                        state.copy(checkCardDelete = UiState.Fail(checkResult.error))
+                    }
+                    return@launch
+                }
+            }
+
+            val resolvedState = currentState?.copy(isLoading = true)
+                ?: when (val detailResult = try {
+                    getCardDetail(GetCardDetail.Param(cardId))
+                } catch (_: Exception) {
+                    updateFeedLikeLoading(cardId, false)
+                    return@launch
+                }) {
+                    is DomainResult.Success -> FeedLikeUiState(
+                        isLike = detailResult.data.isLike,
+                        likeCount = detailResult.data.likeCount,
+                        isLoading = true,
+                    )
+
+                    is DomainResult.Failure -> {
+                        updateFeedLikeLoading(cardId, false)
+                        if (detailResult.error == ERROR_ALREADY_CARD_DELETE) {
+                            _uiState.update { state ->
+                                state.copy(checkCardDelete = UiState.Success(cardId))
+                            }
+                        }
+                        return@launch
+                    }
+                }
+            updateFeedLikeState(cardId, resolvedState)
+
+            val result = if (resolvedState.isLike) {
+                unlikeCard(cardId)
+            } else {
+                likeCard(cardId)
+            }
+
+            when (result) {
+                is DomainResult.Success -> {
+                    val isLike = !resolvedState.isLike
+                    val likeCount = if (isLike) {
+                        resolvedState.likeCount + 1
+                    } else {
+                        (resolvedState.likeCount - 1).coerceAtLeast(0)
+                    }
+                    updateFeedLikeState(
+                        cardId = cardId,
+                        state = resolvedState.copy(
+                            isLike = isLike,
+                            likeCount = likeCount,
+                            isLoading = false,
+                            animationVersion = resolvedState.animationVersion + 1,
+                        )
+                    )
+                }
+
+                is DomainResult.Failure -> {
+                    updateFeedLikeState(cardId, resolvedState.copy(isLoading = false))
+                    if (result.error == ERROR_ALREADY_CARD_DELETE) {
+                        _uiState.update { state ->
+                            state.copy(checkCardDelete = UiState.Success(cardId))
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun updateFeedLikeLoading(cardId: Long, isLoading: Boolean) {
+        _uiState.update { currentState ->
+            val likeState = currentState.feedLikeStates[cardId] ?: return@update currentState
+            currentState.copy(
+                feedLikeStates = currentState.feedLikeStates +
+                    (cardId to likeState.copy(isLoading = isLoading))
+            )
+        }
+    }
+
+    private fun updateFeedLikeState(cardId: Long, state: FeedLikeUiState) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                feedLikeStates = currentState.feedLikeStates + (cardId to state)
+            )
+        }
+    }
+
     fun removeFeedCard(cardId: String) {
         cardId.toLongOrNull()?.let(::addToHiddenCards)
     }
@@ -408,6 +532,14 @@ data class Home(
     val checkCardDelete: UiState<Long> = UiState.None,
     val hiddenCardIds: Set<Long> = emptySet(),
     val cardArticle: UiState<CardArticle> = UiState.Loading,
+    val feedLikeStates: Map<Long, FeedLikeUiState> = emptyMap(),
+)
+
+data class FeedLikeUiState(
+    val isLike: Boolean,
+    val likeCount: Int,
+    val isLoading: Boolean = false,
+    val animationVersion: Int = 0,
 )
 
 enum class FeedType {

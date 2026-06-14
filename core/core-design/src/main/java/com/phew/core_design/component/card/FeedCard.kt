@@ -53,8 +53,12 @@ fun FeedDefaultCard(
     font: String,
     distance: String = "",
     likeCount: String = "0",
+    isLike: Boolean = false,
+    isLikeLoading: Boolean = false,
+    likeAnimationKey: Int = 0,
     commentCount: String = "0",
     timeAgo: String,
+    onClickLike: () -> Unit = {},
     onClick: () -> Unit
 ) {
     FeedCardImpl(
@@ -64,10 +68,14 @@ fun FeedDefaultCard(
         font = font,
         distance = distance,
         likeCount = likeCount,
+        isLike = isLike,
+        isLikeLoading = isLikeLoading,
+        likeAnimationKey = likeAnimationKey,
         commentCount = commentCount,
         timeAgo = timeAgo,
         remainingTimeMillis = 0L,
         cardType = FeedCardType.DEFAULT,
+        onClickLike = onClickLike,
         onClick = onClick
     )
 }
@@ -177,6 +185,10 @@ fun FeedAdminCard(
     timeAgo: String,
     commentCount: String,
     likeCount: String,
+    isLike: Boolean = false,
+    isLikeLoading: Boolean = false,
+    likeAnimationKey: Int = 0,
+    onClickLike: () -> Unit = {},
     onClick: () -> Unit
 ) {
     FeedAdminCardImpl(
@@ -185,8 +197,12 @@ fun FeedAdminCard(
         imgUrl = imgUrl,
         font = font,
         likeCount = likeCount,
+        isLike = isLike,
+        isLikeLoading = isLikeLoading,
+        likeAnimationKey = likeAnimationKey,
         commentCount = commentCount,
         timeAgo = timeAgo,
+        onClickLike = onClickLike,
         onClick = onClick
     )
 }
@@ -199,10 +215,14 @@ private fun FeedCardImpl(
     font: String,
     distance: String = "",
     likeCount: String,
+    isLike: Boolean = false,
+    isLikeLoading: Boolean = false,
+    likeAnimationKey: Int = 0,
     commentCount: String,
     timeAgo: String,
     remainingTimeMillis: Long,
     cardType: FeedCardType,
+    onClickLike: () -> Unit = {},
     onClick: () -> Unit
 ) {
     Surface(
@@ -234,10 +254,14 @@ private fun FeedCardImpl(
             BottomContent(
                 distance = distance,
                 likeCount = likeCount,
+                isLike = isLike,
+                isLikeLoading = isLikeLoading,
+                likeAnimationKey = likeAnimationKey,
                 commentCount = commentCount,
                 timeAgo = timeAgo,
                 remainingTimeMillis = remainingTimeMillis.toString(),
-                cardType = cardType
+                cardType = cardType,
+                onClickLike = onClickLike,
             )
         }
     }
@@ -250,8 +274,12 @@ private fun FeedAdminCardImpl(
     imgUrl: String = "",
     font: String = "",
     likeCount: String = "",
+    isLike: Boolean = false,
+    isLikeLoading: Boolean = false,
+    likeAnimationKey: Int = 0,
     commentCount: String = "",
     timeAgo: String = "",
+    onClickLike: () -> Unit = {},
     onClick: () -> Unit
 ) {
     Surface(
@@ -282,10 +310,14 @@ private fun FeedAdminCardImpl(
 
             BottomContent(
                 likeCount = likeCount,
+                isLike = isLike,
+                isLikeLoading = isLikeLoading,
+                likeAnimationKey = likeAnimationKey,
                 commentCount = commentCount,
                 isAdminManger = true,
                 timeAgo = timeAgo,
-                cardType = FeedCardType.ADMIN
+                cardType = FeedCardType.ADMIN,
+                onClickLike = onClickLike,
             )
         }
     }

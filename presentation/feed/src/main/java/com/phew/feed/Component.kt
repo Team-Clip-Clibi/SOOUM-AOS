@@ -415,6 +415,11 @@ object FeedUi {
         feedCard: FeedCardType,
         onClick: (String) -> Unit,
         onRemoveCard: (String) -> Unit,
+        isLike: Boolean = false,
+        likeCount: Int = 0,
+        isLikeLoading: Boolean = false,
+        likeAnimationKey: Int = 0,
+        onClickLike: () -> Unit = {},
     ) {
         when (feedCard) {
             is FeedCardType.BoombType -> PungTypeCard(
@@ -425,12 +430,22 @@ object FeedUi {
 
             is FeedCardType.AdminType -> AdminTypeCard(
                 feedCard = feedCard,
-                onClick = onClick
+                onClick = onClick,
+                isLike = isLike,
+                likeCount = likeCount,
+                isLikeLoading = isLikeLoading,
+                likeAnimationKey = likeAnimationKey,
+                onClickLike = onClickLike,
             )
 
             is FeedCardType.NormalType -> NormalTypeCard(
                 feedCard = feedCard,
-                onClick = onClick
+                onClick = onClick,
+                isLike = isLike,
+                likeCount = likeCount,
+                isLikeLoading = isLikeLoading,
+                likeAnimationKey = likeAnimationKey,
+                onClickLike = onClickLike,
             )
         }
     }
@@ -483,6 +498,11 @@ object FeedUi {
     internal fun AdminTypeCard(
         feedCard: FeedCardType.AdminType,
         onClick: (String) -> Unit,
+        isLike: Boolean,
+        likeCount: Int,
+        isLikeLoading: Boolean,
+        likeAnimationKey: Int,
+        onClickLike: () -> Unit,
     ) {
         FeedAdminCard(
             id = feedCard.cardId,
@@ -491,7 +511,11 @@ object FeedUi {
             font = feedCard.font,
             timeAgo = feedCard.writeTime,
             commentCount = feedCard.commentValue,
-            likeCount = feedCard.likeValue,
+            likeCount = likeCount.toString(),
+            isLike = isLike,
+            isLikeLoading = isLikeLoading,
+            likeAnimationKey = likeAnimationKey,
+            onClickLike = onClickLike,
             onClick = {
                 onClick(feedCard.cardId)
             }
@@ -502,6 +526,11 @@ object FeedUi {
     internal fun NormalTypeCard(
         feedCard: FeedCardType.NormalType,
         onClick: (String) -> Unit,
+        isLike: Boolean,
+        likeCount: Int,
+        isLikeLoading: Boolean,
+        likeAnimationKey: Int,
+        onClickLike: () -> Unit,
     ) {
         FeedDefaultCard(
             id = feedCard.cardId,
@@ -511,7 +540,11 @@ object FeedUi {
             distance = feedCard.location ?: "",
             timeAgo = feedCard.writeTime,
             commentCount = feedCard.commentValue,
-            likeCount = feedCard.likeValue,
+            likeCount = likeCount.toString(),
+            isLike = isLike,
+            isLikeLoading = isLikeLoading,
+            likeAnimationKey = likeAnimationKey,
+            onClickLike = onClickLike,
             onClick = {
                 onClick(feedCard.cardId)
             }
