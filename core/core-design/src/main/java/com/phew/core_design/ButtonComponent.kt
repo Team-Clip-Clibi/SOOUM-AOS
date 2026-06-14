@@ -745,9 +745,9 @@ object SmallButton {
         disabledColor: Color = NeutralColor.GRAY_200,
         onClick: () -> Unit,
         modifier: Modifier,
+        isBorderShow: Boolean = true,
         content: @Composable RowScope.() -> Unit,
-
-        ) {
+    ) {
         val interactionSource = remember { MutableInteractionSource() }
         val isPressed by interactionSource.collectIsPressedAsState()
 
@@ -756,10 +756,16 @@ object SmallButton {
                 .fillMaxWidth()
                 .height(32.dp)
                 .clip(shape = RoundedCornerShape(8.dp))
-                .border(
-                    width = 1.dp,
-                    color = NeutralColor.GRAY_300,
-                    shape = RoundedCornerShape(size = 8.dp)
+                .then(
+                    if (isBorderShow) {
+                        Modifier.border(
+                            width = 1.dp,
+                            color = NeutralColor.GRAY_300,
+                            shape = RoundedCornerShape(size = 8.dp)
+                        )
+                    } else {
+                        Modifier
+                    }
                 )
                 .drawBehind {
                     val color = when {
@@ -831,6 +837,7 @@ object SmallButton {
         buttonText: String,
         onClick: () -> Unit,
         isEnable: Boolean = true,
+        isBorderShow: Boolean = true,
         modifier: Modifier
     ) {
         BlinkSmallButton(
@@ -839,6 +846,7 @@ object SmallButton {
             disabledColor = NeutralColor.GRAY_200,
             onClick = onClick,
             enabled = isEnable,
+            isBorderShow = isBorderShow,
             modifier = modifier
         ) {
             Text(
