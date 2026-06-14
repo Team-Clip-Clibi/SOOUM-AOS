@@ -39,6 +39,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -81,6 +82,7 @@ import com.phew.presentation.write.component.NumberTagFlowLayout
 import com.phew.presentation.write.component.NumberTagItem
 import com.phew.domain.dto.CardImageDefault
 import com.phew.presentation.write.model.BackgroundConfig
+import com.phew.presentation.write.model.WriteUiState
 import com.phew.core_design.FontItem
 import com.phew.presentation.write.model.WriteOption
 import com.phew.presentation.write.model.WriteOptions
@@ -120,114 +122,23 @@ internal fun WriteRoute(
         viewModel.clickBackHandler(isFromFeedCard = isFromTab)
     }
 
-    LaunchedEffect(Unit) {
-        if (isFromTab) viewModel.isComeFromTab()
-    }
-    val context = LocalContext.current
-    val keyboard = LocalSoftwareKeyboardController.current
-    val focusManager = LocalFocusManager.current
-
-    //   위치 권한
-    val locationPermission = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestMultiplePermissions(),
-        onResult = { permissionResult ->
-            val isGranted = permissionResult.any { it.value }
-            viewModel.onLocationPermissionResult(isGranted)
-        }
-    )
-
-    LaunchedEffect(context) {
-        val fineGranted = ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-
-        val coarseGranted = ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-
-        viewModel.onInitialLocationPermissionCheck(fineGranted || coarseGranted)
-    }
-    //  Effect Event로 수정
-    LaunchedEffect(Unit) {
-        viewModel.requestPermissionEvent.collect { permissions ->
-            locationPermission.launch(permissions)
-        }
-    }
-
-    // 완료 이벤트 처리
-    LaunchedEffect(Unit) {
-        viewModel.writeCompleteEvent.collect {
-            SooumLog.d(TAG, "writeCompleteEvent")
-            navController.previousBackStackEntry?.savedStateHandle?.set("card_added", true)
-            onWriteComplete(CardDetailArgs(cardId = it))
-        }
-    }
-
-    // parentCardId 설정
-    LaunchedEffect(args) {
-        args?.parentCardId?.let { parentCardId ->
-            viewModel.setParentCardId(parentCardId)
-        }
-    }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val compareContent = stringResource(WriteR.string.write_card_content_default_placeholder)
-    var errorWithRefreshToken by remember { mutableStateOf<String?>(null) }
-    var showRestrictedDialog by remember { mutableStateOf(false) }
-    var showDeletedDialog by remember { mutableStateOf(false) }
-    var showBadImageDialog by remember { mutableStateOf(false) }
-    val composition by rememberLottieComposition(
-        LottieCompositionSpec.RawRes(com.phew.core_design.R.raw.ic_refresh)
+    val defaultContent = stringResource(WriteR.string.write_card_content_default_placeholder)
+    var activeDialog by remember { mutableStateOf<WriteRouteDialog?>(null) }
+
+    WriteRouteEffects(
+        viewModel = viewModel,
+        navController = navController,
+        args = args,
+        isFromTab = isFromTab,
+        onWriteComplete = onWriteComplete,
+        onDialogRequested = { activeDialog = it },
     )
-    val progress by animateLottieCompositionAsState(
-        composition = composition,
-        iterations = LottieConstants.IterateForever,
-        isPlaying = showRestrictedDialog && uiState.activateDate is UiState.Loading
-    )
-
-    LaunchedEffect(Unit) {
-        viewModel.uiEffect.collect { effect ->
-            when (effect) {
-                is WriteUiEffect.ShowError -> {
-                    errorWithRefreshToken = effect.refreshToken
-                }
-
-                WriteUiEffect.ShowRestricted -> {
-                    showRestrictedDialog = true
-                }
-
-                WriteUiEffect.ShowDeleted -> {
-                    showDeletedDialog = true
-                }
-
-                WriteUiEffect.ShowBadImage -> {
-                    showBadImageDialog = true
-                }
-            }
-        }
-    }
 
     WriteScreen(
         modifier = modifier,
         args = args,
-        content = uiState.content,
-        tags = uiState.tags,
-        currentTagInput = uiState.currentTagInput,
-        relatedTags = uiState.relatedNumberTags,
-        isWriteCompleted = uiState.canComplete,
-        activeBackgroundImageResId = uiState.activeBackgroundResId,
-        activeBackgroundUri = uiState.activeBackgroundUri,
-        selectedBackgroundFilter = uiState.selectedBackgroundFilter,
-        selectedGridImageName = uiState.selectedGridImageName,
-        selectedFont = uiState.selectedFont,
-        selectedFontType = uiState.selectedFontType,
-        selectedOptionIds = uiState.selectedOptionIds,
-        hasLocationPermission = uiState.hasLocationPermission,
-        showLocationPermissionDialog = uiState.showLocationPermissionDialog,
-        showCameraPermissionDialog = uiState.showCameraPermissionDialog,
-        showGalleryPermissionDialog = uiState.showGalleryPermissionDialog,
-        cardDefaultImagesByCategory = uiState.cardDefaultImagesByCategory,
+        uiState = uiState,
         onBackPressed = onBackPressed,
         onContentChange = viewModel::updateContent,
         onTagInputChange = viewModel::updateTagInput,
@@ -246,7 +157,7 @@ internal fun WriteRoute(
         onContentClick = {
             viewModel.hideRelatedTags()
 
-            if (uiState.content == compareContent) {
+            if (uiState.content == defaultContent) {
                 viewModel.updateContent("")
             }
         },
@@ -270,15 +181,10 @@ internal fun WriteRoute(
         onAddTag = viewModel::addTag,
         onRemoveTag = viewModel::removeTag,
         onRelatedTagClick = { tagItem -> viewModel.addTag(tagItem.name) },
-        focusTagInput = uiState.focusTagInput,
         onCompleteTagInput = viewModel::completeTagInput,
         onResetTagInput = viewModel::resetTagInput,
         onTagFocusHandled = viewModel::onTagInputFocusHandled,
         onWriteComplete = viewModel::onWriteComplete,
-        showBackgroundPicker = uiState.showBackgroundPickerSheet,
-        shouldLaunchAlbum = uiState.shouldLaunchBackgroundAlbum,
-        shouldRequestCameraPermission = uiState.shouldRequestBackgroundCameraPermission,
-        pendingCameraCapture = uiState.pendingBackgroundCameraCapture,
         onCameraPickerRequested = viewModel::onBackgroundPickerRequested,
         onCameraPickerDismissed = viewModel::onBackgroundPickerDismissed,
         onCameraPickerAction = viewModel::onBackgroundPickerAction,
@@ -290,87 +196,176 @@ internal fun WriteRoute(
         onGallerySettingsResult = viewModel::onGallerySettingsResult,
         onCameraSettingsResult = viewModel::onCameraSettingsResult,
         hideRelatedTags = viewModel::hideRelatedTags,
-        isWriteInProgress = uiState.isWriteInProgress,
         onEnterClick = {
             viewModel.writeFinishTagEnter(isFromFeedCard = isFromTab)
-        }
+        },
     )
 
-    if (showRestrictedDialog) {
-        when (val activateDate = uiState.activateDate) {
-            is UiState.Loading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    LottieAnimation(
-                        composition = composition,
-                        progress = { progress },
-                        modifier = Modifier.size(44.dp)
-                    )
-                }
-            }
+    WriteRouteDialog(
+        dialog = activeDialog,
+        activateDate = uiState.activateDate,
+        onDismissAndGoHome = {
+            activeDialog = null
+            onHome()
+        },
+        onBadImageDismissed = {
+            activeDialog = null
+            viewModel.resetToDefaultImage()
+        },
+    )
+}
 
-            is UiState.Success, is UiState.Fail -> {
-                val dateString = if (activateDate is UiState.Success) activateDate.data else ""
-                val onDismissAction = {
-                    showRestrictedDialog = false
-                    onHome()
-                }
-                DialogComponent.DefaultButtonOne(
-                    title = stringResource(WriteR.string.write_screen_dialog_restrict_title),
-                    description = stringResource(
-                        WriteR.string.write_screen_dialog_restrict_message,
-                        dateString
-                    ),
-                    onClick = onDismissAction,
-                    onDismiss = onDismissAction,
-                    buttonText = stringResource(com.phew.core_design.R.string.common_okay)
-                )
-            }
-        }
+private sealed interface WriteRouteDialog {
+    data class Error(val refreshToken: String) : WriteRouteDialog
+    data object Restricted : WriteRouteDialog
+    data object Deleted : WriteRouteDialog
+    data object BadImage : WriteRouteDialog
+}
+
+@Composable
+private fun WriteRouteEffects(
+    viewModel: WriteViewModel,
+    navController: NavController,
+    args: WriteArgs?,
+    isFromTab: Boolean,
+    onWriteComplete: (CardDetailArgs) -> Unit,
+    onDialogRequested: (WriteRouteDialog) -> Unit,
+) {
+    val context = LocalContext.current
+    val currentOnWriteComplete by rememberUpdatedState(onWriteComplete)
+    val currentOnDialogRequested by rememberUpdatedState(onDialogRequested)
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+        onResult = { result ->
+            viewModel.onLocationPermissionResult(result.values.any { it })
+        },
+    )
+
+    LaunchedEffect(viewModel, isFromTab) {
+        if (isFromTab) viewModel.isComeFromTab()
     }
 
-    if (showDeletedDialog) {
-        DeletedCardDialog(
-            onConfirm = {
-                showDeletedDialog = false
-                onHome()
-            },
-            onDismiss = {
-                showDeletedDialog = false
-                onHome()
-            }
+    LaunchedEffect(context, viewModel) {
+        viewModel.onInitialLocationPermissionCheck(
+            isPermissionGranted(context, Manifest.permission.ACCESS_FINE_LOCATION) ||
+                isPermissionGranted(context, Manifest.permission.ACCESS_COARSE_LOCATION),
         )
     }
 
-    if (showBadImageDialog) {
-        DialogComponent.DefaultButtonOne(
+    LaunchedEffect(viewModel) {
+        viewModel.requestPermissionEvent.collect { permissions ->
+            locationPermissionLauncher.launch(permissions)
+        }
+    }
+
+    LaunchedEffect(viewModel, navController) {
+        viewModel.writeCompleteEvent.collect { cardId ->
+            SooumLog.d(TAG, "writeCompleteEvent")
+            navController.previousBackStackEntry
+                ?.savedStateHandle
+                ?.set("card_added", true)
+            currentOnWriteComplete(CardDetailArgs(cardId = cardId))
+        }
+    }
+
+    LaunchedEffect(viewModel, args?.parentCardId) {
+        args?.parentCardId?.let(viewModel::setParentCardId)
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.uiEffect.collect { effect ->
+            currentOnDialogRequested(effect.toRouteDialog())
+        }
+    }
+}
+
+private fun WriteUiEffect.toRouteDialog(): WriteRouteDialog = when (this) {
+    is WriteUiEffect.ShowError -> WriteRouteDialog.Error(refreshToken)
+    WriteUiEffect.ShowRestricted -> WriteRouteDialog.Restricted
+    WriteUiEffect.ShowDeleted -> WriteRouteDialog.Deleted
+    WriteUiEffect.ShowBadImage -> WriteRouteDialog.BadImage
+}
+
+private fun isPermissionGranted(context: Context, permission: String): Boolean =
+    ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+
+@Composable
+private fun WriteRouteDialog(
+    dialog: WriteRouteDialog?,
+    activateDate: UiState<String>,
+    onDismissAndGoHome: () -> Unit,
+    onBadImageDismissed: () -> Unit,
+) {
+    when (dialog) {
+        null -> Unit
+        WriteRouteDialog.Restricted -> RestrictedWriteDialog(
+            activateDate = activateDate,
+            onDismiss = onDismissAndGoHome,
+        )
+        WriteRouteDialog.Deleted -> DeletedCardDialog(
+            onConfirm = onDismissAndGoHome,
+            onDismiss = onDismissAndGoHome,
+        )
+        WriteRouteDialog.BadImage -> DialogComponent.DefaultButtonOne(
             title = stringResource(WriteR.string.write_screen_picture_dialog_image_title),
             description = stringResource(WriteR.string.write_screen_picture_dialog_image_content),
             buttonText = stringResource(com.phew.core_design.R.string.common_okay),
-            onClick = {
-                showBadImageDialog = false
-                viewModel.resetToDefaultImage()
-            },
-            onDismiss = {
-                showBadImageDialog = false
-                viewModel.resetToDefaultImage()
-            }
+            onClick = onBadImageDismissed,
+            onDismiss = onBadImageDismissed,
         )
+        is WriteRouteDialog.Error -> {
+            val keyboard = LocalSoftwareKeyboardController.current
+            val focusManager = LocalFocusManager.current
+            ErrorDialog(
+                onDismiss = {
+                    keyboard?.hide()
+                    focusManager.clearFocus(force = true)
+                    onDismissAndGoHome()
+                },
+                refreshToken = dialog.refreshToken,
+            )
+        }
     }
+}
 
-    errorWithRefreshToken?.let { refreshToken ->
-        ErrorDialog(
-            onDismiss = {
-                keyboard?.hide()
-                focusManager.clearFocus(force = true)
-                errorWithRefreshToken = null
-                onHome()
-            },
-            refreshToken = refreshToken
-        )
+@Composable
+private fun RestrictedWriteDialog(
+    activateDate: UiState<String>,
+    onDismiss: () -> Unit,
+) {
+    val composition by rememberLottieComposition(
+        LottieCompositionSpec.RawRes(com.phew.core_design.R.raw.ic_refresh),
+    )
+    val progress by animateLottieCompositionAsState(
+        composition = composition,
+        iterations = LottieConstants.IterateForever,
+        isPlaying = activateDate is UiState.Loading,
+    )
+
+    when (activateDate) {
+        is UiState.Loading -> Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            LottieAnimation(
+                composition = composition,
+                progress = { progress },
+                modifier = Modifier.size(44.dp),
+            )
+        }
+        is UiState.Success, is UiState.Fail -> {
+            val date = (activateDate as? UiState.Success)?.data.orEmpty()
+            DialogComponent.DefaultButtonOne(
+                title = stringResource(WriteR.string.write_screen_dialog_restrict_title),
+                description = stringResource(
+                    WriteR.string.write_screen_dialog_restrict_message,
+                    date,
+                ),
+                onClick = onDismiss,
+                onDismiss = onDismiss,
+                buttonText = stringResource(com.phew.core_design.R.string.common_okay),
+            )
+        }
     }
 }
 
@@ -378,23 +373,7 @@ internal fun WriteRoute(
 private fun WriteScreen(
     modifier: Modifier = Modifier,
     args: WriteArgs? = null,
-    content: String,
-    tags: List<String>,
-    currentTagInput: String,
-    relatedTags: List<NumberTagItem>,
-    isWriteCompleted: Boolean,
-    activeBackgroundImageResId: Int?,
-    activeBackgroundUri: Uri?,
-    selectedBackgroundFilter: BackgroundFilterType,
-    selectedGridImageName: String?,
-    selectedFont: String,
-    selectedFontType: FontType?,
-    selectedOptionIds: List<String>,
-    hasLocationPermission: Boolean,
-    showLocationPermissionDialog: Boolean,
-    showCameraPermissionDialog: Boolean,
-    showGalleryPermissionDialog: Boolean,
-    cardDefaultImagesByCategory: Map<BackgroundFilterType, List<CardImageDefault>>,
+    uiState: WriteUiState,
     onBackPressed: () -> Unit,
     onContentChange: (String) -> Unit,
     onTagInputChange: (String) -> Unit,
@@ -415,15 +394,10 @@ private fun WriteScreen(
     onAddTag: (String) -> Unit,
     onRemoveTag: (String) -> Unit,
     onRelatedTagClick: (NumberTagItem) -> Unit,
-    focusTagInput: Boolean,
     onCompleteTagInput: () -> Unit,
     onResetTagInput: () -> Unit,
     onTagFocusHandled: () -> Unit,
     onWriteComplete: () -> Unit,
-    showBackgroundPicker: Boolean,
-    shouldLaunchAlbum: Boolean,
-    shouldRequestCameraPermission: Boolean,
-    pendingCameraCapture: CameraCaptureRequest?,
     onCameraPickerRequested: () -> Unit,
     onCameraPickerDismissed: () -> Unit,
     onCameraPickerAction: (CameraPickerAction) -> Unit,
@@ -436,9 +410,23 @@ private fun WriteScreen(
     onGallerySettingsResult: (Boolean) -> Unit,
     onCameraSettingsResult: (Boolean) -> Unit,
     hideRelatedTags: () -> Unit,
-    isWriteInProgress: Boolean,
     onEnterClick: () -> Unit,
 ) {
+    val content = uiState.content
+    val tags = uiState.tags
+    val currentTagInput = uiState.currentTagInput
+    val relatedTags = uiState.relatedNumberTags
+    val isWriteCompleted = uiState.canComplete
+    val activeBackgroundImageResId = uiState.activeBackgroundResId
+    val activeBackgroundUri = uiState.activeBackgroundUri
+    val selectedBackgroundFilter = uiState.selectedBackgroundFilter
+    val selectedGridImageName = uiState.selectedGridImageName
+    val selectedFont = uiState.selectedFont
+    val selectedFontType = uiState.selectedFontType
+    val selectedOptionIds = uiState.selectedOptionIds
+    val hasLocationPermission = uiState.hasLocationPermission
+    val cardDefaultImagesByCategory = uiState.cardDefaultImagesByCategory
+
     val snackBarHostState = remember { SnackbarHostState() }
     val cameraPermissions = arrayOf(Manifest.permission.CAMERA)
     val albumPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -501,9 +489,9 @@ private fun WriteScreen(
 
     CameraPickerEffect(
         effectState = CameraPickerEffectState(
-            launchAlbum = shouldLaunchAlbum,
-            requestCameraPermission = shouldRequestCameraPermission,
-            pendingCapture = pendingCameraCapture
+            launchAlbum = uiState.shouldLaunchBackgroundAlbum,
+            requestCameraPermission = uiState.shouldRequestBackgroundCameraPermission,
+            pendingCapture = uiState.pendingBackgroundCameraCapture,
         ),
         onAlbumRequestConsumed = onAlbumRequestConsumed,
         onAlbumPicked = onCustomImageSelected,
@@ -626,7 +614,7 @@ private fun WriteScreen(
                                 },
                                 onAddTag = onAddTag,
                                 onRemoveTag = onRemoveTag,
-                                shouldFocusTagInput = focusTagInput,
+                                shouldFocusTagInput = uiState.focusTagInput,
                                 onTagFocusHandled = onTagFocusHandled,
                                 currentTagInput = currentTagInput,
                                 onTagInputChange = onTagInputChange,
@@ -691,7 +679,7 @@ private fun WriteScreen(
             }
         }
 
-        if (isWriteInProgress) {
+        if (uiState.isWriteInProgress) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -703,7 +691,7 @@ private fun WriteScreen(
         }
     }
 
-    if (showLocationPermissionDialog) {
+    if (uiState.showLocationPermissionDialog) {
         DialogComponent.DefaultButtonTwo(
             title = stringResource(R.string.location_permission_title),
             description = stringResource(R.string.location_permission_description),
@@ -718,7 +706,7 @@ private fun WriteScreen(
         )
     }
 
-    if (showCameraPermissionDialog) {
+    if (uiState.showCameraPermissionDialog) {
         DialogComponent.DefaultButtonTwo(
             title = stringResource(R.string.camera_permission_title),
             description = stringResource(R.string.camera_permission_description),
@@ -734,7 +722,7 @@ private fun WriteScreen(
             startButtonTextColor = NeutralColor.GRAY_600
         )
     }
-    if (showGalleryPermissionDialog) {
+    if (uiState.showGalleryPermissionDialog) {
         DialogComponent.DefaultButtonTwo(
             title = stringResource(R.string.gallery_permission_title),
             description = stringResource(R.string.gallery_permission_description),
@@ -752,7 +740,7 @@ private fun WriteScreen(
     }
 
     CameraPickerBottomSheet(
-        visible = showBackgroundPicker,
+        visible = uiState.showBackgroundPickerSheet,
         onActionSelected = onCameraPickerAction,
         onDismiss = onCameraPickerDismissed
     )
