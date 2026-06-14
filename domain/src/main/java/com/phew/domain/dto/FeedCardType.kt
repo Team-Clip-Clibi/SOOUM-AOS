@@ -14,6 +14,7 @@ sealed class FeedCardType {
         val writeTime: String,
         val commentValue: String,
         val likeValue: String,
+        val isLike: Boolean = false,
     ) : FeedCardType()
 
     data class AdminType(
@@ -26,6 +27,7 @@ sealed class FeedCardType {
         val writeTime: String,
         val commentValue: String,
         val likeValue: String,
+        val isLike: Boolean = false,
     ) : FeedCardType()
 
     data class NormalType(
@@ -38,6 +40,7 @@ sealed class FeedCardType {
         val writeTime: String,
         val commentValue: String,
         val likeValue: String,
+        val isLike: Boolean = false,
     ) : FeedCardType()
 
     fun isEventCard(): Boolean {

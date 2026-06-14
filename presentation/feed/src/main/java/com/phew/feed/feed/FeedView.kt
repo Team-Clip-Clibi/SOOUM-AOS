@@ -179,7 +179,26 @@ fun FeedView(
 
     val snackBarHostState = remember { SnackbarHostState() }
     val refreshState = rememberPullToRefreshState()
-    val isRefresh = feedItems.loadState.refresh is LoadState.Loading && feedItems.itemCount > 0
+    val feedRefreshLoadState = feedItems.loadState.refresh
+    val isRefresh = feedRefreshLoadState is LoadState.Loading && feedItems.itemCount > 0
+    var wasRefreshingExistingFeed by remember { mutableStateOf(false) }
+
+    LaunchedEffect(feedRefreshLoadState, feedItems.itemCount) {
+        when {
+            feedRefreshLoadState is LoadState.Loading && feedItems.itemCount > 0 -> {
+                wasRefreshingExistingFeed = true
+            }
+
+            wasRefreshingExistingFeed && feedRefreshLoadState is LoadState.NotLoading -> {
+                wasRefreshingExistingFeed = false
+                viewModel.onFeedRefreshCompleted()
+            }
+
+            feedRefreshLoadState is LoadState.Error -> {
+                wasRefreshingExistingFeed = false
+            }
+        }
+    }
     val pullDistance = 102.dp
     val pullOffsetPx = with(LocalDensity.current) {
         refreshState.distanceFraction * pullDistance.toPx()
@@ -296,7 +315,7 @@ private fun FeedContentView(
     onClick: (String, Boolean) -> Unit,
     onRemoveCard: (String) -> Unit,
     feedLikeStates: Map<Long, FeedLikeUiState>,
-    onClickLike: (Long, Int) -> Unit,
+    onClickLike: (Long, Int, Boolean) -> Unit,
     pullOffsetPx: Float,
     onRefresh: () -> Unit,
     hiddenCardIds: Set<Long>,
@@ -461,10 +480,10 @@ private fun FeedCardItem(
     onClick: (String, Boolean) -> Unit,
     onRemoveCard: (String) -> Unit,
     likeState: FeedLikeUiState?,
-    onClickLike: (Long, Int) -> Unit,
+    onClickLike: (Long, Int, Boolean) -> Unit,
 ) {
     val cardId = feedCard.cardId.toLongOrNull()
-    val displayedIsLike = likeState?.isLike ?: false
+    val displayedIsLike = likeState?.isLike ?: feedCard.isLike
     val displayedLikeCount = likeState?.likeCount ?: feedCard.likeValue.toIntOrNull() ?: 0
     Box(
         modifier = Modifier
@@ -485,7 +504,7 @@ private fun FeedCardItem(
             likeAnimationKey = likeState?.animationVersion ?: 0,
             onClickLike = {
                 cardId?.let {
-                    onClickLike(it, displayedLikeCount)
+                    onClickLike(it, displayedLikeCount, displayedIsLike)
                 }
             },
         )
@@ -555,6 +574,13 @@ private val FeedCardType.likeValue: String
         is FeedCardType.BoombType -> likeValue
         is FeedCardType.AdminType -> likeValue
         is FeedCardType.NormalType -> likeValue
+    }
+
+private val FeedCardType.isLike: Boolean
+    get() = when (this) {
+        is FeedCardType.BoombType -> isLike
+        is FeedCardType.AdminType -> isLike
+        is FeedCardType.NormalType -> isLike
     }
 
 private fun FeedCardType.isHidden(hiddenCardIds: Set<Long>): Boolean {

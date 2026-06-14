@@ -11,5 +11,6 @@ data class DistanceCard(
     val distance: String?,
     val createAt: String,
     val storyExpirationTime: String?,
-    val isAdminCard: Boolean
+    val isAdminCard: Boolean,
+    val isLike: Boolean
 )

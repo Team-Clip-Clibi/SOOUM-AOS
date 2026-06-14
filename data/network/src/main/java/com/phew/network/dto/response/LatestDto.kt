@@ -27,5 +27,7 @@ data class LatestDto(
     @SerialName("storyExpirationTime")
     val storyExpirationTime: String?,
     @SerialName("isAdminCard")
-    val isAdminCard: Boolean
+    val isAdminCard: Boolean,
+    @SerialName("isLike")
+    val isLike: Boolean,
 )

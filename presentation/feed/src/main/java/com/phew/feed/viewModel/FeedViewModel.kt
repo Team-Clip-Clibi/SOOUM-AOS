@@ -22,7 +22,6 @@ import com.phew.domain.repository.FeedPagingQuery
 import com.phew.domain.usecase.CheckCardAlreadyDelete
 import com.phew.domain.usecase.CheckLocationPermission
 import com.phew.domain.usecase.GetCardArticle
-import com.phew.domain.usecase.GetCardDetail
 import com.phew.domain.usecase.GetFeedNotification
 import com.phew.domain.usecase.GetNotification
 import com.phew.domain.usecase.GetReadNotification
@@ -64,7 +63,6 @@ class FeedViewModel @Inject constructor(
     private val checkCardDelete: CheckCardAlreadyDelete,
     private val eventLog: SaveEventLogFeedView,
     private val getArticle: GetCardArticle,
-    private val getCardDetail: GetCardDetail,
     private val likeCard: LikeCard,
     private val unlikeCard: UnlikeCard,
 ) :
@@ -294,24 +292,38 @@ class FeedViewModel @Inject constructor(
 
     fun refreshCurrentTab() {
         fetchCardArticle()
+        _uiState.update { state ->
+            state.copy(
+                feedLikeStates = state.feedLikeStates.mapValues { (_, likeState) ->
+                    likeState.copy(
+                        isLoading = false,
+                        animationVersion = 0,
+                    )
+                }
+            )
+        }
         updateFeedSelection(refresh = true)
+    }
+
+    fun onFeedRefreshCompleted() {
+        _uiState.update { state -> state.copy(feedLikeStates = emptyMap()) }
     }
 
     fun verifyAndToggleLike(
         cardId: Long,
         initialLikeCount: Int,
+        initialIsLike: Boolean,
     ) {
         val currentState = _uiState.value.feedLikeStates[cardId]
         if (currentState?.isLoading == true) return
 
+        val stateBeforeToggle = currentState ?: FeedLikeUiState(
+            isLike = initialIsLike,
+            likeCount = initialLikeCount,
+        )
         updateFeedLikeState(
             cardId = cardId,
-            state = currentState?.copy(isLoading = true)
-                ?: FeedLikeUiState(
-                    isLike = false,
-                    likeCount = initialLikeCount,
-                    isLoading = true,
-                )
+            state = stateBeforeToggle.copy(isLoading = true),
         )
         viewModelScope.launch {
             when (val checkResult = checkCardDelete(CheckCardAlreadyDelete.Param(cardId))) {
@@ -334,32 +346,7 @@ class FeedViewModel @Inject constructor(
                 }
             }
 
-            val resolvedState = currentState?.copy(isLoading = true)
-                ?: when (val detailResult = try {
-                    getCardDetail(GetCardDetail.Param(cardId))
-                } catch (_: Exception) {
-                    updateFeedLikeLoading(cardId, false)
-                    return@launch
-                }) {
-                    is DomainResult.Success -> FeedLikeUiState(
-                        isLike = detailResult.data.isLike,
-                        likeCount = detailResult.data.likeCount,
-                        isLoading = true,
-                    )
-
-                    is DomainResult.Failure -> {
-                        updateFeedLikeLoading(cardId, false)
-                        if (detailResult.error == ERROR_ALREADY_CARD_DELETE) {
-                            _uiState.update { state ->
-                                state.copy(checkCardDelete = UiState.Success(cardId))
-                            }
-                        }
-                        return@launch
-                    }
-                }
-            updateFeedLikeState(cardId, resolvedState)
-
-            val result = if (resolvedState.isLike) {
+            val result = if (stateBeforeToggle.isLike) {
                 unlikeCard(cardId)
             } else {
                 likeCard(cardId)
@@ -367,25 +354,29 @@ class FeedViewModel @Inject constructor(
 
             when (result) {
                 is DomainResult.Success -> {
-                    val isLike = !resolvedState.isLike
+                    val isLike = !stateBeforeToggle.isLike
                     val likeCount = if (isLike) {
-                        resolvedState.likeCount + 1
+                        stateBeforeToggle.likeCount + 1
                     } else {
-                        (resolvedState.likeCount - 1).coerceAtLeast(0)
+                        (stateBeforeToggle.likeCount - 1).coerceAtLeast(0)
                     }
                     updateFeedLikeState(
                         cardId = cardId,
-                        state = resolvedState.copy(
+                        state = stateBeforeToggle.copy(
                             isLike = isLike,
                             likeCount = likeCount,
                             isLoading = false,
-                            animationVersion = resolvedState.animationVersion + 1,
+                            animationVersion = if (isLike) {
+                                stateBeforeToggle.animationVersion + 1
+                            } else {
+                                stateBeforeToggle.animationVersion
+                            },
                         )
                     )
                 }
 
                 is DomainResult.Failure -> {
-                    updateFeedLikeState(cardId, resolvedState.copy(isLoading = false))
+                    updateFeedLikeState(cardId, stateBeforeToggle.copy(isLoading = false))
                     if (result.error == ERROR_ALREADY_CARD_DELETE) {
                         _uiState.update { state ->
                             state.copy(checkCardDelete = UiState.Success(cardId))
