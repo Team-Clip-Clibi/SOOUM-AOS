@@ -54,7 +54,10 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import com.phew.core_design.typography.FontType
 import androidx.compose.ui.tooling.preview.Preview
@@ -93,6 +96,8 @@ import com.phew.core_design.CustomFont
 import com.phew.core_design.component.filter.SooumFilter
 import com.phew.presentation.write.model.BackgroundFilterType
 import com.phew.presentation.write.screen.component.ImageGrid
+import com.phew.presentation.write.screen.component.PollCreateScreen
+import com.phew.presentation.write.screen.component.PollOptionUi
 import com.phew.presentation.write.R as WriteR
 import androidx.navigation.NavController
 import com.phew.core.ui.model.navigation.CardDetailArgs
@@ -199,6 +204,13 @@ internal fun WriteRoute(
         onEnterClick = {
             viewModel.writeFinishTagEnter(isFromFeedCard = isFromTab)
         },
+        onPollClose = viewModel::closePollCreate,
+        onPollComplete = viewModel::completePollCreate,
+        onPollOptionChange = viewModel::updateDraftPollOption,
+        onPollAddOption = viewModel::addDraftPollOption,
+        onPollRemoveOption = viewModel::removeDraftPollOption,
+        onPollEdit = viewModel::openPollCreate,
+        onPollDelete = viewModel::deletePoll,
     )
 
     WriteDialogHost(
@@ -411,7 +423,29 @@ private fun WriteScreen(
     onCameraSettingsResult: (Boolean) -> Unit,
     hideRelatedTags: () -> Unit,
     onEnterClick: () -> Unit,
+    onPollClose: () -> Unit,
+    onPollComplete: () -> Unit,
+    onPollOptionChange: (Long, String) -> Unit,
+    onPollAddOption: () -> Unit,
+    onPollRemoveOption: (Long) -> Unit,
+    onPollEdit: () -> Unit,
+    onPollDelete: () -> Unit,
 ) {
+    if (uiState.isPollCreateMode) {
+        PollCreateScreen(
+            modifier = modifier.fillMaxSize(),
+            options = uiState.draftPollContents.mapIndexed { index, text ->
+                PollOptionUi(id = index.toLong(), text = text)
+            },
+            onOptionChange = onPollOptionChange,
+            onAddOption = onPollAddOption,
+            onRemoveOption = onPollRemoveOption,
+            onClose = onPollClose,
+            onComplete = onPollComplete,
+        )
+        return
+    }
+
     val content = uiState.content
     val tags = uiState.tags
     val currentTagInput = uiState.currentTagInput
@@ -623,6 +657,17 @@ private fun WriteScreen(
                         )
                     }
 
+                    if (uiState.pollContents.isNotEmpty()) {
+                        PollPreviewCard(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 12.dp),
+                            pollContents = uiState.pollContents,
+                            onEdit = onPollEdit,
+                            onDelete = onPollDelete,
+                        )
+                    }
+
                     BackgroundSelect(
                         modifier = Modifier.fillMaxWidth(),
                         selectedGridImageName = selectedGridImageName,
@@ -662,15 +707,22 @@ private fun WriteScreen(
                 }
 
                 val filteredOptions = if (args?.parentCardId != null) {
-                    WriteOptions.availableOptions.filter { it.id != "twenty_four_hours" }
+                    WriteOptions.availableOptions.filter {
+                        it.id != "twenty_four_hours" && it.id != WriteOptions.POLL_OPTION_ID
+                    }
                 } else {
                     WriteOptions.availableOptions
+                }
+                val displayedSelectedOptionIds = if (uiState.pollContents.isNotEmpty()) {
+                    selectedOptionIds + WriteOptions.POLL_OPTION_ID
+                } else {
+                    selectedOptionIds
                 }
 
                 if (showOptionButtons) {
                     OptionButtons(
                         options = filteredOptions,
-                        selectedOptionIds = selectedOptionIds,
+                        selectedOptionIds = displayedSelectedOptionIds,
                         hasLocationPermission = hasLocationPermission,
                         onOptionSelected = { option -> onOptionSelected(option.id) },
                         onDistancePermissionRequest = onDistanceOptionWithoutPermission
@@ -750,6 +802,63 @@ private fun appSettingsIntent(context: Context): Intent =
     Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
         data = Uri.fromParts("package", context.packageName, null)
     }
+
+@Composable
+private fun PollPreviewCard(
+    pollContents: List<String>,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clickable(onClick = onEdit)
+                    .padding(8.dp),
+                painter = painterResource(com.phew.core_design.R.drawable.ic_write_stoke),
+                contentDescription = stringResource(WriteR.string.write_poll_edit),
+                tint = NeutralColor.GRAY_500,
+            )
+            Icon(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clickable(onClick = onDelete)
+                    .padding(8.dp),
+                painter = painterResource(com.phew.core_design.R.drawable.ic_delete),
+                contentDescription = stringResource(WriteR.string.write_poll_delete),
+                tint = NeutralColor.GRAY_500,
+            )
+        }
+        pollContents.forEach { content ->
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .background(
+                        color = NeutralColor.GRAY_100,
+                        shape = RoundedCornerShape(10.dp)
+                    )
+                    .padding(horizontal = 20.dp),
+                contentAlignment = Alignment.CenterStart,
+            ) {
+                Text(
+                    text = content,
+                    style = TextComponent.SUBTITLE_1_M_16,
+                    color = NeutralColor.BLACK,
+                )
+            }
+        }
+    }
+}
 
 private fun isGalleryPermissionGranted(context: Context): Boolean {
     val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

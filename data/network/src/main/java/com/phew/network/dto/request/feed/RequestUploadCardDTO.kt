@@ -12,5 +12,8 @@ data class RequestUploadCardDTO(
     val imgType: String,
     val imgName: String,
     val isStory: Boolean,
-    val tags: List<String>
+    val tags: List<String>,
+    val hasPoll: Boolean,
+    val pollContents: List<String>,
+    val pollType: String,
 )

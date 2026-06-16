@@ -20,7 +20,6 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -45,7 +44,6 @@ import com.phew.core_design.AppBar
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.R
 import com.phew.core_design.TextComponent
-import com.phew.core_design.component.button.RoundButton
 import com.phew.core_design.theme.SooumTheme
 import com.phew.presentation.write.R as WriteR
 
@@ -67,10 +65,8 @@ fun PollCreateScreen(
     onComplete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val completeEnabled = options
-        .take(REQUIRED_POLL_OPTIONS)
-        .size == REQUIRED_POLL_OPTIONS &&
-        options.take(REQUIRED_POLL_OPTIONS).all { it.text.isNotBlank() }
+    val completeEnabled = options.size >= REQUIRED_POLL_OPTIONS &&
+        options.all { it.text.isNotBlank() }
 
     Column(
         modifier = modifier.background(NeutralColor.WHITE),
@@ -92,8 +88,6 @@ fun PollCreateScreen(
             onAddOption = onAddOption,
             onRemoveOption = onRemoveOption,
         )
-
-        PollCreateToolbar()
     }
 }
 
@@ -225,33 +219,6 @@ private fun AddPollOptionButton(
             style = TextComponent.SUBTITLE_1_M_16,
             color = contentColor,
         )
-    }
-}
-
-@Composable
-private fun PollCreateToolbar() {
-    Column {
-        HorizontalDivider(color = NeutralColor.GRAY_200)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp)
-                .background(NeutralColor.WHITE)
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            RoundButton(
-                text = stringResource(WriteR.string.poll_toolbar_distance),
-                selected = true,
-                onClick = {},
-            )
-            RoundButton(
-                text = stringResource(WriteR.string.poll_toolbar_story),
-                selected = false,
-                onClick = {},
-            )
-        }
     }
 }
 

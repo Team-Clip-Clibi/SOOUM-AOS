@@ -453,6 +453,11 @@ class WriteViewModel @Inject constructor(
     }
 
     fun selectOption(optionId: String) {
+        if (optionId == WriteOptions.POLL_OPTION_ID) {
+            openPollCreate()
+            return
+        }
+
         _uiState.update { state ->
             if (optionId == distanceOptionId && !state.hasLocationPermission) {
                 return@update state
@@ -465,6 +470,83 @@ class WriteViewModel @Inject constructor(
                 currentIds + optionId
             }
             state.copy(selectedOptionIds = newIds)
+        }
+    }
+
+    fun openPollCreate() {
+        _uiState.update { state ->
+            state.copy(
+                isPollCreateMode = true,
+                draftPollContents = state.pollContents.takeIf { it.isNotEmpty() }
+                    ?: listOf("", "")
+            )
+        }
+    }
+
+    fun closePollCreate() {
+        _uiState.update { it.copy(isPollCreateMode = false) }
+    }
+
+    fun updateDraftPollOption(index: Long, text: String) {
+        val targetIndex = index.toInt()
+        _uiState.update { state ->
+            state.copy(
+                draftPollContents = state.draftPollContents.mapIndexed { optionIndex, option ->
+                    if (optionIndex == targetIndex) text else option
+                }
+            )
+        }
+    }
+
+    fun addDraftPollOption() {
+        _uiState.update { state ->
+            if (state.draftPollContents.size >= MAX_POLL_OPTION_COUNT) {
+                state
+            } else {
+                state.copy(draftPollContents = state.draftPollContents + "")
+            }
+        }
+    }
+
+    fun removeDraftPollOption(index: Long) {
+        val targetIndex = index.toInt()
+        _uiState.update { state ->
+            if (targetIndex < REQUIRED_POLL_OPTION_COUNT) {
+                state
+            } else {
+                state.copy(
+                    draftPollContents = state.draftPollContents.filterIndexed { optionIndex, _ ->
+                        optionIndex != targetIndex
+                    }
+                )
+            }
+        }
+    }
+
+    fun completePollCreate() {
+        _uiState.update { state ->
+            val pollContents = state.draftPollContents
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+            if (pollContents.size < REQUIRED_POLL_OPTION_COUNT) {
+                state
+            } else {
+                state.copy(
+                    isPollCreateMode = false,
+                    draftPollContents = pollContents,
+                    pollContents = pollContents
+                )
+            }
+        }
+    }
+
+    fun deletePoll() {
+        _uiState.update {
+            it.copy(
+                pollContents = emptyList(),
+                draftPollContents = listOf("", ""),
+                isPollCreateMode = false
+            )
         }
     }
 
@@ -587,7 +669,9 @@ class WriteViewModel @Inject constructor(
                             font = selectedFontServerName.data.serverName,
                             imgName = imgName,
                             isStory = state.selectedOptionIds.contains("twenty_four_hours"),
-                            tags = state.tags
+                            tags = state.tags,
+                            isDistanceShared = state.selectedOptionIds.contains(WriteOptions.DISTANCE_OPTION_ID),
+                            pollContents = state.pollContents
                         )
                         SooumLog.d(TAG, "onWriteComplete card: $cardParam")
                         postCard(cardParam)
@@ -760,3 +844,5 @@ class WriteViewModel @Inject constructor(
 }
 
 private const val TAG = "WriteViewModel"
+private const val REQUIRED_POLL_OPTION_COUNT = 2
+private const val MAX_POLL_OPTION_COUNT = 4
