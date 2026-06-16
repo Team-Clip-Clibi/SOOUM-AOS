@@ -13,4 +13,5 @@ data class Latest(
     val storyExpirationTime: String?,
     val isAdminCard: Boolean,
     val isLike: Boolean,
+    val pollVoterCount: Long?,
 )

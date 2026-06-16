@@ -57,6 +57,7 @@ fun FeedDefaultCard(
     isLikeLoading: Boolean = false,
     likeAnimationKey: Int = 0,
     commentCount: String = "0",
+    pollVoterCount: String? = null,
     timeAgo: String,
     onClickLike: () -> Unit = {},
     onClick: () -> Unit
@@ -72,6 +73,7 @@ fun FeedDefaultCard(
         isLikeLoading = isLikeLoading,
         likeAnimationKey = likeAnimationKey,
         commentCount = commentCount,
+        pollVoterCount = pollVoterCount,
         timeAgo = timeAgo,
         remainingTimeMillis = 0L,
         cardType = FeedCardType.DEFAULT,
@@ -89,6 +91,7 @@ fun FeedPungCard(
     distance: String,
     likeCount: String = "0",
     commentCount: String = "0",
+    pollVoterCount: String? = null,
     timeAgo: String,
     remainingTimeMillis: Long,
     onClick: () -> Unit
@@ -101,6 +104,7 @@ fun FeedPungCard(
         distance = distance,
         likeCount = likeCount,
         commentCount = commentCount,
+        pollVoterCount = pollVoterCount,
         timeAgo = timeAgo,
         remainingTimeMillis = remainingTimeMillis,
         cardType = FeedCardType.PUNG,
@@ -219,6 +223,7 @@ private fun FeedCardImpl(
     isLikeLoading: Boolean = false,
     likeAnimationKey: Int = 0,
     commentCount: String,
+    pollVoterCount: String?,
     timeAgo: String,
     remainingTimeMillis: Long,
     cardType: FeedCardType,
@@ -258,6 +263,7 @@ private fun FeedCardImpl(
                 isLikeLoading = isLikeLoading,
                 likeAnimationKey = likeAnimationKey,
                 commentCount = commentCount,
+                pollVoterCount = pollVoterCount,
                 timeAgo = timeAgo,
                 remainingTimeMillis = remainingTimeMillis.toString(),
                 cardType = cardType,
@@ -389,6 +395,7 @@ private fun Preview_FeedCard() {
             distance = "600m",
             likeCount = "2",
             commentCount = "1",
+            pollVoterCount = "8",
             timeAgo = "방금 전",
             onClick = {}
         )
@@ -401,6 +408,7 @@ private fun Preview_FeedCard() {
             distance = "600m",
             likeCount = "0",
             commentCount = "5",
+            pollVoterCount = "12",
             timeAgo = "방금 전",
             remainingTimeMillis = 86400000L,
             onClick = {}

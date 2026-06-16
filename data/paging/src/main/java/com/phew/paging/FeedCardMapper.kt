@@ -16,6 +16,7 @@ internal fun Latest.toFeedCardType(): FeedCardType = toFeedCardType(
     writeTime = createAt,
     commentValue = commentCardCount.toString(),
     likeValue = likeCount.toString(),
+    pollVoterValue = pollVoterCount?.toString(),
     isLike = isLike,
     isAdminCard = isAdminCard
 )
@@ -31,6 +32,7 @@ internal fun Popular.toFeedCardType(): FeedCardType = toFeedCardType(
     writeTime = createAt,
     commentValue = commentCardCount.toString(),
     likeValue = likeCount.toString(),
+    pollVoterValue = pollVoterCount?.toString(),
     isLike = isLike,
     isAdminCard = isAdminCard
 )
@@ -46,6 +48,7 @@ internal fun DistanceCard.toFeedCardType(): FeedCardType = toFeedCardType(
     writeTime = createAt,
     commentValue = commentCardCount.toString(),
     likeValue = likeCount.toString(),
+    pollVoterValue = pollVoterCount?.toString(),
     isLike = isLike,
     isAdminCard = isAdminCard
 )
@@ -61,6 +64,7 @@ private fun toFeedCardType(
     writeTime: String,
     commentValue: String,
     likeValue: String,
+    pollVoterValue: String?,
     isLike: Boolean,
     isAdminCard: Boolean,
 ): FeedCardType {
@@ -76,6 +80,7 @@ private fun toFeedCardType(
             writeTime = writeTime,
             commentValue = commentValue,
             likeValue = likeValue,
+            pollVoterValue = pollVoterValue,
             isLike = isLike,
         )
 
@@ -89,6 +94,7 @@ private fun toFeedCardType(
             writeTime = writeTime,
             commentValue = commentValue,
             likeValue = likeValue,
+            pollVoterValue = pollVoterValue,
             isLike = isLike,
         )
 
@@ -102,6 +108,7 @@ private fun toFeedCardType(
             writeTime = writeTime,
             commentValue = commentValue,
             likeValue = likeValue,
+            pollVoterValue = pollVoterValue,
             isLike = isLike,
         )
     }

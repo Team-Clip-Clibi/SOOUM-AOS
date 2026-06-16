@@ -14,6 +14,7 @@ sealed class FeedCardType {
         val writeTime: String,
         val commentValue: String,
         val likeValue: String,
+        val pollVoterValue: String?,
         val isLike: Boolean = false,
     ) : FeedCardType()
 
@@ -27,6 +28,7 @@ sealed class FeedCardType {
         val writeTime: String,
         val commentValue: String,
         val likeValue: String,
+        val pollVoterValue: String?,
         val isLike: Boolean = false,
     ) : FeedCardType()
 
@@ -40,6 +42,7 @@ sealed class FeedCardType {
         val writeTime: String,
         val commentValue: String,
         val likeValue: String,
+        val pollVoterValue: String?,
         val isLike: Boolean = false,
     ) : FeedCardType()
 

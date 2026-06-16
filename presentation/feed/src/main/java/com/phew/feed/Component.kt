@@ -486,6 +486,7 @@ object FeedUi {
                 timeAgo = feedCard.writeTime,
                 commentCount = feedCard.commentValue,
                 likeCount = feedCard.likeValue,
+                pollVoterCount = feedCard.pollVoterValue,
                 remainingTimeMillis = remainingTimeMillis,
                 onClick = {
                     onClick(feedCard.cardId)
@@ -541,6 +542,7 @@ object FeedUi {
             timeAgo = feedCard.writeTime,
             commentCount = feedCard.commentValue,
             likeCount = likeCount.toString(),
+            pollVoterCount = feedCard.pollVoterValue,
             isLike = isLike,
             isLikeLoading = isLikeLoading,
             likeAnimationKey = likeAnimationKey,
@@ -897,7 +899,8 @@ private fun BoombTypeCardPreview() {
         location = "150m",
         writeTime = "2025-01-15T10:30:00",
         commentValue = "12",
-        likeValue = "45"
+        likeValue = "45",
+        pollVoterValue = "36"
     )
 
     TypedFeedCardView(
@@ -919,7 +922,8 @@ private fun AdminTypeCardPreview() {
         location = "100m",
         writeTime = "2025-01-15T09:00:00",
         commentValue = "25",
-        likeValue = "78"
+        likeValue = "78",
+        pollVoterValue = "0"
     )
 
     TypedFeedCardView(feedCard = sampleAdminCard, onClick = {}, onRemoveCard = {})
@@ -937,7 +941,8 @@ private fun NormalTypeCardPreview() {
         location = "100m",
         writeTime = "2025-01-15T11:00:00",
         commentValue = "8",
-        likeValue = "23"
+        likeValue = "23",
+        pollVoterValue = "14"
     )
 
     TypedFeedCardView(feedCard = sampleNormalCard, onClick = {}, onRemoveCard = {})

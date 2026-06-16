@@ -13,4 +13,5 @@ data class Popular(
     val storyExpirationTime: String?,
     val isAdminCard: Boolean,
     val isLike: Boolean,
+    val pollVoterCount: Long?,
 )

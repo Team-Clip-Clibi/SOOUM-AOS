@@ -167,7 +167,8 @@ internal fun PopularDto.toDomain(): Popular {
         createAt = this.createAt,
         storyExpirationTime = this.storyExpirationTime,
         isAdminCard = this.isAdminCard,
-        isLike = this.isLike
+        isLike = this.isLike,
+        pollVoterCount = this.pollVoterCount
     )
 }
 
@@ -194,7 +195,8 @@ internal fun LatestDto.toDomain(): Latest {
         createAt = this.createAt,
         storyExpirationTime = this.storyExpirationTime,
         isAdminCard = this.isAdminCard,
-        isLike = this.isLike
+        isLike = this.isLike,
+        pollVoterCount = this.pollVoterCount
     )
 }
 
@@ -211,7 +213,8 @@ internal fun DistanceDTO.toDomain(): DistanceCard {
         createAt = this.createAt,
         storyExpirationTime = this.storyExpirationTime,
         isAdminCard = this.isAdminCard,
-        isLike = this.isLike
+        isLike = this.isLike,
+        pollVoterCount = this.pollVoterCount
     )
 }
 

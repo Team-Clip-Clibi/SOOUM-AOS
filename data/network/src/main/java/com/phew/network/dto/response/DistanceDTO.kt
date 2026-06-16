@@ -30,4 +30,6 @@ data class DistanceDTO(
     val isAdminCard: Boolean,
     @SerialName("isLike")
     val isLike: Boolean,
+    @SerialName("pollVoterCnt")
+    val pollVoterCount: Long? = null,
 )
