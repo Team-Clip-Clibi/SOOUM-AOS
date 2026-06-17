@@ -31,6 +31,8 @@ import com.phew.domain.dto.ProfileCard
 import com.phew.domain.dto.TagInfo
 import com.phew.domain.dto.Token
 import com.phew.domain.dto.UploadImageUrl
+import com.phew.domain.dto.Poll
+import com.phew.domain.dto.PollOption
 import com.phew.domain.dto.UserBlockNotification
 import com.phew.domain.dto.UserCommentLike
 import com.phew.domain.dto.UserCommentWrite
@@ -73,6 +75,9 @@ import com.phew.network.dto.response.card.CardCommentResponseDTO
 import com.phew.network.dto.response.card.CardContentDto
 import com.phew.network.dto.response.card.CardDetailResponseDTO
 import com.phew.network.dto.response.card.CardDetailTagDTO
+import com.phew.network.dto.response.card.PollOptionResponseDTO
+import com.phew.network.dto.response.card.PollResponseDTO
+import com.phew.network.dto.response.card.PollVoteResponseDTO
 import com.phew.network.dto.response.feed.CardArticleDTO
 import com.phew.network.dto.response.profile.FollowDataDTO
 import com.phew.network.dto.response.profile.ProfileDTO
@@ -327,6 +332,7 @@ internal fun CardDetailResponseDTO.toDomain(): CardDetail {
         previousCardImgUrl = previousCardImgUrl,
         visitedCnt = visitedCnt,
         isFeedCard = isFeedCard,
+        poll = poll?.toDomain(),
         storyExpirationTime = storyExpirationTime
     )
 }
@@ -335,6 +341,32 @@ internal fun CardDetailTagDTO.toDomain(): CardDetailTag {
     return CardDetailTag(
         tagId = tagId,
         name = name
+    )
+}
+
+internal fun PollResponseDTO.toDomain(): Poll {
+    return Poll(
+        totalVoterCount = totalVoterCnt,
+        isVoted = isVoted,
+        options = options.map { it.toDomain() }
+    )
+}
+
+internal fun PollOptionResponseDTO.toDomain(): PollOption {
+    return PollOption(
+        pollOptionId = pollOptionId,
+        content = content,
+        voteCount = voteCnt,
+        votePercentage = votePercentage,
+        isVoted = isVoted
+    )
+}
+
+internal fun PollVoteResponseDTO.toDomain(): Poll {
+    return Poll(
+        totalVoterCount = totalVoterCnt,
+        isVoted = options.any { it.isVoted },
+        options = options.map { it.toDomain() }
     )
 }
 

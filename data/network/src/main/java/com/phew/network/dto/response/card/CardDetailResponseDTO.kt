@@ -26,6 +26,7 @@ data class CardDetailResponseDTO(
     val previousCardImgUrl: String? = null,
     val visitedCnt: Int,
     val isFeedCard: Boolean = false,
+    val poll: PollResponseDTO? = null,
     val storyExpirationTime : String?
 )
 
@@ -33,4 +34,28 @@ data class CardDetailResponseDTO(
 data class CardDetailTagDTO(
     val tagId: Long,
     val name: String,
+)
+
+@Serializable
+data class PollResponseDTO(
+    val totalVoterCnt: Long,
+    val isVoted: Boolean,
+    val options: List<PollOptionResponseDTO>
+)
+
+@Serializable
+data class PollOptionResponseDTO(
+    val pollOptionId: Long,
+    val content: String,
+    val voteCnt: Long? = null,
+    val votePercentage: Double? = null,
+    val isVoted: Boolean
+)
+
+@Serializable
+data class PollVoteResponseDTO(
+    val feedCardId: Long,
+    val pollId: Long,
+    val totalVoterCnt: Long,
+    val options: List<PollOptionResponseDTO>
 )

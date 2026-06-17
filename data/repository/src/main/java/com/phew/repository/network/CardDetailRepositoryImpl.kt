@@ -4,6 +4,7 @@ import com.phew.core_common.APP_ERROR_CODE
 import com.phew.core_common.DataResult
 import com.phew.domain.dto.CardComment
 import com.phew.domain.dto.CardDetail
+import com.phew.domain.dto.Poll
 import com.phew.domain.dto.CardReplyRequest
 import com.phew.domain.repository.network.CardDetailRepository
 import com.phew.network.dto.request.feed.RequestUploadCardAnswerDTO
@@ -24,6 +25,17 @@ class CardDetailRepositoryImpl @Inject constructor(
 
     override suspend fun unlikeCard(cardId: Long): DataResult<Unit> = executeWithoutBody {
         cardDetailsHttp.deleteCardLike(cardId)
+    }
+
+    override suspend fun createPollVote(pollOptionId: Long): DataResult<Poll> {
+        return apiCall(
+            apiCall = { cardDetailsHttp.createPollVote(pollOptionId) },
+            mapper = { it.toDomain() }
+        )
+    }
+
+    override suspend fun deletePollVote(pollOptionId: Long): DataResult<Unit> = executeWithoutBody {
+        cardDetailsHttp.deletePollVote(pollOptionId)
     }
 
     override suspend fun getCardDetail(
