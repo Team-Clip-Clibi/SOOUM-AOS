@@ -16,6 +16,8 @@ internal fun Latest.toFeedCardType(): FeedCardType = toFeedCardType(
     writeTime = createAt,
     commentValue = commentCardCount.toString(),
     likeValue = likeCount.toString(),
+    pollVoterValue = pollVoterCount?.toString(),
+    isLike = isLike,
     isAdminCard = isAdminCard
 )
 
@@ -30,6 +32,8 @@ internal fun Popular.toFeedCardType(): FeedCardType = toFeedCardType(
     writeTime = createAt,
     commentValue = commentCardCount.toString(),
     likeValue = likeCount.toString(),
+    pollVoterValue = pollVoterCount?.toString(),
+    isLike = isLike,
     isAdminCard = isAdminCard
 )
 
@@ -44,6 +48,8 @@ internal fun DistanceCard.toFeedCardType(): FeedCardType = toFeedCardType(
     writeTime = createAt,
     commentValue = commentCardCount.toString(),
     likeValue = likeCount.toString(),
+    pollVoterValue = pollVoterCount?.toString(),
+    isLike = isLike,
     isAdminCard = isAdminCard
 )
 
@@ -58,6 +64,8 @@ private fun toFeedCardType(
     writeTime: String,
     commentValue: String,
     likeValue: String,
+    pollVoterValue: String?,
+    isLike: Boolean,
     isAdminCard: Boolean,
 ): FeedCardType {
     return when {
@@ -71,7 +79,9 @@ private fun toFeedCardType(
             location = location,
             writeTime = writeTime,
             commentValue = commentValue,
-            likeValue = likeValue
+            likeValue = likeValue,
+            pollVoterValue = pollVoterValue,
+            isLike = isLike,
         )
 
         isAdminCard -> FeedCardType.AdminType(
@@ -83,7 +93,9 @@ private fun toFeedCardType(
             location = location,
             writeTime = writeTime,
             commentValue = commentValue,
-            likeValue = likeValue
+            likeValue = likeValue,
+            pollVoterValue = pollVoterValue,
+            isLike = isLike,
         )
 
         else -> FeedCardType.NormalType(
@@ -95,7 +107,9 @@ private fun toFeedCardType(
             location = location,
             writeTime = writeTime,
             commentValue = commentValue,
-            likeValue = likeValue
+            likeValue = likeValue,
+            pollVoterValue = pollVoterValue,
+            isLike = isLike,
         )
     }
 }

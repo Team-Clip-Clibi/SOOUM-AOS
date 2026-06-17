@@ -7,6 +7,7 @@ import androidx.paging.cachedIn
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core_common.CardDetailTrace
 import com.phew.core_common.DomainResult
+import com.phew.core_common.ERROR_ALREADY_CARD_DELETE
 import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.ERROR_NO_DATA
 import com.phew.domain.dto.CardArticle
@@ -25,9 +26,11 @@ import com.phew.domain.usecase.GetFeedNotification
 import com.phew.domain.usecase.GetNotification
 import com.phew.domain.usecase.GetReadNotification
 import com.phew.domain.usecase.GetUnReadNotification
+import com.phew.domain.usecase.LikeCard
 import com.phew.domain.usecase.SaveEventLogFeedView
 import com.phew.domain.usecase.SetReadActivateNotify
 import com.phew.domain.usecase.SetReadActivateNotify.*
+import com.phew.domain.usecase.UnlikeCard
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -59,7 +62,9 @@ class FeedViewModel @Inject constructor(
     private val readNotify: SetReadActivateNotify,
     private val checkCardDelete: CheckCardAlreadyDelete,
     private val eventLog: SaveEventLogFeedView,
-    private val getArticle: GetCardArticle
+    private val getArticle: GetCardArticle,
+    private val likeCard: LikeCard,
+    private val unlikeCard: UnlikeCard,
 ) :
     ViewModel() {
     private val _uiState = MutableStateFlow(Home())
@@ -287,7 +292,117 @@ class FeedViewModel @Inject constructor(
 
     fun refreshCurrentTab() {
         fetchCardArticle()
+        _uiState.update { state ->
+            state.copy(
+                feedLikeStates = state.feedLikeStates.mapValues { (_, likeState) ->
+                    likeState.copy(
+                        isLoading = false,
+                        animationVersion = 0,
+                    )
+                }
+            )
+        }
         updateFeedSelection(refresh = true)
+    }
+
+    fun onFeedRefreshCompleted() {
+        _uiState.update { state -> state.copy(feedLikeStates = emptyMap()) }
+    }
+
+    fun verifyAndToggleLike(
+        cardId: Long,
+        initialLikeCount: Int,
+        initialIsLike: Boolean,
+    ) {
+        val currentState = _uiState.value.feedLikeStates[cardId]
+        if (currentState?.isLoading == true) return
+
+        val stateBeforeToggle = currentState ?: FeedLikeUiState(
+            isLike = initialIsLike,
+            likeCount = initialLikeCount,
+        )
+        updateFeedLikeState(
+            cardId = cardId,
+            state = stateBeforeToggle.copy(isLoading = true),
+        )
+        viewModelScope.launch {
+            when (val checkResult = checkCardDelete(CheckCardAlreadyDelete.Param(cardId))) {
+                is DomainResult.Success -> {
+                    if (checkResult.data) {
+                        updateFeedLikeLoading(cardId, false)
+                        _uiState.update { state ->
+                            state.copy(checkCardDelete = UiState.Success(cardId))
+                        }
+                        return@launch
+                    }
+                }
+
+                is DomainResult.Failure -> {
+                    updateFeedLikeLoading(cardId, false)
+                    _uiState.update { state ->
+                        state.copy(checkCardDelete = UiState.Fail(checkResult.error))
+                    }
+                    return@launch
+                }
+            }
+
+            val result = if (stateBeforeToggle.isLike) {
+                unlikeCard(cardId)
+            } else {
+                likeCard(cardId)
+            }
+
+            when (result) {
+                is DomainResult.Success -> {
+                    val isLike = !stateBeforeToggle.isLike
+                    val likeCount = if (isLike) {
+                        stateBeforeToggle.likeCount + 1
+                    } else {
+                        (stateBeforeToggle.likeCount - 1).coerceAtLeast(0)
+                    }
+                    updateFeedLikeState(
+                        cardId = cardId,
+                        state = stateBeforeToggle.copy(
+                            isLike = isLike,
+                            likeCount = likeCount,
+                            isLoading = false,
+                            animationVersion = if (isLike) {
+                                stateBeforeToggle.animationVersion + 1
+                            } else {
+                                stateBeforeToggle.animationVersion
+                            },
+                        )
+                    )
+                }
+
+                is DomainResult.Failure -> {
+                    updateFeedLikeState(cardId, stateBeforeToggle.copy(isLoading = false))
+                    if (result.error == ERROR_ALREADY_CARD_DELETE) {
+                        _uiState.update { state ->
+                            state.copy(checkCardDelete = UiState.Success(cardId))
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun updateFeedLikeLoading(cardId: Long, isLoading: Boolean) {
+        _uiState.update { currentState ->
+            val likeState = currentState.feedLikeStates[cardId] ?: return@update currentState
+            currentState.copy(
+                feedLikeStates = currentState.feedLikeStates +
+                    (cardId to likeState.copy(isLoading = isLoading))
+            )
+        }
+    }
+
+    private fun updateFeedLikeState(cardId: Long, state: FeedLikeUiState) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                feedLikeStates = currentState.feedLikeStates + (cardId to state)
+            )
+        }
     }
 
     fun removeFeedCard(cardId: String) {
@@ -408,6 +523,14 @@ data class Home(
     val checkCardDelete: UiState<Long> = UiState.None,
     val hiddenCardIds: Set<Long> = emptySet(),
     val cardArticle: UiState<CardArticle> = UiState.Loading,
+    val feedLikeStates: Map<Long, FeedLikeUiState> = emptyMap(),
+)
+
+data class FeedLikeUiState(
+    val isLike: Boolean,
+    val likeCount: Int,
+    val isLoading: Boolean = false,
+    val animationVersion: Int = 0,
 )
 
 enum class FeedType {

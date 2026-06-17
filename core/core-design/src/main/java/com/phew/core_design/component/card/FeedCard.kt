@@ -53,8 +53,13 @@ fun FeedDefaultCard(
     font: String,
     distance: String = "",
     likeCount: String = "0",
+    isLike: Boolean = false,
+    isLikeLoading: Boolean = false,
+    likeAnimationKey: Int = 0,
     commentCount: String = "0",
+    pollVoterCount: String? = null,
     timeAgo: String,
+    onClickLike: () -> Unit = {},
     onClick: () -> Unit
 ) {
     FeedCardImpl(
@@ -64,10 +69,15 @@ fun FeedDefaultCard(
         font = font,
         distance = distance,
         likeCount = likeCount,
+        isLike = isLike,
+        isLikeLoading = isLikeLoading,
+        likeAnimationKey = likeAnimationKey,
         commentCount = commentCount,
+        pollVoterCount = pollVoterCount,
         timeAgo = timeAgo,
         remainingTimeMillis = 0L,
         cardType = FeedCardType.DEFAULT,
+        onClickLike = onClickLike,
         onClick = onClick
     )
 }
@@ -81,6 +91,7 @@ fun FeedPungCard(
     distance: String,
     likeCount: String = "0",
     commentCount: String = "0",
+    pollVoterCount: String? = null,
     timeAgo: String,
     remainingTimeMillis: Long,
     onClick: () -> Unit
@@ -93,6 +104,7 @@ fun FeedPungCard(
         distance = distance,
         likeCount = likeCount,
         commentCount = commentCount,
+        pollVoterCount = pollVoterCount,
         timeAgo = timeAgo,
         remainingTimeMillis = remainingTimeMillis,
         cardType = FeedCardType.PUNG,
@@ -177,6 +189,10 @@ fun FeedAdminCard(
     timeAgo: String,
     commentCount: String,
     likeCount: String,
+    isLike: Boolean = false,
+    isLikeLoading: Boolean = false,
+    likeAnimationKey: Int = 0,
+    onClickLike: () -> Unit = {},
     onClick: () -> Unit
 ) {
     FeedAdminCardImpl(
@@ -185,8 +201,12 @@ fun FeedAdminCard(
         imgUrl = imgUrl,
         font = font,
         likeCount = likeCount,
+        isLike = isLike,
+        isLikeLoading = isLikeLoading,
+        likeAnimationKey = likeAnimationKey,
         commentCount = commentCount,
         timeAgo = timeAgo,
+        onClickLike = onClickLike,
         onClick = onClick
     )
 }
@@ -199,10 +219,15 @@ private fun FeedCardImpl(
     font: String,
     distance: String = "",
     likeCount: String,
+    isLike: Boolean = false,
+    isLikeLoading: Boolean = false,
+    likeAnimationKey: Int = 0,
     commentCount: String,
+    pollVoterCount: String?,
     timeAgo: String,
     remainingTimeMillis: Long,
     cardType: FeedCardType,
+    onClickLike: () -> Unit = {},
     onClick: () -> Unit
 ) {
     Surface(
@@ -234,10 +259,15 @@ private fun FeedCardImpl(
             BottomContent(
                 distance = distance,
                 likeCount = likeCount,
+                isLike = isLike,
+                isLikeLoading = isLikeLoading,
+                likeAnimationKey = likeAnimationKey,
                 commentCount = commentCount,
+                pollVoterCount = pollVoterCount,
                 timeAgo = timeAgo,
                 remainingTimeMillis = remainingTimeMillis.toString(),
-                cardType = cardType
+                cardType = cardType,
+                onClickLike = onClickLike,
             )
         }
     }
@@ -250,8 +280,12 @@ private fun FeedAdminCardImpl(
     imgUrl: String = "",
     font: String = "",
     likeCount: String = "",
+    isLike: Boolean = false,
+    isLikeLoading: Boolean = false,
+    likeAnimationKey: Int = 0,
     commentCount: String = "",
     timeAgo: String = "",
+    onClickLike: () -> Unit = {},
     onClick: () -> Unit
 ) {
     Surface(
@@ -282,10 +316,14 @@ private fun FeedAdminCardImpl(
 
             BottomContent(
                 likeCount = likeCount,
+                isLike = isLike,
+                isLikeLoading = isLikeLoading,
+                likeAnimationKey = likeAnimationKey,
                 commentCount = commentCount,
                 isAdminManger = true,
                 timeAgo = timeAgo,
-                cardType = FeedCardType.ADMIN
+                cardType = FeedCardType.ADMIN,
+                onClickLike = onClickLike,
             )
         }
     }
@@ -357,6 +395,7 @@ private fun Preview_FeedCard() {
             distance = "600m",
             likeCount = "2",
             commentCount = "1",
+            pollVoterCount = "8",
             timeAgo = "방금 전",
             onClick = {}
         )
@@ -369,6 +408,7 @@ private fun Preview_FeedCard() {
             distance = "600m",
             likeCount = "0",
             commentCount = "5",
+            pollVoterCount = "12",
             timeAgo = "방금 전",
             remainingTimeMillis = 86400000L,
             onClick = {}

@@ -21,4 +21,6 @@
     <string name="card_detail_comment_app_bar_title">댓글카드</string>
     <string name="card_detail_dialog_delete_title">삭제된 카드</string>
     <string name="card_detail_unknown_user">알 수 없는 사용자</string>
+    <string name="card_detail_poll_voter_count">%d명 참여</string>
+    <string name="card_detail_poll_option_result">%1$d%% (%2$d명)</string>
 </resources>

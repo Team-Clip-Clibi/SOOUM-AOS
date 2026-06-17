@@ -201,7 +201,9 @@ class CardFeedRepositoryImpl @Inject constructor(
         imageType: String,
         imageName: String,
         isStory: Boolean,
-        tag: List<String>
+        tag: List<String>,
+        hasPoll: Boolean,
+        pollContents: List<String>,
     ): DataResult<CardIdResponse> {
         return try {
             val request = feedHttp.requestUploadCard(
@@ -214,7 +216,10 @@ class CardFeedRepositoryImpl @Inject constructor(
                     imgType = imageType,
                     imgName = imageName,
                     isStory = isStory,
-                    tags = tag
+                    tags = tag,
+                    hasPoll = hasPoll,
+                    pollContents = pollContents,
+                    pollType = "SINGLE"
                 )
             )
             if (request.isSuccessful && request.code() == 200) {

@@ -54,6 +54,7 @@ data class CardDetailUiState(
     val comments: List<CardComment> = emptyList(),
     val error: CardDetailError? = null,
     val isLikeLoading: Boolean = false,
+    val isPollVoteLoading: Boolean = false,
     val isBlockLoading: Boolean = false,
     val blockSuccess: Boolean = false,
     val blockedMemberId: Long? = null,
@@ -77,6 +78,8 @@ class CardDetailViewModel @Inject constructor(
     private val commentPaging: GetCardCommentsPaging,
     private val likeCard: LikeCard,
     private val unLikeCard: UnlikeCard,
+    private val createPollVote: com.phew.domain.usecase.CreatePollVote,
+    private val deletePollVote: com.phew.domain.usecase.DeletePollVote,
     private val deleteCard: DeleteCard,
     private val blockMember: BlockMember,
     private val unblockMember: UnblockMember,
@@ -243,6 +246,104 @@ class CardDetailViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             isLikeLoading = false,
+                            error = when (result.error) {
+                                ERROR_NETWORK -> CardDetailError.NETWORK_ERROR
+                                ERROR_ALREADY_CARD_DELETE -> CardDetailError.CARD_DELETE
+                                else -> CardDetailError.FAIL
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    fun voteOrCancelPoll(pollOptionId: Long) {
+        viewModelScope.launch {
+            if (_uiState.value.isPollVoteLoading) return@launch
+
+            val currentDetail = _uiState.value.cardDetail ?: return@launch
+            val currentPoll = currentDetail.poll ?: return@launch
+
+            when (val checkResult = checkCardDelete(CheckCardAlreadyDelete.Param(currentDetail.cardId))) {
+                is DomainResult.Success -> {
+                    if (checkResult.data) {
+                        _uiState.update { it.copy(error = CardDetailError.CARD_DELETE) }
+                        setDeleteDialog()
+                        return@launch
+                    }
+                }
+                is DomainResult.Failure -> {
+                    _uiState.update { it.copy(error = CardDetailError.NETWORK_ERROR) }
+                    return@launch
+                }
+            }
+
+            _uiState.update { it.copy(isPollVoteLoading = true, error = null) }
+
+            if (currentPoll.isVoted) {
+                val votedOptionId = currentPoll.options
+                    .firstOrNull { it.isVoted }
+                    ?.pollOptionId
+                    ?: pollOptionId
+
+                when (val result = deletePollVote(
+                    com.phew.domain.usecase.DeletePollVote.Param(votedOptionId)
+                )) {
+                    is DomainResult.Success -> {
+                        val canceledPoll = currentPoll.copy(
+                            totalVoterCount = (currentPoll.totalVoterCount - 1L).coerceAtLeast(0L),
+                            isVoted = false,
+                            options = currentPoll.options.map { option ->
+                                option.copy(
+                                    voteCount = if (option.pollOptionId == votedOptionId) {
+                                        option.voteCount?.minus(1L)?.coerceAtLeast(0L)
+                                    } else {
+                                        option.voteCount
+                                    },
+                                    votePercentage = null,
+                                    isVoted = false
+                                )
+                            }
+                        )
+                        _uiState.update {
+                            it.copy(
+                                cardDetail = currentDetail.copy(poll = canceledPoll),
+                                isPollVoteLoading = false
+                            )
+                        }
+                    }
+                    is DomainResult.Failure -> {
+                        _uiState.update {
+                            it.copy(
+                                isPollVoteLoading = false,
+                                error = when (result.error) {
+                                    ERROR_NETWORK -> CardDetailError.NETWORK_ERROR
+                                    ERROR_ALREADY_CARD_DELETE -> CardDetailError.CARD_DELETE
+                                    else -> CardDetailError.FAIL
+                                }
+                            )
+                        }
+                    }
+                }
+                return@launch
+            }
+
+            when (val result = createPollVote(
+                com.phew.domain.usecase.CreatePollVote.Param(pollOptionId)
+            )) {
+                is DomainResult.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            cardDetail = currentDetail.copy(poll = result.data),
+                            isPollVoteLoading = false
+                        )
+                    }
+                }
+                is DomainResult.Failure -> {
+                    _uiState.update {
+                        it.copy(
+                            isPollVoteLoading = false,
                             error = when (result.error) {
                                 ERROR_NETWORK -> CardDetailError.NETWORK_ERROR
                                 ERROR_ALREADY_CARD_DELETE -> CardDetailError.CARD_DELETE

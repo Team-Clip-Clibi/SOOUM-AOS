@@ -525,6 +525,70 @@ object AppBar {
     }
 
     @Composable
+    fun CloseTextButtonAppBar(
+        appBarText: String,
+        buttonText: String,
+        onCloseClick: () -> Unit,
+        onButtonClick: () -> Unit,
+        buttonEnabled: Boolean = true,
+        buttonTextStyle: TextStyle = TextComponent.SUBTITLE_1_M_16,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .height(48.dp)
+                .background(NeutralColor.WHITE),
+        ) {
+            Text(
+                modifier = Modifier.align(Alignment.Center),
+                text = appBarText,
+                style = TextComponent.TITLE_1_SB_18,
+                color = NeutralColor.BLACK,
+                textAlign = TextAlign.Center,
+            )
+
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .size(48.dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = onCloseClick,
+                    )
+                    .padding(12.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    modifier = Modifier.fillMaxSize(),
+                    painter = painterResource(R.drawable.ic_delete),
+                    contentDescription = "close",
+                    tint = NeutralColor.BLACK,
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .width(AppBarDefaults.IconSlotSize)
+                    .fillMaxHeight()
+                    .clickable(
+                        enabled = buttonEnabled,
+                        onClick = onButtonClick,
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = buttonText,
+                    style = buttonTextStyle,
+                    color = if (buttonEnabled) NeutralColor.BLACK else NeutralColor.GRAY_300,
+                )
+            }
+        }
+    }
+
+    @Composable
     fun HomeBanner(data: List<Triple<String, String, String>>) {
         val pageState = rememberPagerState(pageCount = { data.size })
         LaunchedEffect(Unit) {

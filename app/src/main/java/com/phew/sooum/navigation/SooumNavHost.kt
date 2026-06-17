@@ -48,23 +48,30 @@ fun SooumNavHost(
     modifier: Modifier = Modifier,
     appVersionUpdate: () -> Unit,
     finish: () -> Unit,
+    onServerMessage: (String) -> Unit,
     mainViewModel: MainViewModel = hiltViewModel(),
 ) {
     val navController = appState.navController
-    LaunchedEffect(Unit) {
+    LaunchedEffect(mainViewModel, navController) {
         mainViewModel.globalEvent.collect { event ->
-            if (event == GlobalEvent.TeapotEvent) {
-                navController.navigateToSignUpGraph(
-                    navOptions = navOptions {
-                        popUpTo(SPLASH_GRAPH) {
-                            inclusive = true
+            when (event) {
+                GlobalEvent.TeapotEvent -> {
+                    navController.navigateToSignUpGraph(
+                        navOptions = navOptions {
+                            popUpTo(SPLASH_GRAPH) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
                         }
-                        launchSingleTop = true
-                    }
-                )
+                    )
+                }
+
+                is GlobalEvent.ServerMessage -> onServerMessage(event.message)
+                is GlobalEvent.Error -> Unit
             }
         }
     }
+
     SharedTransitionLayout {
         NavHost(
             navController = navController,

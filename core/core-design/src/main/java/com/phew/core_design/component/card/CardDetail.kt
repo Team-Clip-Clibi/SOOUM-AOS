@@ -29,6 +29,7 @@ fun CardDetail(
     cardTags: List<String>,
     fontType: FontType? = null,
     header: @Composable () -> Unit,
+    contentAfterCard: @Composable () -> Unit = {},
     bottom: @Composable () -> Unit?,
     onPreviousCardClick: () -> Unit = { },
     onTagClick: (String) -> Unit = { }
@@ -73,6 +74,8 @@ fun CardDetail(
                 )
             }
         }
+
+        contentAfterCard()
 
         bottom()
     }

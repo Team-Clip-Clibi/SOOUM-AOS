@@ -39,7 +39,10 @@ data class WriteUiState(
     val parentCardId: Long? = null,
     val cardDefaultImagesByCategory: Map<BackgroundFilterType, List<CardImageDefault>> = emptyMap(),
     val selectedDefaultImageName: String? = null,
-    val activateDate: UiState<String> = UiState.Loading
+    val activateDate: UiState<String> = UiState.Loading,
+    val isPollCreateMode: Boolean = false,
+    val draftPollContents: List<String> = listOf("", ""),
+    val pollContents: List<String> = emptyList(),
 ) {
     val isContentValid: Boolean
         get() = content.isNotBlank()
