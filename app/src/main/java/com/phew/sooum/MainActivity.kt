@@ -109,8 +109,6 @@ class MainActivity : ComponentActivity() {
                         appState = appState,
                         finish = ::finish,
                         appVersionUpdate = ::playStore,
-                        // 요기 수정 -> webView 삭제
-                        isExpend = isExpandedScreen
                     )
                 }
             }

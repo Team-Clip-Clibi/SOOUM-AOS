@@ -45,9 +45,12 @@ class PostCard @Inject constructor(
         var imgName: String?,
         val isStory: Boolean?,
         val tags: List<String>,
+        val isDistanceShared: Boolean,
+        val pollContents: List<String>,
     )
 
     suspend operator fun invoke(data: Param): DomainResult<Long, String> {
+        if(data.content.trim().isEmpty()) return DomainResult.Failure(ERROR_FAIL_JOB)
         when (val checkedPostBanned = networkRepository.requestCheckUploadCard()) {
             is DataResult.Fail -> return DomainResult.Failure(ERROR_FAIL_JOB)
             is DataResult.Success -> {
@@ -76,7 +79,7 @@ class PostCard @Inject constructor(
         imageInfo: UploadImageInfo,
     ): DomainResult<Long, String> {
         val locationPermissionCheck = deviceRepository.getLocationPermission()
-        val (latitude, longitude) = if (locationPermissionCheck) {
+        val (latitude, longitude) = if (locationPermissionCheck && param.isDistanceShared) {
             val location = deviceRepository.requestLocation()
             location.latitude to location.longitude
         } else {
@@ -84,7 +87,7 @@ class PostCard @Inject constructor(
         }
         val uploadResult = if (!param.answerCard) {
             networkRepository.requestUploadCard(
-                isDistanceShared = locationPermissionCheck,
+                isDistanceShared = param.isDistanceShared,
                 content = param.content,
                 imageName = imageInfo.name,
                 isStory = param.isStory!!,
@@ -92,7 +95,9 @@ class PostCard @Inject constructor(
                 latitude = latitude,
                 longitude = longitude,
                 tag = param.tags,
-                imageType = imageInfo.type
+                imageType = imageInfo.type,
+                hasPoll = param.pollContents.isNotEmpty(),
+                pollContents = param.pollContents
             )
         } else {
             if (param.cardId == null) return DomainResult.Failure(ERROR_FAIL_JOB) // Ensure early exit for null cardId
@@ -111,7 +116,7 @@ class PostCard @Inject constructor(
         return when (uploadResult) {
             is DataResult.Success -> {
                 eventRepository.logWriteCardClickFinishButton()
-                if (!locationPermissionCheck) eventRepository.logWriteDistanceSharedOff()
+                if (!param.isDistanceShared) eventRepository.logWriteDistanceSharedOff()
                 DomainResult.Success(uploadResult.data.cardId)
             }
 

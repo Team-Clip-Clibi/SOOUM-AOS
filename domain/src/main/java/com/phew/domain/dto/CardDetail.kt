@@ -24,6 +24,7 @@ data class CardDetail(
     val previousCardImgUrl: String?,
     val visitedCnt: Int,
     val isFeedCard: Boolean = false,
+    val poll: Poll? = null,
     val storyExpirationTime: String?,
 ) {
     val endTime = TimeUtils.remainingMillisUntil(storyExpirationTime)
@@ -32,6 +33,20 @@ data class CardDetail(
 data class CardDetailTag(
     val tagId: Long,
     val name: String
+)
+
+data class Poll(
+    val totalVoterCount: Long,
+    val isVoted: Boolean,
+    val options: List<PollOption>
+)
+
+data class PollOption(
+    val pollOptionId: Long,
+    val content: String,
+    val voteCount: Long?,
+    val votePercentage: Double?,
+    val isVoted: Boolean
 )
 
 data class CardComment(

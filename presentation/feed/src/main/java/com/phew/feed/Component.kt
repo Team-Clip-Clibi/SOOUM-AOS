@@ -415,6 +415,11 @@ object FeedUi {
         feedCard: FeedCardType,
         onClick: (String) -> Unit,
         onRemoveCard: (String) -> Unit,
+        isLike: Boolean = false,
+        likeCount: Int = 0,
+        isLikeLoading: Boolean = false,
+        likeAnimationKey: Int = 0,
+        onClickLike: () -> Unit = {},
     ) {
         when (feedCard) {
             is FeedCardType.BoombType -> PungTypeCard(
@@ -425,12 +430,22 @@ object FeedUi {
 
             is FeedCardType.AdminType -> AdminTypeCard(
                 feedCard = feedCard,
-                onClick = onClick
+                onClick = onClick,
+                isLike = isLike,
+                likeCount = likeCount,
+                isLikeLoading = isLikeLoading,
+                likeAnimationKey = likeAnimationKey,
+                onClickLike = onClickLike,
             )
 
             is FeedCardType.NormalType -> NormalTypeCard(
                 feedCard = feedCard,
-                onClick = onClick
+                onClick = onClick,
+                isLike = isLike,
+                likeCount = likeCount,
+                isLikeLoading = isLikeLoading,
+                likeAnimationKey = likeAnimationKey,
+                onClickLike = onClickLike,
             )
         }
     }
@@ -471,6 +486,7 @@ object FeedUi {
                 timeAgo = feedCard.writeTime,
                 commentCount = feedCard.commentValue,
                 likeCount = feedCard.likeValue,
+                pollVoterCount = feedCard.pollVoterValue,
                 remainingTimeMillis = remainingTimeMillis,
                 onClick = {
                     onClick(feedCard.cardId)
@@ -483,6 +499,11 @@ object FeedUi {
     internal fun AdminTypeCard(
         feedCard: FeedCardType.AdminType,
         onClick: (String) -> Unit,
+        isLike: Boolean,
+        likeCount: Int,
+        isLikeLoading: Boolean,
+        likeAnimationKey: Int,
+        onClickLike: () -> Unit,
     ) {
         FeedAdminCard(
             id = feedCard.cardId,
@@ -491,7 +512,11 @@ object FeedUi {
             font = feedCard.font,
             timeAgo = feedCard.writeTime,
             commentCount = feedCard.commentValue,
-            likeCount = feedCard.likeValue,
+            likeCount = likeCount.toString(),
+            isLike = isLike,
+            isLikeLoading = isLikeLoading,
+            likeAnimationKey = likeAnimationKey,
+            onClickLike = onClickLike,
             onClick = {
                 onClick(feedCard.cardId)
             }
@@ -502,6 +527,11 @@ object FeedUi {
     internal fun NormalTypeCard(
         feedCard: FeedCardType.NormalType,
         onClick: (String) -> Unit,
+        isLike: Boolean,
+        likeCount: Int,
+        isLikeLoading: Boolean,
+        likeAnimationKey: Int,
+        onClickLike: () -> Unit,
     ) {
         FeedDefaultCard(
             id = feedCard.cardId,
@@ -511,7 +541,12 @@ object FeedUi {
             distance = feedCard.location ?: "",
             timeAgo = feedCard.writeTime,
             commentCount = feedCard.commentValue,
-            likeCount = feedCard.likeValue,
+            likeCount = likeCount.toString(),
+            pollVoterCount = feedCard.pollVoterValue,
+            isLike = isLike,
+            isLikeLoading = isLikeLoading,
+            likeAnimationKey = likeAnimationKey,
+            onClickLike = onClickLike,
             onClick = {
                 onClick(feedCard.cardId)
             }
@@ -864,7 +899,8 @@ private fun BoombTypeCardPreview() {
         location = "150m",
         writeTime = "2025-01-15T10:30:00",
         commentValue = "12",
-        likeValue = "45"
+        likeValue = "45",
+        pollVoterValue = "36"
     )
 
     TypedFeedCardView(
@@ -886,7 +922,8 @@ private fun AdminTypeCardPreview() {
         location = "100m",
         writeTime = "2025-01-15T09:00:00",
         commentValue = "25",
-        likeValue = "78"
+        likeValue = "78",
+        pollVoterValue = "0"
     )
 
     TypedFeedCardView(feedCard = sampleAdminCard, onClick = {}, onRemoveCard = {})
@@ -904,7 +941,8 @@ private fun NormalTypeCardPreview() {
         location = "100m",
         writeTime = "2025-01-15T11:00:00",
         commentValue = "8",
-        likeValue = "23"
+        likeValue = "23",
+        pollVoterValue = "14"
     )
 
     TypedFeedCardView(feedCard = sampleNormalCard, onClick = {}, onRemoveCard = {})

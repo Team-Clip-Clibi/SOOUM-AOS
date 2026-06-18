@@ -17,15 +17,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -38,14 +37,11 @@ import com.phew.core_design.LargeButton
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.SmallButton
 import com.phew.core_design.TextComponent
-import com.phew.domain.SIGN_UP_ALREADY_SIGN_UP
 import com.phew.domain.SIGN_UP_BANNED
-import com.phew.domain.SIGN_UP_OKAY
-import com.phew.domain.SIGN_UP_REGISTERED
 import com.phew.domain.SIGN_UP_WITHDRAWN
 import com.phew.sign_up.R
+import com.phew.sign_up.SignUpEffect
 import com.phew.sign_up.SignUpViewModel
-import com.phew.sign_up.UiState
 import com.phew.sign_up.dto.SignUpResult
 
 @Composable
@@ -57,22 +53,24 @@ fun OnBoarding(
     home: () -> Unit,
     showWithdrawalDialog: Boolean = false
 ) {
-    val uiState by viewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
-    val dialogShow = remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    var dialogResult by remember { mutableStateOf<SignUpResult?>(null) }
     val withdrawalDialogShow = remember { mutableStateOf(showWithdrawalDialog) }
     BackHandler(onBack = remember(back) { { back() } })
-    HandleCheckSignUp(
-        checkSignUpState = uiState.checkSignUp,
-        loginState = uiState.login,
-        snackBarHostState = snackBarHostState,
-        signUp = signUp,
-        dialogShow = {
-            dialogShow.value = true
-        },
-        login = viewModel::login,
-        onHome = remember(home) { { home() } }
-    )
+
+    LaunchedEffect(viewModel) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                SignUpEffect.NavigateToAgreement -> signUp()
+                SignUpEffect.NavigateHome -> home()
+                is SignUpEffect.ShowDialog -> dialogResult = effect.result
+                is SignUpEffect.ShowError -> snackBarHostState.showSignUpError(context, effect.error)
+                else -> Unit
+            }
+        }
+    }
+
     Scaffold(
         bottomBar = {
             BottomView(
@@ -98,70 +96,20 @@ fun OnBoarding(
         ) {
             TitleView()
             ContentView()
-            if (dialogShow.value) {
+            dialogResult?.let { result ->
                 DialogView(
-                    (uiState.checkSignUp as UiState.Success<SignUpResult>).data,
-                    onclick = remember {
-                        {
-                            dialogShow.value = false
-                            viewModel.initSignUpResult()
-                        }
+                    data = result,
+                    onclick = {
+                        dialogResult = null
                     }
                 )
             }
-            
+
             if (withdrawalDialogShow.value) {
                 WithdrawalCompleteDialog(
                     onDismiss = remember { { withdrawalDialogShow.value = false } }
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun HandleCheckSignUp(
-    checkSignUpState: UiState<SignUpResult>,
-    loginState: UiState<Unit>,
-    snackBarHostState: SnackbarHostState,
-    signUp: () -> Unit,
-    login: () -> Unit,
-    dialogShow: () -> Unit,
-    onHome: () -> Unit,
-) {
-    val context = LocalContext.current
-    LaunchedEffect(checkSignUpState, loginState, snackBarHostState) {
-        when (checkSignUpState) {
-            is UiState.Fail -> {
-                snackBarHostState.showSnackbar(
-                    message = context.getString(com.phew.core_design.R.string.error_network),
-                    duration = SnackbarDuration.Short
-                )
-            }
-
-            is UiState.Success -> {
-                when (checkSignUpState.data.result) {
-                    SIGN_UP_OKAY -> {
-                        signUp()
-                    }
-
-                    SIGN_UP_REGISTERED, SIGN_UP_ALREADY_SIGN_UP -> login()
-                    else -> dialogShow()
-                }
-            }
-
-            else -> Unit
-        }
-        when (loginState) {
-            is UiState.Fail -> {
-                snackBarHostState.showSnackbar(
-                    message = context.getString(com.phew.core_design.R.string.error_network),
-                    duration = SnackbarDuration.Short
-                )
-            }
-
-            is UiState.Success -> onHome()
-            else -> Unit
         }
     }
 }
@@ -255,6 +203,7 @@ private fun BottomView(
         SmallButton.NoIconTertiary(
             buttonText = stringResource(R.string.onBoarding_btn_already_sign_up),
             onClick = onClickAlreadySignUp,
+            isBorderShow = false,
             modifier = Modifier.fillMaxWidth()
         )
     }

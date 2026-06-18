@@ -7,6 +7,7 @@ data class WriteOption(
 
 object WriteOptions {
     const val DISTANCE_OPTION_ID = "distance_sharing"
+    const val POLL_OPTION_ID = "poll"
     const val DEFAULT_OPTION_ID = DISTANCE_OPTION_ID
 
     val availableOptions = listOf(
@@ -17,6 +18,10 @@ object WriteOptions {
         WriteOption(
             id = "twenty_four_hours", 
             displayName = "24시간"
+        ),
+        WriteOption(
+            id = POLL_OPTION_ID,
+            displayName = "투표"
         )
     )
 

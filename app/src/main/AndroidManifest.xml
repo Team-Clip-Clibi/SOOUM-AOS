@@ -103,6 +103,22 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="sooum_general_notification" />
+        <!-- FaceBook SDK -->
+        <meta-data
+            android:name="com.facebook.sdk.ApplicationId"
+            android:value="@string/facebook_app_info" />
+        <meta-data
+            android:name="com.facebook.sdk.ClientToken"
+            android:value="@string/facebook_client_token_info" />
+        <meta-data
+            android:name="com.facebook.sdk.AutoLogAppEventsEnabled"
+            android:value="${FACEBOOK_AUTO_LOG_APP_EVENTS}" />
+        <meta-data
+            android:name="com.facebook.sdk.AutoInitEnabled"
+            android:value="${FACEBOOK_AUTO_LOG_APP_EVENTS}" />
+        <meta-data
+            android:name="com.facebook.sdk.AdvertiserIDCollectionEnabled"
+            android:value="${FACEBOOK_AUTO_LOG_APP_EVENTS}" />
     </application>
 
 </manifest>

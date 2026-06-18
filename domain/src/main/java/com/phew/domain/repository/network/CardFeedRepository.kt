@@ -45,6 +45,8 @@ interface CardFeedRepository {
         imageName: String,
         isStory: Boolean,
         tag: List<String>,
+        hasPoll: Boolean,
+        pollContents: List<String>,
     ): DataResult<CardIdResponse>
 
     suspend fun requestUploadCardAnswer(

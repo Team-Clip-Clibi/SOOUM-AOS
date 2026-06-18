@@ -3,6 +3,8 @@
     <string name="write_screen_title">새로운 카드</string>
     <string name="write_screen_comment_title">댓글카드</string>
     <string name="write_screen_complete">완료</string>
+    <string name="poll_toolbar_distance">거리공유</string>
+    <string name="poll_toolbar_story">24시간</string>
     <string name="write_screen_background_section">배경</string>
     <string name="write_screen_font_section">글씨체</string>
     <string name="write_card_content_default_placeholder">숨에서 편하게 이야기 나눠요</string>
@@ -11,6 +13,17 @@
     <string name="write_screen_dialog_delete_title">삭제된 카드예요</string>
     <string name="write_screen_picture_dialog_image_title">부적절한 사진으로 보여져요</string>
     <string name="write_screen_picture_dialog_image_content">다른 사진으로 변경하거나 기본 이미지를 사용해 주세요.</string>
+    <string name="write_poll_title">투표 만들기</string>
+    <string name="write_poll_single_choice_description">선택지는 여러 개 추가할 수 있지만, 참여자는 하나만 선택할 수 있어요.</string>
+    <string name="write_poll_add_option">항목 추가</string>
+    <string name="write_poll_option_limit">선택지는 %1$d개부터 %2$d개까지 만들 수 있어요.</string>
+    <string name="write_poll_option_placeholder">선택지 %1$d</string>
+    <string name="write_poll_preview_title">투표 미리보기</string>
+    <string name="write_poll_single_choice_label">단일 선택</string>
+    <string name="write_poll_option_input">항목 입력</string>
+    <string name="write_poll_remove_option">항목 삭제</string>
+    <string name="write_poll_edit">투표 수정</string>
+    <string name="write_poll_delete">투표 삭제</string>
     
     <!-- Background Filter Types -->
     <string name="background_filter_color">컬러</string>
