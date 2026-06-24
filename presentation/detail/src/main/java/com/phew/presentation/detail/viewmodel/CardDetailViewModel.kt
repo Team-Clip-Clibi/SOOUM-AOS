@@ -54,6 +54,7 @@ data class CardDetailUiState(
     val comments: List<CardComment> = emptyList(),
     val error: CardDetailError? = null,
     val isLikeLoading: Boolean = false,
+    val likeAnimationKey: Int = 0,
     val isPollVoteLoading: Boolean = false,
     val isBlockLoading: Boolean = false,
     val blockSuccess: Boolean = false,
@@ -189,28 +190,40 @@ class CardDetailViewModel @Inject constructor(
 
     fun verifyAndToggleLike(cardId: Long) {
         viewModelScope.launch {
+            if (_uiState.value.isLikeLoading) return@launch
+
+            _uiState.update {
+                it.copy(isLikeLoading = true)
+            }
+
             // 1. 카드가 삭제되었는지 먼저 확인
             when (val checkResult = checkCardDelete(CheckCardAlreadyDelete.Param(cardId = cardId))) {
                 is DomainResult.Success -> {
                     if (checkResult.data) {
                         // 삭제된 경우 -> 에러 설정 및 다이얼로그 표시
-                        _uiState.update { it.copy(error = CardDetailError.CARD_DELETE) }
+                        _uiState.update {
+                            it.copy(
+                                isLikeLoading = false,
+                                error = CardDetailError.CARD_DELETE
+                            )
+                        }
                         setDeleteDialog()
                         return@launch
                     }
                 }
                 is DomainResult.Failure -> {
                     // 확인 실패 시 -> 네트워크 에러 처리 하고 중단
-                    _uiState.update { it.copy(error = CardDetailError.NETWORK_ERROR) }
+                    _uiState.update {
+                        it.copy(
+                            isLikeLoading = false,
+                            error = CardDetailError.NETWORK_ERROR
+                        )
+                    }
                     return@launch
                 }
             }
 
             // 2. 삭제되지 않은 경우 좋아요 토글 수행
-            _uiState.update {
-                it.copy(isLikeLoading = true)
-            }
-
             val currentDetail = _uiState.value.cardDetail
             if (currentDetail == null) {
                 _uiState.update {
@@ -229,7 +242,7 @@ class CardDetailViewModel @Inject constructor(
                     val updatedDetail = currentDetail.copy(
                         isLike = !currentDetail.isLike,
                         likeCount = if (currentDetail.isLike) {
-                            currentDetail.likeCount - 1
+                            (currentDetail.likeCount - 1).coerceAtLeast(0)
                         } else {
                             currentDetail.likeCount + 1
                         }
@@ -237,7 +250,8 @@ class CardDetailViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             cardDetail = updatedDetail,
-                            isLikeLoading = false
+                            isLikeLoading = false,
+                            likeAnimationKey = it.likeAnimationKey + 1
                         )
                     }
                 }

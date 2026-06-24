@@ -356,6 +356,8 @@ internal fun CommentCardDetailScreen(
                     cardDetail = cardDetail,
                     isExpire = isExpire,
                     isDelete = isRealDelete,
+                    isLikeLoading = uiState.isLikeLoading,
+                    likeAnimationKey = uiState.likeAnimationKey,
                     onClickLike = onClickLikeLambda,
                     onClickCommentIcon = onWriteClickLambda,
                     comments = comments,
@@ -491,6 +493,8 @@ private fun CardView(
     cardDetail: CardDetail?,
     isExpire: Boolean,
     isDelete: Boolean,
+    isLikeLoading: Boolean = false,
+    likeAnimationKey: Int = 0,
     onClickLike: () -> Unit,
     onClickCommentIcon: () -> Unit,
     comments: LazyPagingItems<CardComment>,
@@ -586,6 +590,8 @@ private fun CardView(
                             commentCnt = cardDetail?.commentCardCount ?: 0,
                             searchCnt = cardDetail?.visitedCnt ?: 0,
                             isLikeCard = cardDetail?.isLike == true,
+                            isLikeLoading = isLikeLoading,
+                            likeAnimationKey = likeAnimationKey,
                             onClickLike = onClickLike,
                             onClickComment = onClickCommentIcon
                         )

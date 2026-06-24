@@ -366,11 +366,7 @@ class FeedViewModel @Inject constructor(
                             isLike = isLike,
                             likeCount = likeCount,
                             isLoading = false,
-                            animationVersion = if (isLike) {
-                                stateBeforeToggle.animationVersion + 1
-                            } else {
-                                stateBeforeToggle.animationVersion
-                            },
+                            animationVersion = stateBeforeToggle.animationVersion + 1,
                         )
                     )
                 }
