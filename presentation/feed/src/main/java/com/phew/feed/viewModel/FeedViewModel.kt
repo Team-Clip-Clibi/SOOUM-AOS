@@ -321,15 +321,26 @@ class FeedViewModel @Inject constructor(
             isLike = initialIsLike,
             likeCount = initialLikeCount,
         )
+        val toggledIsLike = !stateBeforeToggle.isLike
+        val toggledLikeCount = if (toggledIsLike) {
+            stateBeforeToggle.likeCount + 1
+        } else {
+            (stateBeforeToggle.likeCount - 1).coerceAtLeast(0)
+        }
         updateFeedLikeState(
             cardId = cardId,
-            state = stateBeforeToggle.copy(isLoading = true),
+            state = stateBeforeToggle.copy(
+                isLike = toggledIsLike,
+                likeCount = toggledLikeCount,
+                isLoading = true,
+                animationVersion = stateBeforeToggle.animationVersion + 1,
+            ),
         )
         viewModelScope.launch {
             when (val checkResult = checkCardDelete(CheckCardAlreadyDelete.Param(cardId))) {
                 is DomainResult.Success -> {
                     if (checkResult.data) {
-                        updateFeedLikeLoading(cardId, false)
+                        updateFeedLikeState(cardId, stateBeforeToggle.copy(isLoading = false))
                         _uiState.update { state ->
                             state.copy(checkCardDelete = UiState.Success(cardId))
                         }
@@ -338,7 +349,7 @@ class FeedViewModel @Inject constructor(
                 }
 
                 is DomainResult.Failure -> {
-                    updateFeedLikeLoading(cardId, false)
+                    updateFeedLikeState(cardId, stateBeforeToggle.copy(isLoading = false))
                     _uiState.update { state ->
                         state.copy(checkCardDelete = UiState.Fail(checkResult.error))
                     }
@@ -354,17 +365,11 @@ class FeedViewModel @Inject constructor(
 
             when (result) {
                 is DomainResult.Success -> {
-                    val isLike = !stateBeforeToggle.isLike
-                    val likeCount = if (isLike) {
-                        stateBeforeToggle.likeCount + 1
-                    } else {
-                        (stateBeforeToggle.likeCount - 1).coerceAtLeast(0)
-                    }
                     updateFeedLikeState(
                         cardId = cardId,
                         state = stateBeforeToggle.copy(
-                            isLike = isLike,
-                            likeCount = likeCount,
+                            isLike = toggledIsLike,
+                            likeCount = toggledLikeCount,
                             isLoading = false,
                             animationVersion = stateBeforeToggle.animationVersion + 1,
                         )
