@@ -218,8 +218,8 @@ class CardFeedRepositoryImpl @Inject constructor(
                     isStory = isStory,
                     tags = tag,
                     hasPoll = hasPoll,
-                    pollContents = pollContents,
-                    pollType = "SINGLE"
+                    pollContents = pollContents.takeIf { hasPoll },
+                    pollType = "SINGLE".takeIf { hasPoll }
                 )
             )
             if (request.isSuccessful && request.code() == 200) {
