@@ -160,6 +160,9 @@ class ProfileViewModel @Inject constructor(
                             isRefreshing = false,
                             nickname = "",
                             userId = 0L,
+                            changeBio = null,
+                            changeProfile = false,
+                            imageChange = false,
                             newProfileImageUri = if (request.data.profileImgName.trim()
                                     .isEmpty()
                             ) listOf(Uri.EMPTY) else listOf(Uri.EMPTY) + request.data.profileImageUrl.toUri()
@@ -304,19 +307,23 @@ class ProfileViewModel @Inject constructor(
     fun update() {
         if (!_uiState.value.changeProfile) return
         viewModelScope.launch(Dispatchers.IO) {
+            val currentState = _uiState.value
+            val profile = (currentState.profileInfo as UiState.Success).data
+            val nextNickname = currentState.changeNickName
+                ?.takeIf { it != profile.nickname }
+                ?: profile.nickname
+            val nextBio = currentState.changeBio ?: profile.bio
             when (val result = updateProfile(
-                (_uiState.value.profileInfo as UiState.Success).data.let { profile ->
-                    UpdateProfile.Param(
-                        nickName = if (_uiState.value.changeNickName == profile.nickname) null else _uiState.value.changeNickName,
-                        imgName = when {
-                            !_uiState.value.useAlbum && !_uiState.value.useCamera && _uiState.value.newProfileImageUri.size == 2 -> profile.profileImgName
-                            else -> ""
-                        },
-                        profileBio = profile.bio,
-                        profileImage = if (_uiState.value.newProfileImageUri.last() == Uri.EMPTY) null else _uiState.value.newProfileImageUri.last().toString(),
-                        isImageChange = _uiState.value.imageChange
-                    )
-                }
+                UpdateProfile.Param(
+                    nickName = currentState.changeNickName?.takeIf { it != profile.nickname },
+                    imgName = when {
+                        !currentState.useAlbum && !currentState.useCamera && currentState.newProfileImageUri.size == 2 -> profile.profileImgName
+                        else -> ""
+                    },
+                    profileBio = nextBio,
+                    profileImage = if (currentState.newProfileImageUri.last() == Uri.EMPTY) null else currentState.newProfileImageUri.last().toString(),
+                    isImageChange = currentState.imageChange
+                )
             )) {
                 is DomainResult.Failure -> {
                     _uiState.update { state -> state.copy(updateProfile = UiState.Fail(result.error)) }
@@ -326,6 +333,12 @@ class ProfileViewModel @Inject constructor(
                     _uiState.update { state ->
                         state.copy(
                             updateProfile = UiState.Success(Unit),
+                            profileInfo = UiState.Success(
+                                profile.copy(
+                                    nickname = nextNickname,
+                                    bio = nextBio
+                                )
+                            )
                         )
                     }
                     myProfile()
@@ -336,25 +349,52 @@ class ProfileViewModel @Inject constructor(
 
     fun changeNickName(data: String) {
         _uiState.update { state ->
-            state.copy(changeNickName = data)
+            state.copy(
+                changeNickName = data,
+                nickNameHint = UiState.Loading
+            ).withChangeProfileState()
+        }
+        val currentProfile = (_uiState.value.profileInfo as? UiState.Success)?.data ?: return
+        if (data == currentProfile.nickname) {
+            _uiState.update { state ->
+                state.copy(nickNameHint = UiState.Loading).withChangeProfileState()
+            }
+            return
+        }
+        if (data.length < 2) {
+            _uiState.update { state ->
+                state.copy(nickNameHint = UiState.Success(false)).withChangeProfileState()
+            }
+            return
         }
         viewModelScope.launch(Dispatchers.IO) {
             when (val result = checkNickName(CheckNickName.Param(data))) {
                 is DomainResult.Failure -> {
                     _uiState.update { state ->
-                        state.copy(nickNameHint = UiState.Fail(result.error), changeProfile = false)
+                        if (state.changeNickName != data) {
+                            state
+                        } else {
+                            state.copy(nickNameHint = UiState.Fail(result.error)).withChangeProfileState()
+                        }
                     }
                 }
 
                 is DomainResult.Success -> {
                     _uiState.update { state ->
-                        state.copy(
-                            nickNameHint = UiState.Success(result.data),
-                            changeProfile = result.data
-                        )
+                        if (state.changeNickName != data) {
+                            state
+                        } else {
+                            state.copy(nickNameHint = UiState.Success(result.data)).withChangeProfileState()
+                        }
                     }
                 }
             }
+        }
+    }
+
+    fun changeBio(data: String) {
+        _uiState.update { state ->
+            state.copy(changeBio = data).withChangeProfileState()
         }
     }
 
@@ -364,7 +404,7 @@ class ProfileViewModel @Inject constructor(
                 useAlbum = true,
                 useCamera = false,
                 imageChange = true
-            )
+            ).withChangeProfileState()
         }
     }
 
@@ -374,7 +414,7 @@ class ProfileViewModel @Inject constructor(
                 useAlbum = false,
                 useCamera = true,
                 imageChange = true
-            )
+            ).withChangeProfileState()
         }
     }
 
@@ -383,10 +423,9 @@ class ProfileViewModel @Inject constructor(
             state.copy(
                 useAlbum = false,
                 useCamera = false,
-                changeProfile = true,
                 imageChange = true,
                 newProfileImageUri = listOf(Uri.EMPTY)
-            )
+            ).withChangeProfileState()
         }
     }
 
@@ -404,8 +443,8 @@ class ProfileViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 newProfileImageUri = it.newProfileImageUri + uri,
-                changeProfile = true
-            )
+                imageChange = true
+            ).withChangeProfileState()
         }
     }
 
@@ -426,8 +465,8 @@ class ProfileViewModel @Inject constructor(
                                 id = System.currentTimeMillis(),
                                 uri = result.data
                             ),
-                            changeProfile = true
-                        )
+                            imageChange = true
+                        ).withChangeProfileState()
                     }
                 }
             }
@@ -451,8 +490,8 @@ class ProfileViewModel @Inject constructor(
                     _uiState.update { state ->
                         state.copy(
                             newProfileImageUri = state.newProfileImageUri + result.data,
-                            changeProfile = true
-                        )
+                            imageChange = true
+                        ).withChangeProfileState()
                     }
                 }
             }
@@ -470,10 +509,14 @@ class ProfileViewModel @Inject constructor(
             state.copy(
                 pendingProfileCameraCapture = null,
                 changeNickName = null,
+                changeBio = null,
                 newProfileImageUri = listOf(Uri.EMPTY),
                 errorMessage = "",
                 useCamera = false,
                 useAlbum = false,
+                changeProfile = false,
+                imageChange = false,
+                nickNameHint = UiState.Loading,
                 updateProfile = UiState.Loading
             )
         }
@@ -488,8 +531,9 @@ class ProfileViewModel @Inject constructor(
                     if (state.newProfileImageUri.size > 1) state.newProfileImageUri.dropLast(1) else listOf(
                         Uri.EMPTY
                     )
-                } else state.newProfileImageUri
-            )
+                } else state.newProfileImageUri,
+                imageChange = if (!result) false else state.imageChange
+            ).withChangeProfileState()
         }
     }
 
@@ -552,6 +596,7 @@ data class Profile(
     val useAlbum: Boolean = false,
     val useCamera: Boolean = false,
     var changeNickName: String? = null,
+    val changeBio: String? = null,
     val newProfileImageUri: List<Uri> = listOf(Uri.EMPTY),
     val errorMessage: String = "",
     val changeProfile: Boolean = false,
@@ -561,6 +606,21 @@ data class Profile(
     val deletedCardIds: Set<Long> = emptySet(),
     val checkIsMyProfile: UiState<Pair<Boolean, Long>> = UiState.None,
 )
+
+private fun Profile.withChangeProfileState(): Profile {
+    return copy(changeProfile = canUpdateProfile())
+}
+
+private fun Profile.canUpdateProfile(): Boolean {
+    val profile = (profileInfo as? UiState.Success)?.data ?: return false
+    val isNicknameChanged = changeNickName != null && changeNickName != profile.nickname
+    val isBioChanged = changeBio != null && changeBio != profile.bio
+    val hasChanges = imageChange || isNicknameChanged || isBioChanged
+    if (!hasChanges) return false
+    if (!isNicknameChanged) return true
+    return changeNickName.orEmpty().length >= 2 &&
+        (nickNameHint as? UiState.Success<Boolean>)?.data == true
+}
 
 sealed interface UiState<out T> {
     data object None : UiState<Nothing>

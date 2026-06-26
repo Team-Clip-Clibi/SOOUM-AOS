@@ -10,6 +10,7 @@
     <string name="profile_btn_edit_profile">프로필 편집</string>
     <string name="profile_txt_no_card">카드가 없어요</string>
     <string name="profile_txt_no_comment_card">댓글카드가 없어요</string>
+    <string name="profile_txt_bio_more">더 보기</string>
     <string name="follow_txt_tab_follower">팔로워 %d</string>
     <string name="follow_txt_tab_following">팔로잉 %d</string>
     <string name="follow_btn_follow">팔로우</string>
@@ -23,6 +24,9 @@
     <string name="profile_dialog_un_block_content">%s님을 팔로우하고, 카드를 볼 수 있어요.</string>
     <string name="profile_dialog_un_block_btn_okay">차단 해제</string>
     <string name="edit_profile_top_bar">프로필 편집</string>
+    <string name="edit_profile_nickname_title">닉네임</string>
+    <string name="edit_profile_bio_title">소개</string>
+    <string name="edit_profile_bio_placeholder">소개 작성</string>
     <string name="edit_profile_nickName_helper">최대 8자까지 입력할 수 있어요</string>
     <string name="edit_profile_nickName_helper_error">부적절한 닉네임이에요. 다시 입력해주세요</string>
     <string name="edit_profile_nickName_helper_one_more">한 글자 이상 입력해주세요</string>

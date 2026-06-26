@@ -35,6 +35,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 object TextFiledComponent {
@@ -292,6 +293,10 @@ object TextFiledComponent {
         value: String,
         maxValueLength: Int = 0,
         placeHolder: String = "",
+        height: Dp = 199.dp,
+        horizontalPadding: Dp = 24.dp,
+        verticalPadding: Dp = 15.dp,
+        showCounter: Boolean = true,
         onValueChange: (String) -> Unit,
     ) {
         val focusRequester = remember { FocusRequester() }
@@ -299,9 +304,14 @@ object TextFiledComponent {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(199.dp)
+                .height(height)
                 .background(color = NeutralColor.GRAY_100, shape = RoundedCornerShape(10.dp))
-                .padding(start = 24.dp, top = 15.dp, end = 24.dp, bottom = 15.dp)
+                .padding(
+                    start = horizontalPadding,
+                    top = verticalPadding,
+                    end = horizontalPadding,
+                    bottom = verticalPadding
+                )
                 .clickable(
                     interactionSource = interaction,
                     indication = null
@@ -321,6 +331,7 @@ object TextFiledComponent {
                     .fillMaxWidth()
                     .align(Alignment.TopStart)
                     .focusRequester(focusRequester),
+                textStyle = TextComponent.SUBTITLE_1_M_16.copy(color = NeutralColor.BLACK),
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent,
                     unfocusedContainerColor = Color.Transparent,
@@ -333,16 +344,18 @@ object TextFiledComponent {
                     cursorColor = NeutralColor.BLACK
                 ),
             )
-            Text(
-                text = "${value.length}/${maxValueLength}",
-                style = TextComponent.CAPTION_2_M_12,
-                color = NeutralColor.GRAY_400,
-                textAlign = TextAlign.End,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .padding(top = 6.dp)
-            )
+            if (showCounter) {
+                Text(
+                    text = "${value.length}/${maxValueLength}",
+                    style = TextComponent.CAPTION_2_M_12,
+                    color = NeutralColor.GRAY_400,
+                    textAlign = TextAlign.End,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.BottomCenter)
+                        .padding(top = 6.dp)
+                )
+            }
         }
     }
 }
