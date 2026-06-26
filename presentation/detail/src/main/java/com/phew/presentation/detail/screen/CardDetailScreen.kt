@@ -153,7 +153,7 @@ internal fun CardDetailRoute(
         }
     }
 
-    val commentsPagingItems = viewModel.commentsPagingData.collectAsLazyPagingItems()
+    val commentsPagingItems = uiState.commentsPagingData.collectAsLazyPagingItems()
 
     var showBottomSheet by remember { mutableStateOf(false) }
     var showBlockDialog by remember { mutableStateOf(false) }

@@ -22,6 +22,8 @@ import com.phew.presentation.write.model.WriteOptions
 import com.phew.presentation.write.model.WriteUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -50,11 +52,11 @@ import com.phew.domain.usecase.SaveEventLogWriteCardView
 import com.phew.domain.usecase.SaveEventLogWriteCommentCardView
 
 import com.phew.presentation.write.model.BackgroundFilterType
-import com.phew.presentation.write.viewmodel.WriteUiEffect
 import com.phew.presentation.write.viewmodel.UiState
 import kotlinx.coroutines.withContext
 
 @HiltViewModel
+@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 class WriteViewModel @Inject constructor(
     private val deviceRepository: DeviceRepository,
     private val createImageFile: CreateImageFile,
@@ -124,18 +126,6 @@ class WriteViewModel @Inject constructor(
         }
     }
 
-    /**
-     * 권한 요청
-     */
-    private val _requestPermissionEvent = MutableSharedFlow<Array<String>>()
-    val requestPermissionEvent = _requestPermissionEvent.asSharedFlow()
-
-    /**
-     * 완료 이벤트
-     */
-    private val _writeCompleteEvent = MutableSharedFlow<Long>()
-    val writeCompleteEvent = _writeCompleteEvent.asSharedFlow()
-
     private val _uiEffect = MutableSharedFlow<WriteUiEffect>()
     val uiEffect = _uiEffect.asSharedFlow()
 
@@ -200,7 +190,7 @@ class WriteViewModel @Inject constructor(
     fun requestLocationPermission() {
         _uiState.update { it.copy(showLocationPermissionDialog = false) }
         viewModelScope.launch {
-            _requestPermissionEvent.emit(locationPermissions)
+            _uiEffect.emit(WriteUiEffect.RequestPermission(locationPermissions))
         }
     }
 
@@ -690,7 +680,7 @@ class WriteViewModel @Inject constructor(
                             )
                         }
                         SooumLog.d(TAG, "onWriteComplete success: ${result.data}")
-                        _writeCompleteEvent.emit(result.data)
+                        _uiEffect.emit(WriteUiEffect.NavigateToWrittenCard(result.data))
                     }
 
                     is DomainResult.Failure -> {

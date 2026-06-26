@@ -1,8 +1,10 @@
 package com.phew.presentation.write.viewmodel
 
-sealed class WriteUiEffect {
-    data class ShowError(val refreshToken: String) : WriteUiEffect()
-    object ShowRestricted : WriteUiEffect()
-    object ShowDeleted : WriteUiEffect()
-    object ShowBadImage : WriteUiEffect()
+sealed interface WriteUiEffect {
+    data class RequestPermission(val permissions: Array<String>) : WriteUiEffect
+    data class NavigateToWrittenCard(val cardId: Long) : WriteUiEffect
+    data class ShowError(val refreshToken: String) : WriteUiEffect
+    data object ShowRestricted : WriteUiEffect
+    data object ShowDeleted : WriteUiEffect
+    data object ShowBadImage : WriteUiEffect
 }

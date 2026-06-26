@@ -44,8 +44,7 @@ import com.phew.presentation.settings.component.setting.SettingItemRow
 import com.phew.presentation.settings.model.setting.SettingItem
 import com.phew.presentation.settings.model.setting.SettingItemId
 import com.phew.presentation.settings.model.setting.SettingItemType
-import com.phew.presentation.settings.model.setting.SettingNavigationEvent
-import com.phew.presentation.settings.model.setting.ToastEvent
+import com.phew.presentation.settings.model.setting.SettingUiEffect
 import com.phew.presentation.settings.viewmodel.SettingViewModel
 import kotlinx.coroutines.flow.collectLatest
 import com.phew.presentation.settings.R as SettingsR
@@ -69,33 +68,26 @@ fun SettingRoute(
     val yOffset = 8.dp.value.toInt()
 
     LaunchedEffect(viewModel) {
-        viewModel.navigationEvent.collectLatest { event ->
+        viewModel.uiEffect.collectLatest { event ->
             when (event) {
-                SettingNavigationEvent.NavigateToLoginOtherDevice -> onNavigateToLoginOtherDevice()
-                SettingNavigationEvent.NavigateToLoadPreviousAccount -> onNavigateToLoadPreviousAccount()
-                SettingNavigationEvent.NavigateToBlockedUsers -> onNavigateToBlockedUsers()
-                SettingNavigationEvent.NavigateToNotice -> onNavigateToNotice()
-                SettingNavigationEvent.NavigateToPrivacyPolicy -> onNavigateToPrivacyPolicy()
-                SettingNavigationEvent.NavigateToAccountDeletion -> onNavigateToAccountDeletion()
-                SettingNavigationEvent.NavigateToAppStore -> {
+                SettingUiEffect.NavigateToLoginOtherDevice -> onNavigateToLoginOtherDevice()
+                SettingUiEffect.NavigateToLoadPreviousAccount -> onNavigateToLoadPreviousAccount()
+                SettingUiEffect.NavigateToBlockedUsers -> onNavigateToBlockedUsers()
+                SettingUiEffect.NavigateToNotice -> onNavigateToNotice()
+                SettingUiEffect.NavigateToPrivacyPolicy -> onNavigateToPrivacyPolicy()
+                SettingUiEffect.NavigateToAccountDeletion -> onNavigateToAccountDeletion()
+                SettingUiEffect.NavigateToAppStore -> {
                     openAppStore(context)
                 }
 
-                SettingNavigationEvent.NavigateToAlarm -> onNavigateToAlarm()
-                is SettingNavigationEvent.SendInquiryMail -> {
+                SettingUiEffect.NavigateToAlarm -> onNavigateToAlarm()
+                is SettingUiEffect.SendInquiryMail -> {
                     InquiryUtils.openInquiryMail(
                         context = context,
                         refreshToken = event.refreshToken
                     )
                 }
-            }
-        }
-    }
-
-    LaunchedEffect(viewModel) {
-        viewModel.toastEvent.collectLatest { event ->
-            when (event) {
-                ToastEvent.ShowCurrentVersionToast -> {
+                SettingUiEffect.ShowCurrentVersionToast -> {
                     SooumToast.makeToast(
                         context,
                         context.getString(SettingsR.string.setting_current_new_version),
@@ -104,7 +96,7 @@ fun SettingRoute(
                     ).show()
                 }
 
-                ToastEvent.ShowNotificationToggleErrorToast -> {
+                SettingUiEffect.ShowNotificationToggleErrorToast -> {
                     SooumToast.makeToast(
                         context,
                         context.getString(SettingsR.string.setting_alarm_failed),
@@ -584,4 +576,3 @@ private fun openAppStore(context: Context) {
         }
     }
 }
-

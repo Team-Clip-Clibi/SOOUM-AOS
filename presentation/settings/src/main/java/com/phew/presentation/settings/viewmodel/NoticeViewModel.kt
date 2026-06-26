@@ -14,9 +14,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -27,13 +27,15 @@ class NoticeViewModel @Inject constructor(
     getNotificationPage: GetNotification,
 ): ViewModel(){
 
-    private val _uiState = MutableStateFlow(NoticeState())
+    private val _uiState = MutableStateFlow(
+        NoticeState(
+            notice = getNotificationPage(NoticeSource.SETTINGS).cachedIn(viewModelScope)
+        )
+    )
     val uiState = _uiState.asStateFlow()
 
-    private val _navigationEvent = MutableSharedFlow<NoticeNavigationEvent>()
-    val navigationEvent: SharedFlow<NoticeNavigationEvent> = _navigationEvent.asSharedFlow()
-
-    val notice: Flow<PagingData<Notice>> = getNotificationPage(NoticeSource.SETTINGS).cachedIn(viewModelScope)
+    private val _uiEffect = MutableSharedFlow<NoticeUiEffect>()
+    val uiEffect = _uiEffect.asSharedFlow()
 
     init {
         getFeedNotice()
@@ -67,7 +69,7 @@ class NoticeViewModel @Inject constructor(
     
     fun onNoticeItemClick(notice: Notice) {
         viewModelScope.launch {
-            _navigationEvent.emit(NoticeNavigationEvent.NavigateToNoticeDetail(notice))
+            _uiEffect.emit(NoticeUiEffect.NavigateToNoticeDetail(notice))
         }
     }
     
@@ -78,11 +80,12 @@ class NoticeViewModel @Inject constructor(
 
 data class NoticeState(
     val isLoading: Boolean = false,
-    val noticeItem: UiState<List<Notice>> = UiState.None
+    val notice: Flow<PagingData<Notice>> = emptyFlow(),
+    val noticeItem: UiState<List<Notice>> = UiState.None,
 )
 
-sealed class NoticeNavigationEvent {
-    data class NavigateToNoticeDetail(val notice: Notice) : NoticeNavigationEvent()
+sealed interface NoticeUiEffect {
+    data class NavigateToNoticeDetail(val notice: Notice) : NoticeUiEffect
 }
 
 

@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -26,10 +27,11 @@ class BlockUserManagementViewModel @Inject constructor(
     private val getRefreshToken: GetRefreshToken
 ) : ViewModel() {
 
-    val blockUsers: Flow<PagingData<BlockMember>> =
-        getBlockUserPaging().cachedIn(viewModelScope)
-
-    private val _uiState = MutableStateFlow(BlockUserManagementUiState())
+    private val _uiState = MutableStateFlow(
+        BlockUserManagementUiState(
+            blockUsers = getBlockUserPaging().cachedIn(viewModelScope)
+        )
+    )
     val uiState = _uiState.asStateFlow()
 
     private val _uiEffect = MutableSharedFlow<BlockUserManagementUiEffect>()
@@ -103,6 +105,7 @@ class BlockUserManagementViewModel @Inject constructor(
 }
 
 data class BlockUserManagementUiState(
+    val blockUsers: Flow<PagingData<BlockMember>> = emptyFlow(),
     val showUnblockDialog: Boolean = false,
     val selectedBlockMember: BlockMember? = null,
     val removedBlockMemberIds: Set<Long> = emptySet()

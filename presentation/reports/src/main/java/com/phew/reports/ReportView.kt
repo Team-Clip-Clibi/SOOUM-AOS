@@ -197,7 +197,7 @@ private fun HandleState(
         showFinishDialog()
     }
     val context = LocalContext.current
-    LaunchedEffect(uiState) {
+    LaunchedEffect(uiState.reportCard) {
         when (uiState.reportCard) {
             is ReportCardViewModel.UiState.Fail -> {
                 snackBarHostState.showSnackbar(

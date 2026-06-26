@@ -45,8 +45,8 @@ import com.phew.core_design.NeutralColor
 import com.phew.core_design.TextComponent
 import com.phew.domain.dto.Notice
 import com.phew.presentation.settings.R
-import com.phew.presentation.settings.viewmodel.NoticeNavigationEvent
 import com.phew.presentation.settings.viewmodel.NoticeState
+import com.phew.presentation.settings.viewmodel.NoticeUiEffect
 import com.phew.presentation.settings.viewmodel.NoticeViewModel
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
@@ -65,12 +65,12 @@ internal fun NoticeRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
-    val noticePagingItems = viewModel.notice.collectAsLazyPagingItems()
+    val noticePagingItems = uiState.notice.collectAsLazyPagingItems()
 
-    LaunchedEffect(viewModel.navigationEvent) {
-        viewModel.navigationEvent.collect { event ->
+    LaunchedEffect(viewModel) {
+        viewModel.uiEffect.collect { event ->
             when (event) {
-                is NoticeNavigationEvent.NavigateToNoticeDetail -> {
+                is NoticeUiEffect.NavigateToNoticeDetail -> {
                     onNoticeItemClick(WebViewUrlArgs(
                         url = event.notice.url
                     ))

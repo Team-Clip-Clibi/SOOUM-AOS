@@ -33,6 +33,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
@@ -62,6 +63,7 @@ data class CardDetailUiState(
     val blockedNickname: String? = null,
     val deleteSuccess: Boolean = false,
     val deleteErrorDialog: Boolean = false,
+    val commentsPagingData: Flow<PagingData<CardComment>> = emptyFlow(),
     val checkCardDelete:  UiState<Long> = UiState.None,
 )
 
@@ -97,7 +99,7 @@ class CardDetailViewModel @Inject constructor(
     private val _pagingRequest = MutableStateFlow<PagingRequest>(PagingRequest.None)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val commentsPagingData: Flow<PagingData<CardComment>> = _pagingRequest
+    private val commentsPagingData: Flow<PagingData<CardComment>> = _pagingRequest
         .flatMapLatest { request ->
             when (request) {
                 is PagingRequest.None -> flowOf(PagingData.empty())
@@ -105,6 +107,10 @@ class CardDetailViewModel @Inject constructor(
             }
         }
         .cachedIn(viewModelScope)
+
+    init {
+        _uiState.update { it.copy(commentsPagingData = commentsPagingData) }
+    }
 
     fun requestComment(cardId: Long) {
         _pagingRequest.update {

@@ -264,29 +264,32 @@ private fun WriteRouteEffects(
         )
     }
 
-    LaunchedEffect(viewModel) {
-        viewModel.requestPermissionEvent.collect { permissions ->
-            locationPermissionLauncher.launch(permissions)
-        }
-    }
-
-    LaunchedEffect(viewModel, navController) {
-        viewModel.writeCompleteEvent.collect { cardId ->
-            SooumLog.d(TAG, "writeCompleteEvent")
-            navController.previousBackStackEntry
-                ?.savedStateHandle
-                ?.set("card_added", true)
-            currentOnWriteComplete(CardDetailArgs(cardId = cardId))
-        }
-    }
-
     LaunchedEffect(viewModel, args?.parentCardId) {
         args?.parentCardId?.let(viewModel::setParentCardId)
     }
 
-    LaunchedEffect(viewModel) {
+    LaunchedEffect(viewModel, navController) {
         viewModel.uiEffect.collect { effect ->
-            currentOnDialogRequested(effect.toRouteDialog())
+            when (effect) {
+                is WriteUiEffect.RequestPermission -> {
+                    locationPermissionLauncher.launch(effect.permissions)
+                }
+
+                is WriteUiEffect.NavigateToWrittenCard -> {
+                    SooumLog.d(TAG, "NavigateToWrittenCard")
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("card_added", true)
+                    currentOnWriteComplete(CardDetailArgs(cardId = effect.cardId))
+                }
+
+                is WriteUiEffect.ShowError,
+                WriteUiEffect.ShowRestricted,
+                WriteUiEffect.ShowDeleted,
+                WriteUiEffect.ShowBadImage -> {
+                    currentOnDialogRequested(effect.toRouteDialog())
+                }
+            }
         }
     }
 }
@@ -296,6 +299,8 @@ private fun WriteUiEffect.toRouteDialog(): WriteDialog = when (this) {
     WriteUiEffect.ShowRestricted -> WriteDialog.Restricted
     WriteUiEffect.ShowDeleted -> WriteDialog.Deleted
     WriteUiEffect.ShowBadImage -> WriteDialog.BadImage
+    is WriteUiEffect.RequestPermission,
+    is WriteUiEffect.NavigateToWrittenCard -> error("Route-only effect cannot be converted to dialog.")
 }
 
 private fun isPermissionGranted(context: Context, permission: String): Boolean =

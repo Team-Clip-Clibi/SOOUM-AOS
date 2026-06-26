@@ -5,14 +5,13 @@ import androidx.lifecycle.viewModelScope
 import com.phew.core_common.DomainResult
 import com.phew.domain.usecase.GetTransferCode
 import com.phew.domain.usecase.RefreshTransferCode
-import com.phew.presentation.settings.model.LoginOtherDeviceNavigationEvent
+import com.phew.presentation.settings.model.LoginOtherDeviceUiEffect
 import com.phew.presentation.settings.model.LoginOtherDeviceUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -32,8 +31,8 @@ class LoginOtherDeviceViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(LoginOtherDeviceUiState())
     val uiState: StateFlow<LoginOtherDeviceUiState> = _uiState.asStateFlow()
 
-    private val _navigationEvent = MutableSharedFlow<LoginOtherDeviceNavigationEvent>()
-    val navigationEvent: SharedFlow<LoginOtherDeviceNavigationEvent> = _navigationEvent.asSharedFlow()
+    private val _uiEffect = MutableSharedFlow<LoginOtherDeviceUiEffect>()
+    val uiEffect = _uiEffect.asSharedFlow()
 
     private var timerJob: Job? = null
     private var remainingTimeMillis = 0L
@@ -102,7 +101,7 @@ class LoginOtherDeviceViewModel @Inject constructor(
 
     fun onBackPressed() {
         viewModelScope.launch {
-            _navigationEvent.emit(LoginOtherDeviceNavigationEvent.NavigateBack)
+            _uiEffect.emit(LoginOtherDeviceUiEffect.NavigateBack)
         }
     }
 

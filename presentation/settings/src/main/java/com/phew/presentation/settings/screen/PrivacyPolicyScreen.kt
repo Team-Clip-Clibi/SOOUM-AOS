@@ -22,9 +22,11 @@ import com.phew.core.ui.model.navigation.WebViewUrlArgs
 import com.phew.presentation.settings.component.privacy.PrivacyPolicyItemRow
 import com.phew.presentation.settings.model.privacy.PrivacyPolicyItem
 import com.phew.presentation.settings.model.privacy.PrivacyPolicyItemId
-import com.phew.presentation.settings.viewmodel.PrivacyPolicyNavigationEvent
 import com.phew.presentation.settings.viewmodel.PrivacyPolicyType
+import com.phew.presentation.settings.viewmodel.PrivacyPolicyUiEffect
 import com.phew.presentation.settings.viewmodel.PrivacyPolicyViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.getValue
 
 @Composable
 internal fun PrivacyPolicyRoute(
@@ -33,10 +35,12 @@ internal fun PrivacyPolicyRoute(
     onBackPressed: () -> Unit,
     onNavigateToWebView: (WebViewUrlArgs) -> Unit
 ) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
     LaunchedEffect(viewModel) {
-        viewModel.navigationEvent.collect { event ->
+        viewModel.uiEffect.collect { event ->
             when (event) {
-                is PrivacyPolicyNavigationEvent.NavigateToWebView -> {
+                is PrivacyPolicyUiEffect.NavigateToWebView -> {
                     onNavigateToWebView(event.args)
                 }
             }
@@ -45,7 +49,7 @@ internal fun PrivacyPolicyRoute(
 
     PrivacyPolicyScreen(
         modifier = modifier,
-        items = viewModel.getPrivacyPolicyItems(),
+        items = uiState.items,
         onItemClick = { item ->
             val type = when (item.id) {
                 PrivacyPolicyItemId.PRIVACY_POLICY_PERSONAL_INFO -> PrivacyPolicyType.PERSONAL_INFO

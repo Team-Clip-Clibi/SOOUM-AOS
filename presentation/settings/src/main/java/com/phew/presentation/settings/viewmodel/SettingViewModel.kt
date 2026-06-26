@@ -15,16 +15,14 @@ import com.phew.domain.usecase.GetToggleNotification
 import com.phew.domain.usecase.RunHaptic
 import com.phew.domain.usecase.SetToggleNotification
 import com.phew.presentation.settings.component.setting.SettingItemRow
-import com.phew.presentation.settings.model.setting.SettingNavigationEvent
 import com.phew.presentation.settings.model.setting.SettingItem
 import com.phew.presentation.settings.model.setting.SettingItemId
 import com.phew.presentation.settings.model.setting.SettingItemType
+import com.phew.presentation.settings.model.setting.SettingUiEffect
 import com.phew.presentation.settings.model.setting.SettingUiState
-import com.phew.presentation.settings.model.setting.ToastEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -63,11 +61,8 @@ class SettingViewModel @Inject constructor(
 
     val uiState: StateFlow<SettingUiState> = _uiState.asStateFlow()
 
-    private val _navigationEvent = MutableSharedFlow<SettingNavigationEvent>()
-    val navigationEvent: SharedFlow<SettingNavigationEvent> = _navigationEvent.asSharedFlow()
-
-    private val _toastEvent = MutableSharedFlow<ToastEvent>()
-    val toastEvent: SharedFlow<ToastEvent> = _toastEvent.asSharedFlow()
+    private val _uiEffect = MutableSharedFlow<SettingUiEffect>()
+    val uiEffect = _uiEffect.asSharedFlow()
     
     init {
         loadActivityRestrictionDate()
@@ -137,7 +132,7 @@ class SettingViewModel @Inject constructor(
 
                 is DomainResult.Failure -> {
                     _uiState.update { it.copy(isLoading = false) }
-                    _toastEvent.emit(ToastEvent.ShowNotificationToggleErrorToast)
+                    _uiEffect.emit(SettingUiEffect.ShowNotificationToggleErrorToast)
                 }
             }
         }
@@ -145,46 +140,46 @@ class SettingViewModel @Inject constructor(
 
     fun onLoginOtherDeviceClick() {
         viewModelScope.launch {
-            _navigationEvent.emit(SettingNavigationEvent.NavigateToLoginOtherDevice)
+            _uiEffect.emit(SettingUiEffect.NavigateToLoginOtherDevice)
         }
     }
 
     fun onLoadPreviousAccountClick() {
         viewModelScope.launch {
-            _navigationEvent.emit(SettingNavigationEvent.NavigateToLoadPreviousAccount)
+            _uiEffect.emit(SettingUiEffect.NavigateToLoadPreviousAccount)
         }
     }
 
     fun onBlockedUsersClick() {
         viewModelScope.launch {
-            _navigationEvent.emit(SettingNavigationEvent.NavigateToBlockedUsers)
+            _uiEffect.emit(SettingUiEffect.NavigateToBlockedUsers)
         }
     }
 
     fun onNoticeClick() {
         viewModelScope.launch {
-            _navigationEvent.emit(SettingNavigationEvent.NavigateToNotice)
+            _uiEffect.emit(SettingUiEffect.NavigateToNotice)
         }
     }
 
     fun onAlarmClick() {
         viewModelScope.launch {
-            _navigationEvent.emit(SettingNavigationEvent.NavigateToAlarm)
+            _uiEffect.emit(SettingUiEffect.NavigateToAlarm)
         }
     }
 
     fun onInquiryClick() {
         viewModelScope.launch {
             val refreshToken = getRefreshToken()
-            _navigationEvent.emit(
-                SettingNavigationEvent.SendInquiryMail(refreshToken = refreshToken)
+            _uiEffect.emit(
+                SettingUiEffect.SendInquiryMail(refreshToken = refreshToken)
             )
         }
     }
 
     fun onPrivacyPolicyClick() {
         viewModelScope.launch {
-            _navigationEvent.emit(SettingNavigationEvent.NavigateToPrivacyPolicy)
+            _uiEffect.emit(SettingUiEffect.NavigateToPrivacyPolicy)
         }
     }
 
@@ -199,7 +194,7 @@ class SettingViewModel @Inject constructor(
     fun onConfirmWithdrawal() {
         _uiState.update { it.copy(showWithdrawalDialog = false) }
         viewModelScope.launch {
-            _navigationEvent.emit(SettingNavigationEvent.NavigateToAccountDeletion)
+            _uiEffect.emit(SettingUiEffect.NavigateToAccountDeletion)
         }
     }
 
@@ -208,10 +203,10 @@ class SettingViewModel @Inject constructor(
             val currentState = _uiState.value
             when (currentState.appVersionStatusType) {
                 AppVersionStatusType.UPDATE -> {
-                    _navigationEvent.emit(SettingNavigationEvent.NavigateToAppStore)
+                    _uiEffect.emit(SettingUiEffect.NavigateToAppStore)
                 }
                 AppVersionStatusType.OK, AppVersionStatusType.PENDING -> {
-                    _toastEvent.emit(ToastEvent.ShowCurrentVersionToast)
+                    _uiEffect.emit(SettingUiEffect.ShowCurrentVersionToast)
                 }
                 null -> {
                     // 상태가 없는 경우 아무 동작 하지 않음
@@ -276,7 +271,7 @@ class SettingViewModel @Inject constructor(
                 }
                 is DomainResult.Failure -> {
                     _uiState.update { it.copy(isLoading = false) }
-                    _toastEvent.emit(ToastEvent.ShowNotificationToggleErrorToast)
+                    _uiEffect.emit(SettingUiEffect.ShowNotificationToggleErrorToast)
                 }
             }
         }

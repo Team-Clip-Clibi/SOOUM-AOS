@@ -9,18 +9,24 @@ import com.phew.presentation.settings.model.privacy.PrivacyPolicyItemId
 import com.phew.presentation.settings.model.setting.SettingItemType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class PrivacyPolicyViewModel @Inject constructor() : ViewModel() {
 
-    private val _navigationEvent = MutableSharedFlow<PrivacyPolicyNavigationEvent>()
-    val navigationEvent: SharedFlow<PrivacyPolicyNavigationEvent> = _navigationEvent.asSharedFlow()
+    private val _uiState = MutableStateFlow(
+        PrivacyPolicyUiState(items = createPrivacyPolicyItems())
+    )
+    val uiState = _uiState.asStateFlow()
 
-    fun getPrivacyPolicyItems(): List<PrivacyPolicyItem> {
+    private val _uiEffect = MutableSharedFlow<PrivacyPolicyUiEffect>()
+    val uiEffect = _uiEffect.asSharedFlow()
+
+    private fun createPrivacyPolicyItems(): List<PrivacyPolicyItem> {
         return PrivacyPolicyType.entries.sortedBy { it.id }.map { type ->
             PrivacyPolicyItem(
                 id = PrivacyPolicyItemId.valueOf("PRIVACY_POLICY_${type.name}"),
@@ -32,8 +38,8 @@ class PrivacyPolicyViewModel @Inject constructor() : ViewModel() {
     
     fun onPrivacyPolicyItemClick(type: PrivacyPolicyType) {
         viewModelScope.launch {
-            _navigationEvent.emit(
-                PrivacyPolicyNavigationEvent.NavigateToWebView(
+            _uiEffect.emit(
+                PrivacyPolicyUiEffect.NavigateToWebView(
                     WebViewUrlArgs(url = type.url)
                 )
             )
@@ -49,6 +55,10 @@ class PrivacyPolicyViewModel @Inject constructor() : ViewModel() {
     }
 }
 
+data class PrivacyPolicyUiState(
+    val items: List<PrivacyPolicyItem> = emptyList(),
+)
+
 enum class PrivacyPolicyType(val id: String, val url: String) {
     // 개인 정보 처리 방침
     PERSONAL_INFO("1", "https://www.notion.so/26b2142ccaa38059a1dbf3e6b6b6b4e6"),
@@ -58,6 +68,6 @@ enum class PrivacyPolicyType(val id: String, val url: String) {
     LOCATION_INFO("3", "https://www.notion.so/26b2142ccaa380f1bfafe99f5f8a10f1")
 }
 
-sealed class PrivacyPolicyNavigationEvent {
-    data class NavigateToWebView(val args: WebViewUrlArgs) : PrivacyPolicyNavigationEvent()
+sealed interface PrivacyPolicyUiEffect {
+    data class NavigateToWebView(val args: WebViewUrlArgs) : PrivacyPolicyUiEffect
 }

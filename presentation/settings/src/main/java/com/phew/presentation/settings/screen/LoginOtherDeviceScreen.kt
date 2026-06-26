@@ -35,7 +35,7 @@ import com.phew.core_design.NeutralColor
 import com.phew.core_design.Primary
 import com.phew.core_design.TextComponent
 import com.phew.presentation.settings.R
-import com.phew.presentation.settings.model.LoginOtherDeviceNavigationEvent
+import com.phew.presentation.settings.model.LoginOtherDeviceUiEffect
 import com.phew.presentation.settings.viewmodel.LoginOtherDeviceViewModel
 import kotlinx.coroutines.flow.collectLatest
 import com.phew.core_design.R as DesignR
@@ -49,9 +49,9 @@ internal fun LoginOtherDeviceRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(viewModel) {
-        viewModel.navigationEvent.collectLatest { event ->
+        viewModel.uiEffect.collectLatest { event ->
             when (event) {
-                LoginOtherDeviceNavigationEvent.NavigateBack -> onBackPressed()
+                LoginOtherDeviceUiEffect.NavigateBack -> onBackPressed()
             }
         }
     }

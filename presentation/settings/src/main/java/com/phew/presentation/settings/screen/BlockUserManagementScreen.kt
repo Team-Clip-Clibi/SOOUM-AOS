@@ -47,7 +47,6 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.phew.core.ui.component.ErrorDialog
 import com.phew.core_design.AppBar.IconLeftAppBar
-import com.phew.domain.usecase.GetRefreshToken
 import com.phew.core_design.Danger
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.NeutralColor
@@ -71,11 +70,11 @@ internal fun BlockUserManagementRoute(
     onBackPressed: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val blockUsers = viewModel.blockUsers.collectAsLazyPagingItems()
+    val blockUsers = uiState.blockUsers.collectAsLazyPagingItems()
     val context = LocalContext.current
     var errorWithRefreshToken by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(blockUsers) {
+    LaunchedEffect(viewModel) {
         viewModel.uiEffect.collectLatest { effect ->
             when (effect) {
                 BlockUserManagementUiEffect.ShowUnblockSuccess -> {

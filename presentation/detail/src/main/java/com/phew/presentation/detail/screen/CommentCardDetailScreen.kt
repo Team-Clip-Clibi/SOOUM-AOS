@@ -127,7 +127,7 @@ internal fun CommentCardDetailScreen(
     onCardChanged: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val comments: LazyPagingItems<CardComment> = viewModel.commentsPagingData
+    val comments: LazyPagingItems<CardComment> = uiState.commentsPagingData
         .collectAsLazyPagingItems()
     val cardDetail = uiState.cardDetail
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -135,7 +135,6 @@ internal fun CommentCardDetailScreen(
     LaunchedEffect(args.cardId) {
         SooumLog.d(TAG, "CardId : ${args.cardId}")
         viewModel.loadCardDetail(args.cardId, isSilent = true)
-        viewModel.requestComment(args.cardId)
     }
 
     LaunchedEffect(Unit) {
