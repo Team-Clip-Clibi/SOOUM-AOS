@@ -1,32 +1,26 @@
 package com.phew.presentation.detail.component
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.phew.core_design.Danger
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.R
 import com.phew.presentation.detail.R as detailR
 import com.phew.core_design.TextComponent
 import com.phew.core_design.component.button.IconButtons
+import com.phew.core_design.component.card.component.LikeButton
 
 @Composable
 internal fun CardDetailBottom(
@@ -35,6 +29,8 @@ internal fun CardDetailBottom(
     commentCnt: Int,
     searchCnt: Int,
     isLikeCard: Boolean,
+    isLikeLoading: Boolean = false,
+    likeAnimationKey: Int = 0,
     onClickLike: () -> Unit,
     onClickComment: () -> Unit
 ) {
@@ -49,33 +45,19 @@ internal fun CardDetailBottom(
                 .weight(2f)
                 .fillMaxWidth()
         ) {
-            Row(
+            LikeButton(
                 modifier = Modifier
                     .height(44.dp)
                     .width(60.dp)
-                    .padding(vertical = 12.dp)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = onClickLike
-                    ),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    painter = painterResource(
-                        if (isLikeCard) R.drawable.ic_heart_filled else R.drawable.ic_heart_stoke
-                    ),
-                    contentDescription = "like button",
-                    tint = if (isLikeCard) Danger.M_RED else NeutralColor.GRAY_500,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(Modifier.width(4.dp))
-                Text(
-                    text = likeCnt.toString(),
-                    style = TextComponent.CAPTION_1_SB_12,
-                    color = NeutralColor.GRAY_500
-                )
-            }
+                    .padding(vertical = 12.dp),
+                likeCount = likeCnt.toString(),
+                isLike = isLikeCard,
+                isLikeLoading = isLikeLoading,
+                likeAnimationKey = likeAnimationKey,
+                textStyle = TextComponent.CAPTION_1_SB_12,
+                spacing = 4.dp,
+                onClickLike = onClickLike,
+            )
 
             IconButtons(
                 selectedIconTintColor = NeutralColor.GRAY_500,

@@ -352,6 +352,8 @@ internal fun CardDetailRoute(
         commentCnt = cardDetail.commentCardCount,
         searchCnt = cardDetail.visitedCnt,
         isLikeCard = cardDetail.isLike,
+        isLikeLoading = uiState.isLikeLoading,
+        likeAnimationKey = uiState.likeAnimationKey,
         poll = cardDetail.poll,
         isPollVoteLoading = uiState.isPollVoteLoading,
         commentsPagingItems = commentsPagingItems,
@@ -448,6 +450,8 @@ private fun CardDetailScreen(
     commentCnt: Int,
     searchCnt: Int,
     isLikeCard: Boolean,
+    isLikeLoading: Boolean,
+    likeAnimationKey: Int,
     poll: Poll?,
     isPollVoteLoading: Boolean,
     commentsPagingItems: LazyPagingItems<CardComment>,
@@ -662,6 +666,8 @@ private fun CardDetailScreen(
                                     commentCnt = commentCnt,
                                     searchCnt = searchCnt,
                                     isLikeCard = isLikeCard,
+                                    isLikeLoading = isLikeLoading,
+                                    likeAnimationKey = likeAnimationKey,
                                     onClickLike = onClickLike,
                                     onClickComment = {
                                         onClickCommentIcon(MoveDetail.IMAGE)
