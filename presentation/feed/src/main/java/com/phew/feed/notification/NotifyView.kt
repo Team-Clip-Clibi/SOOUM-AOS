@@ -66,8 +66,8 @@ import com.phew.domain.dto.Notice
 import com.phew.domain.dto.Notification
 import com.phew.feed.NotificationUi
 import com.phew.feed.NotifyTab
+import com.phew.feed.viewModel.FeedUiEffect
 import com.phew.feed.viewModel.FeedViewModel
-import com.phew.feed.viewModel.NavigationEvent
 import com.phew.feed.viewModel.UiState
 import com.phew.presentation.feed.R
 
@@ -82,9 +82,9 @@ fun NotifyView(
     onClickAlarmSetting: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val notices = viewModel.notice.collectAsLazyPagingItems()
-    val read = viewModel.readActivateAlarm.collectAsLazyPagingItems()
-    val unRead = viewModel.unReadActivateAlarm.collectAsLazyPagingItems()
+    val notices = uiState.notice.collectAsLazyPagingItems()
+    val read = uiState.readActivateAlarm.collectAsLazyPagingItems()
+    val unRead = uiState.unReadActivateAlarm.collectAsLazyPagingItems()
     val onBack by rememberUpdatedState(newValue = backClick)
     val snackBarHostState = remember { SnackbarHostState() }
     val refreshState = rememberPullToRefreshState()
@@ -105,13 +105,15 @@ fun NotifyView(
         }
     }
     LaunchedEffect(viewModel) {
-        viewModel.navigationEvent.collect { event ->
+        viewModel.uiEffect.collect { event ->
             when (event) {
-                is NavigationEvent.NavigateToDetail -> {
+                is FeedUiEffect.NavigateToDetail -> {
                     unRead.refresh()
                     read.refresh()
                     navigateToDetail(event.args)
                 }
+
+                is FeedUiEffect.RequestPermission -> Unit
             }
         }
     }

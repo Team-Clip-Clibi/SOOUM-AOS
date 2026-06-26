@@ -13,24 +13,10 @@ import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.model.navigation.FollowArgs
 import com.phew.core_common.DomainResult
 import com.phew.domain.dto.FollowData
-import com.phew.domain.dto.ProfileInfo
 import com.phew.domain.dto.ProfileCard
-import com.phew.domain.usecase.CheckCardAlreadyDelete
-import com.phew.domain.usecase.CheckIsMyProfile
-import com.phew.domain.usecase.CheckNickName
-import com.phew.domain.usecase.CreateImageFile
-import com.phew.domain.usecase.FinishTakePicture
-import com.phew.domain.usecase.GetFollower
-import com.phew.domain.usecase.GetFollowing
-import com.phew.domain.usecase.GetMyProfileInfo
-import com.phew.domain.usecase.GetOtherProfile
-import com.phew.domain.usecase.GetProfileCommentCard
-import com.phew.domain.usecase.GetProfileFeedCard
-import com.phew.domain.usecase.SendBlockUser
-import com.phew.domain.usecase.SendFollowUser
-import com.phew.domain.usecase.SendUnBlockUser
-import com.phew.domain.usecase.SendUnFollowUser
+import com.phew.domain.dto.ProfileInfo
 import com.phew.domain.usecase.UpdateProfile
+import com.phew.domain.usecase.orchestrator.ProfileUseCaseOrchestrator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -50,22 +36,7 @@ import javax.inject.Inject
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val getMyProfile: GetMyProfileInfo,
-    private val getFeedCard: GetProfileFeedCard,
-    private val getCommentCard: GetProfileCommentCard,
-    private val unFollowUser: SendUnFollowUser,
-    private val getFollower: GetFollower,
-    private val getFollowing: GetFollowing,
-    private val getOtherProfile: GetOtherProfile,
-    private val followUser: SendFollowUser,
-    private val blockUser: SendBlockUser,
-    private val unBlockUser: SendUnBlockUser,
-    private val checkNickName: CheckNickName,
-    private val createFile: CreateImageFile,
-    private val finishPhoto: FinishTakePicture,
-    private val updateProfile: UpdateProfile,
-    private val checkCardDelete: CheckCardAlreadyDelete,
-    private val checkMyProfile : CheckIsMyProfile
+    private val profileOrchestrator: ProfileUseCaseOrchestrator,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(Profile())
     val uiState: StateFlow<Profile> = _uiState.asStateFlow()
@@ -90,7 +61,7 @@ class ProfileViewModel @Inject constructor(
 
     fun checkIsMyProfile(userId: Long, nickname: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            when (val result = checkMyProfile(CheckIsMyProfile.Param(userId = userId, nickName = nickname))) {
+            when (val result = profileOrchestrator.checkIsMyProfile(userId = userId, nickName = nickname)) {
                 is DomainResult.Failure -> {
                     _uiState.update { state ->
                         state.copy(
@@ -121,7 +92,7 @@ class ProfileViewModel @Inject constructor(
     fun myProfile() {
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { state -> state.copy(profileInfo = UiState.Loading) }
-            when (val request = getMyProfile()) {
+            when (val request = profileOrchestrator.myProfile()) {
                 is DomainResult.Failure -> {
                     _uiState.update { state ->
                         state.copy(
@@ -135,13 +106,13 @@ class ProfileViewModel @Inject constructor(
                     _uiState.update { state ->
                         state.copy(
                             profileInfo = UiState.Success(request.data),
-                            profileFeedCard = getFeedCard(userId = request.data.userId)
+                            profileFeedCard = profileOrchestrator.profileFeedCards(userId = request.data.userId)
                                 .cachedIn(viewModelScope)
                                 .combine(_uiState.map { it.deletedCardIds }.distinctUntilChanged()) { pagingData, deletedIds ->
                                     pagingData.filter { !deletedIds.contains(it.cardId) }
                                 },
-                            profileCommentCard = getCommentCard().cachedIn(viewModelScope),
-                            follow = getFollower(profileId = request.data.userId).map { pagingData ->
+                            profileCommentCard = profileOrchestrator.profileCommentCards().cachedIn(viewModelScope),
+                            follow = profileOrchestrator.followers(profileId = request.data.userId).map { pagingData ->
                                 val uniqueIds = mutableSetOf<Long>()
                                 pagingData.filter { user ->
                                     uniqueIds.add(user.memberId)
@@ -149,7 +120,7 @@ class ProfileViewModel @Inject constructor(
                             }.cachedIn(
                                 viewModelScope
                             ),
-                            following = getFollowing(profileId = request.data.userId).map { pagingData ->
+                            following = profileOrchestrator.followings(profileId = request.data.userId).map { pagingData ->
                                 val uniqueIds = mutableSetOf<Long>()
                                 pagingData.filter { user ->
                                     uniqueIds.add(user.memberId)
@@ -183,7 +154,7 @@ class ProfileViewModel @Inject constructor(
                     )
                 }
             }
-            when (val request = getOtherProfile(GetOtherProfile.Param(profileId = profileId))) {
+            when (val request = profileOrchestrator.otherProfile(profileId = profileId)) {
                 is DomainResult.Failure -> {
                     _uiState.update { state ->
                         state.copy(
@@ -197,13 +168,13 @@ class ProfileViewModel @Inject constructor(
                     _uiState.update { state ->
                         state.copy(
                             profileInfo = UiState.Success(request.data),
-                            profileFeedCard = getFeedCard(userId = request.data.userId)
+                            profileFeedCard = profileOrchestrator.profileFeedCards(userId = request.data.userId)
                                 .cachedIn(viewModelScope)
                                 .combine(_uiState.map { it.deletedCardIds }.distinctUntilChanged()) { pagingData, deletedIds ->
                                     pagingData.filter { !deletedIds.contains(it.cardId) }
                                 },
-                            profileCommentCard = getCommentCard().cachedIn(viewModelScope),
-                            follow = getFollower(profileId = request.data.userId).map { pagingData ->
+                            profileCommentCard = profileOrchestrator.profileCommentCards().cachedIn(viewModelScope),
+                            follow = profileOrchestrator.followers(profileId = request.data.userId).map { pagingData ->
                                 val uniqueIds = mutableSetOf<Long>()
                                 pagingData.filter { user ->
                                     uniqueIds.add(user.memberId)
@@ -211,7 +182,7 @@ class ProfileViewModel @Inject constructor(
                             }.cachedIn(
                                 viewModelScope
                             ),
-                            following = getFollowing(profileId = request.data.userId).map { pagingData ->
+                            following = profileOrchestrator.followings(profileId = request.data.userId).map { pagingData ->
                                 val uniqueIds = mutableSetOf<Long>()
                                 pagingData.filter { user ->
                                     uniqueIds.add(user.memberId)
@@ -231,7 +202,7 @@ class ProfileViewModel @Inject constructor(
     fun block(userId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { state -> state.copy(event = UiState.Loading) }
-            when (val request = blockUser(SendBlockUser.Param(userId = userId))) {
+            when (val request = profileOrchestrator.blockUser(userId = userId)) {
                 is DomainResult.Failure -> {
                     _uiState.update { state -> state.copy(event = UiState.Fail(request.error)) }
                 }
@@ -247,7 +218,7 @@ class ProfileViewModel @Inject constructor(
     fun unBlock(userId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { state -> state.copy(event = UiState.Loading) }
-            when (val request = unBlockUser(SendUnBlockUser.Param(userId = userId))) {
+            when (val request = profileOrchestrator.unBlockUser(userId = userId)) {
                 is DomainResult.Failure -> {
                     _uiState.update { state -> state.copy(event = UiState.Fail(request.error)) }
                 }
@@ -263,7 +234,7 @@ class ProfileViewModel @Inject constructor(
     fun followUser(userId: Long, isRefresh: Boolean = false, isMyProfile: Boolean = false) {
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { state -> state.copy(event = UiState.Loading) }
-            when (val request = followUser(SendFollowUser.Param(userId = userId))) {
+            when (val request = profileOrchestrator.followUser(userId = userId)) {
                 is DomainResult.Failure -> {
                     _uiState.update { state -> state.copy(event = UiState.Fail(request.error)) }
                 }
@@ -283,7 +254,7 @@ class ProfileViewModel @Inject constructor(
     fun unFollowUser(userId: Long, isRefresh: Boolean = false, isMyProfile: Boolean = false) {
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { state -> state.copy(event = UiState.Loading) }
-            when (val request = unFollowUser(SendUnFollowUser.Param(userId = userId))) {
+            when (val request = profileOrchestrator.unFollowUser(userId = userId)) {
                 is DomainResult.Failure -> {
                     _uiState.update { state -> state.copy(event = UiState.Fail(request.error)) }
                 }
@@ -313,7 +284,7 @@ class ProfileViewModel @Inject constructor(
                 ?.takeIf { it != profile.nickname }
                 ?: profile.nickname
             val nextBio = currentState.changeBio ?: profile.bio
-            when (val result = updateProfile(
+            when (val result = profileOrchestrator.updateProfile(
                 UpdateProfile.Param(
                     nickName = currentState.changeNickName?.takeIf { it != profile.nickname },
                     imgName = when {
@@ -368,7 +339,7 @@ class ProfileViewModel @Inject constructor(
             return
         }
         viewModelScope.launch(Dispatchers.IO) {
-            when (val result = checkNickName(CheckNickName.Param(data))) {
+            when (val result = profileOrchestrator.checkNickName(data)) {
                 is DomainResult.Failure -> {
                     _uiState.update { state ->
                         if (state.changeNickName != data) {
@@ -451,7 +422,7 @@ class ProfileViewModel @Inject constructor(
     fun onProfileCameraPermissionResult(granted: Boolean) {
         if (!granted) return
         viewModelScope.launch(Dispatchers.IO) {
-            when (val result = createFile()) {
+            when (val result = profileOrchestrator.createImageFile()) {
                 is DomainResult.Failure -> {
                     _uiState.update { state ->
                         state.copy(errorMessage = result.error, changeProfile = false)
@@ -476,7 +447,7 @@ class ProfileViewModel @Inject constructor(
     fun closeFile(data: Uri, success: Boolean) {
         if (!success) return
         viewModelScope.launch(Dispatchers.IO) {
-            when (val result = finishPhoto(FinishTakePicture.Param(data))) {
+            when (val result = profileOrchestrator.finishTakePicture(data)) {
                 is DomainResult.Failure -> {
                     _uiState.update { state ->
                         state.copy(
@@ -542,7 +513,7 @@ class ProfileViewModel @Inject constructor(
         
         viewModelScope.launch {
             _uiState.update { state -> state.copy(checkCardDelete = UiState.Loading) }
-            when (val result = checkCardDelete(CheckCardAlreadyDelete.Param(cardId = cardId))) {
+            when (val result = profileOrchestrator.checkCardDeleted(cardId = cardId)) {
                 is DomainResult.Failure -> {
                     _uiState.update { state ->
                         state.copy(checkCardDelete = UiState.Fail(result.error))

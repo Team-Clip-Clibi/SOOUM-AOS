@@ -70,8 +70,8 @@ import com.phew.feed.NAV_HOME_POPULAR_INDEX
 import com.phew.feed.viewModel.DistanceType
 import com.phew.feed.viewModel.FeedType
 import com.phew.feed.viewModel.FeedLikeUiState
+import com.phew.feed.viewModel.FeedUiEffect
 import com.phew.feed.viewModel.FeedViewModel
-import com.phew.feed.viewModel.NavigationEvent
 import com.phew.feed.viewModel.UiState
 import com.phew.presentation.feed.R
 import com.phew.feed.NotifyTab
@@ -91,11 +91,11 @@ fun FeedView(
     adUnitId: String
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val unRead = viewModel.unReadActivateAlarm.collectAsLazyPagingItems()
+    val unRead = uiState.unReadActivateAlarm.collectAsLazyPagingItems()
     val cardArticle = uiState.cardArticle
     val feedNoticeState = uiState.feedNotification
     var cachedFeedNotice by remember { mutableStateOf<List<Notice>>(emptyList()) }
-    val feedItems = viewModel.feedPaging.collectAsLazyPagingItems()
+    val feedItems = uiState.feedPaging.collectAsLazyPagingItems()
     val lazyGridState = rememberLazyGridState()
     var hasScrolledToTop by rememberSaveable { mutableStateOf(false) }
     var previousHomeTab by rememberSaveable { mutableStateOf<HomeTabType?>(null) }
@@ -120,13 +120,14 @@ fun FeedView(
         else -> cachedFeedNotice
     }
 
-    // Navigation event handling
     LaunchedEffect(viewModel) {
-        viewModel.navigationEvent.collect { event ->
+        viewModel.uiEffect.collect { event ->
             when (event) {
-                is NavigationEvent.NavigateToDetail -> {
+                is FeedUiEffect.NavigateToDetail -> {
                     navigateToDetail(event.args)
                 }
+
+                is FeedUiEffect.RequestPermission -> Unit
             }
         }
     }

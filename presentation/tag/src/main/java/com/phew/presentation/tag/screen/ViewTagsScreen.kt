@@ -99,55 +99,46 @@ internal fun ViewTagsRoute(
 
     // Toast 처리 및 Snackbar 처리
     LaunchedEffect(Unit) {
-        viewModel.viewTagsScreenUiEffect
+        viewModel.uiEffect
             .flowWithLifecycle(lifecycleOwner.lifecycle, Lifecycle.State.STARTED)
             .collect { effect ->
-                effect?.let {
-                    when (it) {
-                        is TagUiEffect.ShowAddFavoriteTagToast -> {
-                            val message = context.getString(R.string.tag_favorite_add, it.tagName)
-                            SooumToast.makeToast(
-                                context,
-                                message,
-                                Toast.LENGTH_SHORT,
-                                yOffset = yOffset
-                            ).show()
-                            viewModel.clearViewTagsScreenUiEffect()
-                        }
+                when (effect) {
+                    is TagUiEffect.ShowAddFavoriteTagToast -> {
+                        val message = context.getString(R.string.tag_favorite_add, effect.tagName)
+                        SooumToast.makeToast(
+                            context,
+                            message,
+                            Toast.LENGTH_SHORT,
+                            yOffset = yOffset
+                        ).show()
+                    }
 
-                        is TagUiEffect.ShowRemoveFavoriteTagToast -> {
-                            val message =
-                                context.getString(R.string.tag_favorite_delete, it.tagName)
-                            SooumToast.makeToast(
-                                context,
-                                message,
-                                Toast.LENGTH_SHORT,
-                                yOffset = yOffset
-                            ).show()
-                            viewModel.clearViewTagsScreenUiEffect()
-                        }
+                    is TagUiEffect.ShowRemoveFavoriteTagToast -> {
+                        val message =
+                            context.getString(R.string.tag_favorite_delete, effect.tagName)
+                        SooumToast.makeToast(
+                            context,
+                            message,
+                            Toast.LENGTH_SHORT,
+                            yOffset = yOffset
+                        ).show()
+                    }
 
-                        is TagUiEffect.ShowNetworkErrorSnackbar -> {
-                            val result = snackbarHostState.showSnackbar(
-                                message = context.getString(R.string.tag_network_error_message),
-                                actionLabel = context.getString(R.string.tag_network_error_retry),
-                                duration = SnackbarDuration.Indefinite
-                            )
-                            if (result == SnackbarResult.ActionPerformed) {
-                                it.retryAction()
-                            }
-                            viewModel.clearViewTagsScreenUiEffect()
-                        }
-
-                        is TagUiEffect.NavigateToDetail -> {
-                              navigateToDetail(it.cardDetailArgs)
-                              viewModel.clearViewTagsScreenUiEffect()
-                        }
-
-                        else -> {
-                            viewModel.clearViewTagsScreenUiEffect()
+                    is TagUiEffect.ShowNetworkErrorSnackbar -> {
+                        val result = snackbarHostState.showSnackbar(
+                            message = context.getString(R.string.tag_network_error_message),
+                            actionLabel = context.getString(R.string.tag_network_error_retry),
+                            duration = SnackbarDuration.Indefinite
+                        )
+                        if (result == SnackbarResult.ActionPerformed) {
+                            effect.retryAction()
                         }
                     }
+
+                    is TagUiEffect.NavigateToDetail -> navigateToDetail(effect.cardDetailArgs)
+
+                    TagUiEffect.NavigationSearchScreen,
+                    is TagUiEffect.NavigateToViewTags -> Unit
                 }
             }
     }

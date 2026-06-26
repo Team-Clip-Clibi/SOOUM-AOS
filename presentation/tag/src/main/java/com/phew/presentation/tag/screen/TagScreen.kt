@@ -90,48 +90,32 @@ internal fun TagRoute(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.tagScreenUiEffect
+        viewModel.uiEffect
             .flowWithLifecycle(lifecycleOwner.lifecycle, Lifecycle.State.STARTED)
             .collect { effect ->
-                effect?.let {
-                    when (it) {
-                        TagUiEffect.NavigationSearchScreen -> {
-                            navigateToSearchScreen()
-                            viewModel.clearTagScreenUiEffect()
-                        }
+                when (effect) {
+                    TagUiEffect.NavigationSearchScreen -> navigateToSearchScreen()
 
-                        is TagUiEffect.ShowRemoveFavoriteTagToast -> {
-                            SooumToast.makeToast(
-                                context,
-                                context.getString(R.string.tag_favorite_delete, it.tagName),
-                                SooumToast.LENGTH_SHORT
-                            ).show()
-                            viewModel.clearTagScreenUiEffect()
-                        }
-
-                        is TagUiEffect.ShowAddFavoriteTagToast -> {
-                            SooumToast.makeToast(
-                                context,
-                                context.getString(R.string.tag_favorite_add, it.tagName),
-                                SooumToast.LENGTH_SHORT
-                            ).show()
-                            viewModel.clearTagScreenUiEffect()
-                        }
-
-                        is TagUiEffect.NavigateToViewTags -> {
-                            navigateToViewTags(it.tagName, it.tagId)
-                            viewModel.clearTagScreenUiEffect()
-                        }
-                        
-                        is TagUiEffect.ShowNetworkErrorSnackbar -> {
-                            // TagScreen에서는 네트워크 오류가 발생하지 않으므로 빈 처리
-                            viewModel.clearTagScreenUiEffect()
-                        }
-
-                        else -> {
-                            viewModel.clearTagScreenUiEffect()
-                        }
+                    is TagUiEffect.ShowRemoveFavoriteTagToast -> {
+                        SooumToast.makeToast(
+                            context,
+                            context.getString(R.string.tag_favorite_delete, effect.tagName),
+                            SooumToast.LENGTH_SHORT
+                        ).show()
                     }
+
+                    is TagUiEffect.ShowAddFavoriteTagToast -> {
+                        SooumToast.makeToast(
+                            context,
+                            context.getString(R.string.tag_favorite_add, effect.tagName),
+                            SooumToast.LENGTH_SHORT
+                        ).show()
+                    }
+
+                    is TagUiEffect.NavigateToViewTags -> navigateToViewTags(effect.tagName, effect.tagId)
+
+                    is TagUiEffect.ShowNetworkErrorSnackbar,
+                    is TagUiEffect.NavigateToDetail -> Unit
                 }
             }
     }

@@ -15,6 +15,7 @@ import com.phew.core.ui.component.home.HomeTabType
 import com.phew.core_design.slideComposable
 import com.phew.feed.feed.FeedView
 import com.phew.feed.notification.NotifyView
+import com.phew.feed.viewModel.FeedUiEffect
 import com.phew.feed.viewModel.FeedViewModel
 import com.phew.presentation.detail.navigation.navigateToDetailGraph
 import com.phew.core.ui.state.SooumAppState
@@ -73,8 +74,10 @@ fun NavGraphBuilder.feedGraph(
                 }
             )
             LaunchedEffect(feedViewModel) {
-                feedViewModel.requestPermissionEvent.collect { permissions ->
-                    locationPermission.launch(permissions)
+                feedViewModel.uiEffect.collect { effect ->
+                    if (effect is FeedUiEffect.RequestPermission) {
+                        locationPermission.launch(effect.permissions)
+                    }
                 }
             }
 
@@ -140,4 +143,3 @@ fun NavGraphBuilder.feedGraph(
         }
     }
 }
-

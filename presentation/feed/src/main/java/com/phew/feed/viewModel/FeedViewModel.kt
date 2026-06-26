@@ -16,21 +16,8 @@ import com.phew.domain.dto.Location
 import com.phew.domain.dto.Notice
 import com.phew.domain.dto.NoticeSource
 import com.phew.domain.dto.Notification
-import com.phew.domain.repository.DeviceRepository
-import com.phew.domain.repository.FeedPagingFactory
 import com.phew.domain.repository.FeedPagingQuery
-import com.phew.domain.usecase.CheckCardAlreadyDelete
-import com.phew.domain.usecase.CheckLocationPermission
-import com.phew.domain.usecase.GetCardArticle
-import com.phew.domain.usecase.GetFeedNotification
-import com.phew.domain.usecase.GetNotification
-import com.phew.domain.usecase.GetReadNotification
-import com.phew.domain.usecase.GetUnReadNotification
-import com.phew.domain.usecase.LikeCard
-import com.phew.domain.usecase.SaveEventLogFeedView
-import com.phew.domain.usecase.SetReadActivateNotify
-import com.phew.domain.usecase.SetReadActivateNotify.*
-import com.phew.domain.usecase.UnlikeCard
+import com.phew.domain.usecase.orchestrator.FeedUseCaseOrchestrator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -41,6 +28,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
@@ -52,27 +40,14 @@ import javax.inject.Inject
 
 @HiltViewModel
 class FeedViewModel @Inject constructor(
-    private val locationAsk: CheckLocationPermission,
-    getNotificationPage: GetNotification,
-    getUnReadNotification: GetUnReadNotification,
-    getReadNotification: GetReadNotification,
-    private val feedPagingFactory: FeedPagingFactory,
-    private val deviceRepository: DeviceRepository,
-    private val notification: GetFeedNotification,
-    private val readNotify: SetReadActivateNotify,
-    private val checkCardDelete: CheckCardAlreadyDelete,
-    private val eventLog: SaveEventLogFeedView,
-    private val getArticle: GetCardArticle,
-    private val likeCard: LikeCard,
-    private val unlikeCard: UnlikeCard,
+    private val feedOrchestrator: FeedUseCaseOrchestrator,
 ) :
     ViewModel() {
     private val _uiState = MutableStateFlow(Home())
     val uiState: StateFlow<Home> = _uiState.asStateFlow()
 
-    // Navigation side effects
-    private val _navigationEvent = MutableSharedFlow<NavigationEvent>()
-    val navigationEvent = _navigationEvent.asSharedFlow()
+    private val _uiEffect = MutableSharedFlow<FeedUiEffect>()
+    val uiEffect = _uiEffect.asSharedFlow()
 
     // 알람 읽음 처리를 위해
     private val mutex = Mutex()
@@ -84,6 +59,17 @@ class FeedViewModel @Inject constructor(
      */
 
     init {
+        _uiState.update {
+            it.copy(
+                notice = feedOrchestrator.noticePage(NoticeSource.NOTIFICATION)
+                    .cachedIn(viewModelScope),
+                unReadActivateAlarm = feedOrchestrator.unreadNotificationPage()
+                    .cachedIn(viewModelScope),
+                readActivateAlarm = feedOrchestrator.readNotificationPage()
+                    .cachedIn(viewModelScope),
+                feedPaging = feedPaging.cachedIn(viewModelScope),
+            )
+        }
         viewModelScope.launch {
             launch { loadInitialFeeds() }
             launch { getFeedNotice() }
@@ -104,13 +90,6 @@ class FeedViewModel @Inject constructor(
             )
         }
     }
-
-    val notice: Flow<PagingData<Notice>> =
-        getNotificationPage(NoticeSource.NOTIFICATION).cachedIn(viewModelScope)
-    val unReadActivateAlarm: Flow<PagingData<Notification>> =
-        getUnReadNotification().cachedIn(viewModelScope)
-    val readActivateAlarm: Flow<PagingData<Notification>> =
-        getReadNotification().cachedIn(viewModelScope)
 
     private data class FeedPagingSelection(
         val feedType: FeedType,
@@ -148,18 +127,11 @@ class FeedViewModel @Inject constructor(
     )
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val feedPaging: Flow<PagingData<FeedCardType>> = _feedPagingSelection
-        .flatMapLatest { selection -> feedPagingFactory.create(selection.toQuery()) }
-        .cachedIn(viewModelScope)
-
-    /**
-     * 권한 요청
-     */
-    private val _requestPermissionEvent = MutableSharedFlow<Array<String>>()
-    val requestPermissionEvent = _requestPermissionEvent.asSharedFlow()
+    private val feedPaging: Flow<PagingData<FeedCardType>> = _feedPagingSelection
+        .flatMapLatest { selection -> feedOrchestrator.feedPaging(selection.toQuery()) }
 
     fun checkLocationPermission() {
-        val isGranted = locationAsk()
+        val isGranted = feedOrchestrator.hasLocationPermission()
         if (isGranted) {
             getLocation()
             return
@@ -171,13 +143,13 @@ class FeedViewModel @Inject constructor(
 
     fun clickHomeTab() {
         viewModelScope.launch(Dispatchers.IO) {
-            eventLog.moveToTop()
+            feedOrchestrator.moveToTop()
         }
     }
 
     private suspend fun getLocationSafely(): Location {
         return try {
-            deviceRepository.requestLocation()
+            feedOrchestrator.getLocation()
         } catch (e: Exception) {
             // 위치 정보 가져오기 실패 시 빈 위치 반환
             e.printStackTrace()
@@ -197,7 +169,7 @@ class FeedViewModel @Inject constructor(
 
     private fun getFeedNotice() {
         viewModelScope.launch(Dispatchers.IO) {
-            when (val request = notification(NoticeSource.NOTIFICATION)) {
+            when (val request = feedOrchestrator.getFeedNotification(NoticeSource.NOTIFICATION)) {
                 is DomainResult.Failure -> {
                     _uiState.update { state -> state.copy(feedNotification = UiState.Fail(request.error)) }
                 }
@@ -211,7 +183,7 @@ class FeedViewModel @Inject constructor(
 
     fun onPermissionRequest(permission: Array<String>) {
         viewModelScope.launch {
-            _requestPermissionEvent.emit(permission)
+            _uiEffect.emit(FeedUiEffect.RequestPermission(permission))
         }
     }
 
@@ -272,7 +244,7 @@ class FeedViewModel @Inject constructor(
                 }
                 if (notify.isNotEmpty()) {
                     when (val result =
-                        readNotify.invoke(Param(notifyId = notify))) {
+                        feedOrchestrator.markNotificationsRead(notify)) {
                         is DomainResult.Failure -> {
                             _uiState.update { state ->
                                 state.copy(setReadNotify = UiState.Fail(result.error))
@@ -337,7 +309,7 @@ class FeedViewModel @Inject constructor(
             ),
         )
         viewModelScope.launch {
-            when (val checkResult = checkCardDelete(CheckCardAlreadyDelete.Param(cardId))) {
+            when (val checkResult = feedOrchestrator.checkCardDeleted(cardId)) {
                 is DomainResult.Success -> {
                     if (checkResult.data) {
                         updateFeedLikeState(cardId, stateBeforeToggle.copy(isLoading = false))
@@ -357,11 +329,10 @@ class FeedViewModel @Inject constructor(
                 }
             }
 
-            val result = if (stateBeforeToggle.isLike) {
-                unlikeCard(cardId)
-            } else {
-                likeCard(cardId)
-            }
+            val result = feedOrchestrator.setCardLike(
+                cardId = cardId,
+                shouldLike = !stateBeforeToggle.isLike
+            )
 
             when (result) {
                 is DomainResult.Success -> {
@@ -423,7 +394,7 @@ class FeedViewModel @Inject constructor(
         }
         viewModelScope.launch {
             _uiState.update { state -> state.copy(checkCardDelete = UiState.Loading) }
-            when (val result = checkCardDelete(CheckCardAlreadyDelete.Param(cardId = cardIdLong))) {
+            when (val result = feedOrchestrator.checkCardDeleted(cardIdLong)) {
                 is DomainResult.Failure -> {
                     _uiState.update { state ->
                         state.copy(checkCardDelete = UiState.Fail(result.error))
@@ -435,9 +406,9 @@ class FeedViewModel @Inject constructor(
                         _uiState.update { state -> state.copy(checkCardDelete = UiState.Success(cardIdLong)) }
                     } else {
                         _uiState.update { state -> state.copy(checkCardDelete = UiState.None) }
-                        if (isEventCard) eventLog.moveToCardDetailWhenEventCard() else eventLog.moveToCardDetail()
-                        _navigationEvent.emit(
-                            NavigationEvent.NavigateToDetail(
+                        feedOrchestrator.moveToCardDetail(isEventCard)
+                        _uiEffect.emit(
+                            FeedUiEffect.NavigateToDetail(
                                 CardDetailArgs(cardId = cardIdLong, previousView = CardDetailTrace.PROFILE)
                             )
                         )
@@ -465,7 +436,7 @@ class FeedViewModel @Inject constructor(
 
     private fun fetchCardArticle() {
         viewModelScope.launch(Dispatchers.IO) {
-            when (val result = getArticle()) {
+            when (val result = feedOrchestrator.getCardArticle()) {
                 is DomainResult.Failure -> {
                     if (result.error == ERROR_NO_DATA) {
                         _uiState.update { state ->
@@ -510,14 +481,19 @@ class FeedViewModel @Inject constructor(
     }
 }
 
-sealed interface NavigationEvent {
-    data class NavigateToDetail(val args: CardDetailArgs) : NavigationEvent
+sealed interface FeedUiEffect {
+    data class NavigateToDetail(val args: CardDetailArgs) : FeedUiEffect
+    data class RequestPermission(val permissions: Array<String>) : FeedUiEffect
 }
 
 data class Home(
     val currentTab: FeedType = FeedType.Latest,
     val distanceTab: DistanceType = DistanceType.KM_1,
     val location: Location = Location.EMPTY,
+    val notice: Flow<PagingData<Notice>> = emptyFlow(),
+    val unReadActivateAlarm: Flow<PagingData<Notification>> = emptyFlow(),
+    val readActivateAlarm: Flow<PagingData<Notification>> = emptyFlow(),
+    val feedPaging: Flow<PagingData<FeedCardType>> = emptyFlow(),
     val shouldShowPermissionRationale: Boolean = false,
     val feedNotification: UiState<List<Notice>> = UiState.Loading,
     val setReadNotify: UiState<Unit> = UiState.Loading,
