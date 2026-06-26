@@ -1,0 +1,87 @@
+# SOOUM Codex Guide
+
+최종 업데이트: 2026-06-27
+
+이 문서는 Codex가 이 프로젝트를 시니어 안드로이드 개발자 관점으로 읽고 수정하기 위한 프로젝트 분석 및 작업 규칙이다. 새로운 구조 규칙이나 팀 합의가 생기면 반드시 이 파일의 "규칙 변경 기록"에 추가한다.
+
+## 프로젝트 분석
+
+SOOUM은 익명 카드형 SNS Android 앱이다. 계정은 기기 기반으로 발급되고, 사용자는 카드 작성, 피드 탐색, 태그 검색/즐겨찾기, 팔로우, 알림, 프로필 편집, 신고/차단 같은 SNS 핵심 기능을 사용한다.
+
+아키텍처는 Clean Architecture 기반 멀티 모듈이다.
+
+- `app`: 앱 진입점, Firebase/FCM, 네비게이션 호스트, 앱 단위 DI와 초기화.
+- `presentation`: 화면별 Compose UI, ViewModel, Navigation Graph. 기능 모듈은 `feed`, `tag`, `profile`, `write`, `detail`, `settings`, `sign-up`, `splash`, `home`, `reports` 등으로 나뉜다.
+- `domain`: DTO/model, repository interface, UseCase, 전역 이벤트/인터셉터 계약. 현재 일부 UseCase가 Android Context를 직접 사용하므로 완전한 순수 Kotlin 레이어는 아니다.
+- `data`: Retrofit/network, repository 구현, paging source/factory, device/token/analytics 구현.
+- `core`: 디자인 시스템, 공통 UI state, navigation model, 공통 상수/로그/유틸.
+- `build-logic`: Gradle convention plugin.
+
+현재 가장 큰 구조적 문제는 `domain/usecase`에 작은 UseCase가 많이 흩어져 있고, ViewModel이 기능 하나를 처리하기 위해 10개 이상의 UseCase를 직접 주입받는 점이다. 이러면 화면 로직의 의존성 표면이 커지고, 같은 정책이 여러 ViewModel로 복제되기 쉽다.
+
+이번 정리에서 `FeedUseCaseOrchestrator`, `ProfileUseCaseOrchestrator`, `TagUseCaseOrchestrator`를 추가했다. Orchestrator는 Repository를 직접 새로 호출하는 계층이 아니라, 기존 UseCase를 기능 단위로 묶는 application/domain facade다. ViewModel은 세부 UseCase 조합을 몰라도 되고, 화면 이벤트와 UI 상태 관리에 집중한다.
+
+## UseCase Orchestrator 규칙
+
+새 기능을 만들거나 기존 화면을 수정할 때는 ViewModel에 개별 UseCase를 계속 추가하지 않는다. 기능 단위 Orchestrator가 있으면 Orchestrator에 메서드를 추가하고, 없으면 기능 경계 기준으로 새 Orchestrator를 만든다.
+
+권장 경계:
+
+- Feed: 피드 목록, 알림, 위치 권한/위치 조회, 카드 좋아요, 카드 삭제 여부 확인, Feed event log.
+- Profile: 내/타인 프로필, 팔로우/언팔로우, 차단/해제, 프로필 수정, 프로필 이미지 처리, 프로필 paging.
+- Tag: 태그 검색, 인기 태그, 즐겨찾기, 태그 카드 paging, Tag event log.
+- Detail/Write/Settings는 수정 시 같은 방식으로 Orchestrator 전환을 검토한다.
+
+Orchestrator 작성 원칙:
+
+- `domain/src/main/java/com/phew/domain/usecase/orchestrator` 아래에 둔다.
+- 생성자 주입은 기존 UseCase만 받는 것을 우선한다. Repository 직접 주입은 기존 UseCase로 표현하기 어렵거나 중복을 줄이는 경우에만 허용한다.
+- 메서드 이름은 화면 동작보다 도메인 의도를 드러낸다. 예: `checkCardDeleted`, `setCardLike`, `profileFeedCards`.
+- Error mapping은 가능하면 기존 UseCase에 둔다. Orchestrator는 조합과 흐름 조율에 집중한다.
+- ViewModel 생성자에 같은 기능군 UseCase가 3개 이상 들어가면 Orchestrator 후보로 본다.
+
+## Flow 규칙
+
+ViewModel이 외부로 공개하는 Flow는 2개만 둔다.
+
+- `uiState: StateFlow<...>`
+- `uiEffect: SharedFlow<...>`
+
+Paging Flow가 필요한 경우 별도 public property로 노출하지 말고, 기존 `Profile`/`TagUiState`/`Home`처럼 UI state 내부 값으로 둔다. 이벤트는 화면별 `navigationEvent`, `toastEvent`, `requestPermissionEvent` 등으로 쪼개지 말고 sealed `UiEffect`에 통합한다.
+
+기존 코드에 남아 있는 예외는 수정 대상 파일을 건드릴 때 점진적으로 이 규칙에 맞춘다. 한 번에 전 프로젝트를 대량 변경하지 않는다.
+
+## Presentation 작업 규칙
+
+- ViewModel은 UI 상태 축약, 사용자 action 처리, effect emit에 집중한다.
+- Compose 화면은 `uiState`를 collect하고, `uiEffect`는 `LaunchedEffect(viewModel)` 또는 lifecycle-aware collect로 처리한다.
+- 화면에서 직접 Repository 또는 UseCase를 호출하지 않는다.
+- 화면별 effect Flow를 새로 만들지 않는다. 화면별 분기가 필요하면 sealed effect type에 목적을 드러내고 현재 화면에서 필요한 effect만 처리한다.
+- PagingData refresh, deleted card filtering 같은 UI 생명주기와 밀접한 로직은 state 내부 Flow 또는 ViewModel private Flow로 유지한다.
+
+## Domain/Data 작업 규칙
+
+- API 오류 매핑은 UseCase 또는 repository 구현 중 기존 패턴과 가까운 곳에 둔다.
+- `DataResult`와 `DomainResult` 혼용이 남아 있으므로 새 코드에서는 호출부가 기대하는 result type을 유지하되, 신규 경계에서는 `DomainResult`를 우선 검토한다.
+- `safeUseCase`를 사용할 수 있으면 중복 error mapping을 늘리지 않는다.
+- Android Context가 필요한 동작은 장기적으로 data/device 또는 platform adapter로 밀어내는 것을 목표로 한다. 단, 현재 구조와 큰 충돌이 있으면 작은 수정 범위 안에서 기존 패턴을 따른다.
+
+## 검증 규칙
+
+관련 모듈 Kotlin 컴파일을 최소 검증으로 실행한다.
+
+```bash
+JAVA_HOME=/Users/sonny8569/Library/Java/JavaVirtualMachines/corretto-21.0.8/Contents/Home ./gradlew :domain:compileDebugKotlin :presentation:feed:compileDebugKotlin :presentation:profile:compileDebugKotlin :presentation:tag:compileDebugKotlin
+```
+
+작업 범위가 앱 전반 DI, navigation, build logic을 건드리면 `:app:assembleDevDebug` 또는 해당 variant assemble까지 확장한다.
+
+## 규칙 변경 기록
+
+### 2026-06-27
+
+- UseCase 파편화를 줄이기 위해 기능 단위 Orchestrator 패턴을 도입했다.
+- Feed/Profile/Tag에 Orchestrator를 우선 적용했다.
+- ViewModel public Flow는 `uiState`와 `uiEffect` 두 개만 공개하는 규칙을 추가했다.
+- Paging Flow는 public ViewModel property가 아니라 UI state 내부 값으로 관리한다.
+- 새 규칙이 생기면 이 `.Codex` 파일에 날짜와 함께 기록한다.

@@ -58,25 +58,6 @@ class FeedViewModel @Inject constructor(
      * 활동알림(unRead , read)
      */
 
-    init {
-        _uiState.update {
-            it.copy(
-                notice = feedOrchestrator.noticePage(NoticeSource.NOTIFICATION)
-                    .cachedIn(viewModelScope),
-                unReadActivateAlarm = feedOrchestrator.unreadNotificationPage()
-                    .cachedIn(viewModelScope),
-                readActivateAlarm = feedOrchestrator.readNotificationPage()
-                    .cachedIn(viewModelScope),
-                feedPaging = feedPaging.cachedIn(viewModelScope),
-            )
-        }
-        viewModelScope.launch {
-            launch { loadInitialFeeds() }
-            launch { getFeedNotice() }
-            launch { fetchCardArticle() }
-        }
-    }
-
     private suspend fun loadInitialFeeds() {
         // Location 초기 설정
         val location = getLocationSafely()
@@ -129,6 +110,25 @@ class FeedViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     private val feedPaging: Flow<PagingData<FeedCardType>> = _feedPagingSelection
         .flatMapLatest { selection -> feedOrchestrator.feedPaging(selection.toQuery()) }
+
+    init {
+        _uiState.update {
+            it.copy(
+                notice = feedOrchestrator.noticePage(NoticeSource.NOTIFICATION)
+                    .cachedIn(viewModelScope),
+                unReadActivateAlarm = feedOrchestrator.unreadNotificationPage()
+                    .cachedIn(viewModelScope),
+                readActivateAlarm = feedOrchestrator.readNotificationPage()
+                    .cachedIn(viewModelScope),
+                feedPaging = feedPaging.cachedIn(viewModelScope),
+            )
+        }
+        viewModelScope.launch {
+            launch { loadInitialFeeds() }
+            launch { getFeedNotice() }
+            launch { fetchCardArticle() }
+        }
+    }
 
     fun checkLocationPermission() {
         val isGranted = feedOrchestrator.hasLocationPermission()
