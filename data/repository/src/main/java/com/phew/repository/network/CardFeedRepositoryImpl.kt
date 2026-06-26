@@ -1,7 +1,6 @@
 package com.phew.repository.network
 
 import com.phew.core_common.APP_ERROR_CODE
-import com.phew.core_common.DataResult
 import com.phew.core_common.HTTP_NO_MORE_CONTENT
 import com.phew.domain.dto.CardArticle
 import com.phew.domain.dto.CardDefaultImagesResponse
@@ -30,7 +29,7 @@ class CardFeedRepositoryImpl @Inject constructor(
     override suspend fun requestFeedPopular(
         latitude: Double?,
         longitude: Double?
-    ): DataResult<List<Popular>> {
+    ): Result<List<Popular>> {
         return try {
             val feedDto = CardFeedDto(
                 latitude = latitude,
@@ -45,15 +44,15 @@ class CardFeedRepositoryImpl @Inject constructor(
 
             if (response.isSuccessful) {
                 val popularList = response.body()?.map { it.toDomain() } ?: emptyList()
-                DataResult.Success(popularList)
+                Result.success(popularList)
             } else {
-                DataResult.Fail(
+                com.phew.core_common.resultFailure(
                     code = response.code(),
                     message = response.message()
                 )
             }
         } catch (e: Exception) {
-            DataResult.Fail(
+            com.phew.core_common.resultFailure(
                 throwable = e,
                 message = e.message
             )
@@ -64,7 +63,7 @@ class CardFeedRepositoryImpl @Inject constructor(
         latitude: Double?,
         longitude: Double?,
         lastId: Long?
-    ): DataResult<List<Latest>> {
+    ): Result<List<Latest>> {
         return try {
 
             val feedDto = CardFeedDto(
@@ -89,17 +88,17 @@ class CardFeedRepositoryImpl @Inject constructor(
 
             if (response.isSuccessful) {
                 val latestList = response.body()?.map { it.toDomain() } ?: emptyList()
-                DataResult.Success(latestList)
+                Result.success(latestList)
             } else if (response.code() == HTTP_NO_MORE_CONTENT) {
-                DataResult.Success(emptyList())
+                Result.success(emptyList())
             } else {
-                DataResult.Fail(
+                com.phew.core_common.resultFailure(
                     code = response.code(),
                     message = response.message()
                 )
             }
         } catch (e: Exception) {
-            DataResult.Fail(
+            com.phew.core_common.resultFailure(
                 throwable = e,
                 message = e.message
             )
@@ -111,7 +110,7 @@ class CardFeedRepositoryImpl @Inject constructor(
         longitude: Double?,
         distance: Double?,
         lastId: Long?
-    ): DataResult<List<DistanceCard>> {
+    ): Result<List<DistanceCard>> {
         try {
             val response = if (lastId == null) {
                 feedHttp.requestDistanceFeed(
@@ -129,15 +128,15 @@ class CardFeedRepositoryImpl @Inject constructor(
             }
             if (response.isSuccessful) {
                 val result = response.body()?.map { data -> data.toDomain() } ?: emptyList()
-                return DataResult.Success(result)
+                return Result.success(result)
             } else if (response.code() == HTTP_NO_MORE_CONTENT) {
-                return DataResult.Success(emptyList())
+                return Result.success(emptyList())
             } else {
-                return DataResult.Fail(code = response.code(), message = response.message())
+                return com.phew.core_common.resultFailure(code = response.code(), message = response.message())
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            return DataResult.Fail(
+            return com.phew.core_common.resultFailure(
                 throwable = e,
                 message = e.message,
                 code = APP_ERROR_CODE
@@ -145,7 +144,7 @@ class CardFeedRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun requestRelatedTag(resultCnt: Int, tag: String): DataResult<List<TagInfo>> {
+    override suspend fun requestRelatedTag(resultCnt: Int, tag: String): Result<List<TagInfo>> {
         return apiCall(
             apiCall = {
                 feedHttp.requestRelatedTag(
@@ -157,7 +156,7 @@ class CardFeedRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun requestCardImageDefault(): DataResult<CardDefaultImagesResponse> {
+    override suspend fun requestCardImageDefault(): Result<CardDefaultImagesResponse> {
         return apiCall(
             apiCall = {
                 feedHttp.requestCardImageDefault()
@@ -174,7 +173,7 @@ class CardFeedRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun requestUploadCardImage(): DataResult<CardImageDefault> {
+    override suspend fun requestUploadCardImage(): Result<CardImageDefault> {
         return apiCall(
             apiCall = {
                 feedHttp.requestUploadCardUrl()
@@ -183,7 +182,7 @@ class CardFeedRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun requestCheckUploadCard(): DataResult<CheckedBaned> {
+    override suspend fun requestCheckUploadCard(): Result<CheckedBaned> {
         return apiCall(
             apiCall = {
                 feedHttp.requestCheckUploadCard()
@@ -204,7 +203,7 @@ class CardFeedRepositoryImpl @Inject constructor(
         tag: List<String>,
         hasPoll: Boolean,
         pollContents: List<String>,
-    ): DataResult<CardIdResponse> {
+    ): Result<CardIdResponse> {
         return try {
             val request = feedHttp.requestUploadCard(
                 RequestUploadCardDTO(
@@ -224,17 +223,17 @@ class CardFeedRepositoryImpl @Inject constructor(
             )
             if (request.isSuccessful && request.code() == 200) {
                 request.body()?.let {
-                    DataResult.Success(it.toDomain())
-                } ?: DataResult.Fail(code = request.code(), message = "Response body is null")
+                    Result.success(it.toDomain())
+                } ?: com.phew.core_common.resultFailure(code = request.code(), message = "Response body is null")
             } else {
-                DataResult.Fail(
+                com.phew.core_common.resultFailure(
                     code = request.code(),
                     message = request.message()
                 )
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            DataResult.Fail(
+            com.phew.core_common.resultFailure(
                 throwable = e,
                 message = e.message,
                 code = APP_ERROR_CODE
@@ -252,7 +251,7 @@ class CardFeedRepositoryImpl @Inject constructor(
         imageType: String,
         imageName: String,
         tag: List<String>
-    ): DataResult<CardIdResponse> {
+    ): Result<CardIdResponse> {
         return try {
             val request = feedHttp.requestUploadAnswerCard(
                 cardId = cardId,
@@ -269,17 +268,17 @@ class CardFeedRepositoryImpl @Inject constructor(
             )
             if (request.isSuccessful && request.code() == 200) {
                 request.body()?.let {
-                    DataResult.Success(it.toDomain())
-                } ?: DataResult.Fail(code = request.code(), message = "Response body is null")
+                    Result.success(it.toDomain())
+                } ?: com.phew.core_common.resultFailure(code = request.code(), message = "Response body is null")
             } else {
-                DataResult.Fail(
+                com.phew.core_common.resultFailure(
                     code = request.code(),
                     message = request.message()
                 )
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            DataResult.Fail(
+            com.phew.core_common.resultFailure(
                 throwable = e,
                 message = e.message,
                 code = APP_ERROR_CODE
@@ -290,28 +289,28 @@ class CardFeedRepositoryImpl @Inject constructor(
     override suspend fun requestUploadImage(
         data: RequestBody,
         url: String,
-    ): DataResult<Unit> {
+    ): Result<Unit> {
         return apiCall(
             apiCall = { feedHttp.requestUploadImage(url = url, body = data) },
             mapper = { result -> result }
         )
     }
 
-    override suspend fun requestCheckImage(imageName: String): DataResult<Boolean> {
+    override suspend fun requestCheckImage(imageName: String): Result<Boolean> {
         return apiCall(
             apiCall = { feedHttp.requestCheckBackgroundImage(imgName = imageName) },
             mapper = { result -> result.isAvailableImg }
         )
     }
 
-    override suspend fun requestCheckCardDelete(cardId: Long): DataResult<Boolean> {
+    override suspend fun requestCheckCardDelete(cardId: Long): Result<Boolean> {
         return apiCall(
             apiCall = { feedHttp.requestCheckCardDelete(cardId = cardId) },
             mapper = { data -> data.isDeleted }
         )
     }
 
-    override suspend fun requestCardArticle(): DataResult<CardArticle> {
+    override suspend fun requestCardArticle(): Result<CardArticle> {
         return apiCall(
             apiCall = { feedHttp.requestCardsArticle() },
             mapper = { data -> data.toDomain() }

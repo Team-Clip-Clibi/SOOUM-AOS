@@ -1,9 +1,8 @@
 package com.phew.domain.usecase
 
-import com.phew.core_common.DataResult
-import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.TimeUtils
+import com.phew.core_common.resultFailure
 import com.phew.domain.SIGN_UP_ALREADY_SIGN_UP
 import com.phew.domain.SIGN_UP_BANNED
 import com.phew.domain.SIGN_UP_OKAY
@@ -23,12 +22,9 @@ class CheckSignUp @Inject constructor(
     private val deviceRepository: DeviceRepository,
     private val repository: SignUpRepository,
 ) {
-    suspend operator fun invoke(): DomainResult<Pair<String, String>, String> = coroutineScope {
-        val securityKeyResult = repository.requestSecurityKey()
-        if (securityKeyResult is DataResult.Fail) {
-            return@coroutineScope DomainResult.Failure(ERROR_NETWORK)
-        }
-        val securityKey = (securityKeyResult as DataResult.Success).data
+    suspend operator fun invoke(): Result<Pair<String, String>> = coroutineScope {
+        val securityKey = repository.requestSecurityKey()
+            .getOrElse { return@coroutineScope resultFailure(ERROR_NETWORK) }
         val key = makeSecurityKey(securityKey)
 
         val deviceIdDeferred = async { deviceRepository.requestDeviceId() }
@@ -40,31 +36,27 @@ class CheckSignUp @Inject constructor(
         val modelName = modelNameDeferred.await()
 
         val encryptedInfo = encrypt(data = deviceId, key = key)
-        when (val checkSignUpResult = repository.requestCheckSignUp(
+        repository.requestCheckSignUp(
             info = encryptedInfo,
             osVersion = osVersion,
             modelName = modelName
-        )) {
-            is DataResult.Fail -> {
-                DomainResult.Failure(ERROR_NETWORK)
-            }
-
-            is DataResult.Success -> {
-                val data = checkSignUpResult.data
+        ).fold(
+            onSuccess = { data ->
                 val resultType = when {
                     data.registered -> SIGN_UP_ALREADY_SIGN_UP
                     data.banned -> SIGN_UP_BANNED
                     data.withdrawn -> SIGN_UP_WITHDRAWN
                     else -> SIGN_UP_OKAY
                 }
-                DomainResult.Success(Pair(resultType,
+                Result.success(Pair(resultType,
                     if (data.time.trim()
                             .isEmpty()
                     ) "" else TimeUtils.convertIsoToDateString(data.time)
                 )
                 )
-            }
-        }
+            },
+            onFailure = { resultFailure(ERROR_NETWORK) },
+        )
     }
 
     private fun makeSecurityKey(key: String): PublicKey {

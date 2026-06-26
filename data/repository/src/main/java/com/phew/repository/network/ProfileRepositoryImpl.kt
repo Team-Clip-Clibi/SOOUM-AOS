@@ -1,7 +1,6 @@
 package com.phew.repository.network
 
 import com.phew.core_common.APP_ERROR_CODE
-import com.phew.core_common.DataResult
 import com.phew.domain.dto.FollowData
 import com.phew.domain.dto.ProfileInfo
 import com.phew.domain.dto.ProfileCard
@@ -17,21 +16,21 @@ import javax.inject.Inject
 
 class ProfileRepositoryImpl @Inject constructor(private val http: ProfileHttp) :
     ProfileRepository {
-    override suspend fun requestMyProfile(): DataResult<ProfileInfo> {
+    override suspend fun requestMyProfile(): Result<ProfileInfo> {
         return apiCall(
             apiCall = { http.requestMyProfile() },
             mapper = { data -> data.toDomain() }
         )
     }
 
-    override suspend fun requestOtherProfile(profileId: Long): DataResult<ProfileInfo> {
+    override suspend fun requestOtherProfile(profileId: Long): Result<ProfileInfo> {
         return apiCall(
             apiCall = { http.requestOtherProfile(profileOwnerId = profileId) },
             mapper = { data -> data.toDomain() }
         )
     }
 
-    override suspend fun requestProfileFeedCard(userId: Long): DataResult<Pair<Int, List<ProfileCard>>> {
+    override suspend fun requestProfileFeedCard(userId: Long): Result<Pair<Int, List<ProfileCard>>> {
         return pagingCall(
             apiCall = { http.requestMyProfileFeedCard(userId = userId) },
             mapper = { data -> data.cardContents.map { cardContentDto -> cardContentDto.toDomain() } }
@@ -41,28 +40,28 @@ class ProfileRepositoryImpl @Inject constructor(private val http: ProfileHttp) :
     override suspend fun requestProfileFeedCardNext(
         userId: Long,
         cardId: Long,
-    ): DataResult<Pair<Int, List<ProfileCard>>> {
+    ): Result<Pair<Int, List<ProfileCard>>> {
         return pagingCall(
             apiCall = { http.requestMyProfileFeedCardNext(userId = userId, lastId = cardId) },
             mapper = { data -> data.cardContents.map { cardContentDto -> cardContentDto.toDomain() } }
         )
     }
 
-    override suspend fun requestProfileCommentCard(): DataResult<Pair<Int, List<ProfileCard>>> {
+    override suspend fun requestProfileCommentCard(): Result<Pair<Int, List<ProfileCard>>> {
         return pagingCall(
             apiCall = { http.requestMyProfileCommentCard() },
             mapper = { data -> data.cardContents.map { cardContentDto -> cardContentDto.toDomain() } }
         )
     }
 
-    override suspend fun requestProfileCommentCardNext(cardId: Long): DataResult<Pair<Int, List<ProfileCard>>> {
+    override suspend fun requestProfileCommentCardNext(cardId: Long): Result<Pair<Int, List<ProfileCard>>> {
         return pagingCall(
             apiCall = { http.requestMyProfileCommentCardNext(lastId = cardId) },
             mapper = { data -> data.cardContents.map { cardContentDto -> cardContentDto.toDomain() } }
         )
     }
 
-    override suspend fun requestFollower(profileId: Long): DataResult<Pair<Int, List<FollowData>>> {
+    override suspend fun requestFollower(profileId: Long): Result<Pair<Int, List<FollowData>>> {
         return pagingCall(
             apiCall = { http.requestFollower(profileOwnerId = profileId) },
             mapper = { data -> data.map { followData -> followData.toDomain() } }
@@ -72,7 +71,7 @@ class ProfileRepositoryImpl @Inject constructor(private val http: ProfileHttp) :
     override suspend fun requestFollowerNext(
         profileId: Long,
         lastId: Long,
-    ): DataResult<Pair<Int, List<FollowData>>> {
+    ): Result<Pair<Int, List<FollowData>>> {
         return pagingCall(
             apiCall = { http.requestFollowerNext(profileOwnerId = profileId, lastId = lastId) },
             mapper = { data -> data.map { followData -> followData.toDomain() } }
@@ -81,7 +80,7 @@ class ProfileRepositoryImpl @Inject constructor(private val http: ProfileHttp) :
 
     override suspend fun requestFollowing(
         profileId: Long,
-    ): DataResult<Pair<Int, List<FollowData>>> {
+    ): Result<Pair<Int, List<FollowData>>> {
         return pagingCall(
             apiCall = { http.requestFollowing(profileOwnerId = profileId) },
             mapper = { data -> data.map { followerData -> followerData.toDomain() } }
@@ -91,69 +90,69 @@ class ProfileRepositoryImpl @Inject constructor(private val http: ProfileHttp) :
     override suspend fun requestFollowingNext(
         profileId: Long,
         lastId: Long,
-    ): DataResult<Pair<Int, List<FollowData>>> {
+    ): Result<Pair<Int, List<FollowData>>> {
         return pagingCall(
             apiCall = { http.requestFollowingNext(profileOwnerId = profileId, lastId = lastId) },
             mapper = { data -> data.map { followerData -> followerData.toDomain() } }
         )
     }
 
-    override suspend fun requestFollowUser(profileId: Long): DataResult<Boolean> {
+    override suspend fun requestFollowUser(profileId: Long): Result<Boolean> {
         try {
             val request = http.requestFollowUser(userId = profileId)
             if (!request.isSuccessful) {
-                return DataResult.Fail(code = request.code(), message = request.message())
+                return com.phew.core_common.resultFailure(code = request.code(), message = request.message())
             }
-            return DataResult.Success(true)
+            return Result.success(true)
         } catch (e: Exception) {
-            return DataResult.Fail(code = APP_ERROR_CODE, message = e.message, throwable = e)
+            return com.phew.core_common.resultFailure(code = APP_ERROR_CODE, message = e.message, throwable = e)
         }
     }
 
-    override suspend fun requestUnFollowUser(profileId: Long): DataResult<Boolean> {
+    override suspend fun requestUnFollowUser(profileId: Long): Result<Boolean> {
         try {
             val request = http.requestUnFollowUser(toMemberId = profileId)
             if (!request.isSuccessful) {
-                return DataResult.Fail(code = request.code(), message = request.message())
+                return com.phew.core_common.resultFailure(code = request.code(), message = request.message())
             }
-            return DataResult.Success(true)
+            return Result.success(true)
         } catch (e: Exception) {
-            return DataResult.Fail(code = APP_ERROR_CODE, message = e.message, throwable = e)
+            return com.phew.core_common.resultFailure(code = APP_ERROR_CODE, message = e.message, throwable = e)
         }
     }
 
-    override suspend fun requestBlockUser(profileId: Long): DataResult<Boolean> {
+    override suspend fun requestBlockUser(profileId: Long): Result<Boolean> {
         try {
             val request = http.requestBlockMember(toMemberId = profileId)
             if (!request.isSuccessful) {
-                return DataResult.Fail(code = request.code(), message = request.message())
+                return com.phew.core_common.resultFailure(code = request.code(), message = request.message())
             }
-            return DataResult.Success(true)
+            return Result.success(true)
         } catch (e: Exception) {
-            return DataResult.Fail(code = APP_ERROR_CODE, message = e.message, throwable = e)
+            return com.phew.core_common.resultFailure(code = APP_ERROR_CODE, message = e.message, throwable = e)
         }
     }
 
-    override suspend fun requestUnBlockUser(profileId: Long): DataResult<Boolean> {
+    override suspend fun requestUnBlockUser(profileId: Long): Result<Boolean> {
         try {
             val request = http.requestUnBlockMember(toMemberId = profileId)
             if (!request.isSuccessful) {
-                return DataResult.Fail(code = request.code(), message = request.message())
+                return com.phew.core_common.resultFailure(code = request.code(), message = request.message())
             }
-            return DataResult.Success(true)
+            return Result.success(true)
         } catch (e: Exception) {
-            return DataResult.Fail(code = APP_ERROR_CODE, message = e.message, throwable = e)
+            return com.phew.core_common.resultFailure(code = APP_ERROR_CODE, message = e.message, throwable = e)
         }
     }
 
-    override suspend fun requestUploadImageUrl(): DataResult<UploadImageUrl> {
+    override suspend fun requestUploadImageUrl(): Result<UploadImageUrl> {
         return apiCall(
             apiCall = { http.requestUploadImageUrl() },
             mapper = { data -> data.toDomain() }
         )
     }
 
-    override suspend fun requestUploadImage(uri: String, body: RequestBody): DataResult<Unit> {
+    override suspend fun requestUploadImage(uri: String, body: RequestBody): Result<Unit> {
         return apiCall(
             apiCall = { http.requestUploadImage(url = uri, body = body) },
             mapper = { result -> result }
@@ -164,7 +163,7 @@ class ProfileRepositoryImpl @Inject constructor(private val http: ProfileHttp) :
         nickName: String?,
         profileImageName: String?,
         profileBio: String?,
-    ): DataResult<Unit> {
+    ): Result<Unit> {
         return apiCall(
             apiCall = {
                 http.requestProfileUpdate(

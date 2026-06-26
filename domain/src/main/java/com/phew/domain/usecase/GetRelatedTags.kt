@@ -1,10 +1,11 @@
 package com.phew.domain.usecase
 
-import com.phew.core_common.DataResult
 import com.phew.core_common.HTTP_NO_MORE_CONTENT
 import com.phew.core_common.HTTP_INVALID_TOKEN
 import com.phew.core_common.ERROR_LOGOUT
 import com.phew.core_common.ERROR_NETWORK
+import com.phew.core_common.mapResult
+import com.phew.core_common.resultFailure
 import com.phew.domain.model.TagInfoList
 import com.phew.domain.repository.network.TagRepository
 import javax.inject.Inject
@@ -17,31 +18,23 @@ class GetRelatedTags @Inject constructor(
         val tag: String
     )
 
-    suspend operator fun invoke(param: Param): DataResult<TagInfoList> {
-        return when (val result = repository.getRelatedTags(param.resultCnt, param.tag)) {
-            is DataResult.Success -> {
-                // Handle case when no tags are found (empty list)
-                if (result.data.tagInfos.isEmpty()) {
-                    DataResult.Fail(
+    suspend operator fun invoke(param: Param): Result<TagInfoList> {
+        return repository.getRelatedTags(param.resultCnt, param.tag).mapResult(
+            success = { data ->
+                if (data.tagInfos.isEmpty()) {
+                    return resultFailure(
                         message = "No Content",
                         code = HTTP_NO_MORE_CONTENT
                     )
-                } else {
-                    DataResult.Success(result.data)
                 }
+                data
+            },
+        ) { code, _ ->
+            when (code) {
+                HTTP_NO_MORE_CONTENT -> "No Content"
+                HTTP_INVALID_TOKEN -> ERROR_LOGOUT
+                else -> ERROR_NETWORK
             }
-            is DataResult.Fail -> mapFailure(result)
-        }
-    }
-
-    private fun mapFailure(result: DataResult.Fail): DataResult<TagInfoList> {
-        return when (result.code) {
-            HTTP_NO_MORE_CONTENT -> DataResult.Fail(
-                message = "No Content",
-                code = HTTP_NO_MORE_CONTENT
-            )
-            HTTP_INVALID_TOKEN -> DataResult.Fail(code = result.code, message = ERROR_LOGOUT)
-            else -> DataResult.Fail(code = result.code, message = ERROR_NETWORK)
         }
     }
 }

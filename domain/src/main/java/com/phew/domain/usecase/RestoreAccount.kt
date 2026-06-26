@@ -1,11 +1,11 @@
 package com.phew.domain.usecase
 
-import com.phew.core_common.DataResult
-import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.ERROR_TRANSFER_CODE_INVALID
 import com.phew.core_common.HTTP_BAD_REQUEST
+import com.phew.core_common.exception.asSooumException
+import com.phew.core_common.resultFailure
 import com.phew.domain.BuildConfig
 import com.phew.domain.dto.Token
 import com.phew.domain.interceptor.InterceptorManger
@@ -32,69 +32,65 @@ class RestoreAccount @Inject constructor(
         val transferCode: String,
     )
 
-    suspend operator fun invoke(param: Param): DomainResult<Unit, String> {
+    suspend operator fun invoke(param: Param): Result<Unit> {
         val transferRsaKey = signUpRepository.requestSecurityKey()
-        if (transferRsaKey is DataResult.Fail) return DomainResult.Failure(ERROR_NETWORK)
+            .getOrElse { return resultFailure(ERROR_NETWORK) }
         val deviceId = deviceRepository.requestDeviceId()
         val transferEncryptedInfo =
-            makeDeviceInfo(key = (transferRsaKey as DataResult.Success).data, deviceInfo = deviceId)
+            makeDeviceInfo(key = transferRsaKey, deviceInfo = deviceId)
         val codeResult = membersRepository.transferAccount(
             transferCode = param.transferCode,
             deviceId = transferEncryptedInfo
         )
-        if (codeResult != Result.success(Unit)) return DomainResult.Failure(
-            ERROR_TRANSFER_CODE_INVALID
-        )
+        if (codeResult.isFailure) return resultFailure(ERROR_TRANSFER_CODE_INVALID)
         eventLogRepository.logSuccessTransfer()
         val loginKey = signUpRepository.requestSecurityKey()
+            .getOrElse { return resultFailure(ERROR_NETWORK) }
         val loginEncryptedInfo =
-            makeDeviceInfo(key = (loginKey as DataResult.Success).data, deviceInfo = deviceId)
+            makeDeviceInfo(key = loginKey, deviceInfo = deviceId)
         val modelName = deviceRepository.requestDeviceModel()
         val osVersion = deviceRepository.requestDeviceOS()
-        when (val request = signUpRepository.requestLogin(
+        return signUpRepository.requestLogin(
             info = loginEncryptedInfo,
             osVersion = osVersion,
             modelName = modelName
-        )) {
-            is DataResult.Fail -> {
-                return when (request.code) {
-                    HTTP_BAD_REQUEST -> DomainResult.Failure(ERROR_FAIL_JOB)
-                    else -> DomainResult.Failure(ERROR_NETWORK)
-                }
-            }
-
-            is DataResult.Success -> {
+        ).fold(
+            onSuccess = { token ->
                 deviceRepository.deleteAll()
                 interceptorManger.resetToken()
                 val saveToken = deviceRepository.saveToken(
                     key = BuildConfig.TOKEN_KEY,
                     data = Token(
-                        refreshToken = request.data.refreshToken,
-                        accessToken = request.data.accessToken
+                        refreshToken = token.refreshToken,
+                        accessToken = token.accessToken
                     )
                 )
-                if (!saveToken) return DomainResult.Failure(ERROR_FAIL_JOB)
-                when (val profile = profileRepository.requestMyProfile()) {
-                    is DataResult.Fail -> {
-                        interceptorManger.deleteAll()
-                        return DomainResult.Failure(ERROR_FAIL_JOB)
-                    }
-
-                    is DataResult.Success -> {
-                        val data = profile.data
+                if (!saveToken) return resultFailure(ERROR_FAIL_JOB)
+                profileRepository.requestMyProfile().fold(
+                    onSuccess = { data ->
                         val saveProfileResult = deviceRepository.saveProfileInfo(
                             profileKey = BuildConfig.PROFILE_KEY,
                             nickName = data.nickname
                         )
                         if (!saveProfileResult) {
                             interceptorManger.deleteAll()
-                            return DomainResult.Failure(ERROR_FAIL_JOB)
+                            return resultFailure(ERROR_FAIL_JOB)
                         }
-                        return DomainResult.Success(Unit)
-                    }
+                        Result.success(Unit)
+                    },
+                    onFailure = {
+                        interceptorManger.deleteAll()
+                        resultFailure(ERROR_FAIL_JOB)
+                    },
+                )
+            },
+            onFailure = { throwable ->
+                when (throwable.asSooumException().code) {
+                    HTTP_BAD_REQUEST -> resultFailure(ERROR_FAIL_JOB)
+                    else -> resultFailure(ERROR_NETWORK)
                 }
-            }
-        }
+            },
+        )
     }
 
     private fun makeDeviceInfo(key: String, deviceInfo: String): String {

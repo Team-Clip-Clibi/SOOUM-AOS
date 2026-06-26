@@ -2,12 +2,9 @@ package com.phew.paging
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.phew.core_common.DataResult
-import com.phew.core_common.HTTP_INVALID_TOKEN
 import com.phew.core_common.log.SooumLog
 import com.phew.domain.dto.TagCardContent
 import com.phew.domain.repository.network.TagRepository
-import java.io.IOException
 import javax.inject.Inject
 
 class PagingTagCards @Inject constructor(
@@ -33,9 +30,8 @@ class PagingTagCards @Inject constructor(
                 tagRepository.getTagCards(tagId, lastId)
             }
             
-            when (result) {
-                is DataResult.Success -> {
-                    val tagCards = result.data
+            result.fold(
+                onSuccess = { tagCards ->
                     val isTagFavorite = tagCards.isFavorite // Extract isFavorite from TagCards
                     
                     val cardContents = tagCards.cardContents.map { cardContent ->
@@ -60,20 +56,12 @@ class PagingTagCards @Inject constructor(
                         prevKey = null,
                         nextKey = nextKey
                     )
-                }
-                is DataResult.Fail -> {
-                    when (result.code) {
-                        HTTP_INVALID_TOKEN -> {
-                            SooumLog.w(TAG, "Invalid token - user needs to login again")
-                            LoadResult.Error(IOException("Authentication failed"))
-                        }
-                        else -> {
-                            SooumLog.e(TAG, "Failed to load tag cards: ${result.message}")
-                            LoadResult.Error(IOException("Network error: ${result.message}"))
-                        }
-                    }
-                }
-            }
+                },
+                onFailure = { throwable ->
+                    SooumLog.e(TAG, "Failed to load tag cards: ${throwable.message}")
+                    LoadResult.Error(throwable)
+                },
+            )
         } catch (exception: Exception) {
             SooumLog.e(TAG, "Exception loading tag cards: ${exception.message}")
             LoadResult.Error(exception)

@@ -6,8 +6,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.core.net.toUri
-import com.phew.core_common.DataResult
-import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR
 import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.ERROR_FAIL_PACKAGE_IMAGE
@@ -15,6 +13,8 @@ import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.ERROR_UN_GOOD_IMAGE
 import com.phew.core_common.HTTP_NOT_FOUND
 import com.phew.core_common.HTTP_UN_GOOD_IMAGE
+import com.phew.core_common.exception.asSooumException
+import com.phew.core_common.resultFailure
 import com.phew.domain.BuildConfig
 import com.phew.domain.dto.Token
 import com.phew.domain.repository.DeviceRepository
@@ -44,43 +44,40 @@ class RequestSignUp @Inject constructor(
         val agreedToPrivacyPolicy: Boolean,
     )
 
-    suspend operator fun invoke(data: Param): DomainResult<Unit, String> {
+    suspend operator fun invoke(data: Param): Result<Unit> {
         val fcmToken = deviceRepository.requestGetSaveFirebaseToken(BuildConfig.FCM_TOKEN_KEY)
         val notifyStatus = deviceRepository.requestGetNotify(BuildConfig.NOTIFY_KEY)
         if (fcmToken == ERROR) {
-            return DomainResult.Failure(ERROR_FAIL_JOB)
+            return resultFailure(ERROR_FAIL_JOB)
         }
         val deviceId = deviceRepository.requestDeviceId()
         val deviceModel = deviceRepository.requestDeviceModel()
         val androidOs = deviceRepository.requestDeviceOS()
-        val requestKey = repository.requestSecurityKey()
-        if (requestKey is DataResult.Fail) {
-            return DomainResult.Failure(ERROR_NETWORK)
-        }
-        val makeKey = makeSecurityKey((requestKey as DataResult.Success).data)
+        val securityKey = repository.requestSecurityKey()
+            .getOrElse { return resultFailure(ERROR_NETWORK) }
+        val makeKey = makeSecurityKey(securityKey)
         val encryptedDeviceId = encrypt(data = deviceId, key = makeKey)
         val fileName: String?
         if (data.profileImage.isNotEmpty()) {
-            val requestImageUploadUrl = repository.requestUploadImageUrl()
-            if (requestImageUploadUrl is DataResult.Fail) return DomainResult.Failure(ERROR_NETWORK)
-            fileName = (requestImageUploadUrl as DataResult.Success).data.imgName
-            val uploadImageUrl = requestImageUploadUrl.data.imgUrl
+            val imageUploadUrl = repository.requestUploadImageUrl()
+                .getOrElse { return resultFailure(ERROR_NETWORK) }
+            fileName = imageUploadUrl.imgName
             val file = try {
                 context.contentResolver.readAsCompressedJpegRequestBody(uri = data.profileImage.toUri())
             } catch (e: IOException) {
-                return DomainResult.Failure(ERROR_FAIL_PACKAGE_IMAGE)
+                return resultFailure(ERROR_FAIL_PACKAGE_IMAGE)
             } catch (e: OutOfMemoryError) {
-                return DomainResult.Failure(ERROR_FAIL_JOB)
+                return resultFailure(ERROR_FAIL_JOB)
             }
             val requestImageUpload = repository.requestUploadImage(
                 data = file,
-                url = uploadImageUrl
+                url = imageUploadUrl.imgUrl
             )
-            if (requestImageUpload is DataResult.Fail){
-                return when(requestImageUpload.code){
-                    HTTP_NOT_FOUND -> DomainResult.Failure(ERROR_NETWORK)
-                    HTTP_UN_GOOD_IMAGE -> DomainResult.Failure(ERROR_UN_GOOD_IMAGE)
-                    else -> DomainResult.Failure(ERROR_FAIL_JOB)
+            requestImageUpload.exceptionOrNull()?.asSooumException()?.let { exception ->
+                return when(exception.code){
+                    HTTP_NOT_FOUND -> resultFailure(ERROR_NETWORK)
+                    HTTP_UN_GOOD_IMAGE -> resultFailure(ERROR_UN_GOOD_IMAGE)
+                    else -> resultFailure(ERROR_FAIL_JOB)
                 }
             }
         } else {
@@ -98,16 +95,8 @@ class RequestSignUp @Inject constructor(
             deviceModel = deviceModel,
             deviceOs = androidOs
         )
-        when (request) {
-            is DataResult.Fail -> {
-                return when(request.code){
-                    HTTP_NOT_FOUND -> DomainResult.Failure(ERROR_NETWORK)
-                    HTTP_UN_GOOD_IMAGE -> DomainResult.Failure(ERROR_UN_GOOD_IMAGE)
-                    else -> DomainResult.Failure(ERROR_FAIL_JOB)
-                }
-            }
-
-            is DataResult.Success -> {
+        return request.fold(
+            onSuccess = { token ->
                 val saveUserInfo = deviceRepository.saveUserInfo(
                     key = BuildConfig.USER_INFO_KEY,
                     nickName = data.nickName,
@@ -116,23 +105,30 @@ class RequestSignUp @Inject constructor(
                     agreedToTermsOfService = data.agreedToTermsOfService,
                     isNotifyAgree = notifyStatus
                 )
-                if (!saveUserInfo) return DomainResult.Failure(ERROR_FAIL_JOB)
+                if (!saveUserInfo) return resultFailure(ERROR_FAIL_JOB)
                 val saveToken = deviceRepository.saveToken(
                     key = BuildConfig.TOKEN_KEY,
                     data = Token(
-                        refreshToken = request.data.refreshToken,
-                        accessToken = request.data.accessToken
+                        refreshToken = token.refreshToken,
+                        accessToken = token.accessToken
                     )
                 )
-                if (!saveToken) return DomainResult.Failure(ERROR_FAIL_JOB)
+                if (!saveToken) return resultFailure(ERROR_FAIL_JOB)
                 val saveProfile = deviceRepository.saveProfileInfo(
                     profileKey = BuildConfig.PROFILE_KEY,
                     nickName = data.nickName
                 )
-                if (!saveProfile) return DomainResult.Failure(ERROR_FAIL_JOB)
-                return DomainResult.Success(Unit)
-            }
-        }
+                if (!saveProfile) return resultFailure(ERROR_FAIL_JOB)
+                Result.success(Unit)
+            },
+            onFailure = { throwable ->
+                when(throwable.asSooumException().code){
+                    HTTP_NOT_FOUND -> resultFailure(ERROR_NETWORK)
+                    HTTP_UN_GOOD_IMAGE -> resultFailure(ERROR_UN_GOOD_IMAGE)
+                    else -> resultFailure(ERROR_FAIL_JOB)
+                }
+            },
+        )
     }
 
     private fun makeSecurityKey(key: String): PublicKey {

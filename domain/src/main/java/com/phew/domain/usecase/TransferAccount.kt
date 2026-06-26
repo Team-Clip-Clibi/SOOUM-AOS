@@ -1,8 +1,9 @@
 package com.phew.domain.usecase
 
-import com.phew.core_common.DataResult
 import com.phew.core_common.ERROR_FAIL_JOB
+import com.phew.core_common.resultFailure
 import com.phew.domain.BuildConfig
+import com.phew.domain.dto.Token
 import com.phew.domain.interceptor.InterceptorManger
 import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.event.EventRepository
@@ -26,50 +27,48 @@ class TransferAccount @Inject constructor(
     )
 
     suspend operator fun invoke(param: Param): Result<Unit> {
-        val requestTransferKey = signUpRepository.requestSecurityKey()
-        if (requestTransferKey is DataResult.Fail) return Result.failure(Exception("Failed to get transfer key"))
+        val transferKey = signUpRepository.requestSecurityKey()
+            .getOrElse { return resultFailure("Failed to get transfer key") }
         eventLogRepository.logSuccessTransfer()
         val deviceId = deviceRepository.requestDeviceId()
         val transferEncryptInfo = makeDeviceInfo(
-            key = (requestTransferKey as DataResult.Success).data,
+            key = transferKey,
             deviceInfo = deviceId
         )
         val codeResult = membersRepository.transferAccount(
             transferCode = param.transferCode,
             deviceId = transferEncryptInfo
         )
-        if (codeResult != Result.success(Unit)) return codeResult
-        val requestLoginKey = signUpRepository.requestSecurityKey()
+        if (codeResult.isFailure) return codeResult
+        val loginKey = signUpRepository.requestSecurityKey()
+            .getOrElse { return resultFailure("Failed to get login key") }
         val loginEncryptInfo = makeDeviceInfo(
-            key = (requestLoginKey as DataResult.Success).data,
+            key = loginKey,
             deviceInfo = deviceId
         )
         val modelName = deviceRepository.requestDeviceModel()
         val osVersion = deviceRepository.requestDeviceOS()
-        when (val request = signUpRepository.requestLogin(
+        return signUpRepository.requestLogin(
             info = loginEncryptInfo,
             osVersion = osVersion,
             modelName = modelName
-        )) {
-            is DataResult.Fail -> {
-                return Result.failure(request.throwable ?: Exception("Login request failed"))
-            }
-
-            is DataResult.Success -> {
+        ).fold(
+            onSuccess = { token ->
                 val deleteAll = interceptorManger.deleteAll()
-                if (!deleteAll) return Result.failure(Exception(ERROR_FAIL_JOB))
+                if (!deleteAll) return resultFailure(ERROR_FAIL_JOB)
                 interceptorManger.resetToken()
                 val saveToken = deviceRepository.saveToken(
                     key = BuildConfig.TOKEN_KEY,
-                    data = com.phew.domain.dto.Token(
-                        refreshToken = request.data.refreshToken,
-                        accessToken = request.data.accessToken
+                    data = Token(
+                        refreshToken = token.refreshToken,
+                        accessToken = token.accessToken
                     )
                 )
-                if (!saveToken) return Result.failure(Exception("Failed to save token"))
-                return Result.success(Unit)
-            }
-        }
+                if (!saveToken) return resultFailure("Failed to save token")
+                Result.success(Unit)
+            },
+            onFailure = { Result.failure(it) },
+        )
     }
 
     private fun makeDeviceInfo(key: String, deviceInfo: String): String {

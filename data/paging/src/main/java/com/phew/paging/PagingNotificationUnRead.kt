@@ -2,12 +2,9 @@ package com.phew.paging
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.phew.core_common.DataResult
-import com.phew.core_common.ERROR_NETWORK
 import com.phew.domain.dto.Notification
 import com.phew.domain.repository.network.NotifyRepository
 import kotlinx.coroutines.delay
-import java.io.IOException
 import javax.inject.Inject
 
 class PagingNotificationUnRead @Inject constructor(
@@ -26,11 +23,10 @@ class PagingNotificationUnRead @Inject constructor(
             } else {
                 notifyRepository.requestNotificationUnReadPatch(lastId = key)
             }
-            when (result) {
-                is DataResult.Fail -> return LoadResult.Error(IOException(ERROR_NETWORK))
-                is DataResult.Success -> {
+            result.fold(
+                onSuccess = { data ->
                     delay(2000L)
-                    val unReadData = result.data.second
+                    val unReadData = data.second
                     val currentKey = params.key ?: -1L
                     val unRead = if(currentKey != -1L){
                         unReadData.filter { data -> data.notificationId < currentKey }
@@ -49,8 +45,9 @@ class PagingNotificationUnRead @Inject constructor(
                         prevKey = null,
                         nextKey = unRead.last().notificationId
                     )
-                }
-            }
+                },
+                onFailure = { return LoadResult.Error(it) },
+            )
         } catch (e: Exception) {
             e.printStackTrace()
             return LoadResult.Error(e)

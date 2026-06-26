@@ -2,7 +2,6 @@ package com.phew.presentation.settings.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.phew.core_common.DomainResult
 import com.phew.core_common.IsDebug
 import com.phew.core_common.TimeUtils
 import com.phew.domain.dto.Alarm
@@ -124,17 +123,16 @@ class SettingViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
-            when (setToggleNotification(param = SetToggleNotification.Param(enabled))) {
-                is DomainResult.Success -> {
+            setToggleNotification(param = SetToggleNotification.Param(enabled)).fold(
+                onSuccess = {
                     haptic.invoke()
                     _uiState.update { state -> state.copy(notificationEnabled = enabled) }
-                }
-
-                is DomainResult.Failure -> {
+                },
+                onFailure = {
                     _uiState.update { it.copy(isLoading = false) }
                     _uiEffect.emit(SettingUiEffect.ShowNotificationToggleErrorToast)
-                }
-            }
+                },
+            )
         }
     }
 
@@ -218,9 +216,9 @@ class SettingViewModel @Inject constructor(
     private fun loadActivityRestrictionDate() {
         viewModelScope.launch {
             val result = getActivityRestrictionDate()
-            if (result is DomainResult.Success) {
+            result.onSuccess { date ->
                 _uiState.update { 
-                    it.copy(activityRestrictionDate = result.data?.let { dateString -> 
+                    it.copy(activityRestrictionDate = date?.let { dateString ->
                         TimeUtils.formatToKoreanDateTime(dateString) 
                     }) 
                 }
@@ -235,20 +233,18 @@ class SettingViewModel @Inject constructor(
                 isDebugMode = isDebug
             )
             
-            when (val result = checkAppVersionNew(param)) {
-                is DomainResult.Success -> {
+            checkAppVersionNew(param).fold(
+                onSuccess = { result ->
                     _uiState.update { 
                         it.copy(
-                            appVersionStatus = result.data,
-                            appVersionStatusType = result.data.status,
-                            latestVersion = result.data.latestVersion
+                            appVersionStatus = result,
+                            appVersionStatusType = result.status,
+                            latestVersion = result.latestVersion
                         )
                     }
-                }
-                is DomainResult.Failure -> {
-                    // 실패시에는 null로 유지 (기본값)
-                }
-            }
+                },
+                onFailure = {},
+            )
         }
     }
     
@@ -265,15 +261,15 @@ class SettingViewModel @Inject constructor(
     
     fun loadNotificationState() {
         viewModelScope.launch {
-            when (val result = getToggleNotification()) {
-                is DomainResult.Success -> {
-                    _uiState.update { it.copy(notificationEnabled = result.data) }
-                }
-                is DomainResult.Failure -> {
+            getToggleNotification().fold(
+                onSuccess = { result ->
+                    _uiState.update { it.copy(notificationEnabled = result) }
+                },
+                onFailure = {
                     _uiState.update { it.copy(isLoading = false) }
                     _uiEffect.emit(SettingUiEffect.ShowNotificationToggleErrorToast)
-                }
-            }
+                },
+            )
         }
     }
 }

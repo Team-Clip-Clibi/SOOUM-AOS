@@ -1,7 +1,6 @@
 package com.phew.repository.network
 
 import com.phew.core_common.APP_ERROR_CODE
-import com.phew.core_common.DataResult
 import com.phew.domain.dto.CardComment
 import com.phew.domain.dto.CardDetail
 import com.phew.domain.dto.Poll
@@ -19,22 +18,22 @@ class CardDetailRepositoryImpl @Inject constructor(
     private val cardDetailsHttp: CardDetailsInquiryHttp
 ) : CardDetailRepository {
 
-    override suspend fun likeCard(cardId: Long): DataResult<Unit> = executeWithoutBody {
+    override suspend fun likeCard(cardId: Long): Result<Unit> = executeWithoutBody {
         cardDetailsHttp.requestCardLike(cardId)
     }
 
-    override suspend fun unlikeCard(cardId: Long): DataResult<Unit> = executeWithoutBody {
+    override suspend fun unlikeCard(cardId: Long): Result<Unit> = executeWithoutBody {
         cardDetailsHttp.deleteCardLike(cardId)
     }
 
-    override suspend fun createPollVote(pollOptionId: Long): DataResult<Poll> {
+    override suspend fun createPollVote(pollOptionId: Long): Result<Poll> {
         return apiCall(
             apiCall = { cardDetailsHttp.createPollVote(pollOptionId) },
             mapper = { it.toDomain() }
         )
     }
 
-    override suspend fun deletePollVote(pollOptionId: Long): DataResult<Unit> = executeWithoutBody {
+    override suspend fun deletePollVote(pollOptionId: Long): Result<Unit> = executeWithoutBody {
         cardDetailsHttp.deletePollVote(pollOptionId)
     }
 
@@ -42,7 +41,7 @@ class CardDetailRepositoryImpl @Inject constructor(
         cardId: Long,
         latitude: Double?,
         longitude: Double?
-    ): DataResult<CardDetail> {
+    ): Result<CardDetail> {
         return apiCall(
             apiCall = { cardDetailsHttp.requestCardDetail(cardId, latitude, longitude) },
             mapper = { it.toDomain() }
@@ -52,7 +51,7 @@ class CardDetailRepositoryImpl @Inject constructor(
     override suspend fun postCardReply(
         cardId: Long,
         request: CardReplyRequest
-    ): DataResult<CardIdResponse> { // Changed return type
+    ): Result<CardIdResponse> { // Changed return type
         return try {
             val response = cardDetailsHttp.postCardDetail(
                 cardId = cardId,
@@ -61,18 +60,18 @@ class CardDetailRepositoryImpl @Inject constructor(
 
             if (response.isSuccessful) {
                 response.body()?.let {
-                    DataResult.Success(it.toDomain()) // Extract cardId
-                } ?: DataResult.Fail(code = response.code(), message = "Response body is null")
+                    Result.success(it.toDomain()) // Extract cardId
+                } ?: com.phew.core_common.resultFailure(code = response.code(), message = "Response body is null")
             } else {
-                DataResult.Fail(code = response.code(), message = response.message())
+                com.phew.core_common.resultFailure(code = response.code(), message = response.message())
             }
         } catch (e: Exception) {
-            DataResult.Fail(code = APP_ERROR_CODE, message = e.message, throwable = e)
+            com.phew.core_common.resultFailure(code = APP_ERROR_CODE, message = e.message, throwable = e)
         }
     }
 
 
-    override suspend fun deleteCard(cardId: Long): DataResult<Unit> = executeWithoutBody {
+    override suspend fun deleteCard(cardId: Long): Result<Unit> = executeWithoutBody {
         cardDetailsHttp.deleteCard(cardId)
     }
 
@@ -80,7 +79,7 @@ class CardDetailRepositoryImpl @Inject constructor(
         cardId: Long,
         latitude: Double?,
         longitude: Double?
-    ): DataResult<List<CardComment>> {
+    ): Result<List<CardComment>> {
         return apiCall(
             apiCall = { cardDetailsHttp.requestCardComments(cardId, latitude, longitude) },
             mapper = { list -> list.map { it.toDomain() } }
@@ -92,7 +91,7 @@ class CardDetailRepositoryImpl @Inject constructor(
         lastId: Long,
         latitude: Double?,
         longitude: Double?
-    ): DataResult<List<CardComment>> {
+    ): Result<List<CardComment>> {
         return apiCall(
             apiCall = {
                 cardDetailsHttp.requestCardCommentsMore(cardId, lastId, latitude, longitude)
@@ -101,28 +100,28 @@ class CardDetailRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun blockMember(toMemberId: Long): DataResult<Unit> = executeWithoutBody {
+    override suspend fun blockMember(toMemberId: Long): Result<Unit> = executeWithoutBody {
         cardDetailsHttp.blockMember(toMemberId)
     }
 
-    override suspend fun unblockMember(toMemberId: Long): DataResult<Unit> = executeWithoutBody {
+    override suspend fun unblockMember(toMemberId: Long): Result<Unit> = executeWithoutBody {
         cardDetailsHttp.unblockMember(toMemberId)
     }
 
-    private suspend fun executeWithoutBody(block: suspend () -> Response<Unit>): DataResult<Unit> {
+    private suspend fun executeWithoutBody(block: suspend () -> Response<Unit>): Result<Unit> {
         return try {
             val response = block()
             if (response.isSuccessful) {
-                DataResult.Success(Unit)
+                Result.success(Unit)
             } else {
                 if (response.code() == com.phew.core_common.HTTP_CARD_ALREADY_DELETE) {
-                    DataResult.Fail(code = response.code(), message = com.phew.core_common.ERROR_ALREADY_CARD_DELETE)
+                    com.phew.core_common.resultFailure(code = response.code(), message = com.phew.core_common.ERROR_ALREADY_CARD_DELETE)
                 } else {
-                    DataResult.Fail(code = response.code(), message = response.message())
+                    com.phew.core_common.resultFailure(code = response.code(), message = response.message())
                 }
             }
         } catch (e: Exception) {
-            DataResult.Fail(code = APP_ERROR_CODE, message = e.message, throwable = e)
+            com.phew.core_common.resultFailure(code = APP_ERROR_CODE, message = e.message, throwable = e)
         }
     }
 

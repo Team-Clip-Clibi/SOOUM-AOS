@@ -1,9 +1,8 @@
 package com.phew.domain.usecase
 
-import com.phew.core_common.DataResult
-import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.ERROR_NETWORK
+import com.phew.core_common.resultFailure
 import com.phew.domain.BuildConfig
 import com.phew.domain.dto.Token
 import com.phew.domain.repository.DeviceRepository
@@ -20,44 +19,38 @@ class Login @Inject constructor(
     private val deviceRepository: DeviceRepository,
     private val repository: SignUpRepository,
 ) {
-    suspend operator fun invoke(): DomainResult<Unit, String> = coroutineScope {
+    suspend operator fun invoke(): Result<Unit> = coroutineScope {
         val deviceIdDeferred = async { deviceRepository.requestDeviceId() }
         val osVersionDeferred = async { deviceRepository.requestDeviceOS() }
         val modelNameDeferred = async { deviceRepository.requestDeviceModel() }
         val requestKeyDeferred = async { repository.requestSecurityKey() }
 
         val requestKey = requestKeyDeferred.await()
-        if (requestKey is DataResult.Fail) {
-            return@coroutineScope DomainResult.Failure(ERROR_NETWORK)
-        }
+        val securityKey = requestKey.getOrElse { return@coroutineScope resultFailure(ERROR_NETWORK) }
 
         val deviceId = deviceIdDeferred.await()
         val osVersion = osVersionDeferred.await()
         val modelName = modelNameDeferred.await()
 
-        val securityKey = (requestKey as DataResult.Success).data
         val key = makeSecurityKey(securityKey)
         val encryptedInfo = encrypt(data = deviceId, key = key)
-        when (val requestLogin = repository.requestLogin(
+        repository.requestLogin(
             info = encryptedInfo,
             osVersion = osVersion,
             modelName = modelName
-        )) {
-            is DataResult.Fail -> {
-                return@coroutineScope DomainResult.Failure(ERROR_NETWORK)
-            }
-
-            is DataResult.Success -> {
+        ).fold(
+            onSuccess = { token ->
                 val saveToken = deviceRepository.saveToken(
                     key = BuildConfig.TOKEN_KEY,
-                    data = Token(refreshToken = requestLogin.data.refreshToken, accessToken = requestLogin.data.accessToken)
+                    data = Token(refreshToken = token.refreshToken, accessToken = token.accessToken)
                 )
                 if (!saveToken) {
-                    return@coroutineScope DomainResult.Failure(ERROR_FAIL_JOB)
+                    return@coroutineScope resultFailure(ERROR_FAIL_JOB)
                 }
-                return@coroutineScope DomainResult.Success(Unit)
-            }
-        }
+                Result.success(Unit)
+            },
+            onFailure = { resultFailure(ERROR_NETWORK) },
+        )
     }
 
     private fun makeSecurityKey(key: String): PublicKey {

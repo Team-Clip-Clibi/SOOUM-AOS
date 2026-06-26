@@ -11,7 +11,7 @@ import androidx.paging.filter
 import com.phew.core.ui.model.CameraCaptureRequest
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core.ui.model.navigation.FollowArgs
-import com.phew.core_common.DomainResult
+import com.phew.core_common.errorMessage
 import com.phew.domain.dto.FollowData
 import com.phew.domain.dto.ProfileCard
 import com.phew.domain.dto.ProfileInfo
@@ -61,23 +61,22 @@ class ProfileViewModel @Inject constructor(
 
     fun checkIsMyProfile(userId: Long, nickname: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            when (val result = profileOrchestrator.checkIsMyProfile(userId = userId, nickName = nickname)) {
-                is DomainResult.Failure -> {
+            profileOrchestrator.checkIsMyProfile(userId = userId, nickName = nickname).fold(
+                onSuccess = { isMyProfile ->
                     _uiState.update { state ->
                         state.copy(
-                            event = UiState.Fail(result.error)
+                            checkIsMyProfile = UiState.Success(isMyProfile)
+                        )
+                    }
+                },
+                onFailure = { throwable ->
+                    _uiState.update { state ->
+                        state.copy(
+                            event = UiState.Fail(throwable.toUiMessage())
                         )
                     }
                 }
-
-                is DomainResult.Success -> {
-                    _uiState.update { state ->
-                        state.copy(
-                            checkIsMyProfile = UiState.Success(result.data)
-                        )
-                    }
-                }
-            }
+            )
         }
     }
 
@@ -92,27 +91,18 @@ class ProfileViewModel @Inject constructor(
     fun myProfile() {
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { state -> state.copy(profileInfo = UiState.Loading) }
-            when (val request = profileOrchestrator.myProfile()) {
-                is DomainResult.Failure -> {
+            profileOrchestrator.myProfile().fold(
+                onSuccess = { profile ->
                     _uiState.update { state ->
                         state.copy(
-                            profileInfo = UiState.Fail(request.error),
-                            isRefreshing = false
-                        )
-                    }
-                }
-
-                is DomainResult.Success -> {
-                    _uiState.update { state ->
-                        state.copy(
-                            profileInfo = UiState.Success(request.data),
-                            profileFeedCard = profileOrchestrator.profileFeedCards(userId = request.data.userId)
+                            profileInfo = UiState.Success(profile),
+                            profileFeedCard = profileOrchestrator.profileFeedCards(userId = profile.userId)
                                 .cachedIn(viewModelScope)
                                 .combine(_uiState.map { it.deletedCardIds }.distinctUntilChanged()) { pagingData, deletedIds ->
                                     pagingData.filter { !deletedIds.contains(it.cardId) }
                                 },
                             profileCommentCard = profileOrchestrator.profileCommentCards().cachedIn(viewModelScope),
-                            follow = profileOrchestrator.followers(profileId = request.data.userId).map { pagingData ->
+                            follow = profileOrchestrator.followers(profileId = profile.userId).map { pagingData ->
                                 val uniqueIds = mutableSetOf<Long>()
                                 pagingData.filter { user ->
                                     uniqueIds.add(user.memberId)
@@ -120,7 +110,7 @@ class ProfileViewModel @Inject constructor(
                             }.cachedIn(
                                 viewModelScope
                             ),
-                            following = profileOrchestrator.followings(profileId = request.data.userId).map { pagingData ->
+                            following = profileOrchestrator.followings(profileId = profile.userId).map { pagingData ->
                                 val uniqueIds = mutableSetOf<Long>()
                                 pagingData.filter { user ->
                                     uniqueIds.add(user.memberId)
@@ -134,13 +124,21 @@ class ProfileViewModel @Inject constructor(
                             changeBio = null,
                             changeProfile = false,
                             imageChange = false,
-                            newProfileImageUri = if (request.data.profileImgName.trim()
+                            newProfileImageUri = if (profile.profileImgName.trim()
                                     .isEmpty()
-                            ) listOf(Uri.EMPTY) else listOf(Uri.EMPTY) + request.data.profileImageUrl.toUri()
+                            ) listOf(Uri.EMPTY) else listOf(Uri.EMPTY) + profile.profileImageUrl.toUri()
+                        )
+                    }
+                },
+                onFailure = { throwable ->
+                    _uiState.update { state ->
+                        state.copy(
+                            profileInfo = UiState.Fail(throwable.toUiMessage()),
+                            isRefreshing = false
                         )
                     }
                 }
-            }
+            )
         }
     }
 
@@ -154,27 +152,18 @@ class ProfileViewModel @Inject constructor(
                     )
                 }
             }
-            when (val request = profileOrchestrator.otherProfile(profileId = profileId)) {
-                is DomainResult.Failure -> {
+            profileOrchestrator.otherProfile(profileId = profileId).fold(
+                onSuccess = { profile ->
                     _uiState.update { state ->
                         state.copy(
-                            profileInfo = UiState.Fail(request.error),
-                            isRefreshing = false
-                        )
-                    }
-                }
-
-                is DomainResult.Success -> {
-                    _uiState.update { state ->
-                        state.copy(
-                            profileInfo = UiState.Success(request.data),
-                            profileFeedCard = profileOrchestrator.profileFeedCards(userId = request.data.userId)
+                            profileInfo = UiState.Success(profile),
+                            profileFeedCard = profileOrchestrator.profileFeedCards(userId = profile.userId)
                                 .cachedIn(viewModelScope)
                                 .combine(_uiState.map { it.deletedCardIds }.distinctUntilChanged()) { pagingData, deletedIds ->
                                     pagingData.filter { !deletedIds.contains(it.cardId) }
                                 },
                             profileCommentCard = profileOrchestrator.profileCommentCards().cachedIn(viewModelScope),
-                            follow = profileOrchestrator.followers(profileId = request.data.userId).map { pagingData ->
+                            follow = profileOrchestrator.followers(profileId = profile.userId).map { pagingData ->
                                 val uniqueIds = mutableSetOf<Long>()
                                 pagingData.filter { user ->
                                     uniqueIds.add(user.memberId)
@@ -182,7 +171,7 @@ class ProfileViewModel @Inject constructor(
                             }.cachedIn(
                                 viewModelScope
                             ),
-                            following = profileOrchestrator.followings(profileId = request.data.userId).map { pagingData ->
+                            following = profileOrchestrator.followings(profileId = profile.userId).map { pagingData ->
                                 val uniqueIds = mutableSetOf<Long>()
                                 pagingData.filter { user ->
                                     uniqueIds.add(user.memberId)
@@ -194,80 +183,84 @@ class ProfileViewModel @Inject constructor(
                             otherProfileId = profileId
                         )
                     }
+                },
+                onFailure = { throwable ->
+                    _uiState.update { state ->
+                        state.copy(
+                            profileInfo = UiState.Fail(throwable.toUiMessage()),
+                            isRefreshing = false
+                        )
+                    }
                 }
-            }
+            )
         }
     }
 
     fun block(userId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { state -> state.copy(event = UiState.Loading) }
-            when (val request = profileOrchestrator.blockUser(userId = userId)) {
-                is DomainResult.Failure -> {
-                    _uiState.update { state -> state.copy(event = UiState.Fail(request.error)) }
-                }
-
-                is DomainResult.Success -> {
+            profileOrchestrator.blockUser(userId = userId).fold(
+                onSuccess = {
                     _uiState.update { state -> state.copy(event = UiState.Success(Unit)) }
                     refreshOtherProfile(profileId = userId)
+                },
+                onFailure = { throwable ->
+                    _uiState.update { state -> state.copy(event = UiState.Fail(throwable.toUiMessage())) }
                 }
-            }
+            )
         }
     }
 
     fun unBlock(userId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { state -> state.copy(event = UiState.Loading) }
-            when (val request = profileOrchestrator.unBlockUser(userId = userId)) {
-                is DomainResult.Failure -> {
-                    _uiState.update { state -> state.copy(event = UiState.Fail(request.error)) }
-                }
-
-                is DomainResult.Success -> {
+            profileOrchestrator.unBlockUser(userId = userId).fold(
+                onSuccess = {
                     _uiState.update { state -> state.copy(event = UiState.Success(Unit)) }
                     refreshOtherProfile(profileId = userId)
+                },
+                onFailure = { throwable ->
+                    _uiState.update { state -> state.copy(event = UiState.Fail(throwable.toUiMessage())) }
                 }
-            }
+            )
         }
     }
 
     fun followUser(userId: Long, isRefresh: Boolean = false, isMyProfile: Boolean = false) {
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { state -> state.copy(event = UiState.Loading) }
-            when (val request = profileOrchestrator.followUser(userId = userId)) {
-                is DomainResult.Failure -> {
-                    _uiState.update { state -> state.copy(event = UiState.Fail(request.error)) }
-                }
-
-                is DomainResult.Success -> {
+            profileOrchestrator.followUser(userId = userId).fold(
+                onSuccess = {
                     _uiState.update { state -> state.copy(event = UiState.Success(Unit)) }
                     if (!isRefresh) return@launch
                     if (isMyProfile) refreshMyProfile() else otherProfile(
                         _uiState.value.otherProfileId,
                         isShowLoading = false
                     )
+                },
+                onFailure = { throwable ->
+                    _uiState.update { state -> state.copy(event = UiState.Fail(throwable.toUiMessage())) }
                 }
-            }
+            )
         }
     }
 
     fun unFollowUser(userId: Long, isRefresh: Boolean = false, isMyProfile: Boolean = false) {
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { state -> state.copy(event = UiState.Loading) }
-            when (val request = profileOrchestrator.unFollowUser(userId = userId)) {
-                is DomainResult.Failure -> {
-                    _uiState.update { state -> state.copy(event = UiState.Fail(request.error)) }
-                }
-
-                is DomainResult.Success -> {
+            profileOrchestrator.unFollowUser(userId = userId).fold(
+                onSuccess = {
                     _uiState.update { state -> state.copy(event = UiState.Success(Unit)) }
                     if (!isRefresh) return@launch
                     if (isMyProfile) refreshMyProfile() else otherProfile(
                         _uiState.value.otherProfileId,
                         isShowLoading = false
                     )
+                },
+                onFailure = { throwable ->
+                    _uiState.update { state -> state.copy(event = UiState.Fail(throwable.toUiMessage())) }
                 }
-            }
+            )
         }
     }
 
@@ -284,7 +277,7 @@ class ProfileViewModel @Inject constructor(
                 ?.takeIf { it != profile.nickname }
                 ?: profile.nickname
             val nextBio = currentState.changeBio ?: profile.bio
-            when (val result = profileOrchestrator.updateProfile(
+            profileOrchestrator.updateProfile(
                 UpdateProfile.Param(
                     nickName = currentState.changeNickName?.takeIf { it != profile.nickname },
                     imgName = when {
@@ -295,12 +288,8 @@ class ProfileViewModel @Inject constructor(
                     profileImage = if (currentState.newProfileImageUri.last() == Uri.EMPTY) null else currentState.newProfileImageUri.last().toString(),
                     isImageChange = currentState.imageChange
                 )
-            )) {
-                is DomainResult.Failure -> {
-                    _uiState.update { state -> state.copy(updateProfile = UiState.Fail(result.error)) }
-                }
-
-                is DomainResult.Success -> {
+            ).fold(
+                onSuccess = {
                     _uiState.update { state ->
                         state.copy(
                             updateProfile = UiState.Success(Unit),
@@ -313,8 +302,11 @@ class ProfileViewModel @Inject constructor(
                         )
                     }
                     myProfile()
+                },
+                onFailure = { throwable ->
+                    _uiState.update { state -> state.copy(updateProfile = UiState.Fail(throwable.toUiMessage())) }
                 }
-            }
+            )
         }
     }
 
@@ -339,27 +331,26 @@ class ProfileViewModel @Inject constructor(
             return
         }
         viewModelScope.launch(Dispatchers.IO) {
-            when (val result = profileOrchestrator.checkNickName(data)) {
-                is DomainResult.Failure -> {
+            profileOrchestrator.checkNickName(data).fold(
+                onSuccess = { available ->
                     _uiState.update { state ->
                         if (state.changeNickName != data) {
                             state
                         } else {
-                            state.copy(nickNameHint = UiState.Fail(result.error)).withChangeProfileState()
+                            state.copy(nickNameHint = UiState.Success(available)).withChangeProfileState()
                         }
                     }
-                }
-
-                is DomainResult.Success -> {
+                },
+                onFailure = { throwable ->
                     _uiState.update { state ->
                         if (state.changeNickName != data) {
                             state
                         } else {
-                            state.copy(nickNameHint = UiState.Success(result.data)).withChangeProfileState()
+                            state.copy(nickNameHint = UiState.Fail(throwable.toUiMessage())).withChangeProfileState()
                         }
                     }
                 }
-            }
+            )
         }
     }
 
@@ -422,50 +413,48 @@ class ProfileViewModel @Inject constructor(
     fun onProfileCameraPermissionResult(granted: Boolean) {
         if (!granted) return
         viewModelScope.launch(Dispatchers.IO) {
-            when (val result = profileOrchestrator.createImageFile()) {
-                is DomainResult.Failure -> {
-                    _uiState.update { state ->
-                        state.copy(errorMessage = result.error, changeProfile = false)
-                    }
-                }
-
-                is DomainResult.Success -> {
+            profileOrchestrator.createImageFile().fold(
+                onSuccess = { uri ->
                     _uiState.update { state ->
                         state.copy(
                             pendingProfileCameraCapture = CameraCaptureRequest(
                                 id = System.currentTimeMillis(),
-                                uri = result.data
+                                uri = uri
                             ),
                             imageChange = true
                         ).withChangeProfileState()
                     }
+                },
+                onFailure = { throwable ->
+                    _uiState.update { state ->
+                        state.copy(errorMessage = throwable.toUiMessage(), changeProfile = false)
+                    }
                 }
-            }
+            )
         }
     }
 
     fun closeFile(data: Uri, success: Boolean) {
         if (!success) return
         viewModelScope.launch(Dispatchers.IO) {
-            when (val result = profileOrchestrator.finishTakePicture(data)) {
-                is DomainResult.Failure -> {
+            profileOrchestrator.finishTakePicture(data).fold(
+                onSuccess = { uri ->
                     _uiState.update { state ->
                         state.copy(
-                            errorMessage = result.error,
+                            newProfileImageUri = state.newProfileImageUri + uri,
+                            imageChange = true
+                        ).withChangeProfileState()
+                    }
+                },
+                onFailure = { throwable ->
+                    _uiState.update { state ->
+                        state.copy(
+                            errorMessage = throwable.toUiMessage(),
                             changeProfile = false
                         )
                     }
                 }
-
-                is DomainResult.Success -> {
-                    _uiState.update { state ->
-                        state.copy(
-                            newProfileImageUri = state.newProfileImageUri + result.data,
-                            imageChange = true
-                        ).withChangeProfileState()
-                    }
-                }
-            }
+            )
         }
     }
 
@@ -513,17 +502,11 @@ class ProfileViewModel @Inject constructor(
         
         viewModelScope.launch {
             _uiState.update { state -> state.copy(checkCardDelete = UiState.Loading) }
-            when (val result = profileOrchestrator.checkCardDeleted(cardId = cardId)) {
-                is DomainResult.Failure -> {
-                    _uiState.update { state ->
-                        state.copy(checkCardDelete = UiState.Fail(result.error))
-                    }
-                }
-
-                is DomainResult.Success -> {
-                    if (result.data) {
+            profileOrchestrator.checkCardDeleted(cardId = cardId).fold(
+                onSuccess = { isDeleted ->
+                    if (isDeleted) {
                         // 삭제된 경우 ID를 전달
-                        _uiState.update { state -> 
+                        _uiState.update { state ->
                             state.copy(checkCardDelete = UiState.Success(cardId))
                         }
                     } else {
@@ -535,8 +518,13 @@ class ProfileViewModel @Inject constructor(
                             )
                         )
                     }
+                },
+                onFailure = { throwable ->
+                    _uiState.update { state ->
+                        state.copy(checkCardDelete = UiState.Fail(throwable.toUiMessage()))
+                    }
                 }
-            }
+            )
         }
     }
 
@@ -603,3 +591,5 @@ sealed interface UiState<out T> {
 sealed interface ProfileUiEffect {
     data class NavigateToDetail(val cardDetailArgs: CardDetailArgs): ProfileUiEffect
 }
+
+private fun Throwable.toUiMessage(): String = Result.failure<Unit>(this).errorMessage()

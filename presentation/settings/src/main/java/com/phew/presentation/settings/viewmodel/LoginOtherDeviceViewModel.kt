@@ -2,7 +2,7 @@ package com.phew.presentation.settings.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.phew.core_common.DomainResult
+import com.phew.core_common.exception.asSooumException
 import com.phew.domain.usecase.GetTransferCode
 import com.phew.domain.usecase.RefreshTransferCode
 import com.phew.presentation.settings.model.LoginOtherDeviceUiEffect
@@ -51,22 +51,20 @@ class LoginOtherDeviceViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             
-            when (val result = getTransferCode()) {
-                is DomainResult.Success -> {
+            getTransferCode().fold(
+                onSuccess = { result ->
                     _uiState.update {
                         it.copy(
-                            code = result.data.transferCode,
-                            expiredAt = result.data.expiredAt,
+                            code = result.transferCode,
+                            expiredAt = result.expiredAt,
                             isCodeGenerated = true,
                             isLoading = false
                         )
                     }
                     startTimer()
-                }
-                is DomainResult.Failure -> {
-                    handleApiFailure(result.error)
-                }
-            }
+                },
+                onFailure = { handleApiFailure(it.asSooumException().code) },
+            )
         }
     }
 
@@ -113,22 +111,20 @@ class LoginOtherDeviceViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             
-            when (val result = refreshTransferCode()) {
-                is DomainResult.Success -> {
+            refreshTransferCode().fold(
+                onSuccess = { result ->
                     _uiState.update {
                         it.copy(
-                            code = result.data.transferCode,
-                            expiredAt = result.data.expiredAt,
+                            code = result.transferCode,
+                            expiredAt = result.expiredAt,
                             isCodeGenerated = true,
                             isLoading = false
                         )
                     }
                     startTimer()
-                }
-                is DomainResult.Failure -> {
-                    handleApiFailure(result.error)
-                }
-            }
+                },
+                onFailure = { handleApiFailure(it.asSooumException().code) },
+            )
         }
     }
     

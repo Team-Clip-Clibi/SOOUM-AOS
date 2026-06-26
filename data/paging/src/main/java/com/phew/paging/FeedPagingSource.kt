@@ -2,13 +2,9 @@ package com.phew.paging
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.phew.core_common.DataResult
-import com.phew.core_common.ERROR_NETWORK
-import com.phew.core_common.HTTP_INVALID_TOKEN
 import com.phew.domain.dto.FeedCardType
 import com.phew.domain.repository.FeedPagingQuery
 import com.phew.domain.repository.network.CardFeedRepository
-import java.io.IOException
 
 internal class FeedPagingSource(
     private val repository: CardFeedRepository,
@@ -36,18 +32,14 @@ internal class FeedPagingSource(
         query: FeedPagingQuery.Latest,
         lastId: Long?,
     ): LoadResult<Long, FeedCardType> {
-        return when (val result = repository.requestFeedLatest(
+        return repository.requestFeedLatest(
             latitude = query.latitude,
             longitude = query.longitude,
             lastId = lastId
-        )) {
-            is DataResult.Success -> result.data
-                .map { it.toFeedCardType() }
-                .filterNotLoaded()
-                .toPage()
-
-            is DataResult.Fail -> result.toError()
-        }
+        ).getOrThrow()
+            .map { it.toFeedCardType() }
+            .filterNotLoaded()
+            .toPage()
     }
 
     private suspend fun loadPopular(
@@ -58,39 +50,31 @@ internal class FeedPagingSource(
             return emptyList<FeedCardType>().toPage()
         }
 
-        return when (val result = repository.requestFeedPopular(
+        return LoadResult.Page(
+            data = repository.requestFeedPopular(
             latitude = query.latitude,
             longitude = query.longitude
-        )) {
-            is DataResult.Success -> LoadResult.Page(
-                data = result.data
-                    .map { it.toFeedCardType() }
-                    .filterNotLoaded(),
-                prevKey = null,
-                nextKey = null
-            )
-
-            is DataResult.Fail -> result.toError()
-        }
+        ).getOrThrow()
+                .map { it.toFeedCardType() }
+                .filterNotLoaded(),
+            prevKey = null,
+            nextKey = null
+        )
     }
 
     private suspend fun loadDistance(
         query: FeedPagingQuery.Distance,
         lastId: Long?,
     ): LoadResult<Long, FeedCardType> {
-        return when (val result = repository.requestFeedDistance(
+        return repository.requestFeedDistance(
             latitude = query.latitude,
             longitude = query.longitude,
             distance = query.distance,
             lastId = lastId
-        )) {
-            is DataResult.Success -> result.data
-                .map { it.toFeedCardType() }
-                .filterNotLoaded()
-                .toPage()
-
-            is DataResult.Fail -> result.toError()
-        }
+        ).getOrThrow()
+            .map { it.toFeedCardType() }
+            .filterNotLoaded()
+            .toPage()
     }
 
     private fun List<FeedCardType>.toPage(): LoadResult.Page<Long, FeedCardType> {
@@ -102,15 +86,6 @@ internal class FeedPagingSource(
             prevKey = null,
             nextKey = nextKey
         )
-    }
-
-    private fun <T : Any> DataResult.Fail.toError(): LoadResult.Error<Long, T> {
-        val exception = if (code == HTTP_INVALID_TOKEN) {
-            SecurityException("Invalid Token")
-        } else {
-            IOException(message ?: ERROR_NETWORK)
-        }
-        return LoadResult.Error<Long, T>(exception)
     }
 
     private fun List<FeedCardType>.filterNotLoaded(): List<FeedCardType> {

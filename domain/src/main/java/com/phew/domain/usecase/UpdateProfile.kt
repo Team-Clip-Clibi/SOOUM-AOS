@@ -7,8 +7,6 @@ import android.graphics.Matrix
 import android.media.ExifInterface
 import android.net.Uri
 import androidx.core.net.toUri
-import com.phew.core_common.DataResult
-import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.ERROR_FAIL_PACKAGE_IMAGE
 import com.phew.core_common.ERROR_LOGOUT
@@ -17,6 +15,8 @@ import com.phew.core_common.ERROR_UN_GOOD_IMAGE
 import com.phew.core_common.HTTP_INVALID_TOKEN
 import com.phew.core_common.HTTP_NOT_FOUND
 import com.phew.core_common.HTTP_UN_GOOD_IMAGE
+import com.phew.core_common.exception.asSooumException
+import com.phew.core_common.resultFailure
 import com.phew.domain.repository.network.ProfileRepository
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
@@ -37,7 +37,7 @@ class UpdateProfile @Inject constructor(
         val isImageChange: Boolean
     )
 
-    suspend operator fun invoke(param: Param): DomainResult<Unit, String> {
+    suspend operator fun invoke(param: Param): Result<Unit> {
         when (param.isImageChange) {
             //이미지 변경이 없을 시
             false -> {
@@ -59,30 +59,30 @@ class UpdateProfile @Inject constructor(
                     )
                     return handleResult(request = request)
                 }
-                val requestImageUrl = repository.requestUploadImageUrl()
-                if (requestImageUrl is DataResult.Fail) return DomainResult.Failure(ERROR_NETWORK)
+                val imageUrl = repository.requestUploadImageUrl()
+                    .getOrElse { return resultFailure(ERROR_NETWORK) }
                 val file = try {
                     contextResolver.readAsCompressedJpegRequestBody(uri = param.profileImage.toUri())
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    return DomainResult.Failure(ERROR_FAIL_PACKAGE_IMAGE)
+                    return resultFailure(ERROR_FAIL_PACKAGE_IMAGE)
                 } catch (e: OutOfMemoryError) {
                     e.printStackTrace()
-                    return DomainResult.Failure(ERROR_FAIL_JOB)
+                    return resultFailure(ERROR_FAIL_JOB)
                 }
                 val requestUploadImage = repository.requestUploadImage(
-                    uri = (requestImageUrl as DataResult.Success).data.imgUrl,
+                    uri = imageUrl.imgUrl,
                     body = file
                 )
-                if (requestUploadImage is DataResult.Fail) {
-                    return when (requestUploadImage.code) {
-                        HTTP_NOT_FOUND -> DomainResult.Failure(ERROR_NETWORK)
-                        else -> DomainResult.Failure(ERROR_FAIL_JOB)
+                requestUploadImage.exceptionOrNull()?.asSooumException()?.let { exception ->
+                    return when (exception.code) {
+                        HTTP_NOT_FOUND -> resultFailure(ERROR_NETWORK)
+                        else -> resultFailure(ERROR_FAIL_JOB)
                     }
                 }
                 val requestUpdateProfile = repository.requestUpdateProfile(
                     nickName = param.nickName,
-                    profileImageName = requestImageUrl.data.imgName,
+                    profileImageName = imageUrl.imgName,
                     profileBio = param.profileBio
                 )
                 return handleResult(request = requestUpdateProfile)
@@ -90,19 +90,18 @@ class UpdateProfile @Inject constructor(
         }
     }
 
-    private fun handleResult(request: DataResult<Unit>): DomainResult<Unit, String> {
-        return when (request) {
-            is DataResult.Fail -> {
-                when (request.code) {
-                    HTTP_INVALID_TOKEN -> DomainResult.Failure(ERROR_LOGOUT)
-                    HTTP_NOT_FOUND -> DomainResult.Failure(ERROR_NETWORK)
-                    HTTP_UN_GOOD_IMAGE -> DomainResult.Failure(ERROR_UN_GOOD_IMAGE)
-                    else -> DomainResult.Failure(ERROR_FAIL_JOB)
+    private fun handleResult(request: Result<Unit>): Result<Unit> {
+        return request.fold(
+            onSuccess = { Result.success(Unit) },
+            onFailure = { throwable ->
+                when (throwable.asSooumException().code) {
+                    HTTP_INVALID_TOKEN -> resultFailure(ERROR_LOGOUT)
+                    HTTP_NOT_FOUND -> resultFailure(ERROR_NETWORK)
+                    HTTP_UN_GOOD_IMAGE -> resultFailure(ERROR_UN_GOOD_IMAGE)
+                    else -> resultFailure(ERROR_FAIL_JOB)
                 }
             }
-
-            is DataResult.Success -> DomainResult.Success(Unit)
-        }
+        )
     }
 
     private fun ContentResolver.readAsCompressedJpegRequestBody(

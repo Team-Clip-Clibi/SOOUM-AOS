@@ -6,10 +6,10 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.phew.core_common.CardDetailTrace
 import com.phew.core.ui.model.navigation.CardDetailArgs
-import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR_ALREADY_CARD_DELETE
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.MoveDetail
+import com.phew.core_common.errorMessage
 import com.phew.domain.dto.CardComment
 import com.phew.domain.dto.CardDetail
 import com.phew.domain.usecase.BlockMember
@@ -135,22 +135,22 @@ class CardDetailViewModel @Inject constructor(
                 val commentsResult = commentsDeferred.await()
 
                 when {
-                    cardDetailResult is DomainResult.Success && commentsResult is DomainResult.Success -> {
+                    cardDetailResult.isSuccess && commentsResult.isSuccess -> {
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
-                                cardDetail = cardDetailResult.data,
-                                comments = commentsResult.data,
+                                cardDetail = cardDetailResult.getOrThrow(),
+                                comments = commentsResult.getOrThrow(),
                                 isRefresh = false
                             )
                         }
                     }
 
-                    cardDetailResult is DomainResult.Success && commentsResult is DomainResult.Failure -> {
+                    cardDetailResult.isSuccess && commentsResult.isFailure -> {
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
-                                cardDetail = cardDetailResult.data,
+                                cardDetail = cardDetailResult.getOrThrow(),
                                 comments = emptyList(),
                                 error = CardDetailError.COMMENTS_LOAD_FAILED,
                                 isRefresh = false
@@ -158,11 +158,11 @@ class CardDetailViewModel @Inject constructor(
                         }
                     }
 
-                    cardDetailResult is DomainResult.Failure -> {
+                    cardDetailResult.isFailure -> {
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
-                                error = if (cardDetailResult.error == ERROR_ALREADY_CARD_DELETE) {
+                                error = if (cardDetailResult.errorMessage() == ERROR_ALREADY_CARD_DELETE) {
                                     if(isSilent) CardDetailError.CARD_DELETE_NO_DIALOG else CardDetailError.CARD_DELETE
                                 } else {
                                     CardDetailError.CARD_LOAD_FAILED
@@ -172,7 +172,7 @@ class CardDetailViewModel @Inject constructor(
                         }
                     }
 
-                    commentsResult is DomainResult.Failure -> {
+                    commentsResult.isFailure -> {
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
@@ -218,9 +218,9 @@ class CardDetailViewModel @Inject constructor(
             }
 
             // 1. 카드가 삭제되었는지 먼저 확인
-            when (val checkResult = checkCardDelete(CheckCardAlreadyDelete.Param(cardId = cardId))) {
-                is DomainResult.Success -> {
-                    if (checkResult.data) {
+            checkCardDelete(CheckCardAlreadyDelete.Param(cardId = cardId)).fold(
+                onSuccess = { isDeleted ->
+                    if (isDeleted) {
                         // 삭제된 경우 -> 에러 설정 및 다이얼로그 표시
                         _uiState.update {
                             it.copy(
@@ -232,8 +232,8 @@ class CardDetailViewModel @Inject constructor(
                         setDeleteDialog()
                         return@launch
                     }
-                }
-                is DomainResult.Failure -> {
+                },
+                onFailure = {
                     // 확인 실패 시 -> 네트워크 에러 처리 하고 중단
                     _uiState.update {
                         it.copy(
@@ -243,8 +243,8 @@ class CardDetailViewModel @Inject constructor(
                         )
                     }
                     return@launch
-                }
-            }
+                },
+            )
 
             // 2. 삭제되지 않은 경우 좋아요 토글 수행
             val result = if (currentDetail.isLike) {
@@ -253,29 +253,29 @@ class CardDetailViewModel @Inject constructor(
                 likeCard(cardId)
             }
 
-            when (result) {
-                is DomainResult.Success -> {
+            result.fold(
+                onSuccess = {
                     _uiState.update {
                         it.copy(
                             isLikeLoading = false,
                         )
                     }
-                }
-
-                is DomainResult.Failure -> {
+                },
+                onFailure = { throwable ->
+                    val message = Result.failure<Unit>(throwable).errorMessage()
                     _uiState.update {
                         it.copy(
                             cardDetail = currentDetail,
                             isLikeLoading = false,
-                            error = when (result.error) {
+                            error = when (message) {
                                 ERROR_NETWORK -> CardDetailError.NETWORK_ERROR
                                 ERROR_ALREADY_CARD_DELETE -> CardDetailError.CARD_DELETE
                                 else -> CardDetailError.FAIL
                             }
                         )
                     }
-                }
-            }
+                },
+            )
         }
     }
 
@@ -286,19 +286,19 @@ class CardDetailViewModel @Inject constructor(
             val currentDetail = _uiState.value.cardDetail ?: return@launch
             val currentPoll = currentDetail.poll ?: return@launch
 
-            when (val checkResult = checkCardDelete(CheckCardAlreadyDelete.Param(currentDetail.cardId))) {
-                is DomainResult.Success -> {
-                    if (checkResult.data) {
+            checkCardDelete(CheckCardAlreadyDelete.Param(currentDetail.cardId)).fold(
+                onSuccess = { isDeleted ->
+                    if (isDeleted) {
                         _uiState.update { it.copy(error = CardDetailError.CARD_DELETE) }
                         setDeleteDialog()
                         return@launch
                     }
-                }
-                is DomainResult.Failure -> {
+                },
+                onFailure = {
                     _uiState.update { it.copy(error = CardDetailError.NETWORK_ERROR) }
                     return@launch
-                }
-            }
+                },
+            )
 
             _uiState.update { it.copy(isPollVoteLoading = true, error = null) }
 
@@ -308,10 +308,10 @@ class CardDetailViewModel @Inject constructor(
                     ?.pollOptionId
                     ?: pollOptionId
 
-                when (val result = deletePollVote(
+                deletePollVote(
                     com.phew.domain.usecase.DeletePollVote.Param(votedOptionId)
-                )) {
-                    is DomainResult.Success -> {
+                ).fold(
+                    onSuccess = {
                         val canceledPoll = currentPoll.copy(
                             totalVoterCount = (currentPoll.totalVoterCount - 1L).coerceAtLeast(0L),
                             isVoted = false,
@@ -333,47 +333,49 @@ class CardDetailViewModel @Inject constructor(
                                 isPollVoteLoading = false
                             )
                         }
-                    }
-                    is DomainResult.Failure -> {
+                    },
+                    onFailure = { throwable ->
+                        val message = Result.failure<Unit>(throwable).errorMessage()
                         _uiState.update {
                             it.copy(
                                 isPollVoteLoading = false,
-                                error = when (result.error) {
+                                error = when (message) {
                                     ERROR_NETWORK -> CardDetailError.NETWORK_ERROR
                                     ERROR_ALREADY_CARD_DELETE -> CardDetailError.CARD_DELETE
                                     else -> CardDetailError.FAIL
                                 }
                             )
                         }
-                    }
-                }
+                    },
+                )
                 return@launch
             }
 
-            when (val result = createPollVote(
+            createPollVote(
                 com.phew.domain.usecase.CreatePollVote.Param(pollOptionId)
-            )) {
-                is DomainResult.Success -> {
+            ).fold(
+                onSuccess = { poll ->
                     _uiState.update {
                         it.copy(
-                            cardDetail = currentDetail.copy(poll = result.data),
+                            cardDetail = currentDetail.copy(poll = poll),
                             isPollVoteLoading = false
                         )
                     }
-                }
-                is DomainResult.Failure -> {
+                },
+                onFailure = { throwable ->
+                    val message = Result.failure<Unit>(throwable).errorMessage()
                     _uiState.update {
                         it.copy(
                             isPollVoteLoading = false,
-                            error = when (result.error) {
+                            error = when (message) {
                                 ERROR_NETWORK -> CardDetailError.NETWORK_ERROR
                                 ERROR_ALREADY_CARD_DELETE -> CardDetailError.CARD_DELETE
                                 else -> CardDetailError.FAIL
                             }
                         )
                     }
-                }
-            }
+                },
+            )
         }
     }
 
@@ -385,8 +387,8 @@ class CardDetailViewModel @Inject constructor(
 
             val result = blockMember(BlockMember.Param(toMemberId))
 
-            when (result) {
-                is DomainResult.Success -> {
+            result.fold(
+                onSuccess = {
                     _uiState.update {
                         it.copy(
                             isBlockLoading = false,
@@ -395,17 +397,16 @@ class CardDetailViewModel @Inject constructor(
                             blockedNickname = nickname
                         )
                     }
-                }
-
-                is DomainResult.Failure -> {
+                },
+                onFailure = {
                     _uiState.update {
                         it.copy(
                             isBlockLoading = false,
                             error = CardDetailError.NETWORK_ERROR
                         )
                     }
-                }
-            }
+                },
+            )
         }
     }
 
@@ -415,8 +416,8 @@ class CardDetailViewModel @Inject constructor(
         viewModelScope.launch {
             val result = unblockMember(UnblockMember.Param(memberId))
 
-            when (result) {
-                is DomainResult.Success -> {
+            result.fold(
+                onSuccess = {
                     _uiState.update {
                         it.copy(
                             blockedMemberId = null,
@@ -424,31 +425,22 @@ class CardDetailViewModel @Inject constructor(
                             blockSuccess = false
                         )
                     }
-                }
-
-                is DomainResult.Failure -> {
+                },
+                onFailure = {
                     _uiState.update {
                         it.copy(
                             error = CardDetailError.NETWORK_ERROR
                         )
                     }
-                }
-            }
+                },
+            )
         }
     }
 
     fun requestDeleteCard(cardId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
-            when (deleteCard(cardId)) {
-                is DomainResult.Failure -> {
-                    _uiState.update { state ->
-                        state.copy(
-                            deleteSuccess = false
-                        )
-                    }
-                }
-
-                is DomainResult.Success -> {
+            deleteCard(cardId).fold(
+                onSuccess = {
                     if (_uiState.value.cardDetail?.commentCardCount == 0) {
                         //  상세 카드에서 댓글이 없을 경우 Home으로 이동
                         _uiEffect.emit(CardDetailUiEffect.NavigationHome)
@@ -459,16 +451,23 @@ class CardDetailViewModel @Inject constructor(
                             )
                         }
                     }
-                }
-            }
+                },
+                onFailure = {
+                    _uiState.update { state ->
+                        state.copy(
+                            deleteSuccess = false
+                        )
+                    }
+                },
+            )
         }
     }
 
     fun verifyAndNavigateToWrite(cardId: Long) {
         viewModelScope.launch {
-            when (val result = checkCardDelete(CheckCardAlreadyDelete.Param(cardId = cardId))) {
-                is DomainResult.Success -> {
-                    if (result.data) {
+            checkCardDelete(CheckCardAlreadyDelete.Param(cardId = cardId)).fold(
+                onSuccess = { isDeleted ->
+                    if (isDeleted) {
                         // 삭제된 경우 에러 설정 -> Dialog 표시
                         _uiState.update { it.copy(error = CardDetailError.CARD_DELETE) }
                         setDeleteDialog()
@@ -476,12 +475,12 @@ class CardDetailViewModel @Inject constructor(
                         // 삭제되지 않은 경우 이동
                         _uiEffect.emit(CardDetailUiEffect.NavigateToWrite(cardId))
                     }
-                }
-                is DomainResult.Failure -> {
+                },
+                onFailure = {
                     // 네트워크 에러 등 처리 (기본 에러)
                     _uiState.update { it.copy(error = CardDetailError.NETWORK_ERROR) }
-                }
-            }
+                },
+            )
         }
     }
 

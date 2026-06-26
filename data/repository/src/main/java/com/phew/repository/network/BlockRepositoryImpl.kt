@@ -1,7 +1,6 @@
 package com.phew.repository.network
 
 
-import com.phew.core_common.DataResult
 import com.phew.core_common.log.SooumLog
 import com.phew.domain.model.BlockMember
 import com.phew.domain.repository.network.BlockRepository
@@ -16,18 +15,13 @@ class BlockRepositoryImpl @Inject constructor(
     override suspend fun getBlockList(): Result<List<BlockMember>> {
         SooumLog.d(TAG, "getBlockList")
         
-        return when (val result = apiCall(
+        return apiCall(
             apiCall = { blockHttp.getBlockList() },
             mapper = { it.map { dto -> dto.toDomain() } }
-        )) {
-            is DataResult.Success -> Result.success(result.data)
-            is DataResult.Fail -> Result.failure(
-                result.throwable ?: Exception("Failed to get block list: ${result.message}")
-            )
-        }
+        )
     }
 
-    override suspend fun getBlockListPaging(lastBlockId: Long): DataResult<List<BlockMember>> {
+    override suspend fun getBlockListPaging(lastBlockId: Long): Result<List<BlockMember>> {
         SooumLog.d(TAG, "getBlockListPaging - lastBlockId: $lastBlockId")
         return apiCall(
             apiCall = { blockHttp.getBlockListPaging(lastBlockId) },

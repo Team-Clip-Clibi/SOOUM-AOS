@@ -1,6 +1,5 @@
 package com.phew.repository.network
 
-import com.phew.core_common.DataResult
 import com.phew.core_common.HTTP_NO_MORE_CONTENT
 import com.phew.core_common.log.SooumLog
 import com.phew.domain.dto.FavoriteTagList
@@ -17,7 +16,7 @@ import javax.inject.Inject
 class TagRepositoryImpl @Inject constructor(
     private val tagHttp: TagHttp
 ) : TagRepository {
-    override suspend fun addFavoriteTag(tagId: Long): DataResult<Unit> {
+    override suspend fun addFavoriteTag(tagId: Long): Result<Unit> {
         SooumLog.d(TAG, "addFavoriteTag - tagId: $tagId")
         return apiCall(
             apiCall = { tagHttp.addFavoriteTag(tagId) },
@@ -25,7 +24,7 @@ class TagRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun removeFavoriteTag(tagId: Long): DataResult<Unit> {
+    override suspend fun removeFavoriteTag(tagId: Long): Result<Unit> {
         SooumLog.d(TAG, "removeFavoriteTag - tagId: $tagId")
         return apiCall(
             apiCall = { tagHttp.removeFavoriteTag(tagId) },
@@ -33,12 +32,12 @@ class TagRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun getRelatedTags(resultCnt: Long, tag: String): DataResult<TagInfoList> {
+    override suspend fun getRelatedTags(resultCnt: Long, tag: String): Result<TagInfoList> {
         SooumLog.d(TAG, "getRelatedTags - resultCnt: $resultCnt, tag: $tag")
         
         // Handle null or empty tag
         if (tag.isBlank()) {
-            return DataResult.Fail(
+            return com.phew.core_common.resultFailure(
                 message = "No Content",
                 code = HTTP_NO_MORE_CONTENT
             )
@@ -55,7 +54,7 @@ class TagRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun getTagCards(tagId: Long, lastId: Long): DataResult<TagCards> {
+    override suspend fun getTagCards(tagId: Long, lastId: Long): Result<TagCards> {
         SooumLog.d(TAG, "getTagCards - tagId: $tagId, lastId: $lastId")
         return apiCall(
             apiCall = { tagHttp.getTagCards(tagId = tagId, lastId = lastId) },
@@ -63,7 +62,7 @@ class TagRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun getTagCardsWithFavorite(tagId: Long): DataResult<TagCards> {
+    override suspend fun getTagCardsWithFavorite(tagId: Long): Result<TagCards> {
         SooumLog.d(TAG, "getTagCardsWithFavorite - tagId: $tagId")
         return apiCall(
             apiCall = { tagHttp.getTagCardsWithFavorite(tagId = tagId) },
@@ -71,7 +70,7 @@ class TagRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun getTagRank(): DataResult<TagInfoList> {
+    override suspend fun getTagRank(): Result<TagInfoList> {
         SooumLog.d(TAG, "getTagRank")
         return apiCall(
             apiCall = { tagHttp.getTagRank() },
@@ -79,7 +78,7 @@ class TagRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun getFavoriteTags(): DataResult<FavoriteTagList> {
+    override suspend fun getFavoriteTags(): Result<FavoriteTagList> {
         SooumLog.d(TAG, "getFavoriteTags")
         return apiCall(
             apiCall = { tagHttp.getFavoriteTags() },

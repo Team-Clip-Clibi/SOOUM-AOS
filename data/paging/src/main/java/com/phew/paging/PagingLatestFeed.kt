@@ -2,14 +2,10 @@ package com.phew.paging
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.phew.core_common.DataResult
-import com.phew.core_common.ERROR_NETWORK
-import com.phew.core_common.HTTP_INVALID_TOKEN
 import com.phew.core_common.log.SooumLog
 import com.phew.domain.dto.Latest
 import com.phew.domain.repository.network.CardFeedRepository
 import kotlinx.coroutines.delay
-import java.io.IOException
 import javax.inject.Inject
 
 class PagingLatestFeed @Inject constructor(
@@ -27,41 +23,29 @@ class PagingLatestFeed @Inject constructor(
         SooumLog.d(TAG, "load(lastId=$lastId, loadSize=${params.loadSize})")
 
         return try {
-            when (val result = cardFeedRepository.requestFeedLatest(
+            val data = cardFeedRepository.requestFeedLatest(
                 latitude = latitude,
                 longitude = longitude,
                 lastId = lastId
-            )) {
-                is DataResult.Success -> {
-                    delay(2000L)
-                    val feeds = if (lastId != null) {
-                        result.data.filter { it.cardId.toLongOrNull() != lastId }
-                    } else {
-                        result.data
-                    }
-                    
-                    val nextKey = feeds.asReversed()
-                        .firstOrNull { it.cardId.toLongOrNull() != null }
-                        ?.cardId
-                        ?.toLongOrNull()
-                        ?.takeIf { it != lastId } // Prevent infinite loop if we get same lastId
-                        
-                    LoadResult.Page(
-                        data = feeds,
-                        prevKey = null,
-                        nextKey = nextKey
-                    )
-                }
-
-                is DataResult.Fail -> {
-                    val exception = if (result.code == HTTP_INVALID_TOKEN) {
-                        SecurityException("Invalid Token")
-                    } else {
-                        IOException(ERROR_NETWORK)
-                    }
-                    LoadResult.Error(exception)
-                }
+            ).getOrThrow()
+            delay(2000L)
+            val feeds = if (lastId != null) {
+                data.filter { it.cardId.toLongOrNull() != lastId }
+            } else {
+                data
             }
+                    
+            val nextKey = feeds.asReversed()
+                .firstOrNull { it.cardId.toLongOrNull() != null }
+                ?.cardId
+                ?.toLongOrNull()
+                ?.takeIf { it != lastId }
+                        
+            LoadResult.Page(
+                data = feeds,
+                prevKey = null,
+                nextKey = nextKey
+            )
         } catch (e: Exception) {
             LoadResult.Error(e)
         }

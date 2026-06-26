@@ -5,10 +5,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.phew.core.ui.model.CameraCaptureRequest
 import com.phew.core.ui.model.CameraPickerAction
-import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.ERROR_TRANSFER_CODE_INVALID
 import com.phew.core_common.ERROR_UN_GOOD_IMAGE
+import com.phew.core_common.errorMessage
 import com.phew.domain.SIGN_UP_ALREADY_SIGN_UP
 import com.phew.domain.SIGN_UP_OKAY
 import com.phew.domain.SIGN_UP_REGISTERED
@@ -110,18 +110,17 @@ class SignUpViewModel @Inject constructor(
      */
     fun generateNickName() {
         viewModelScope.launch(Dispatchers.IO) {
-            when (val result = getNickName()) {
-                is DomainResult.Failure -> {
-                    _effect.emit(SignUpEffect.ShowError(SignUpError.Network))
-                }
-
-                is DomainResult.Success -> {
+            getNickName().fold(
+                onSuccess = { nickName ->
                     _uiState.update { state ->
-                        state.copy(nickName = result.data, checkNickName = UiState.Success(true))
+                        state.copy(nickName = nickName, checkNickName = UiState.Success(true))
                     }
                     _effect.emit(SignUpEffect.NavigateToNickName)
+                },
+                onFailure = {
+                    _effect.emit(SignUpEffect.ShowError(SignUpError.Network))
                 }
-            }
+            )
         }
     }
 
@@ -130,7 +129,7 @@ class SignUpViewModel @Inject constructor(
      */
     fun signUp() {
         viewModelScope.launch(Dispatchers.IO) {
-            when (val result = requestSignUp(
+            requestSignUp(
                 data = RequestSignUp.Param(
                     agreedToLocationTerms = _uiState.value.agreedToLocationTerms,
                     agreedToPrivacyPolicy = _uiState.value.agreedToPrivacyPolicy,
@@ -138,9 +137,12 @@ class SignUpViewModel @Inject constructor(
                     nickName = _uiState.value.nickName,
                     profileImage = uiState.value.profile.lastOrNull()?.toString() ?: Uri.EMPTY.toString()
                 )
-            )) {
-                is DomainResult.Failure -> {
-                    when (result.error) {
+            ).fold(
+                onSuccess = {
+                    _effect.emit(SignUpEffect.NavigateToFinish)
+                },
+                onFailure = { throwable ->
+                    when (throwable.toUiMessage()) {
                         ERROR_NETWORK -> {
                             _effect.emit(SignUpEffect.ShowError(SignUpError.Network))
                         }
@@ -154,11 +156,7 @@ class SignUpViewModel @Inject constructor(
                         }
                     }
                 }
-
-                is DomainResult.Success -> {
-                    _effect.emit(SignUpEffect.NavigateToFinish)
-                }
-            }
+            )
         }
     }
 
@@ -166,26 +164,25 @@ class SignUpViewModel @Inject constructor(
      * 닉네임 검증 함수
      */
     private suspend fun checkName(name: String) {
-        when (val result = withContext(Dispatchers.IO) { checkNickName(CheckNickName.Param(name)) }) {
-            is DomainResult.Failure -> {
-                if (_uiState.value.nickName == name) {
-                    _uiState.update { state ->
-                        state.copy(checkNickName = UiState.Fail(result.error))
-                    }
-                    _effect.emit(SignUpEffect.ShowError(SignUpError.Network))
-                }
-            }
-
-            is DomainResult.Success -> {
+        withContext(Dispatchers.IO) { checkNickName(CheckNickName.Param(name)) }.fold(
+            onSuccess = { available ->
                 _uiState.update { state ->
                     if (state.nickName == name) {
-                        state.copy(checkNickName = UiState.Success(result.data))
+                        state.copy(checkNickName = UiState.Success(available))
                     } else {
                         state
                     }
                 }
+            },
+            onFailure = { throwable ->
+                if (_uiState.value.nickName == name) {
+                    _uiState.update { state ->
+                        state.copy(checkNickName = UiState.Fail(throwable.toUiMessage()))
+                    }
+                    _effect.emit(SignUpEffect.ShowError(SignUpError.Network))
+                }
             }
-        }
+        )
     }
 
     /**
@@ -202,21 +199,19 @@ class SignUpViewModel @Inject constructor(
      */
     fun restoreAccount() {
         viewModelScope.launch(Dispatchers.IO) {
-            when (val result =
-                restoreAccount(RestoreAccount.Param(_uiState.value.authCode.trim()))) {
-                is DomainResult.Failure -> {
-                    val error = when (result.error) {
+            restoreAccount(RestoreAccount.Param(_uiState.value.authCode.trim())).fold(
+                onSuccess = {
+                    _effect.emit(SignUpEffect.RestoreSuccess)
+                },
+                onFailure = { throwable ->
+                    val error = when (throwable.toUiMessage()) {
                         ERROR_NETWORK -> SignUpError.Network
                         ERROR_TRANSFER_CODE_INVALID -> SignUpError.InvalidAuthCode
                         else -> SignUpError.App
                     }
                     _effect.emit(SignUpEffect.ShowError(error))
                 }
-
-                is DomainResult.Success -> {
-                    _effect.emit(SignUpEffect.RestoreSuccess)
-                }
-            }
+            )
         }
     }
 
@@ -272,23 +267,22 @@ class SignUpViewModel @Inject constructor(
      */
     fun checkRegister() {
         viewModelScope.launch(Dispatchers.IO) {
-            when (val result = checkSignUp()) {
-                is DomainResult.Failure -> {
-                    _effect.emit(SignUpEffect.ShowError(SignUpError.Network))
-                }
-
-                is DomainResult.Success -> {
+            checkSignUp().fold(
+                onSuccess = { checkResult ->
                     val signUpResult = SignUpResult(
-                        time = result.data.second,
-                        result = result.data.first
+                        time = checkResult.second,
+                        result = checkResult.first
                     )
                     when (signUpResult.result) {
                         SIGN_UP_OKAY -> _effect.emit(SignUpEffect.NavigateToAgreement)
                         SIGN_UP_REGISTERED, SIGN_UP_ALREADY_SIGN_UP -> login()
                         else -> _effect.emit(SignUpEffect.ShowDialog(signUpResult))
                     }
+                },
+                onFailure = {
+                    _effect.emit(SignUpEffect.ShowError(SignUpError.Network))
                 }
-            }
+            )
         }
     }
 
@@ -297,15 +291,14 @@ class SignUpViewModel @Inject constructor(
      */
     private fun login() {
         viewModelScope.launch(Dispatchers.IO) {
-            when (val result = requestLogin()) {
-                is DomainResult.Failure -> {
+            requestLogin().fold(
+                onSuccess = {
+                    _effect.emit(SignUpEffect.NavigateHome)
+                },
+                onFailure = {
                     _effect.emit(SignUpEffect.ShowError(SignUpError.Network))
                 }
-
-                is DomainResult.Success -> {
-                    _effect.emit(SignUpEffect.NavigateHome)
-                }
-            }
+            )
         }
     }
 
@@ -420,22 +413,21 @@ class SignUpViewModel @Inject constructor(
      */
     private fun createImage() {
         viewModelScope.launch(Dispatchers.IO) {
-            when (val result = createFile()) {
-                is DomainResult.Failure -> {
-                    // 실패 시 별도 처리 없음
-                }
-
-                is DomainResult.Success -> {
+            createFile().fold(
+                onSuccess = { uri ->
                     _uiState.update { state ->
                         state.copy(
                             pendingProfileCameraCapture = CameraCaptureRequest(
                                 id = System.currentTimeMillis(),
-                                uri = result.data
+                                uri = uri
                             )
                         )
                     }
+                },
+                onFailure = {
+                    // 실패 시 별도 처리 없음
                 }
-            }
+            )
         }
     }
 
@@ -444,17 +436,16 @@ class SignUpViewModel @Inject constructor(
      */
     private fun closeFile(data: Uri) {
         viewModelScope.launch(Dispatchers.IO) {
-            when (finishPhoto(FinishTakePicture.Param(data))) {
-                is DomainResult.Failure -> {
-                    // 실패 시 별도 처리 없음
-                }
-
-                is DomainResult.Success -> {
+            finishPhoto(FinishTakePicture.Param(data)).fold(
+                onSuccess = {
                     _uiState.update { state ->
                         state.copy(profile = state.profile + data)
                     }
+                },
+                onFailure = {
+                    // 실패 시 별도 처리 없음
                 }
-            }
+            )
         }
     }
 
@@ -517,5 +508,7 @@ enum class SignUpError {
     InvalidAuthCode,
     App
 }
+
+private fun Throwable.toUiMessage(): String = Result.failure<Unit>(this).errorMessage()
 
 private const val NICK_NAME_CHECK_DELAY_MILLIS = 350L

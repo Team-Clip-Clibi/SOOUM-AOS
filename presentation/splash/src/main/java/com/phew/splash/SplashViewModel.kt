@@ -3,9 +3,9 @@ package com.phew.splash
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.phew.core_common.AppVersion
-import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR
 import com.phew.core_common.IsDebug
+import com.phew.core_common.errorMessage
 import com.phew.domain.model.AppVersionStatusType
 import com.phew.domain.usecase.AutoLogin
 import com.phew.domain.usecase.CheckAppVersion
@@ -37,52 +37,43 @@ class SplashViewModel @Inject constructor(
 
     private fun versionCheck() {
         viewModelScope.launch(Dispatchers.IO) {
-            when (val result = version(
+            version(
                 CheckAppVersion.Param(
                     appVersion = appVersion,
                     isDebugMode = isDebug
                 )
-            )) {
-                is DomainResult.Failure -> {
-                    _uiState.value = UiState.Error(ERROR)
-                }
-
-                is DomainResult.Success -> {
-                    if (result.data == AppVersionStatusType.UPDATE) {
+            ).fold(
+                onSuccess = { status ->
+                    if (status == AppVersionStatusType.UPDATE) {
                         _uiState.value = UiState.Update
                         return@launch
                     }
                     updateFcmToken()
-                }
-            }
+                },
+                onFailure = {
+                    _uiState.value = UiState.Error(ERROR)
+                },
+            )
         }
     }
 
     private fun updateFcmToken() {
         viewModelScope.launch(Dispatchers.IO) {
-            when (val result = updateFcm()) {
-                is DomainResult.Failure -> {
-                    _uiState.value = UiState.Error(result.error)
-                }
-
-                is DomainResult.Success -> {
-                    _uiState.value = UiState.Success
-                }
-            }
+            updateFcm().fold(
+                onSuccess = { _uiState.value = UiState.Success },
+                onFailure = { throwable ->
+                    _uiState.value = UiState.Error(Result.failure<Unit>(throwable).errorMessage())
+                },
+            )
         }
     }
 
     fun saveNotify(data: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
-            when (notify(SaveNotify.Param(data))) {
-                is DomainResult.Failure -> {
-                    _uiState.value = UiState.Error(ERROR)
-                }
-
-                is DomainResult.Success -> {
-                    requestAutoLogin()
-                }
-            }
+            notify(SaveNotify.Param(data)).fold(
+                onSuccess = { requestAutoLogin() },
+                onFailure = { _uiState.value = UiState.Error(ERROR) },
+            )
         }
     }
 

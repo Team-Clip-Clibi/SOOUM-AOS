@@ -2,7 +2,6 @@ package com.phew.paging
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.phew.core_common.DataResult
 import com.phew.core_common.HTTP_NO_MORE_CONTENT
 import com.phew.domain.dto.ProfileCard
 import com.phew.domain.repository.network.ProfileRepository
@@ -23,16 +22,10 @@ class PagingProfileFeedCard(
             } else {
                 repository.requestProfileFeedCardNext(userId = userId, cardId = cardId)
             }
-            when (request) {
-                is DataResult.Fail -> {
-                    return LoadResult.Error(
-                        Throwable(request.message)
-                    )
-                }
-
-                is DataResult.Success -> {
+            request.fold(
+                onSuccess = { data ->
                     when {
-                        request.data.second.isEmpty() || request.data.first == HTTP_NO_MORE_CONTENT || request.data.second.isNotEmpty() && request.data.second.last().cardId == params.key -> {
+                        data.second.isEmpty() || data.first == HTTP_NO_MORE_CONTENT || data.second.isNotEmpty() && data.second.last().cardId == params.key -> {
                             return LoadResult.Page(
                                 data = emptyList(),
                                 prevKey = null,
@@ -42,14 +35,15 @@ class PagingProfileFeedCard(
 
                         else -> {
                             return LoadResult.Page(
-                                data = request.data.second,
+                                data = data.second,
                                 prevKey = null,
-                                nextKey = request.data.second.last().cardId
+                                nextKey = data.second.last().cardId
                             )
                         }
                     }
-                }
-            }
+                },
+                onFailure = { return LoadResult.Error(it) },
+            )
         } catch (e: Exception) {
             e.printStackTrace()
             return LoadResult.Error(e)

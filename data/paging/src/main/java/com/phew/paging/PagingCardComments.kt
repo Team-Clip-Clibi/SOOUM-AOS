@@ -2,8 +2,8 @@ package com.phew.paging
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.phew.core_common.DataResult
 import com.phew.core_common.ERROR_NETWORK
+import com.phew.core_common.exception.asSooumException
 import com.phew.core_common.HTTP_INVALID_TOKEN
 import com.phew.core_common.HTTP_NO_MORE_CONTENT
 import com.phew.domain.dto.CardComment
@@ -30,33 +30,32 @@ internal class PagingCardComments(
                 repository.getCardCommentsMore(cardId, lastId, latitude, longitude)
             }
 
-            when (result) {
-                is DataResult.Success -> {
-                    val data = result.data
+            result.fold(
+                onSuccess = { data ->
                     val nextKey = data.lastOrNull()?.cardId
                     LoadResult.Page(
                         data = data,
                         prevKey = null,
                         nextKey = nextKey
                     )
-                }
-
-                is DataResult.Fail -> {
-                    if (result.code == HTTP_NO_MORE_CONTENT) {
+                },
+                onFailure = { throwable ->
+                    val exception = throwable.asSooumException()
+                    if (exception.code == HTTP_NO_MORE_CONTENT) {
                         return LoadResult.Page(
                             data = emptyList(),
                             prevKey = null,
                             nextKey = null
                         )
                     }
-                    val exception = if (result.code == HTTP_INVALID_TOKEN) {
+                    val error = if (exception.code == HTTP_INVALID_TOKEN) {
                         SecurityException("Invalid token")
                     } else {
-                        IOException(result.message ?: ERROR_NETWORK)
+                        IOException(exception.message.ifBlank { ERROR_NETWORK })
                     }
-                    LoadResult.Error(exception)
-                }
-            }
+                    LoadResult.Error(error)
+                },
+            )
         } catch (e: Exception) {
             LoadResult.Error(e)
         }

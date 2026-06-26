@@ -2,7 +2,7 @@ package com.phew.reports
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.phew.core_common.DomainResult
+import com.phew.core_common.errorMessage
 import com.phew.domain.dto.ReportReason
 import com.phew.domain.usecase.ReportsCards
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,20 +22,21 @@ class ReportCardViewModel @Inject constructor(private val report: ReportsCards) 
     fun reportCard(cardId: String) {
         _uiState.update { state -> state.copy(reportCard = UiState.Loading) }
         viewModelScope.launch(Dispatchers.IO) {
-            when (val result = report(
+            report(
                 ReportsCards.Param(
                     cardId = cardId,
                     reason = _uiState.value.reportReason
                 )
-            )) {
-                is DomainResult.Failure -> {
-                    _uiState.update { state -> state.copy(reportCard = UiState.Fail(result.error)) }
-                }
-
-                is DomainResult.Success -> {
+            ).fold(
+                onSuccess = {
                     _uiState.update { state -> state.copy(reportCard = UiState.Success(Unit)) }
-                }
-            }
+                },
+                onFailure = { throwable ->
+                    _uiState.update { state ->
+                        state.copy(reportCard = UiState.Fail(Result.failure<Unit>(throwable).errorMessage()))
+                    }
+                },
+            )
         }
     }
 

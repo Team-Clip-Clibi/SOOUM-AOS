@@ -1,25 +1,24 @@
 package com.phew.domain.usecase
 
-import com.phew.core_common.DomainResult
 import com.phew.domain.repository.network.MembersRepository
 import javax.inject.Inject
 
 class GetActivityRestrictionDate @Inject constructor(
     private val repository: MembersRepository
 ) {
-    suspend operator fun invoke(): DomainResult<String?, Unit> {
+    suspend operator fun invoke(): Result<String?> {
         return try {
             val result = repository.getActivityRestrictionDate()
             result.fold(
                 onSuccess = { data ->
-                    DomainResult.Success(data)
+                    Result.success(data)
                 },
                 onFailure = {
-                    DomainResult.Failure(Unit)
+                    com.phew.core_common.resultFailure(Unit)
                 }
             )
         } catch (e: Exception) {
-            DomainResult.Failure(Unit)
+            com.phew.core_common.resultFailure(Unit)
         }
     }
 }

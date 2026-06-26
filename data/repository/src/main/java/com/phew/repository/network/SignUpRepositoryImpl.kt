@@ -1,6 +1,5 @@
 package com.phew.repository.network
 
-import com.phew.core_common.DataResult
 import com.phew.domain.dto.CheckSignUp
 import com.phew.domain.dto.Token
 import com.phew.domain.dto.UploadImageUrl
@@ -17,7 +16,7 @@ import okhttp3.RequestBody
 import javax.inject.Inject
 
 class SignUpRepositoryImpl @Inject constructor(private val signUpHttp : SignUpHttp) : SignUpRepository {
-    override suspend fun requestCheckSignUp(info: String, osVersion: String, modelName: String): DataResult<CheckSignUp> {
+    override suspend fun requestCheckSignUp(info: String, osVersion: String, modelName: String): Result<CheckSignUp> {
         return apiCall(
             apiCall = { signUpHttp.requestCheckSignUp(InfoDTO(
                 encryptedDeviceId = info,
@@ -29,7 +28,7 @@ class SignUpRepositoryImpl @Inject constructor(private val signUpHttp : SignUpHt
         )
     }
 
-    override suspend fun requestSecurityKey(): DataResult<String> {
+    override suspend fun requestSecurityKey(): Result<String> {
         return apiCall(
             apiCall = { signUpHttp.getSecurityKey() },
             mapper = { result -> result.publicKey }
@@ -40,7 +39,7 @@ class SignUpRepositoryImpl @Inject constructor(private val signUpHttp : SignUpHt
         info: String,
         osVersion: String,
         modelName: String
-    ): DataResult<Token> {
+    ): Result<Token> {
         return apiCall(
             apiCall = { signUpHttp.requestLogin(InfoDTO(
                 encryptedDeviceId = info,
@@ -52,14 +51,14 @@ class SignUpRepositoryImpl @Inject constructor(private val signUpHttp : SignUpHt
         )
     }
 
-    override suspend fun requestNickName(): DataResult<String> {
+    override suspend fun requestNickName(): Result<String> {
         return apiCall(
             apiCall = { signUpHttp.requestNickNameGenerator() },
             mapper = { result -> result.nickname }
         )
     }
 
-    override suspend fun requestUploadImageUrl(): DataResult<UploadImageUrl> {
+    override suspend fun requestUploadImageUrl(): Result<UploadImageUrl> {
         return apiCall(
             apiCall = { signUpHttp.requestUploadImageUrl() },
             mapper = { result -> result.toDomain() }
@@ -69,7 +68,7 @@ class SignUpRepositoryImpl @Inject constructor(private val signUpHttp : SignUpHt
     override suspend fun requestUploadImage(
         data: RequestBody,
         url: String
-    ): DataResult<Unit> {
+    ): Result<Unit> {
         return apiCall(
             apiCall = { signUpHttp.requestUploadImage(url = url, body = data) },
             mapper = { result -> result }
@@ -87,7 +86,7 @@ class SignUpRepositoryImpl @Inject constructor(private val signUpHttp : SignUpHt
         agreedToPrivacyPolicy: Boolean,
         deviceModel: String,
         deviceOs: String
-    ): DataResult<Token> {
+    ): Result<Token> {
         val signUpRequest = SignUpRequest(
             memberInfo = MemberInfoDTO(
                 encryptedDeviceId = encryptedDeviceId,
@@ -111,7 +110,7 @@ class SignUpRepositoryImpl @Inject constructor(private val signUpHttp : SignUpHt
         )
     }
 
-    override suspend fun requestCheckNickName(nickname: String): DataResult<Boolean> {
+    override suspend fun requestCheckNickName(nickname: String): Result<Boolean> {
         return apiCall(
             apiCall = { signUpHttp.requestCheckNickName(NickNameDTO(nickname)) },
             mapper = { result -> result.isAvailable }

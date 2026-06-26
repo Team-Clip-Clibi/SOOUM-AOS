@@ -1,7 +1,6 @@
 package com.phew.repository.network
 
-import com.phew.core_common.DataResult
-import com.phew.core_common.exception.ServerException
+import com.phew.core_common.mapSooumFailure
 import com.phew.core_common.log.SooumLog
 import com.phew.datastore_local.DataStore
 import com.phew.device_info.DeviceInfo
@@ -25,46 +24,30 @@ class MembersRepositoryImpl @Inject constructor(
 
     override suspend fun getActivityRestrictionDate(): Result<String?> {
         SooumLog.d(TAG, "getActivityRestrictionDate")
-        return when (val result = apiCall(
+        return apiCall(
             apiCall = { membersHttp.getActivityRestrictionDate() },
             mapper = { it.activityRestrictionDate }
-        )) {
-            is DataResult.Success -> Result.success(result.data)
-            is DataResult.Fail -> Result.failure(
-                result.throwable
-                    ?: Exception("Failed to get activity restriction date: ${result.message}")
-            )
-        }
+        )
     }
 
     override suspend fun getTransferCode(): Result<TransferCode> {
-        return when (val result = apiCall(
+        return apiCall(
             apiCall = { membersHttp.getTransferCode() },
             mapper = { it.toDomain() }
-        )) {
-            is DataResult.Success -> Result.success(result.data)
-            is DataResult.Fail -> Result.failure(
-                ServerException(result.code, result.message)
-            )
-        }
+        )
     }
 
     override suspend fun refreshTransferCode(): Result<TransferCode> {
-        return when (val result = apiCall(
+        return apiCall(
             apiCall = { membersHttp.refreshTransferCode() },
             mapper = { it.toDomain() }
-        )) {
-            is DataResult.Success -> Result.success(result.data)
-            is DataResult.Fail -> Result.failure(
-                ServerException(result.code, result.message)
-            )
-        }
+        )
     }
 
     override suspend fun transferAccount(transferCode: String, deviceId: String): Result<Unit> {
         SooumLog.d(TAG, "transferAccount - transferCode: $transferCode")
 
-        return try {
+        return runCatching {
             val deviceModel = deviceInfo.modelName()
             val deviceOsVersion = deviceInfo.osVersion()
             val request = TransferAccountRequestDTO(
@@ -74,25 +57,20 @@ class MembersRepositoryImpl @Inject constructor(
                 deviceModel = deviceModel,
                 deviceOsVersion = deviceOsVersion
             )
-            when (val result = apiCall(
+            apiCall(
                 apiCall = { membersHttp.transferAccount(request) },
                 mapper = { Unit }
-            )) {
-                is DataResult.Success -> Result.success(Unit)
-                is DataResult.Fail -> Result.failure(
-                    result.throwable ?: Exception("Failed to transfer account: ${result.message}")
-                )
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
+            )
+        }.mapSooumFailure().fold(
+            onSuccess = { it },
+            onFailure = { Result.failure(it) },
+        )
     }
 
     override suspend fun withdrawalAccount(reason: String): Result<Unit> {
         SooumLog.d(TAG, "withdrawalAccount - reason: $reason")
 
-        return try {
-            // DataStore에서 토큰 가져오기
+        return runCatching {
             val tokenData = dataStore.getToken("user_token")
 
             val request = WithdrawalRequestDTO(
@@ -101,11 +79,11 @@ class MembersRepositoryImpl @Inject constructor(
                 reason = reason
             )
 
-            when (val result = apiCall(
+            apiCall(
                 apiCall = { membersHttp.withdrawalAccount(request) },
                 mapper = { Unit }
-            )) {
-                is DataResult.Success -> {
+            ).fold(
+                onSuccess = {
                     val clearResult = dataStore.clearAllData()
                     if (clearResult) {
                         SooumLog.d(TAG, "Successfully cleared all data after withdrawal")
@@ -117,32 +95,25 @@ class MembersRepositoryImpl @Inject constructor(
                         )
                         Result.success(Unit) // 탈퇴는 성공했으므로 여전히 성공으로 처리
                     }
-                }
-
-                is DataResult.Fail -> Result.failure(
-                    result.throwable ?: Exception("Failed to withdrawal account: ${result.message}")
-                )
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
+                },
+                onFailure = { Result.failure(it) },
+            )
+        }.mapSooumFailure().fold(
+            onSuccess = { it },
+            onFailure = { Result.failure(it) },
+        )
     }
 
     override suspend fun getRejoinableDate(): Result<RejoinableDate> {
         SooumLog.d(TAG, "getRejoinableDate")
 
-        return when (val result = apiCall(
+        return apiCall(
             apiCall = { membersHttp.getRejoinableDate() },
             mapper = { it.toDomain() }
-        )) {
-            is DataResult.Success -> Result.success(result.data)
-            is DataResult.Fail -> Result.failure(
-                result.throwable ?: Exception("Failed to get rejoinable date: ${result.message}")
-            )
-        }
+        )
     }
 
-    override suspend fun toggleNotification(isAllowNotify: Alarm): DataResult<Unit> {
+    override suspend fun toggleNotification(isAllowNotify: Alarm): Result<Unit> {
         SooumLog.d(TAG, "toggleNotification - isAllowNotify: $isAllowNotify")
         return (apiCall(
             apiCall = { membersHttp.toggleNotification(isAllowNotify.toDTO()) },
@@ -150,7 +121,7 @@ class MembersRepositoryImpl @Inject constructor(
         ))
     }
 
-    override suspend fun getToggleNotification(): DataResult<Alarm> {
+    override suspend fun getToggleNotification(): Result<Alarm> {
         return apiCall(
             apiCall = { membersHttp.getToggleNotification() },
             mapper = { result -> result.toDomain() }

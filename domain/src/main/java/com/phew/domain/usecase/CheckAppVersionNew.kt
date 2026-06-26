@@ -1,6 +1,5 @@
 package com.phew.domain.usecase
 
-import com.phew.core_common.DomainResult
 import com.phew.domain.model.AppVersionStatus
 import com.phew.domain.model.AppVersionStatusType
 import com.phew.domain.repository.DeviceRepository
@@ -16,10 +15,10 @@ class CheckAppVersionNew @Inject constructor(
         val isDebugMode: Boolean,
     )
 
-    suspend operator fun invoke(param: Param): DomainResult<AppVersionStatus, Unit> {
+    suspend operator fun invoke(param: Param): Result<AppVersionStatus> {
         return try {
             if (param.isDebugMode) {
-                return DomainResult.Success(
+                return Result.success(
                     AppVersionStatus(
                         status = AppVersionStatusType.OK,
                         latestVersion = "1.0.0"
@@ -30,14 +29,14 @@ class CheckAppVersionNew @Inject constructor(
             val result = appVersionRepository.checkAppVersion(param.type, appVersion)
             result.fold(
                 onSuccess = { status ->
-                    DomainResult.Success(status)
+                    Result.success(status)
                 },
                 onFailure = {
-                    DomainResult.Failure(Unit)
+                    com.phew.core_common.resultFailure(Unit)
                 }
             )
         } catch (e: Exception) {
-            DomainResult.Failure(Unit)
+            com.phew.core_common.resultFailure(Unit)
         }
     }
 }

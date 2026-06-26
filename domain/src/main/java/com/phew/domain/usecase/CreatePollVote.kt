@@ -1,13 +1,12 @@
 package com.phew.domain.usecase
 
 import com.phew.core_common.APP_ERROR_CODE
-import com.phew.core_common.DataResult
-import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR_ALREADY_CARD_DELETE
 import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.HTTP_CARD_ALREADY_DELETE
 import com.phew.core_common.HTTP_INVALID_TOKEN
+import com.phew.core_common.mapFailureMessage
 import com.phew.domain.dto.Poll
 import com.phew.domain.repository.network.CardDetailRepository
 import javax.inject.Inject
@@ -19,19 +18,14 @@ class CreatePollVote @Inject constructor(
         val pollOptionId: Long
     )
 
-    suspend operator fun invoke(param: Param): DomainResult<Poll, String> {
-        return when (val result = repository.createPollVote(param.pollOptionId)) {
-            is DataResult.Success -> DomainResult.Success(result.data)
-            is DataResult.Fail -> mapFailure(result)
-        }
-    }
-
-    private fun mapFailure(result: DataResult.Fail): DomainResult.Failure<String> {
-        return when (result.code) {
-            HTTP_INVALID_TOKEN -> DomainResult.Failure(ERROR_NETWORK)
-            APP_ERROR_CODE -> DomainResult.Failure(result.message ?: ERROR_FAIL_JOB)
-            HTTP_CARD_ALREADY_DELETE -> DomainResult.Failure(ERROR_ALREADY_CARD_DELETE)
-            else -> DomainResult.Failure(ERROR_NETWORK)
+    suspend operator fun invoke(param: Param): Result<Poll> {
+        return repository.createPollVote(param.pollOptionId).mapFailureMessage { code, message ->
+            when (code) {
+                HTTP_INVALID_TOKEN -> ERROR_NETWORK
+                APP_ERROR_CODE -> message.ifBlank { ERROR_FAIL_JOB }
+                HTTP_CARD_ALREADY_DELETE -> ERROR_ALREADY_CARD_DELETE
+                else -> ERROR_NETWORK
+            }
         }
     }
 }

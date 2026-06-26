@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import com.phew.core_common.DomainResult
+import com.phew.core_common.errorMessage
 import com.phew.domain.dto.Notice
 import com.phew.domain.dto.NoticeSource
 import com.phew.domain.usecase.GetFeedNotification
@@ -45,25 +45,24 @@ class NoticeViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { it.copy(isLoading = true) }
             
-            when (val request = notification(NoticeSource.SETTINGS)) {
-                is DomainResult.Failure -> {
+            notification(NoticeSource.SETTINGS).fold(
+                onSuccess = { request ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            noticeItem = UiState.Success(request)
+                        )
+                    }
+                },
+                onFailure = { throwable ->
                     _uiState.update { 
                         it.copy(
                             isLoading = false,
-                            noticeItem = UiState.Fail(request.error)
+                            noticeItem = UiState.Fail(Result.failure<List<Notice>>(throwable).errorMessage())
                         ) 
                     }
-                }
-
-                is DomainResult.Success -> {
-                    _uiState.update { 
-                        it.copy(
-                            isLoading = false,
-                            noticeItem = UiState.Success(request.data)
-                        ) 
-                    }
-                }
-            }
+                },
+            )
         }
     }
     

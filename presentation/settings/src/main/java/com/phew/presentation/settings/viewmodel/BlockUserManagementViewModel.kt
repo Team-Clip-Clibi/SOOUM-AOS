@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import com.phew.core_common.DomainResult
+import com.phew.core_common.errorMessage
 import com.phew.domain.model.BlockMember
 import com.phew.domain.usecase.GetBlockUserPaging
 import com.phew.domain.usecase.GetRefreshToken
@@ -60,12 +60,10 @@ class BlockUserManagementViewModel @Inject constructor(
         val blockMember = _uiState.value.selectedBlockMember ?: return
 
         viewModelScope.launch {
-            when (
-                val result = unblockMember(
+            unblockMember(
                     UnblockMember.Param(toMemberId = blockMember.blockMemberId)
-                )
-            ) {
-                is DomainResult.Success -> {
+                ).fold(
+                onSuccess = {
                     _uiState.update {
                         it.copy(
                             showUnblockDialog = false,
@@ -75,9 +73,8 @@ class BlockUserManagementViewModel @Inject constructor(
                     }
                     _uiEffect.emit(BlockUserManagementUiEffect.ShowUnblockSuccess)
                     _uiEffect.emit(BlockUserManagementUiEffect.RefreshBlockList)
-                }
-
-                is DomainResult.Failure -> {
+                },
+                onFailure = { throwable ->
                     _uiState.update {
                         it.copy(
                             showUnblockDialog = false,
@@ -87,12 +84,12 @@ class BlockUserManagementViewModel @Inject constructor(
                     val refreshToken = getRefreshToken()
                     _uiEffect.emit(
                         BlockUserManagementUiEffect.ShowError(
-                            message = result.error ?: "차단 해제에 실패했습니다.",
+                            message = Result.failure<Unit>(throwable).errorMessage("차단 해제에 실패했습니다."),
                             refreshToken = refreshToken
                         )
                     )
-                }
-            }
+                },
+            )
         }
     }
 

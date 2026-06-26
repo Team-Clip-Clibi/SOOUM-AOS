@@ -1,7 +1,6 @@
 package com.phew.repository
 
 import com.phew.core_common.APP_ERROR_CODE
-import com.phew.core_common.DataResult
 import com.phew.core_common.HTTP_NO_MORE_CONTENT
 import com.phew.domain.dto.Notice
 import com.phew.domain.dto.NoticeSource
@@ -14,24 +13,24 @@ import javax.inject.Inject
 class NotifyRepositoryImpl @Inject constructor(private val notifyHttp: NotifyHttp) :
     NotifyRepository {
 
-    override suspend fun requestNotice(pageSize: Int, source: NoticeSource): DataResult<Pair<Int, List<Notice>>> {
+    override suspend fun requestNotice(pageSize: Int, source: NoticeSource): Result<Pair<Int, List<Notice>>> {
         try {
             val request = notifyHttp.requestNotice(
                 pageSize = pageSize,
                 source = source.value
             )
-            if (!request.isSuccessful) return DataResult.Fail(
+            if (!request.isSuccessful) return com.phew.core_common.resultFailure(
                 code = request.code(),
                 message = request.message()
             )
             if (request.body() == null && request.code() == HTTP_NO_MORE_CONTENT) {
-                return DataResult.Success(Pair(request.code(), emptyList()))
+                return Result.success(Pair(request.code(), emptyList()))
             }
             val body = request.body()!!
             if (body.notices.isEmpty()) {
-                return DataResult.Success(Pair(request.code(), emptyList()))
+                return Result.success(Pair(request.code(), emptyList()))
             }
-            return DataResult.Success(
+            return Result.success(
                 Pair(request.code(), body.notices.map { data ->
                     Notice(
                         content = data.title,
@@ -44,7 +43,7 @@ class NotifyRepositoryImpl @Inject constructor(private val notifyHttp: NotifyHtt
             )
         } catch (e: Exception) {
             e.printStackTrace()
-            return DataResult.Fail(
+            return com.phew.core_common.resultFailure(
                 code = APP_ERROR_CODE,
                 message = e.message,
                 throwable = e
@@ -56,32 +55,32 @@ class NotifyRepositoryImpl @Inject constructor(private val notifyHttp: NotifyHtt
         lastId: Int,
         pageSize: Int,
         source: NoticeSource,
-    ): DataResult<Pair<Int, List<Notice>>> {
+    ): Result<Pair<Int, List<Notice>>> {
         try {
             val request = notifyHttp.requestNoticePatch(
                 lastId = lastId,
                 pageSize = pageSize,
                 source = source.value
             )
-            if (!request.isSuccessful) return DataResult.Fail(
+            if (!request.isSuccessful) return com.phew.core_common.resultFailure(
                 code = request.code(),
                 message = request.message()
             )
             if (request.body() == null && request.code() == HTTP_NO_MORE_CONTENT) {
-                return DataResult.Success(Pair(request.code(), emptyList()))
+                return Result.success(Pair(request.code(), emptyList()))
             }
             val body = request.body()!!
             if (body.notices.isEmpty()) {
-                return DataResult.Success(Pair(request.code(), emptyList()))
+                return Result.success(Pair(request.code(), emptyList()))
             }
-            return DataResult.Success(
+            return Result.success(
                 Pair(request.code(), body.notices.map { data ->
                     data.toDomain()
                 })
             )
         } catch (e: Exception) {
             e.printStackTrace()
-            return DataResult.Fail(
+            return com.phew.core_common.resultFailure(
                 code = APP_ERROR_CODE,
                 message = e.message,
                 throwable = e
@@ -89,26 +88,26 @@ class NotifyRepositoryImpl @Inject constructor(private val notifyHttp: NotifyHtt
         }
     }
 
-    override suspend fun requestNotificationUnRead(): DataResult<Pair<Int, List<Notification>>> {
+    override suspend fun requestNotificationUnRead(): Result<Pair<Int, List<Notification>>> {
         try {
             val request = notifyHttp.requestNotificationUnRead()
             if (!request.isSuccessful) {
-                return DataResult.Fail(code = request.code(), message = request.message())
+                return com.phew.core_common.resultFailure(code = request.code(), message = request.message())
             }
             if (request.body() == null && request.code() == HTTP_NO_MORE_CONTENT) {
-                return DataResult.Success(Pair(request.code(), emptyList()))
+                return Result.success(Pair(request.code(), emptyList()))
             }
             val data = request.body()!!
             if (data.isEmpty()) {
-                return DataResult.Success(Pair(request.code(), emptyList()))
+                return Result.success(Pair(request.code(), emptyList()))
             }
             val domainBody = data.map { response ->
                 response.toDomain()
             }
-            return DataResult.Success(Pair(request.code(), domainBody))
+            return Result.success(Pair(request.code(), domainBody))
         } catch (e: Exception) {
             e.printStackTrace()
-            return DataResult.Fail(
+            return com.phew.core_common.resultFailure(
                 code = APP_ERROR_CODE,
                 message = e.message,
                 throwable = e
@@ -118,27 +117,27 @@ class NotifyRepositoryImpl @Inject constructor(private val notifyHttp: NotifyHtt
 
     override suspend fun requestNotificationUnReadPatch(
         lastId: Long,
-    ): DataResult<Pair<Int, List<Notification>>> {
+    ): Result<Pair<Int, List<Notification>>> {
         try {
             val request =
                 notifyHttp.requestNotificationUnReadPatch(lastId = lastId)
             if (!request.isSuccessful) {
-                return DataResult.Fail(code = request.code(), message = request.message())
+                return com.phew.core_common.resultFailure(code = request.code(), message = request.message())
             }
             if (request.body() == null && request.code() == HTTP_NO_MORE_CONTENT) {
-                return DataResult.Success(Pair(request.code(), emptyList()))
+                return Result.success(Pair(request.code(), emptyList()))
             }
             val data = request.body()!!
             if (data.isEmpty()) {
-                return DataResult.Success(Pair(request.code(), emptyList()))
+                return Result.success(Pair(request.code(), emptyList()))
             }
             val domainBody = data.map { response ->
                 response.toDomain()
             }
-            return DataResult.Success(Pair(request.code(), domainBody))
+            return Result.success(Pair(request.code(), domainBody))
         } catch (e: Exception) {
             e.printStackTrace()
-            return DataResult.Fail(
+            return com.phew.core_common.resultFailure(
                 code = APP_ERROR_CODE,
                 message = e.message,
                 throwable = e
@@ -146,27 +145,27 @@ class NotifyRepositoryImpl @Inject constructor(private val notifyHttp: NotifyHtt
         }
     }
 
-    override suspend fun requestNotificationRead(): DataResult<Pair<Int, List<Notification>>> {
+    override suspend fun requestNotificationRead(): Result<Pair<Int, List<Notification>>> {
         try {
             val request =
                 notifyHttp.requestNotificationRead()
             if (!request.isSuccessful) {
-                return DataResult.Fail(code = request.code(), message = request.message())
+                return com.phew.core_common.resultFailure(code = request.code(), message = request.message())
             }
             if (request.body() == null && request.code() == HTTP_NO_MORE_CONTENT) {
-                return DataResult.Success(Pair(request.code(), emptyList()))
+                return Result.success(Pair(request.code(), emptyList()))
             }
             val data = request.body()!!
             if (data.isEmpty()) {
-                return DataResult.Success(Pair(request.code(), emptyList()))
+                return Result.success(Pair(request.code(), emptyList()))
             }
             val domainBody = data.map { response ->
                 response.toDomain()
             }
-            return DataResult.Success(Pair(request.code(), domainBody))
+            return Result.success(Pair(request.code(), domainBody))
         } catch (e: Exception) {
             e.printStackTrace()
-            return DataResult.Fail(
+            return com.phew.core_common.resultFailure(
                 code = APP_ERROR_CODE,
                 message = e.message,
                 throwable = e
@@ -176,26 +175,26 @@ class NotifyRepositoryImpl @Inject constructor(private val notifyHttp: NotifyHtt
 
     override suspend fun requestNotificationReadPatch(
         lastId: Long,
-    ): DataResult<Pair<Int, List<Notification>>> {
+    ): Result<Pair<Int, List<Notification>>> {
         try {
             val request = notifyHttp.requestNotificationReadPatch(lastId = lastId)
             if (!request.isSuccessful) {
-                return DataResult.Fail(code = request.code(), message = request.message())
+                return com.phew.core_common.resultFailure(code = request.code(), message = request.message())
             }
             if (request.body() == null && request.code() == HTTP_NO_MORE_CONTENT) {
-                return DataResult.Success(Pair(request.code(), emptyList()))
+                return Result.success(Pair(request.code(), emptyList()))
             }
             val data = request.body()!!
             if (data.isEmpty()) {
-                return DataResult.Success(Pair(request.code(), emptyList()))
+                return Result.success(Pair(request.code(), emptyList()))
             }
             val domainBody = data.map { response ->
                 response.toDomain()
             }
-            return DataResult.Success(Pair(request.code(), domainBody))
+            return Result.success(Pair(request.code(), domainBody))
         } catch (e: Exception) {
             e.printStackTrace()
-            return DataResult.Fail(
+            return com.phew.core_common.resultFailure(
                 code = APP_ERROR_CODE,
                 message = e.message,
                 throwable = e

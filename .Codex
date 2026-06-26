@@ -66,9 +66,13 @@ Paging Flow가 필요한 경우 별도 public property로 노출하지 말고, �
 
 ## Domain/Data 작업 규칙
 
-- API 오류 매핑은 UseCase 또는 repository 구현 중 기존 패턴과 가까운 곳에 둔다.
-- `DataResult`와 `DomainResult` 혼용이 남아 있으므로 새 코드에서는 호출부가 기대하는 result type을 유지하되, 신규 경계에서는 `DomainResult`를 우선 검토한다.
-- `safeUseCase`를 사용할 수 있으면 중복 error mapping을 늘리지 않는다.
+- `DataResult`와 `DomainResult`는 제거되었고, 성공/실패 경계는 Kotlin 표준 `Result<T>`만 사용한다.
+- Repository, UseCase, Orchestrator는 `Result.success(...)`와 `Result.failure(...)` 또는 Core의 `resultFailure(...)`로 결과를 감싼다.
+- API 오류 매핑은 Core 공통 예외 함수와 UseCase 정책에 둔다. ViewModel 또는 Compose 화면에서 HTTP 코드별 분기를 새로 복제하지 않는다.
+- Repository의 API 호출은 `Mapper.apiCall`, `pagingCall`, `runCatching { ... }.mapSooumFailure()` 같은 공통 경로를 우선 사용해 try/catch를 최소화한다. 직접 try/catch는 파일/디바이스 I/O처럼 호출부가 복구 정책을 즉시 결정해야 하는 경우에만 둔다.
+- 통신 예외는 `core/core-common/src/main/java/com/phew/core_common/exception/SooumException.kt`에서 관리한다. `sooumExceptionOf`, `Throwable.asSooumException`, `Throwable.sooumCode`, `Throwable.sooumMessage`, `Throwable.isLogoutException`을 사용한다.
+- View 계층은 실패 메시지가 필요하면 `Result<T>.errorMessage()`를, 코드가 필요하면 `Result<T>.errorCode()` 또는 `Throwable.asSooumException().code`를 사용한다. 이 함수들은 Core에 있으므로 View에서 그대로 사용할 수 있다.
+- `safeUseCase` 또는 `mapResult`를 사용할 수 있으면 중복 error mapping을 늘리지 않는다.
 - Android Context가 필요한 동작은 장기적으로 data/device 또는 platform adapter로 밀어내는 것을 목표로 한다. 단, 현재 구조와 큰 충돌이 있으면 작은 수정 범위 안에서 기존 패턴을 따른다.
 
 ## 검증 규칙
@@ -95,4 +99,7 @@ JAVA_HOME=/Users/sonny8569/Library/Java/JavaVirtualMachines/corretto-21.0.8/Cont
 - `Notice`, `BlockUserManagement`, `CardDetail`의 Paging Flow를 UI state 내부로 이동했다.
 - `MyProfile`, `OtherProfile`, `Splash`의 state 수집을 `collectAsStateWithLifecycle()`로 변경하는 규칙을 추가했다.
 - `CommentCardDetailScreen`의 중복 댓글 paging request를 잠재 버그로 보고 제거했다.
+- `DataResult`와 `DomainResult`를 삭제하고 Kotlin `Result<T>`로 성공/실패 표현을 통일했다.
+- Core에 `SooumException`, `resultFailure`, `mapSooumFailure`, `errorMessage`, `errorCode`를 추가해 Repository try/catch와 View 예외 분기를 줄이는 규칙을 추가했다.
+- Repository API 호출은 `runCatching` 기반 공통 mapper를 우선 사용하고, View는 Core 예외 헬퍼를 그대로 사용하는 규칙을 추가했다.
 - 새 규칙이 생기면 이 `.Codex` 파일에 날짜와 함께 기록한다.

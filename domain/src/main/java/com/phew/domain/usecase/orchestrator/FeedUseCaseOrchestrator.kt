@@ -1,7 +1,6 @@
 package com.phew.domain.usecase.orchestrator
 
 import androidx.paging.PagingData
-import com.phew.core_common.DomainResult
 import com.phew.domain.dto.CardArticle
 import com.phew.domain.dto.FeedCardType
 import com.phew.domain.dto.Location
@@ -53,13 +52,13 @@ class FeedUseCaseOrchestrator @Inject constructor(
     fun feedPaging(query: FeedPagingQuery): Flow<PagingData<FeedCardType>> =
         feedPagingFactory.create(query)
 
-    suspend fun getFeedNotification(source: NoticeSource): DomainResult<List<Notice>, String> =
+    suspend fun getFeedNotification(source: NoticeSource): Result<List<Notice>> =
         getFeedNotification.invoke(source)
 
-    suspend fun markNotificationsRead(notifyIds: List<Long>): DomainResult<Unit, String> =
+    suspend fun markNotificationsRead(notifyIds: List<Long>): Result<Unit> =
         setReadActivateNotify(SetReadActivateNotify.Param(notifyId = notifyIds))
 
-    suspend fun checkCardDeleted(cardId: Long): DomainResult<Boolean, String> =
+    suspend fun checkCardDeleted(cardId: Long): Result<Boolean> =
         checkCardAlreadyDelete(CheckCardAlreadyDelete.Param(cardId = cardId))
 
     suspend fun moveToTop() {
@@ -74,8 +73,8 @@ class FeedUseCaseOrchestrator @Inject constructor(
         }
     }
 
-    suspend fun getCardArticle(): DomainResult<CardArticle, String> = getCardArticle.invoke()
+    suspend fun getCardArticle(): Result<CardArticle> = getCardArticle.invoke()
 
-    suspend fun setCardLike(cardId: Long, shouldLike: Boolean): DomainResult<Unit, String> =
+    suspend fun setCardLike(cardId: Long, shouldLike: Boolean): Result<Unit> =
         if (shouldLike) likeCard(cardId) else unlikeCard(cardId)
 }

@@ -1,6 +1,5 @@
 package com.phew.domain.usecase
 
-import com.phew.core_common.DataResult
 import com.phew.core_common.ERROR_NO_DATA
 import com.phew.domain.BuildConfig
 import com.phew.domain.repository.DeviceRepository
@@ -14,14 +13,8 @@ class AutoLogin @Inject constructor(
     suspend operator fun invoke(): Boolean {
         val token = deviceRepository.requestToken(BuildConfig.TOKEN_KEY)
         if (token.first == ERROR_NO_DATA || token.second == ERROR_NO_DATA) return false
-        when (val profile = profileRepository.requestMyProfile()) {
-            is DataResult.Fail -> {
-                deviceRepository.deleteAll()
-                return false
-            }
-
-            is DataResult.Success -> {
-                val data = profile.data
+        profileRepository.requestMyProfile().fold(
+            onSuccess = { data ->
                 val saveProfileResult = deviceRepository.saveProfileInfo(
                     profileKey = BuildConfig.PROFILE_KEY,
                     nickName = data.nickname
@@ -31,7 +24,11 @@ class AutoLogin @Inject constructor(
                     return false
                 }
                 return true
-            }
-        }
+            },
+            onFailure = {
+                deviceRepository.deleteAll()
+                return false
+            },
+        )
     }
 }

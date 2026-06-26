@@ -6,8 +6,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.core.net.toUri
-import com.phew.core_common.DataResult
-import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR_ACCOUNT_SUSPENDED
 import com.phew.core_common.ERROR_ALREADY_CARD_DELETE
 import com.phew.core_common.ERROR_FAIL_JOB
@@ -18,6 +16,8 @@ import com.phew.core_common.HTTP_BAD_REQUEST
 import com.phew.core_common.HTTP_CARD_ALREADY_DELETE
 import com.phew.core_common.HTTP_NOT_FOUND
 import com.phew.core_common.HTTP_UN_GOOD_IMAGE
+import com.phew.core_common.exception.asSooumException
+import com.phew.core_common.resultFailure
 import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.event.EventRepository
 import com.phew.domain.repository.network.CardFeedRepository
@@ -49,35 +49,33 @@ class PostCard @Inject constructor(
         val pollContents: List<String>,
     )
 
-    suspend operator fun invoke(data: Param): DomainResult<Long, String> {
-        if(data.content.trim().isEmpty()) return DomainResult.Failure(ERROR_FAIL_JOB)
-        when (val checkedPostBanned = networkRepository.requestCheckUploadCard()) {
-            is DataResult.Fail -> return DomainResult.Failure(ERROR_FAIL_JOB)
-            is DataResult.Success -> {
-                if (checkedPostBanned.data.isBaned) return DomainResult.Failure(checkedPostBanned.data.viewTime)
-            }
+    suspend operator fun invoke(data: Param): Result<Long> {
+        if(data.content.trim().isEmpty()) return resultFailure(ERROR_FAIL_JOB)
+        val checkedPostBanned = networkRepository.requestCheckUploadCard()
+            .getOrElse { return resultFailure(ERROR_FAIL_JOB) }
+        if (checkedPostBanned.isBaned) {
+            return resultFailure(checkedPostBanned.viewTime)
         }
         val imageInfoResult = if (data.isFromDevice) {
             getImageInfoFromDevice(data.imageUrl)
         } else {
             data.imgName?.let { imageName ->
-                DomainResult.Success(
+                Result.success(
                     UploadImageInfo(
                         imageName,
                         "DEFAULT"
                     )
                 )
-            } ?: DomainResult.Failure(ERROR_FAIL_JOB)
+            } ?: resultFailure(ERROR_FAIL_JOB)
         }
-        if (imageInfoResult is DomainResult.Failure) return imageInfoResult
-        val imageInfo = (imageInfoResult as DomainResult.Success).data
+        val imageInfo = imageInfoResult.getOrElse { return Result.failure(it) }
         return uploadCardData(param = data, imageInfo = imageInfo)
     }
 
     private suspend fun uploadCardData(
         param: Param,
         imageInfo: UploadImageInfo,
-    ): DomainResult<Long, String> {
+    ): Result<Long> {
         val locationPermissionCheck = deviceRepository.getLocationPermission()
         val (latitude, longitude) = if (locationPermissionCheck && param.isDistanceShared) {
             val location = deviceRepository.requestLocation()
@@ -100,7 +98,7 @@ class PostCard @Inject constructor(
                 pollContents = param.pollContents
             )
         } else {
-            if (param.cardId == null) return DomainResult.Failure(ERROR_FAIL_JOB) // Ensure early exit for null cardId
+            if (param.cardId == null) return resultFailure(ERROR_FAIL_JOB)
             networkRepository.requestUploadCardAnswer(
                 cardId = param.cardId,
                 content = param.content,
@@ -113,61 +111,42 @@ class PostCard @Inject constructor(
                 tag = param.tags
             )
         }
-        return when (uploadResult) {
-            is DataResult.Success -> {
+        return uploadResult.fold(
+            onSuccess = { response ->
                 eventRepository.logWriteCardClickFinishButton()
                 if (!param.isDistanceShared) eventRepository.logWriteDistanceSharedOff()
-                DomainResult.Success(uploadResult.data.cardId)
-            }
-
-            is DataResult.Fail -> when (uploadResult.code) {
-                HTTP_BAD_REQUEST -> DomainResult.Failure(ERROR_ACCOUNT_SUSPENDED)
-                HTTP_CARD_ALREADY_DELETE -> DomainResult.Failure(ERROR_ALREADY_CARD_DELETE)
-                HTTP_NOT_FOUND -> DomainResult.Failure(ERROR_FAIL_JOB)
-                HTTP_UN_GOOD_IMAGE -> DomainResult.Failure(ERROR_UN_GOOD_IMAGE)
-                else -> DomainResult.Failure(ERROR_FAIL_JOB)
-            }
-        }
+                Result.success(response.cardId)
+            },
+            onFailure = { throwable ->
+                when (throwable.asSooumException().code) {
+                    HTTP_BAD_REQUEST -> resultFailure(ERROR_ACCOUNT_SUSPENDED)
+                    HTTP_CARD_ALREADY_DELETE -> resultFailure(ERROR_ALREADY_CARD_DELETE)
+                    HTTP_NOT_FOUND -> resultFailure(ERROR_FAIL_JOB)
+                    HTTP_UN_GOOD_IMAGE -> resultFailure(ERROR_UN_GOOD_IMAGE)
+                    else -> resultFailure(ERROR_FAIL_JOB)
+                }
+            },
+        )
     }
 
-    private suspend fun getImageInfoFromDevice(imageUrl: String?): DomainResult<UploadImageInfo, String> {
-        if (imageUrl == null) return DomainResult.Failure(ERROR_FAIL_JOB)
-        return when (val requestUrl = networkRepository.requestUploadCardImage()) {
-            is DataResult.Fail -> {
-                DomainResult.Failure(requestUrl.message ?: ERROR_FAIL_JOB)
-            }
-
-            is DataResult.Success -> {
-                val uploadInfo = requestUrl.data
-                val file =
-                    try {
-                        context.contentResolver.readAsCompressedJpegRequestBody(uri = imageUrl.toUri())
-                    } catch (e: IOException) {
-                        e.printStackTrace()
-                        return DomainResult.Failure(ERROR_FAIL_PACKAGE_IMAGE)
-                    } catch (e: OutOfMemoryError) {
-                        e.printStackTrace()
-                        return DomainResult.Failure(ERROR_FAIL_JOB)
-                    }
-                when (val uploadResult =
-                    networkRepository.requestUploadImage(data = file, url = uploadInfo.url)) {
-                    is DataResult.Fail -> {
-                        return when (uploadResult.code) {
-                            else -> DomainResult.Failure(ERROR_NETWORK)
-                        }
-                    }
-
-                    is DataResult.Success -> {
-                        DomainResult.Success(
-                            UploadImageInfo(
-                                uploadInfo.imageName,
-                                "USER"
-                            )
-                        )
-                    }
-                }
-            }
+    private suspend fun getImageInfoFromDevice(imageUrl: String?): Result<UploadImageInfo> {
+        if (imageUrl == null) return resultFailure(ERROR_FAIL_JOB)
+        val uploadInfo = networkRepository.requestUploadCardImage()
+            .getOrElse { return resultFailure(it.asSooumException().message.ifBlank { ERROR_FAIL_JOB }) }
+        val file = try {
+            context.contentResolver.readAsCompressedJpegRequestBody(uri = imageUrl.toUri())
+        } catch (e: IOException) {
+            e.printStackTrace()
+            return resultFailure(ERROR_FAIL_PACKAGE_IMAGE)
+        } catch (e: OutOfMemoryError) {
+            e.printStackTrace()
+            return resultFailure(ERROR_FAIL_JOB)
         }
+        return networkRepository.requestUploadImage(data = file, url = uploadInfo.url)
+            .fold(
+                onSuccess = { Result.success(UploadImageInfo(uploadInfo.imageName, "USER")) },
+                onFailure = { resultFailure(ERROR_NETWORK) },
+            )
     }
 
     private data class UploadImageInfo(val name: String, val type: String)

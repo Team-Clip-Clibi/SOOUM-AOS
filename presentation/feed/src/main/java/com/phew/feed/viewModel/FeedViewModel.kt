@@ -6,10 +6,10 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core_common.CardDetailTrace
-import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR_ALREADY_CARD_DELETE
 import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.ERROR_NO_DATA
+import com.phew.core_common.errorMessage
 import com.phew.domain.dto.CardArticle
 import com.phew.domain.dto.FeedCardType
 import com.phew.domain.dto.Location
@@ -169,15 +169,14 @@ class FeedViewModel @Inject constructor(
 
     private fun getFeedNotice() {
         viewModelScope.launch(Dispatchers.IO) {
-            when (val request = feedOrchestrator.getFeedNotification(NoticeSource.NOTIFICATION)) {
-                is DomainResult.Failure -> {
-                    _uiState.update { state -> state.copy(feedNotification = UiState.Fail(request.error)) }
+            feedOrchestrator.getFeedNotification(NoticeSource.NOTIFICATION).fold(
+                onSuccess = { notices ->
+                    _uiState.update { state -> state.copy(feedNotification = UiState.Success(notices)) }
+                },
+                onFailure = { throwable ->
+                    _uiState.update { state -> state.copy(feedNotification = UiState.Fail(throwable.toUiMessage())) }
                 }
-
-                is DomainResult.Success -> {
-                    _uiState.update { state -> state.copy(feedNotification = UiState.Success(request.data)) }
-                }
-            }
+            )
         }
     }
 
@@ -243,20 +242,18 @@ class FeedViewModel @Inject constructor(
                     ids
                 }
                 if (notify.isNotEmpty()) {
-                    when (val result =
-                        feedOrchestrator.markNotificationsRead(notify)) {
-                        is DomainResult.Failure -> {
-                            _uiState.update { state ->
-                                state.copy(setReadNotify = UiState.Fail(result.error))
-                            }
-                        }
-
-                        is DomainResult.Success -> {
+                    feedOrchestrator.markNotificationsRead(notify).fold(
+                        onSuccess = {
                             _uiState.update { state ->
                                 state.copy(setReadNotify = UiState.Success(Unit))
                             }
+                        },
+                        onFailure = { throwable ->
+                            _uiState.update { state ->
+                                state.copy(setReadNotify = UiState.Fail(throwable.toUiMessage()))
+                            }
                         }
-                    }
+                    )
                 }
             }
         }
@@ -309,33 +306,32 @@ class FeedViewModel @Inject constructor(
             ),
         )
         viewModelScope.launch {
-            when (val checkResult = feedOrchestrator.checkCardDeleted(cardId)) {
-                is DomainResult.Success -> {
-                    if (checkResult.data) {
+            feedOrchestrator.checkCardDeleted(cardId).fold(
+                onSuccess = { isDeleted ->
+                    if (isDeleted) {
                         updateFeedLikeState(cardId, stateBeforeToggle.copy(isLoading = false))
                         _uiState.update { state ->
                             state.copy(checkCardDelete = UiState.Success(cardId))
                         }
                         return@launch
                     }
-                }
-
-                is DomainResult.Failure -> {
+                },
+                onFailure = { throwable ->
                     updateFeedLikeState(cardId, stateBeforeToggle.copy(isLoading = false))
                     _uiState.update { state ->
-                        state.copy(checkCardDelete = UiState.Fail(checkResult.error))
+                        state.copy(checkCardDelete = UiState.Fail(throwable.toUiMessage()))
                     }
                     return@launch
                 }
-            }
+            )
 
             val result = feedOrchestrator.setCardLike(
                 cardId = cardId,
                 shouldLike = !stateBeforeToggle.isLike
             )
 
-            when (result) {
-                is DomainResult.Success -> {
+            result.fold(
+                onSuccess = {
                     updateFeedLikeState(
                         cardId = cardId,
                         state = stateBeforeToggle.copy(
@@ -345,17 +341,16 @@ class FeedViewModel @Inject constructor(
                             animationVersion = stateBeforeToggle.animationVersion + 1,
                         )
                     )
-                }
-
-                is DomainResult.Failure -> {
+                },
+                onFailure = { throwable ->
                     updateFeedLikeState(cardId, stateBeforeToggle.copy(isLoading = false))
-                    if (result.error == ERROR_ALREADY_CARD_DELETE) {
+                    if (throwable.toUiMessage() == ERROR_ALREADY_CARD_DELETE) {
                         _uiState.update { state ->
                             state.copy(checkCardDelete = UiState.Success(cardId))
                         }
                     }
                 }
-            }
+            )
         }
     }
 
@@ -394,15 +389,9 @@ class FeedViewModel @Inject constructor(
         }
         viewModelScope.launch {
             _uiState.update { state -> state.copy(checkCardDelete = UiState.Loading) }
-            when (val result = feedOrchestrator.checkCardDeleted(cardIdLong)) {
-                is DomainResult.Failure -> {
-                    _uiState.update { state ->
-                        state.copy(checkCardDelete = UiState.Fail(result.error))
-                    }
-                }
-
-                is DomainResult.Success -> {
-                    if (result.data) {
+            feedOrchestrator.checkCardDeleted(cardIdLong).fold(
+                onSuccess = { isDeleted ->
+                    if (isDeleted) {
                         _uiState.update { state -> state.copy(checkCardDelete = UiState.Success(cardIdLong)) }
                     } else {
                         _uiState.update { state -> state.copy(checkCardDelete = UiState.None) }
@@ -413,8 +402,13 @@ class FeedViewModel @Inject constructor(
                             )
                         )
                     }
+                },
+                onFailure = { throwable ->
+                    _uiState.update { state ->
+                        state.copy(checkCardDelete = UiState.Fail(throwable.toUiMessage()))
+                    }
                 }
-            }
+            )
         }
     }
 
@@ -436,25 +430,25 @@ class FeedViewModel @Inject constructor(
 
     private fun fetchCardArticle() {
         viewModelScope.launch(Dispatchers.IO) {
-            when (val result = feedOrchestrator.getCardArticle()) {
-                is DomainResult.Failure -> {
-                    if (result.error == ERROR_NO_DATA) {
+            feedOrchestrator.getCardArticle().fold(
+                onSuccess = { article ->
+                    _uiState.update { state ->
+                        state.copy(cardArticle = UiState.Success(article))
+                    }
+                },
+                onFailure = { throwable ->
+                    val message = throwable.toUiMessage()
+                    if (message == ERROR_NO_DATA) {
                         _uiState.update { state ->
                             state.copy(cardArticle = UiState.None)
                         }
                         return@launch
                     }
                     _uiState.update { state ->
-                        state.copy(cardArticle = UiState.Fail(result.error))
+                        state.copy(cardArticle = UiState.Fail(message))
                     }
                 }
-
-                is DomainResult.Success -> {
-                    _uiState.update { state ->
-                        state.copy(cardArticle = UiState.Success(result.data))
-                    }
-                }
-            }
+            )
         }
     }
 
@@ -528,3 +522,5 @@ sealed interface UiState<out T> {
     data class Success<T>(val data: T) : UiState<T>
     data class Fail(val errorMessage: String) : UiState<Nothing>
 }
+
+private fun Throwable.toUiMessage(): String = Result.failure<Unit>(this).errorMessage()

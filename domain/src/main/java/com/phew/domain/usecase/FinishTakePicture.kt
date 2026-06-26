@@ -4,7 +4,6 @@ import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
 import android.provider.MediaStore
-import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.domain.CROP_FILE
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -16,19 +15,19 @@ class FinishTakePicture @Inject constructor(@ApplicationContext private val cont
         val uri: Uri
     )
 
-    operator fun invoke(data: Param): DomainResult<Uri, String> {
+    operator fun invoke(data: Param): Result<Uri> {
         if (data.uri.scheme == CROP_FILE) {
-            return DomainResult.Success(data.uri)
+            return Result.success(data.uri)
         }
         try {
             val contentValues = ContentValues().apply {
                 put(MediaStore.Images.Media.IS_PENDING, 0)
             }
             context.contentResolver.update(data.uri, contentValues, null, null)
-            return DomainResult.Success(data.uri)
+            return Result.success(data.uri)
         } catch (e: Exception) {
             e.printStackTrace()
-            return DomainResult.Failure(ERROR_FAIL_JOB)
+            return com.phew.core_common.resultFailure(ERROR_FAIL_JOB)
         }
     }
 }

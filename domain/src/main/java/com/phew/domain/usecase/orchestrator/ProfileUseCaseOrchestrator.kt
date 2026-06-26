@@ -2,7 +2,6 @@ package com.phew.domain.usecase.orchestrator
 
 import android.net.Uri
 import androidx.paging.PagingData
-import com.phew.core_common.DomainResult
 import com.phew.domain.dto.FollowData
 import com.phew.domain.dto.ProfileCard
 import com.phew.domain.dto.ProfileInfo
@@ -43,9 +42,9 @@ class ProfileUseCaseOrchestrator @Inject constructor(
     private val checkCardAlreadyDelete: CheckCardAlreadyDelete,
     private val checkIsMyProfile: CheckIsMyProfile,
 ) {
-    suspend fun myProfile(): DomainResult<ProfileInfo, String> = getMyProfileInfo()
+    suspend fun myProfile(): Result<ProfileInfo> = getMyProfileInfo()
 
-    suspend fun otherProfile(profileId: Long): DomainResult<ProfileInfo, String> =
+    suspend fun otherProfile(profileId: Long): Result<ProfileInfo> =
         getOtherProfile(GetOtherProfile.Param(profileId = profileId))
 
     fun profileFeedCards(userId: Long): Flow<PagingData<ProfileCard>> =
@@ -59,32 +58,32 @@ class ProfileUseCaseOrchestrator @Inject constructor(
     fun followings(profileId: Long): Flow<PagingData<FollowData>> =
         getFollowing(profileId = profileId)
 
-    suspend fun followUser(userId: Long): DomainResult<Unit, String> =
+    suspend fun followUser(userId: Long): Result<Unit> =
         sendFollowUser(SendFollowUser.Param(userId = userId))
 
-    suspend fun unFollowUser(userId: Long): DomainResult<Unit, String> =
+    suspend fun unFollowUser(userId: Long): Result<Unit> =
         sendUnFollowUser(SendUnFollowUser.Param(userId = userId))
 
-    suspend fun blockUser(userId: Long): DomainResult<Unit, String> =
+    suspend fun blockUser(userId: Long): Result<Unit> =
         sendBlockUser(SendBlockUser.Param(userId = userId))
 
-    suspend fun unBlockUser(userId: Long): DomainResult<Unit, String> =
+    suspend fun unBlockUser(userId: Long): Result<Unit> =
         sendUnBlockUser(SendUnBlockUser.Param(userId = userId))
 
-    suspend fun checkNickName(nickName: String): DomainResult<Boolean, String> =
+    suspend fun checkNickName(nickName: String): Result<Boolean> =
         checkNickName(CheckNickName.Param(nickName = nickName))
 
-    fun createImageFile(): DomainResult<Uri, String> = createImageFile()
+    fun createImageFile(): Result<Uri> = createImageFile()
 
-    fun finishTakePicture(uri: Uri): DomainResult<Uri, String> =
+    fun finishTakePicture(uri: Uri): Result<Uri> =
         finishTakePicture(FinishTakePicture.Param(uri))
 
-    suspend fun updateProfile(param: UpdateProfile.Param): DomainResult<Unit, String> =
+    suspend fun updateProfile(param: UpdateProfile.Param): Result<Unit> =
         updateProfile(param)
 
-    suspend fun checkCardDeleted(cardId: Long): DomainResult<Boolean, String> =
+    suspend fun checkCardDeleted(cardId: Long): Result<Boolean> =
         checkCardAlreadyDelete(CheckCardAlreadyDelete.Param(cardId = cardId))
 
-    suspend fun checkIsMyProfile(userId: Long, nickName: String): DomainResult<Pair<Boolean, Long>, String> =
+    suspend fun checkIsMyProfile(userId: Long, nickName: String): Result<Pair<Boolean, Long>> =
         checkIsMyProfile(CheckIsMyProfile.Param(userId = userId, nickName = nickName))
 }

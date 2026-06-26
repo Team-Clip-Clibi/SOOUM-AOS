@@ -1,13 +1,13 @@
 package com.phew.repository.mapper
 
 import com.phew.core_common.APP_ERROR_CODE
-import com.phew.core_common.DataResult
 import com.phew.core_common.ERROR_ACCOUNT_SUSPENDED
 import com.phew.core_common.ERROR_ALREADY_CARD_DELETE
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.HTTP_CARD_ALREADY_DELETE
 import com.phew.core_common.HTTP_NO_MORE_CONTENT
 import com.phew.core_common.WITHDRAWAL_USER
+import com.phew.core_common.mapSooumFailure
 import com.phew.domain.dto.Alarm
 import com.phew.domain.dto.CardArticle
 import com.phew.domain.dto.CardComment
@@ -438,39 +438,24 @@ internal fun CardArticleDTO.toDomain(): CardArticle {
 suspend fun <T, R> apiCall(
     apiCall: suspend () -> Response<T>,
     mapper: (T) -> R,
-): DataResult<R> {
-    try {
+): Result<R> {
+    return runCatching {
         val response = apiCall()
         if (!response.isSuccessful) {
-            return when (response.code()) {
-                WITHDRAWAL_USER -> DataResult.Fail(
-                    code = response.code(),
-                    message = ERROR_ACCOUNT_SUSPENDED,
-                    throwable = Exception("Account suspended - Error code 418")
-                )
-                HTTP_CARD_ALREADY_DELETE -> DataResult.Fail(
-                    code = response.code(),
-                    message = ERROR_ALREADY_CARD_DELETE,
-                    throwable = Exception("Card Already Deleted - Error code 410")
-                )
-                else -> DataResult.Fail(
-                    code = response.code(),
-                    message = response.message()
-                )
-            }
+            throw com.phew.core_common.exception.sooumExceptionOf(
+                code = response.code(),
+                message = response.message(),
+            )
         }
 
         val body = response.body()
-            ?: return DataResult.Fail(
+            ?: throw com.phew.core_common.exception.sooumExceptionOf(
                 code = response.code(),
-                message = "Response body is null or empty"
+                message = "Response body is null or empty",
             )
 
-        return DataResult.Success(mapper(body))
-    } catch (e: Exception) {
-        e.printStackTrace()
-        return DataResult.Fail(code = APP_ERROR_CODE, message = e.message, throwable = e)
-    }
+        mapper(body)
+    }.mapSooumFailure()
 }
 
 /**
@@ -480,33 +465,29 @@ suspend fun <T, R> apiCall(
 suspend fun <T, R> pagingCall(
     apiCall: suspend () -> Response<T>,
     mapper: (T) -> List<R>,
-): DataResult<Pair<Int, List<R>>> {
-    try {
+): Result<Pair<Int, List<R>>> {
+    return runCatching {
         val response = apiCall()
         if (!response.isSuccessful) {
-            return DataResult.Fail(code = response.code(), message = response.message())
+            throw com.phew.core_common.exception.sooumExceptionOf(
+                code = response.code(),
+                message = response.message(),
+            )
         }
         if (response.body() == null && response.code() == HTTP_NO_MORE_CONTENT) {
-            return DataResult.Success(Pair(response.code(), emptyList()))
+            return@runCatching Pair(response.code(), emptyList())
         }
         val body = response.body()
-            ?: return DataResult.Fail(
+            ?: throw com.phew.core_common.exception.sooumExceptionOf(
                 code = response.code(),
-                message = ERROR_NETWORK
+                message = ERROR_NETWORK,
             )
         val domainList = mapper(body)
         if (domainList.isEmpty()) {
-            return DataResult.Success(Pair(response.code(), emptyList()))
+            return@runCatching Pair(response.code(), emptyList())
         }
-        return DataResult.Success(Pair(response.code(), domainList))
-    } catch (e: Exception) {
-        e.printStackTrace()
-        return DataResult.Fail(
-            code = APP_ERROR_CODE,
-            message = e.message,
-            throwable = e
-        )
-    }
+        Pair(response.code(), domainList)
+    }.mapSooumFailure()
 }
 
 internal fun TagInfoListDTO.toDomainModel(): TagInfoList {

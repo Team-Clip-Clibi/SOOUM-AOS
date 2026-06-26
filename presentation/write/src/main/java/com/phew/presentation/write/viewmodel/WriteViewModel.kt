@@ -6,9 +6,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.phew.core.ui.model.CameraCaptureRequest
-import com.phew.core_common.log.SooumLog
 import com.phew.core.ui.model.CameraPickerAction
-import com.phew.core_common.DomainResult
 import com.phew.domain.dto.Location
 import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.usecase.CreateImageFile
@@ -44,6 +42,9 @@ import com.phew.core_common.ERROR_ALREADY_CARD_DELETE
 import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.ERROR_UN_GOOD_IMAGE
+import com.phew.core_common.errorMessage
+import com.phew.core_common.log.SooumLog
+import com.phew.core_common.resultFailure
 import com.phew.core_design.CustomFont
 import com.phew.core_design.typography.FontType
 import com.phew.domain.usecase.CheckCardAlreadyDelete
@@ -101,16 +102,10 @@ class WriteViewModel @Inject constructor(
                 .flatMapLatest { tagInput ->
                     _uiState.update { it.copy(isLoadingRelatedTags = true) }
                     try {
-                        when (val result =
-                            getRelatedTag(GetRelatedTag.Param(tag = tagInput, resultCnt = 8))) {
-                            is DomainResult.Success -> {
-                                flowOf(result.data)
-                            }
-
-                            is DomainResult.Failure -> {
-                                flowOf(emptyList())
-                            }
-                        }
+                        flowOf(
+                            getRelatedTag(GetRelatedTag.Param(tag = tagInput, resultCnt = 8))
+                                .getOrElse { emptyList() }
+                        )
                     } catch (e: Exception) {
                         flowOf(emptyList())
                     }
@@ -401,21 +396,20 @@ class WriteViewModel @Inject constructor(
     fun onBackgroundCameraCaptureResult(success: Boolean, uri: Uri) {
         if (success) {
             viewModelScope.launch(Dispatchers.IO) {
-                when (val result = finishTakePicture(FinishTakePicture.Param(uri))) {
-                    is DomainResult.Success -> {
+                finishTakePicture(FinishTakePicture.Param(uri)).fold(
+                    onSuccess = { resultUri ->
                         _uiState.update { state ->
                             state.copy(
-                                activeBackgroundUri = result.data,
+                                activeBackgroundUri = resultUri,
                                 activeBackgroundResId = null,
                                 selectedDefaultImageName = null
                             )
                         }
-                    }
-
-                    is DomainResult.Failure -> {
+                    },
+                    onFailure = {
                         // 실패 시 별도 처리 없음
                     }
-                }
+                )
             }
         }
     }
@@ -542,22 +536,21 @@ class WriteViewModel @Inject constructor(
 
     private fun requestCameraImageForBackground() {
         viewModelScope.launch(Dispatchers.IO) {
-            when (val result = createImageFile()) {
-                is DomainResult.Success -> {
+            createImageFile().fold(
+                onSuccess = { uri ->
                     _uiState.update { state ->
                         state.copy(
                             pendingBackgroundCameraCapture = CameraCaptureRequest(
                                 id = System.currentTimeMillis(),
-                                uri = result.data
+                                uri = uri
                             )
                         )
                     }
-                }
-
-                is DomainResult.Failure -> {
+                },
+                onFailure = {
                     // 실패 시 별도 처리 없음
                 }
-            }
+            )
         }
     }
 
@@ -585,12 +578,15 @@ class WriteViewModel @Inject constructor(
                     "onWriteComplete state: selectedDefaultImageName=${state.selectedDefaultImageName}, activeBackgroundUri=${state.activeBackgroundUri}"
                 )
 
-                val result: DomainResult<Long, String> = try {
+                val result: Result<Long> = try {
                     if (state.parentCardId != null) {
                         val checkResult = checkCardDelete(CheckCardAlreadyDelete.Param(cardId = state.parentCardId))
-                        if (checkResult is DomainResult.Success && checkResult.data) {
+                        val checkFailure = checkResult.exceptionOrNull()
+                        if (checkFailure != null) {
+                            resultFailure(checkFailure.toUiMessage())
+                        } else if (checkResult.getOrNull() == true) {
                             // 삭제된 경우 -> Failure 반환
-                            DomainResult.Failure(ERROR_ALREADY_CARD_DELETE)
+                            resultFailure(ERROR_ALREADY_CARD_DELETE)
                         } else {
                             // 댓글 작성 (PostCardReply 사용)
                             val (imgType, imgName, imageUrl) = when {
@@ -668,23 +664,23 @@ class WriteViewModel @Inject constructor(
                     }
                 } catch (e: Exception) {
                     SooumLog.e(TAG, "onWriteComplete exception during API call: ${e.message}")
-                    DomainResult.Failure("API 호출 중 예외 발생: ${e.message}")
+                    resultFailure("API 호출 중 예외 발생: ${e.message}")
                 }
 
-                when (result) {
-                    is DomainResult.Success -> {
+                result.fold(
+                    onSuccess = { cardId ->
                         _uiState.update {
                             it.copy(
                                 isWriteCompleted = true,
                                 isWriteInProgress = false
                             )
                         }
-                        SooumLog.d(TAG, "onWriteComplete success: ${result.data}")
-                        _uiEffect.emit(WriteUiEffect.NavigateToWrittenCard(result.data))
-                    }
-
-                    is DomainResult.Failure -> {
-                        val errorCode = when (result.error) {
+                        SooumLog.d(TAG, "onWriteComplete success: $cardId")
+                        _uiEffect.emit(WriteUiEffect.NavigateToWrittenCard(cardId))
+                    },
+                    onFailure = { throwable ->
+                        val errorMessage = throwable.toUiMessage()
+                        val errorCode = when (errorMessage) {
                             ERROR_NETWORK -> ERROR_NETWORK
                             ERROR_ACCOUNT_SUSPENDED -> ERROR_ACCOUNT_SUSPENDED
                             ERROR_ALREADY_CARD_DELETE -> ERROR_ALREADY_CARD_DELETE
@@ -718,10 +714,10 @@ class WriteViewModel @Inject constructor(
                                 _uiEffect.emit(WriteUiEffect.ShowError(refreshToken))
                             }
                         }
-                        SooumLog.e(TAG, "onWriteComplete failed: ${result.error}")
+                        SooumLog.e(TAG, "onWriteComplete failed: $errorMessage")
                         // Handle error - could add error state to UI
                     }
-                }
+                )
             }
         }
     }
@@ -741,10 +737,10 @@ class WriteViewModel @Inject constructor(
         val dateResult = withContext(Dispatchers.IO) { activateDate() }
         _uiState.update { state ->
             state.copy(
-                activateDate = when (dateResult) {
-                    is DomainResult.Success -> UiState.Success(dateResult.data ?: "")
-                    is DomainResult.Failure -> UiState.Fail(ERROR_NETWORK)
-                }
+                activateDate = dateResult.fold(
+                    onSuccess = { UiState.Success(it ?: "") },
+                    onFailure = { UiState.Fail(ERROR_NETWORK) }
+                )
             )
         }
     }
@@ -774,11 +770,11 @@ class WriteViewModel @Inject constructor(
     private fun loadCardDefaultImages() {
         viewModelScope.launch {
             try {
-                when (val result = getCardDefaultImage()) {
-                    is DomainResult.Success -> {
+                getCardDefaultImage().fold(
+                    onSuccess = { defaultImageList ->
                         _uiState.update { state ->
                             val convertedMap =
-                                result.data.defaultImages.mapNotNull { (key, value) ->
+                                defaultImageList.defaultImages.mapNotNull { (key, value) ->
                                     BackgroundFilterType.fromServerKey(key)?.let { it to value }
                                 }.toMap()
 
@@ -808,19 +804,18 @@ class WriteViewModel @Inject constructor(
                         }
                         SooumLog.d(
                             TAG,
-                            "loadCardDefaultImages() success: ${result.data.defaultImages.size} categories loaded"
+                            "loadCardDefaultImages() success: ${defaultImageList.defaultImages.size} categories loaded"
                         )
-                    }
-
-                    is DomainResult.Failure -> {
+                    },
+                    onFailure = { throwable ->
                         _uiState.update {
                             it.copy(
                                 cardDefaultImagesByCategory = emptyMap()
                             )
                         }
-                        SooumLog.e(TAG, "loadCardDefaultImages() failed: ${result.error}")
+                        SooumLog.e(TAG, "loadCardDefaultImages() failed: ${throwable.toUiMessage()}")
                     }
-                }
+                )
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
@@ -832,6 +827,8 @@ class WriteViewModel @Inject constructor(
         }
     }
 }
+
+private fun Throwable.toUiMessage(): String = Result.failure<Unit>(this).errorMessage()
 
 private const val TAG = "WriteViewModel"
 private const val REQUIRED_POLL_OPTION_COUNT = 2

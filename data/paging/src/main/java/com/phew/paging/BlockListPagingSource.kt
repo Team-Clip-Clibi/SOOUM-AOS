@@ -2,10 +2,8 @@ package com.phew.paging
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.phew.core_common.DataResult
 import com.phew.domain.model.BlockMember
 import com.phew.domain.repository.network.BlockRepository
-import java.io.IOException
 import javax.inject.Inject
 
 class BlockListPagingSource @Inject constructor(
@@ -18,10 +16,7 @@ class BlockListPagingSource @Inject constructor(
             val users = if (key == null) {
                 repository.getBlockList().getOrThrow()
             } else {
-                when (val result = repository.getBlockListPaging(key)) {
-                    is DataResult.Success -> result.data
-                    is DataResult.Fail -> throw result.throwable ?: IOException("Paging Error")
-                }
+                repository.getBlockListPaging(key).getOrThrow()
             }
             LoadResult.Page(
                 data = users,

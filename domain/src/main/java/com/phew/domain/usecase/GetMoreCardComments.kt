@@ -1,12 +1,11 @@
 package com.phew.domain.usecase
 
 import com.phew.core_common.APP_ERROR_CODE
-import com.phew.core_common.DataResult
-import com.phew.core_common.DomainResult
 import com.phew.core_common.ERROR_FAIL_JOB
 import com.phew.core_common.ERROR_LOGOUT
 import com.phew.core_common.ERROR_NETWORK
 import com.phew.core_common.HTTP_INVALID_TOKEN
+import com.phew.core_common.mapFailureMessage
 import com.phew.domain.dto.CardComment
 import com.phew.domain.repository.DeviceRepository
 import com.phew.domain.repository.network.CardDetailRepository
@@ -21,7 +20,7 @@ class GetMoreCardComments @Inject constructor(
         val lastId: Long
     )
 
-    suspend operator fun invoke(param: Param): DomainResult<List<CardComment>, String> {
+    suspend operator fun invoke(param: Param): Result<List<CardComment>> {
         val locationPermissionCheck = deviceRepository.getLocationPermission()
         val (latitude, longitude) = if (locationPermissionCheck) {
             val location = deviceRepository.requestLocation()
@@ -30,17 +29,13 @@ class GetMoreCardComments @Inject constructor(
             null to null
         }
 
-        return when (val result = repository.getCardCommentsMore(param.cardId, param.lastId, latitude, longitude)) {
-            is DataResult.Success -> DomainResult.Success(result.data)
-            is DataResult.Fail -> mapFailure(result)
-        }
-    }
-
-    private fun mapFailure(result: DataResult.Fail): DomainResult.Failure<String> {
-        return when (result.code) {
-            HTTP_INVALID_TOKEN -> DomainResult.Failure(ERROR_LOGOUT)
-            APP_ERROR_CODE -> DomainResult.Failure(result.message ?: ERROR_FAIL_JOB)
-            else -> DomainResult.Failure(ERROR_NETWORK)
+        return repository.getCardCommentsMore(param.cardId, param.lastId, latitude, longitude)
+            .mapFailureMessage { code, message ->
+            when (code) {
+                HTTP_INVALID_TOKEN -> ERROR_LOGOUT
+                APP_ERROR_CODE -> message.ifBlank { ERROR_FAIL_JOB }
+                else -> ERROR_NETWORK
+            }
         }
     }
 }

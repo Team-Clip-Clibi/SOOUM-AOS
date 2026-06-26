@@ -1,6 +1,5 @@
 package com.phew.repository.network
 
-import com.phew.core_common.DataResult
 import com.phew.domain.model.AppVersionStatus
 import com.phew.domain.repository.network.AppVersionRepository
 import com.phew.network.retrofit.AppVersionHttp
@@ -13,14 +12,9 @@ class AppVersionRepositoryImpl @Inject constructor(
 ) : AppVersionRepository {
     
     override suspend fun checkAppVersion(type: String, version: String): Result<AppVersionStatus> {
-        return when (val result = apiCall(
+        return apiCall(
             apiCall = { appVersionHttp.checkAppVersion(type, version) },
             mapper = { it.toDomain() }
-        )) {
-            is DataResult.Success -> Result.success(result.data)
-            is DataResult.Fail -> Result.failure(
-                result.throwable ?: Exception("Failed to check app version: ${result.message}")
-            )
-        }
+        )
     }
 }

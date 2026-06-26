@@ -2,14 +2,10 @@ package com.phew.paging
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.phew.core_common.DataResult
-import com.phew.core_common.ERROR_NETWORK
-import com.phew.core_common.HTTP_INVALID_TOKEN
 import com.phew.core_common.HTTP_NO_MORE_CONTENT
 import com.phew.domain.dto.Notice
 import com.phew.domain.dto.NoticeSource
 import com.phew.domain.repository.network.NotifyRepository
-import java.io.IOException
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -42,9 +38,9 @@ class PagingNotify @AssistedInject constructor(
                 notifyRepository.requestNoticePatch(lastId = key, pageSize = 30, source = source)
             }
 
-            when (result) {
-                is DataResult.Success -> {
-                    if (result.data.second.isEmpty() || result.data.first == HTTP_NO_MORE_CONTENT) {
+            result.fold(
+                onSuccess = { data ->
+                    if (data.second.isEmpty() || data.first == HTTP_NO_MORE_CONTENT) {
                         return LoadResult.Page(
                             data = emptyList(),
                             prevKey = null,
@@ -52,25 +48,17 @@ class PagingNotify @AssistedInject constructor(
                         )
                     }
                     delay(2000L)
-                    val isEndOfList = result.data.first == HTTP_NO_MORE_CONTENT ||
-                            result.data.second.isEmpty() ||
-                            result.data.second.size < params.loadSize
+                    val isEndOfList = data.first == HTTP_NO_MORE_CONTENT ||
+                            data.second.isEmpty() ||
+                            data.second.size < params.loadSize
                     LoadResult.Page(
-                        data = result.data.second,
+                        data = data.second,
                         prevKey = null,
-                        nextKey = if (isEndOfList) null else result.data.second.last().id
+                        nextKey = if (isEndOfList) null else data.second.last().id
                     )
-                }
-
-                is DataResult.Fail -> {
-                    val exception = if (result.code == HTTP_INVALID_TOKEN) {
-                        SecurityException("Invalid Token")
-                    } else {
-                        IOException(ERROR_NETWORK)
-                    }
-                    LoadResult.Error(exception)
-                }
-            }
+                },
+                onFailure = { LoadResult.Error(it) },
+            )
         } catch (e: Exception) {
             LoadResult.Error(e)
         }

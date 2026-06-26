@@ -7,9 +7,7 @@ import androidx.paging.cachedIn
 import androidx.paging.filter
 import com.phew.core.ui.model.navigation.CardDetailArgs
 import com.phew.core_common.CardDetailTrace
-import com.phew.core_common.DataResult
-import com.phew.core_common.DomainResult
-import com.phew.core_common.ERROR_FAIL_JOB
+import com.phew.core_common.errorMessage
 import com.phew.core_common.log.SooumLog
 import com.phew.domain.BuildConfig
 import com.phew.domain.dto.FavoriteTag
@@ -124,10 +122,10 @@ class TagViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val result = tagOrchestrator.favoriteTags()
-                when (result) {
-                    is DataResult.Success -> {
+                result.fold(
+                    onSuccess = { tagList ->
                         // 최대 9개만 표시
-                        val limitedTags = result.data.favoriteTags.take(9)
+                        val limitedTags = tagList.favoriteTags.take(9)
                         _uiState.update { currentState ->
                             val favoriteTagIds = limitedTags.map { it.id }.toSet()
                             val allTagIds = currentState.localFavoriteStates.keys + favoriteTagIds
@@ -139,13 +137,12 @@ class TagViewModel @Inject constructor(
                             )
                         }
                         SooumLog.d(TAG, "Favorite tags loaded: ${limitedTags.size}")
-                    }
-
-                    is DataResult.Fail -> {
-                        SooumLog.e(TAG, "Failed to load favorite tags: ${result.message}")
+                    },
+                    onFailure = { throwable ->
+                        SooumLog.e(TAG, "Failed to load favorite tags: ${Result.failure<Unit>(throwable).errorMessage()}")
                         _uiState.update { it.copy(favoriteTags = emptyList()) }
                     }
-                }
+                )
             } catch (e: Exception) {
                 SooumLog.e(TAG, "Exception loading favorite tags: ${e.message}")
                 _uiState.update { it.copy(favoriteTags = emptyList()) }
@@ -168,21 +165,20 @@ class TagViewModel @Inject constructor(
                             )
                         }
                     } else {
-                        flowOf(DataResult.Success(TagInfoList(tagInfos = emptyList())) as DataResult<TagInfoList>)
+                        flowOf(Result.success(TagInfoList(tagInfos = emptyList())))
                     }
                 }
                 .collect { result ->
-                    when (result) {
-                        is DataResult.Success -> {
-                            SooumLog.d(TAG, "success=${result.data.tagInfos}")
-                            _uiState.update { it.copy(recommendedTags = result.data.tagInfos) }
-                        }
-
-                        is DataResult.Fail -> {
+                    result.fold(
+                        onSuccess = { tagInfoList ->
+                            SooumLog.d(TAG, "success=${tagInfoList.tagInfos}")
+                            _uiState.update { it.copy(recommendedTags = tagInfoList.tagInfos) }
+                        },
+                        onFailure = {
                             // Handle error
                             _uiState.update { it.copy(recommendedTags = emptyList()) }
                         }
-                    }
+                    )
                 }
         }
     }
@@ -280,8 +276,8 @@ class TagViewModel @Inject constructor(
     private suspend fun removeFavoriteTagAction(tagId: Long, tagName: String, removeFromList: Boolean = true) {
         try {
             val result = tagOrchestrator.removeFavoriteTag(tagId)
-            when (result) {
-                is DataResult.Success -> {
+            result.fold(
+                onSuccess = {
                     // 로컬 상태 업데이트 (즐겨찾기 해제)
                     _uiState.update { currentState ->
                         currentState.copy(
@@ -296,12 +292,11 @@ class TagViewModel @Inject constructor(
                     }
                     emitEffect(TagUiEffect.ShowRemoveFavoriteTagToast(tagName))
                     SooumLog.d(TAG, "Successfully removed favorite tag: $tagName")
+                },
+                onFailure = { throwable ->
+                    SooumLog.e(TAG, "Failed to remove favorite tag: ${Result.failure<Unit>(throwable).errorMessage()}")
                 }
-
-                is DataResult.Fail -> {
-                    SooumLog.e(TAG, "Failed to remove favorite tag: ${result.message}")
-                }
-            }
+            )
         } catch (e: Exception) {
             SooumLog.e(TAG, "Exception removing favorite tag: ${e.message}")
         }
@@ -310,8 +305,8 @@ class TagViewModel @Inject constructor(
     private suspend fun addFavoriteTagAction(tagId: Long, tagName: String) {
         try {
             val result = tagOrchestrator.addFavoriteTag(tagId)
-            when (result) {
-                is DataResult.Success -> {
+            result.fold(
+                onSuccess = {
                     // 로컬 상태 업데이트 (즐겨찾기 추가) 및 즐겨찾기 목록 새로고침
                     _uiState.update { currentState ->
                         currentState.copy(
@@ -322,12 +317,11 @@ class TagViewModel @Inject constructor(
                     loadFavoriteTags()
                     emitEffect(TagUiEffect.ShowAddFavoriteTagToast(tagName))
                     SooumLog.d(TAG, "Successfully added favorite tag: $tagName")
+                },
+                onFailure = { throwable ->
+                    SooumLog.e(TAG, "Failed to add favorite tag: ${Result.failure<Unit>(throwable).errorMessage()}")
                 }
-
-                is DataResult.Fail -> {
-                    SooumLog.e(TAG, "Failed to add favorite tag: ${result.message}")
-                }
-            }
+            )
         } catch (e: Exception) {
             SooumLog.e(TAG, "Exception adding favorite tag: ${e.message}")
         }
@@ -498,25 +492,26 @@ class TagViewModel @Inject constructor(
 
     private fun tagRank() {
         viewModelScope.launch(Dispatchers.IO) {
-            when (val result = tagOrchestrator.tagRank()) {
-                is DomainResult.Failure -> {
+            tagOrchestrator.tagRank().fold(
+                onSuccess = { tags ->
                     _uiState.update { state ->
                         state.copy(
-                            tagRank = UiState.Fail(errorMessage = result.error),
+                            tagRank = UiState.Success(data = tags),
+                            isRefreshing = false
+                        )
+                    }
+                },
+                onFailure = { throwable ->
+                    _uiState.update { state ->
+                        state.copy(
+                            tagRank = UiState.Fail(
+                                errorMessage = Result.failure<List<TagInfo>>(throwable).errorMessage()
+                            ),
                             isRefreshing = false
                         )
                     }
                 }
-
-                is DomainResult.Success -> {
-                    _uiState.update { state ->
-                        state.copy(
-                            tagRank = UiState.Success(data = result.data),
-                            isRefreshing = false
-                        )
-                    }
-                }
-            }
+            )
         }
     }
 
@@ -525,15 +520,9 @@ class TagViewModel @Inject constructor(
 
         viewModelScope.launch {
             _uiState.update { state -> state.copy(checkCardDelete = UiState.Loading) }
-            when (val result = tagOrchestrator.checkCardDeleted(cardId = cardId)) {
-                is DomainResult.Failure -> {
-                    _uiState.update { state ->
-                        state.copy(checkCardDelete = UiState.Fail(result.error))
-                    }
-                }
-
-                is DomainResult.Success -> {
-                    if (result.data) {
+            tagOrchestrator.checkCardDeleted(cardId = cardId).fold(
+                onSuccess = { isDeleted ->
+                    if (isDeleted) {
                         // 삭제된 경우 ID를 전달
                         _uiState.update { state ->
                             state.copy(checkCardDelete = UiState.Success(cardId))
@@ -541,14 +530,23 @@ class TagViewModel @Inject constructor(
                     } else {
                         // 삭제되지 않음
                         _uiState.update { state -> state.copy(checkCardDelete = UiState.None) }
-                         emitEffect(
+                        emitEffect(
                             TagUiEffect.NavigateToDetail(
                                 CardDetailArgs(cardId, previousView = CardDetailTrace.PROFILE)
                             )
                         )
                     }
+                },
+                onFailure = { throwable ->
+                    _uiState.update { state ->
+                        state.copy(
+                            checkCardDelete = UiState.Fail(
+                                Result.failure<Boolean>(throwable).errorMessage()
+                            )
+                        )
+                    }
                 }
-            }
+            )
         }
     }
 

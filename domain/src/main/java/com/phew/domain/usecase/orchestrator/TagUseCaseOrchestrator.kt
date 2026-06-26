@@ -1,8 +1,6 @@
 package com.phew.domain.usecase.orchestrator
 
 import androidx.paging.PagingData
-import com.phew.core_common.DataResult
-import com.phew.core_common.DomainResult
 import com.phew.domain.dto.FavoriteTagList
 import com.phew.domain.dto.TagCardContent
 import com.phew.domain.dto.UserInfo
@@ -36,22 +34,22 @@ class TagUseCaseOrchestrator @Inject constructor(
     fun tagCards(tagId: Long): Flow<PagingData<TagCardContent>> =
         getTagCardsPaging(GetTagCardsPaging.Param(tagId = tagId))
 
-    suspend fun relatedTags(tag: String, resultCount: Long = 20L): DataResult<TagInfoList> =
+    suspend fun relatedTags(tag: String, resultCount: Long = 20L): Result<TagInfoList> =
         getRelatedTags(GetRelatedTags.Param(resultCnt = resultCount, tag = tag))
 
     suspend fun userInfo(key: String): UserInfo? = getUserInfo(GetUserInfo.Param(key = key))
 
     suspend fun profileNickName(profileKey: String): String? = getProfileInfo(profileKey)
 
-    suspend fun favoriteTags(): DataResult<FavoriteTagList> = getFavoriteTags()
+    suspend fun favoriteTags(): Result<FavoriteTagList> = getFavoriteTags()
 
-    suspend fun addFavoriteTag(tagId: Long): DataResult<Unit> =
+    suspend fun addFavoriteTag(tagId: Long): Result<Unit> =
         addFavoriteTag(AddFavoriteTag.Param(tagId = tagId))
 
-    suspend fun removeFavoriteTag(tagId: Long): DataResult<Unit> =
+    suspend fun removeFavoriteTag(tagId: Long): Result<Unit> =
         removeFavoriteTag(RemoveFavoriteTag.Param(tagId = tagId))
 
-    suspend fun tagRank(): DomainResult<List<TagInfo>, String> = getTagRank()
+    suspend fun tagRank(): Result<List<TagInfo>> = getTagRank()
 
     suspend fun logClickSearchView() {
         eventLog.logClickSearchView()
@@ -61,6 +59,6 @@ class TagUseCaseOrchestrator @Inject constructor(
         eventLog.logSelectPopularTag()
     }
 
-    suspend fun checkCardDeleted(cardId: Long): DomainResult<Boolean, String> =
+    suspend fun checkCardDeleted(cardId: Long): Result<Boolean> =
         checkCardAlreadyDelete(CheckCardAlreadyDelete.Param(cardId = cardId))
 }
