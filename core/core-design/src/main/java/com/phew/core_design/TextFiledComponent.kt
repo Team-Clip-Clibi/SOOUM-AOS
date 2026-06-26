@@ -5,11 +5,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -31,6 +34,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -301,48 +305,58 @@ object TextFiledComponent {
     ) {
         val focusRequester = remember { FocusRequester() }
         val interaction = remember { MutableInteractionSource() }
+        val scrollState = rememberScrollState()
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(height)
                 .background(color = NeutralColor.GRAY_100, shape = RoundedCornerShape(10.dp))
-                .padding(
-                    start = horizontalPadding,
-                    top = verticalPadding,
-                    end = horizontalPadding,
-                    bottom = verticalPadding
-                )
                 .clickable(
                     interactionSource = interaction,
                     indication = null
                 ) { focusRequester.requestFocus() }
         ) {
-            TextField(
+            BasicTextField(
                 value = value,
                 onValueChange = onValueChange,
-                placeholder = {
-                    Text(
-                        text = placeHolder,
-                        style = TextComponent.SUBTITLE_1_M_16,
-                        color = NeutralColor.GRAY_500
-                    )
-                },
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .fillMaxSize()
                     .align(Alignment.TopStart)
                     .focusRequester(focusRequester),
                 textStyle = TextComponent.SUBTITLE_1_M_16.copy(color = NeutralColor.BLACK),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    disabledContainerColor = Color.Transparent,
-                    errorContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    disabledIndicatorColor = Color.Transparent,
-                    errorIndicatorColor = Color.Transparent,
-                    cursorColor = NeutralColor.BLACK
-                ),
+                cursorBrush = SolidColor(NeutralColor.BLACK),
+                decorationBox = { innerTextField ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(scrollState)
+                            .padding(
+                                start = horizontalPadding,
+                                top = verticalPadding,
+                                end = horizontalPadding
+                            )
+                    ) {
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            if (value.isEmpty()) {
+                                Text(
+                                    text = placeHolder,
+                                    style = TextComponent.SUBTITLE_1_M_16,
+                                    color = NeutralColor.GRAY_500
+                                )
+                            }
+                            innerTextField()
+                        }
+                        Spacer(
+                            modifier = Modifier.height(
+                                if (showCounter) {
+                                    TEXT_AREA_COUNTER_BOTTOM_SPACE
+                                } else {
+                                    verticalPadding
+                                }
+                            )
+                        )
+                    }
+                }
             )
             if (showCounter) {
                 Text(
@@ -359,6 +373,8 @@ object TextFiledComponent {
         }
     }
 }
+
+private val TEXT_AREA_COUNTER_BOTTOM_SPACE = 32.dp
 
 @Composable
 @Preview
