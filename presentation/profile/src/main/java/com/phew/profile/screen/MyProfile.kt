@@ -348,6 +348,7 @@ private fun MyProfileView(
                 }
             )
         }
+        ProfileComponent.BioView(bio = profile.bio)
         // 카드 , 팔로워, 팔로잉 숫자
         Row(
             modifier = Modifier
@@ -580,4 +581,3 @@ private fun ProfileCardView(
         }
     }
 }
-

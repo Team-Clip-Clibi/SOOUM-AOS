@@ -13,6 +13,7 @@ data class ProfileDTO(
     val cardCnt: Int,
     val followingCnt: Int,
     val followerCnt: Int,
+    val bio: String? = null,
     val isBlocked: Boolean = false,
     val isAlreadyFollowing: Boolean = false,
 )

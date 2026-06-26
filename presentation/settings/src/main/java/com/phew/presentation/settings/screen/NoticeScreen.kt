@@ -187,10 +187,7 @@ private fun NoticeScreen(
                         }
                 ) {
                     items(
-                        count = noticePagingItems.itemCount,
-                        key = { index -> 
-                            noticePagingItems[index]?.let { "notice_${it.id}_$index" } ?: "notice_$index"
-                        }
+                        count = noticePagingItems.itemCount
                     ) { index ->
                         val notice = noticePagingItems[index]
                         notice?.let {

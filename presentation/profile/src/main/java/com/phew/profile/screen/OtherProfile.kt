@@ -535,6 +535,7 @@ private fun ProfileView(
                 }
             )
         }
+        ProfileComponent.BioView(bio = profile.bio)
         Row(
             modifier = Modifier
                 .fillMaxWidth()

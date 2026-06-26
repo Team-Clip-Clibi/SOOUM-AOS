@@ -10,6 +10,7 @@ data class ProfileInfo(
     val cardCnt: Int,
     val followingCnt: Int,
     val followerCnt: Int,
+    val bio: String,
     val isBlocked: Boolean,
     val isAlreadyFollowing: Boolean,
 )
