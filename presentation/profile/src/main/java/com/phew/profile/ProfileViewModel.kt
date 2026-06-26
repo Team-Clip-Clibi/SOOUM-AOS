@@ -305,15 +305,18 @@ class ProfileViewModel @Inject constructor(
         if (!_uiState.value.changeProfile) return
         viewModelScope.launch(Dispatchers.IO) {
             when (val result = updateProfile(
-                UpdateProfile.Param(
-                    nickName = if (_uiState.value.changeNickName == (_uiState.value.profileInfo as UiState.Success).data.nickname) null else _uiState.value.changeNickName,
-                    imgName = when {
-                        !_uiState.value.useAlbum && !_uiState.value.useCamera && _uiState.value.newProfileImageUri.size == 2 -> (_uiState.value.profileInfo as UiState.Success).data.profileImgName
-                        else -> ""
-                    },
-                    profileImage = if(_uiState.value.newProfileImageUri.last() == Uri.EMPTY) null else _uiState.value.newProfileImageUri.last().toString(),
-                    isImageChange = _uiState.value.imageChange
-                )
+                (_uiState.value.profileInfo as UiState.Success).data.let { profile ->
+                    UpdateProfile.Param(
+                        nickName = if (_uiState.value.changeNickName == profile.nickname) null else _uiState.value.changeNickName,
+                        imgName = when {
+                            !_uiState.value.useAlbum && !_uiState.value.useCamera && _uiState.value.newProfileImageUri.size == 2 -> profile.profileImgName
+                            else -> ""
+                        },
+                        profileBio = profile.bio,
+                        profileImage = if (_uiState.value.newProfileImageUri.last() == Uri.EMPTY) null else _uiState.value.newProfileImageUri.last().toString(),
+                        isImageChange = _uiState.value.imageChange
+                    )
+                }
             )) {
                 is DomainResult.Failure -> {
                     _uiState.update { state -> state.copy(updateProfile = UiState.Fail(result.error)) }

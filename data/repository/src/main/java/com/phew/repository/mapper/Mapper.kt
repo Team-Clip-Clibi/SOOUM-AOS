@@ -396,6 +396,7 @@ internal fun ProfileDTO.toDomain() : ProfileInfo{
         todayVisitCnt = this.todayVisitCnt,
         totalVisitCnt = this.totalVisitCnt,
         userId = this.userId,
+        bio = this.bio ?: "",
         isBlocked = this.isBlocked,
         isAlreadyFollowing = this.isAlreadyFollowing
     )
