@@ -2,8 +2,7 @@ package com.phew.presentation.settings.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.phew.domain.usecase.GetRefreshToken
-import com.phew.domain.usecase.WithdrawalAccount
+import com.phew.domain.orchestrator.SettingsUseCaseOrchestrator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,8 +14,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class WithdrawalViewModel @Inject constructor(
-    private val withdrawalAccount: WithdrawalAccount,
-    private val getRefreshToken: GetRefreshToken
+    private val settingsOrchestrator: SettingsUseCaseOrchestrator,
 ): ViewModel() {
     
     private val _uiState = MutableStateFlow(WithdrawalUiState())
@@ -67,14 +65,14 @@ class WithdrawalViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             
-            withdrawalAccount(reason)
+            settingsOrchestrator.withdrawalAccount(reason)
                 .onSuccess {
                     _uiState.update { it.copy(isLoading = false) }
                     _uiEffect.emit(WithdrawalUiEffect.ShowSuccessDialog)
                 }
                 .onFailure { exception ->
                     _uiState.update { it.copy(isLoading = false) }
-                    val refreshToken = getRefreshToken()
+                    val refreshToken = settingsOrchestrator.refreshToken()
                     _uiEffect.emit(
                         WithdrawalUiEffect.ShowError(
                             message = exception.message ?: "Unknown error",

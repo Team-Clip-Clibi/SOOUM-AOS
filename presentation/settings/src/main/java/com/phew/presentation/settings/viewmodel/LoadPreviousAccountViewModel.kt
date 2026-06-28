@@ -2,7 +2,7 @@ package com.phew.presentation.settings.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.phew.domain.usecase.TransferAccount
+import com.phew.domain.orchestrator.SettingsUseCaseOrchestrator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,7 +22,7 @@ data class LoadPreviousAccountUiState(
 
 @HiltViewModel
 class LoadPreviousAccountViewModel @Inject constructor(
-    private val transferAccount: TransferAccount
+    private val settingsOrchestrator: SettingsUseCaseOrchestrator,
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(LoadPreviousAccountUiState())
@@ -32,7 +32,7 @@ class LoadPreviousAccountViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, transferEvent = null)
             
-            transferAccount(TransferAccount.Param(transferCode))
+            settingsOrchestrator.transferAccount(transferCode)
                 .onSuccess {
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,

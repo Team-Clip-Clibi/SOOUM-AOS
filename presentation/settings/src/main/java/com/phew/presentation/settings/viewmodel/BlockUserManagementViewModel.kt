@@ -6,9 +6,7 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.phew.core_common.errorMessage
 import com.phew.domain.model.BlockMember
-import com.phew.domain.usecase.GetBlockUserPaging
-import com.phew.domain.usecase.GetRefreshToken
-import com.phew.domain.usecase.UnblockMember
+import com.phew.domain.orchestrator.SettingsUseCaseOrchestrator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -22,14 +20,12 @@ import javax.inject.Inject
 
 @HiltViewModel
 class BlockUserManagementViewModel @Inject constructor(
-    getBlockUserPaging: GetBlockUserPaging,
-    private val unblockMember: UnblockMember,
-    private val getRefreshToken: GetRefreshToken
+    private val settingsOrchestrator: SettingsUseCaseOrchestrator,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
         BlockUserManagementUiState(
-            blockUsers = getBlockUserPaging().cachedIn(viewModelScope)
+            blockUsers = settingsOrchestrator.blockUsers().cachedIn(viewModelScope)
         )
     )
     val uiState = _uiState.asStateFlow()
@@ -60,9 +56,7 @@ class BlockUserManagementViewModel @Inject constructor(
         val blockMember = _uiState.value.selectedBlockMember ?: return
 
         viewModelScope.launch {
-            unblockMember(
-                    UnblockMember.Param(toMemberId = blockMember.blockMemberId)
-                ).fold(
+            settingsOrchestrator.unblockMember(toMemberId = blockMember.blockMemberId).fold(
                 onSuccess = {
                     _uiState.update {
                         it.copy(
@@ -81,7 +75,7 @@ class BlockUserManagementViewModel @Inject constructor(
                             selectedBlockMember = null
                         )
                     }
-                    val refreshToken = getRefreshToken()
+                    val refreshToken = settingsOrchestrator.refreshToken()
                     _uiEffect.emit(
                         BlockUserManagementUiEffect.ShowError(
                             message = Result.failure<Unit>(throwable).errorMessage("차단 해제에 실패했습니다."),

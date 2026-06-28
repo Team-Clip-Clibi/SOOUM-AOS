@@ -14,7 +14,7 @@ import com.phew.domain.dto.FavoriteTag
 import com.phew.domain.dto.TagCardContent
 import com.phew.domain.model.TagInfo
 import com.phew.domain.model.TagInfoList
-import com.phew.domain.usecase.orchestrator.TagUseCaseOrchestrator
+import com.phew.domain.orchestrator.TagUseCaseOrchestrator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

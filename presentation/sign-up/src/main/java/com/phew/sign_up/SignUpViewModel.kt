@@ -12,14 +12,8 @@ import com.phew.core_common.errorMessage
 import com.phew.domain.SIGN_UP_ALREADY_SIGN_UP
 import com.phew.domain.SIGN_UP_OKAY
 import com.phew.domain.SIGN_UP_REGISTERED
-import com.phew.domain.usecase.CheckNickName
-import com.phew.domain.usecase.CheckSignUp
-import com.phew.domain.usecase.CreateImageFile
-import com.phew.domain.usecase.FinishTakePicture
-import com.phew.domain.usecase.GetNickName
-import com.phew.domain.usecase.Login
-import com.phew.domain.usecase.RequestSignUp
-import com.phew.domain.usecase.RestoreAccount
+import com.phew.domain.model.signup.SignUpRequestParam
+import com.phew.domain.orchestrator.SignUpUseCaseOrchestrator
 import com.phew.sign_up.dto.SignUpResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -38,14 +32,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SignUpViewModel @Inject constructor(
-    private val createFile: CreateImageFile,
-    private val finishPhoto: FinishTakePicture,
-    private val checkSignUp: CheckSignUp,
-    private val requestLogin: Login,
-    private val getNickName: GetNickName,
-    private val requestSignUp: RequestSignUp,
-    private val checkNickName: CheckNickName,
-    private val restoreAccount: RestoreAccount
+    private val signUpOrchestrator: SignUpUseCaseOrchestrator,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SignUp())
@@ -110,7 +97,7 @@ class SignUpViewModel @Inject constructor(
      */
     fun generateNickName() {
         viewModelScope.launch(Dispatchers.IO) {
-            getNickName().fold(
+            signUpOrchestrator.generatedNickName().fold(
                 onSuccess = { nickName ->
                     _uiState.update { state ->
                         state.copy(nickName = nickName, checkNickName = UiState.Success(true))
@@ -129,8 +116,8 @@ class SignUpViewModel @Inject constructor(
      */
     fun signUp() {
         viewModelScope.launch(Dispatchers.IO) {
-            requestSignUp(
-                data = RequestSignUp.Param(
+            signUpOrchestrator.requestSignUp(
+                data = SignUpRequestParam(
                     agreedToLocationTerms = _uiState.value.agreedToLocationTerms,
                     agreedToPrivacyPolicy = _uiState.value.agreedToPrivacyPolicy,
                     agreedToTermsOfService = _uiState.value.agreedToTermsOfService,
@@ -164,7 +151,7 @@ class SignUpViewModel @Inject constructor(
      * 닉네임 검증 함수
      */
     private suspend fun checkName(name: String) {
-        withContext(Dispatchers.IO) { checkNickName(CheckNickName.Param(name)) }.fold(
+        withContext(Dispatchers.IO) { signUpOrchestrator.checkNickName(name) }.fold(
             onSuccess = { available ->
                 _uiState.update { state ->
                     if (state.nickName == name) {
@@ -199,7 +186,7 @@ class SignUpViewModel @Inject constructor(
      */
     fun restoreAccount() {
         viewModelScope.launch(Dispatchers.IO) {
-            restoreAccount(RestoreAccount.Param(_uiState.value.authCode.trim())).fold(
+            signUpOrchestrator.restoreAccount(_uiState.value.authCode.trim()).fold(
                 onSuccess = {
                     _effect.emit(SignUpEffect.RestoreSuccess)
                 },
@@ -267,7 +254,7 @@ class SignUpViewModel @Inject constructor(
      */
     fun checkRegister() {
         viewModelScope.launch(Dispatchers.IO) {
-            checkSignUp().fold(
+            signUpOrchestrator.checkSignUp().fold(
                 onSuccess = { checkResult ->
                     val signUpResult = SignUpResult(
                         time = checkResult.second,
@@ -291,7 +278,7 @@ class SignUpViewModel @Inject constructor(
      */
     private fun login() {
         viewModelScope.launch(Dispatchers.IO) {
-            requestLogin().fold(
+            signUpOrchestrator.login().fold(
                 onSuccess = {
                     _effect.emit(SignUpEffect.NavigateHome)
                 },
@@ -413,7 +400,7 @@ class SignUpViewModel @Inject constructor(
      */
     private fun createImage() {
         viewModelScope.launch(Dispatchers.IO) {
-            createFile().fold(
+            signUpOrchestrator.createImageFile().fold(
                 onSuccess = { uri ->
                     _uiState.update { state ->
                         state.copy(
@@ -436,7 +423,7 @@ class SignUpViewModel @Inject constructor(
      */
     private fun closeFile(data: Uri) {
         viewModelScope.launch(Dispatchers.IO) {
-            finishPhoto(FinishTakePicture.Param(data)).fold(
+            signUpOrchestrator.finishTakePicture(data).fold(
                 onSuccess = {
                     _uiState.update { state ->
                         state.copy(profile = state.profile + data)

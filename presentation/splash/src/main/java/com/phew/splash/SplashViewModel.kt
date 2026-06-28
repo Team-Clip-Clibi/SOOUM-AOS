@@ -7,10 +7,7 @@ import com.phew.core_common.ERROR
 import com.phew.core_common.IsDebug
 import com.phew.core_common.errorMessage
 import com.phew.domain.model.AppVersionStatusType
-import com.phew.domain.usecase.AutoLogin
-import com.phew.domain.usecase.CheckAppVersion
-import com.phew.domain.usecase.GetFirebaseToken
-import com.phew.domain.usecase.SaveNotify
+import com.phew.domain.orchestrator.SplashUseCaseOrchestrator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,12 +18,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SplashViewModel @Inject constructor(
-    private val version: CheckAppVersion,
+    private val splashOrchestrator: SplashUseCaseOrchestrator,
     @IsDebug private val isDebug: Boolean,
     @AppVersion private val appVersion: String,
-    private val updateFcm: GetFirebaseToken,
-    private val notify: SaveNotify,
-    private val autoLogin: AutoLogin
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
@@ -37,12 +31,7 @@ class SplashViewModel @Inject constructor(
 
     private fun versionCheck() {
         viewModelScope.launch(Dispatchers.IO) {
-            version(
-                CheckAppVersion.Param(
-                    appVersion = appVersion,
-                    isDebugMode = isDebug
-                )
-            ).fold(
+            splashOrchestrator.checkAppVersion(appVersion = appVersion, isDebugMode = isDebug).fold(
                 onSuccess = { status ->
                     if (status == AppVersionStatusType.UPDATE) {
                         _uiState.value = UiState.Update
@@ -59,7 +48,7 @@ class SplashViewModel @Inject constructor(
 
     private fun updateFcmToken() {
         viewModelScope.launch(Dispatchers.IO) {
-            updateFcm().fold(
+            splashOrchestrator.updateFcmToken().fold(
                 onSuccess = { _uiState.value = UiState.Success },
                 onFailure = { throwable ->
                     _uiState.value = UiState.Error(Result.failure<Unit>(throwable).errorMessage())
@@ -70,7 +59,7 @@ class SplashViewModel @Inject constructor(
 
     fun saveNotify(data: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
-            notify(SaveNotify.Param(data)).fold(
+            splashOrchestrator.saveNotify(data).fold(
                 onSuccess = { requestAutoLogin() },
                 onFailure = { _uiState.value = UiState.Error(ERROR) },
             )
@@ -79,7 +68,7 @@ class SplashViewModel @Inject constructor(
 
     private fun requestAutoLogin() {
         viewModelScope.launch(Dispatchers.IO) {
-            when (autoLogin()) {
+            when (splashOrchestrator.autoLogin()) {
                 true -> {
                     _uiState.value = UiState.FeedPage
                 }

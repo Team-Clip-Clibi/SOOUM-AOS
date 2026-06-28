@@ -7,15 +7,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.phew.core.ui.model.CameraCaptureRequest
 import com.phew.core.ui.model.CameraPickerAction
-import com.phew.domain.dto.Location
-import com.phew.domain.repository.DeviceRepository
-import com.phew.domain.usecase.CreateImageFile
-import com.phew.domain.usecase.FinishTakePicture
-import com.phew.domain.usecase.GetCardDefaultImage
-import com.phew.domain.usecase.GetRelatedTag
-import com.phew.domain.usecase.PostCard
-import com.phew.domain.usecase.PostCardReply
-import com.phew.domain.usecase.GetRefreshToken
+import com.phew.domain.model.write.WriteCardParam
+import com.phew.domain.model.write.WriteReplyParam
+import com.phew.domain.orchestrator.WriteUseCaseOrchestrator
 import com.phew.presentation.write.model.WriteOptions
 import com.phew.presentation.write.model.WriteUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -47,10 +41,6 @@ import com.phew.core_common.log.SooumLog
 import com.phew.core_common.resultFailure
 import com.phew.core_design.CustomFont
 import com.phew.core_design.typography.FontType
-import com.phew.domain.usecase.CheckCardAlreadyDelete
-import com.phew.domain.usecase.GetActivityRestrictionDate
-import com.phew.domain.usecase.SaveEventLogWriteCardView
-import com.phew.domain.usecase.SaveEventLogWriteCommentCardView
 
 import com.phew.presentation.write.model.BackgroundFilterType
 import com.phew.presentation.write.viewmodel.UiState
@@ -59,18 +49,7 @@ import kotlinx.coroutines.withContext
 @HiltViewModel
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 class WriteViewModel @Inject constructor(
-    private val deviceRepository: DeviceRepository,
-    private val createImageFile: CreateImageFile,
-    private val finishTakePicture: FinishTakePicture,
-    private val getRelatedTag: GetRelatedTag,
-    private val getCardDefaultImage: GetCardDefaultImage,
-    private val postCard: PostCard,
-    private val postCardReply: PostCardReply,
-    private val activateDate: GetActivityRestrictionDate,
-    private val checkCardDelete: CheckCardAlreadyDelete,
-    private val logWriteFeedCard: SaveEventLogWriteCardView,
-    private val logWRiteCommentCard: SaveEventLogWriteCommentCardView,
-    private val getRefreshToken: GetRefreshToken
+    private val writeOrchestrator: WriteUseCaseOrchestrator,
 ) : ViewModel() {
 
     private val locationPermissions = arrayOf(
@@ -103,7 +82,7 @@ class WriteViewModel @Inject constructor(
                     _uiState.update { it.copy(isLoadingRelatedTags = true) }
                     try {
                         flowOf(
-                            getRelatedTag(GetRelatedTag.Param(tag = tagInput, resultCnt = 8))
+                            writeOrchestrator.relatedTags(tag = tagInput, resultCount = 8)
                                 .getOrElse { emptyList() }
                         )
                     } catch (e: Exception) {
@@ -123,15 +102,6 @@ class WriteViewModel @Inject constructor(
 
     private val _uiEffect = MutableSharedFlow<WriteUiEffect>()
     val uiEffect = _uiEffect.asSharedFlow()
-
-    private suspend fun getLocationSafely(): Location {
-        return try {
-            deviceRepository.requestLocation()
-        } catch (e: Exception) {
-            // 위치 정보 가져오기 실패 시 빈 위치 반환
-            Location.EMPTY
-        }
-    }
 
     fun onInitialLocationPermissionCheck(isGranted: Boolean) {
         _uiState.update { state ->
@@ -158,19 +128,19 @@ class WriteViewModel @Inject constructor(
 
     fun isComeFromTab() {
         viewModelScope.launch(Dispatchers.IO) {
-            logWriteFeedCard.logBottomWriteClick()
+            writeOrchestrator.logBottomWriteClick()
         }
     }
 
     fun writeFinishTagEnter(isFromFeedCard: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
-            if (isFromFeedCard) logWriteFeedCard.logWriteTagClickEnter() else logWRiteCommentCard.logWriteTagClickEnter()
+            writeOrchestrator.logWriteTagClickEnter()
         }
     }
 
     fun clickBackHandler(isFromFeedCard: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
-            if(isFromFeedCard) logWriteFeedCard.logBackHandler() else logWRiteCommentCard.logBackHandler()
+            if (isFromFeedCard) writeOrchestrator.logFeedBackHandler() else writeOrchestrator.logCommentBackHandler()
         }
     }
 
@@ -296,17 +266,17 @@ class WriteViewModel @Inject constructor(
             when (isFromFeedCard) {
                 true -> {
                     if (filter == BackgroundFilterType.EVENT) {
-                        logWriteFeedCard.logWriteEventCard()
+                        writeOrchestrator.logWriteEventCard()
                     } else {
-                        logWriteFeedCard.logChangeBackgroundCategory()
+                        writeOrchestrator.logFeedBackgroundChange()
                     }
                 }
 
                 false -> {
                     if (filter == BackgroundFilterType.EVENT) {
-                        logWRiteCommentCard.logWriteEventCard()
+                        writeOrchestrator.logWriteEventCard()
                     } else {
-                        logWRiteCommentCard.logBackgroundChange()
+                        writeOrchestrator.logCommentBackgroundChange()
                     }
                 }
             }
@@ -396,7 +366,7 @@ class WriteViewModel @Inject constructor(
     fun onBackgroundCameraCaptureResult(success: Boolean, uri: Uri) {
         if (success) {
             viewModelScope.launch(Dispatchers.IO) {
-                finishTakePicture(FinishTakePicture.Param(uri)).fold(
+                writeOrchestrator.finishTakePicture(uri).fold(
                     onSuccess = { resultUri ->
                         _uiState.update { state ->
                             state.copy(
@@ -536,7 +506,7 @@ class WriteViewModel @Inject constructor(
 
     private fun requestCameraImageForBackground() {
         viewModelScope.launch(Dispatchers.IO) {
-            createImageFile().fold(
+            writeOrchestrator.createImageFile().fold(
                 onSuccess = { uri ->
                     _uiState.update { state ->
                         state.copy(
@@ -580,7 +550,7 @@ class WriteViewModel @Inject constructor(
 
                 val result: Result<Long> = try {
                     if (state.parentCardId != null) {
-                        val checkResult = checkCardDelete(CheckCardAlreadyDelete.Param(cardId = state.parentCardId))
+                        val checkResult = writeOrchestrator.checkCardDeleted(cardId = state.parentCardId)
                         val checkFailure = checkResult.exceptionOrNull()
                         if (checkFailure != null) {
                             resultFailure(checkFailure.toUiMessage())
@@ -610,7 +580,7 @@ class WriteViewModel @Inject constructor(
                                 "onWriteComplete reply imgType: $imgType, imgName: $imgName, imageUrl: $imageUrl"
                             )
 
-                            val replyParam = PostCardReply.Param(
+                            val replyParam = WriteReplyParam(
                                 cardId = state.parentCardId,
                                 content = state.content,
                                 font = selectedFontServerName.data.serverName,
@@ -621,7 +591,7 @@ class WriteViewModel @Inject constructor(
                                 isDistanceShared = state.selectedOptionIds.contains(WriteOptions.DISTANCE_OPTION_ID)
                             )
                             SooumLog.d(TAG, "onWriteComplete reply: $replyParam")
-                            postCardReply(replyParam)
+                            writeOrchestrator.postCardReply(replyParam)
                         }
                     } else {
                         // 새 카드 작성 (PostCard 사용)
@@ -646,7 +616,7 @@ class WriteViewModel @Inject constructor(
                             "onWriteComplete card isFromDevice: $isFromDevice, imgName: $imgName, imageUrl: $imageUrl"
                         )
 
-                        val cardParam = PostCard.Param(
+                        val cardParam = WriteCardParam(
                             isFromDevice = isFromDevice,
                             answerCard = false,
                             cardId = null,
@@ -660,7 +630,7 @@ class WriteViewModel @Inject constructor(
                             pollContents = state.pollContents
                         )
                         SooumLog.d(TAG, "onWriteComplete card: $cardParam")
-                        postCard(cardParam)
+                        writeOrchestrator.postCard(cardParam)
                     }
                 } catch (e: Exception) {
                     SooumLog.e(TAG, "onWriteComplete exception during API call: ${e.message}")
@@ -710,7 +680,7 @@ class WriteViewModel @Inject constructor(
                             }
 
                             else -> {
-                                val refreshToken = getRefreshToken()
+                                val refreshToken = writeOrchestrator.refreshToken()
                                 _uiEffect.emit(WriteUiEffect.ShowError(refreshToken))
                             }
                         }
@@ -734,7 +704,7 @@ class WriteViewModel @Inject constructor(
     }
 
     private suspend fun getActivateDate() {
-        val dateResult = withContext(Dispatchers.IO) { activateDate() }
+        val dateResult = withContext(Dispatchers.IO) { writeOrchestrator.activityRestrictionDate() }
         _uiState.update { state ->
             state.copy(
                 activateDate = dateResult.fold(
@@ -770,7 +740,7 @@ class WriteViewModel @Inject constructor(
     private fun loadCardDefaultImages() {
         viewModelScope.launch {
             try {
-                getCardDefaultImage().fold(
+                writeOrchestrator.cardDefaultImages().fold(
                     onSuccess = { defaultImageList ->
                         _uiState.update { state ->
                             val convertedMap =

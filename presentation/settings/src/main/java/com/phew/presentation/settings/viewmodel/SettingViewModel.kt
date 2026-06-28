@@ -6,13 +6,7 @@ import com.phew.core_common.IsDebug
 import com.phew.core_common.TimeUtils
 import com.phew.domain.dto.Alarm
 import com.phew.domain.model.AppVersionStatusType
-import com.phew.domain.usecase.CheckAppVersionNew
-import com.phew.domain.usecase.GetActivityRestrictionDate
-import com.phew.domain.usecase.GetRefreshToken
-import com.phew.domain.usecase.GetRejoinableDate
-import com.phew.domain.usecase.GetToggleNotification
-import com.phew.domain.usecase.RunHaptic
-import com.phew.domain.usecase.SetToggleNotification
+import com.phew.domain.orchestrator.SettingsUseCaseOrchestrator
 import com.phew.presentation.settings.component.setting.SettingItemRow
 import com.phew.presentation.settings.model.setting.SettingItem
 import com.phew.presentation.settings.model.setting.SettingItemId
@@ -31,13 +25,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SettingViewModel @Inject constructor(
-    private val getActivityRestrictionDate: GetActivityRestrictionDate,
-    private val checkAppVersionNew: CheckAppVersionNew,
-    private val getRejoinableDate: GetRejoinableDate,
-    private val getRefreshToken: GetRefreshToken,
-    private val setToggleNotification: SetToggleNotification,
-    private val getToggleNotification : GetToggleNotification,
-    private val haptic : RunHaptic,
+    private val settingsOrchestrator: SettingsUseCaseOrchestrator,
     @IsDebug private val isDebug: Boolean,
 ) : ViewModel() {
 
@@ -123,9 +111,9 @@ class SettingViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
-            setToggleNotification(param = SetToggleNotification.Param(enabled)).fold(
+            settingsOrchestrator.setToggleNotification(enabled).fold(
                 onSuccess = {
-                    haptic.invoke()
+                    settingsOrchestrator.runHaptic()
                     _uiState.update { state -> state.copy(notificationEnabled = enabled) }
                 },
                 onFailure = {
@@ -168,7 +156,7 @@ class SettingViewModel @Inject constructor(
 
     fun onInquiryClick() {
         viewModelScope.launch {
-            val refreshToken = getRefreshToken()
+            val refreshToken = settingsOrchestrator.refreshToken()
             _uiEffect.emit(
                 SettingUiEffect.SendInquiryMail(refreshToken = refreshToken)
             )
@@ -215,7 +203,7 @@ class SettingViewModel @Inject constructor(
     
     private fun loadActivityRestrictionDate() {
         viewModelScope.launch {
-            val result = getActivityRestrictionDate()
+            val result = settingsOrchestrator.activityRestrictionDate()
             result.onSuccess { date ->
                 _uiState.update { 
                     it.copy(activityRestrictionDate = date?.let { dateString ->
@@ -228,12 +216,10 @@ class SettingViewModel @Inject constructor(
     
     private fun checkAppVersion() {
         viewModelScope.launch {
-            val param = CheckAppVersionNew.Param(
+            settingsOrchestrator.checkAppVersion(
                 type = "ANDROID",
-                isDebugMode = isDebug
-            )
-            
-            checkAppVersionNew(param).fold(
+                isDebugMode = isDebug,
+            ).fold(
                 onSuccess = { result ->
                     _uiState.update { 
                         it.copy(
@@ -250,7 +236,7 @@ class SettingViewModel @Inject constructor(
     
     private fun loadRejoinableDate() {
         viewModelScope.launch {
-            val result = getRejoinableDate()
+            val result = settingsOrchestrator.rejoinableDate()
             result.onSuccess { rejoinableDate ->
                 _uiState.update { it.copy(rejoinableDate = rejoinableDate) }
             }.onFailure {
@@ -261,7 +247,7 @@ class SettingViewModel @Inject constructor(
     
     fun loadNotificationState() {
         viewModelScope.launch {
-            getToggleNotification().fold(
+            settingsOrchestrator.getToggleNotification().fold(
                 onSuccess = { result ->
                     _uiState.update { it.copy(notificationEnabled = result) }
                 },

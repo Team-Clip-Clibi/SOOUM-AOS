@@ -7,8 +7,7 @@ import androidx.paging.cachedIn
 import com.phew.core_common.errorMessage
 import com.phew.domain.dto.Notice
 import com.phew.domain.dto.NoticeSource
-import com.phew.domain.usecase.GetFeedNotification
-import com.phew.domain.usecase.GetNotification
+import com.phew.domain.orchestrator.SettingsUseCaseOrchestrator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -23,13 +22,12 @@ import javax.inject.Inject
 
 @HiltViewModel
 class NoticeViewModel @Inject constructor(
-    private val notification: GetFeedNotification,
-    getNotificationPage: GetNotification,
+    private val settingsOrchestrator: SettingsUseCaseOrchestrator,
 ): ViewModel(){
 
     private val _uiState = MutableStateFlow(
         NoticeState(
-            notice = getNotificationPage(NoticeSource.SETTINGS).cachedIn(viewModelScope)
+            notice = settingsOrchestrator.noticePage(NoticeSource.SETTINGS).cachedIn(viewModelScope)
         )
     )
     val uiState = _uiState.asStateFlow()
@@ -45,7 +43,7 @@ class NoticeViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { it.copy(isLoading = true) }
             
-            notification(NoticeSource.SETTINGS).fold(
+            settingsOrchestrator.feedNotification(NoticeSource.SETTINGS).fold(
                 onSuccess = { request ->
                     _uiState.update {
                         it.copy(

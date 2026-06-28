@@ -15,13 +15,13 @@ fun <T> resultFailure(
     message: String,
     code: Int = APP_ERROR_CODE,
     throwable: Throwable? = null,
-): Result<T> = resultFailure(code = code, message = message, throwable = throwable)
+): Result<T> = Result.failure(sooumExceptionOf(code = code, message = message, cause = throwable))
 
 fun <T> resultFailure(
     error: Unit,
     code: Int = APP_ERROR_CODE,
     throwable: Throwable? = null,
-): Result<T> = resultFailure(code = code, message = ERROR_FAIL_JOB, throwable = throwable)
+): Result<T> = Result.failure(sooumExceptionOf(code = code, message = ERROR_FAIL_JOB, cause = throwable))
 
 fun <T> Result<T>.mapSooumFailure(): Result<T> {
     return fold(

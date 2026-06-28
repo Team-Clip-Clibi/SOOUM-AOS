@@ -15,8 +15,8 @@ import com.phew.core_common.errorMessage
 import com.phew.domain.dto.FollowData
 import com.phew.domain.dto.ProfileCard
 import com.phew.domain.dto.ProfileInfo
-import com.phew.domain.usecase.UpdateProfile
-import com.phew.domain.usecase.orchestrator.ProfileUseCaseOrchestrator
+import com.phew.domain.model.profile.ProfileUpdateParam
+import com.phew.domain.orchestrator.ProfileUseCaseOrchestrator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -278,7 +278,7 @@ class ProfileViewModel @Inject constructor(
                 ?: profile.nickname
             val nextBio = currentState.changeBio ?: profile.bio
             profileOrchestrator.updateProfile(
-                UpdateProfile.Param(
+                ProfileUpdateParam(
                     nickName = currentState.changeNickName?.takeIf { it != profile.nickname },
                     imgName = when {
                         !currentState.useAlbum && !currentState.useCamera && currentState.newProfileImageUri.size == 2 -> profile.profileImgName

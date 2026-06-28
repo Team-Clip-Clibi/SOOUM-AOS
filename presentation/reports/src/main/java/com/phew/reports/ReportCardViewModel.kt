@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.phew.core_common.errorMessage
 import com.phew.domain.dto.ReportReason
-import com.phew.domain.usecase.ReportsCards
+import com.phew.domain.orchestrator.ReportUseCaseOrchestrator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,18 +15,18 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class ReportCardViewModel @Inject constructor(private val report: ReportsCards) : ViewModel() {
+class ReportCardViewModel @Inject constructor(
+    private val reportOrchestrator: ReportUseCaseOrchestrator,
+) : ViewModel() {
     private var _uiState = MutableStateFlow(ReportState())
     val uiState: StateFlow<ReportState> = _uiState.asStateFlow()
 
     fun reportCard(cardId: String) {
         _uiState.update { state -> state.copy(reportCard = UiState.Loading) }
         viewModelScope.launch(Dispatchers.IO) {
-            report(
-                ReportsCards.Param(
-                    cardId = cardId,
-                    reason = _uiState.value.reportReason
-                )
+            reportOrchestrator.reportCard(
+                cardId = cardId,
+                reason = _uiState.value.reportReason,
             ).fold(
                 onSuccess = {
                     _uiState.update { state -> state.copy(reportCard = UiState.Success(Unit)) }

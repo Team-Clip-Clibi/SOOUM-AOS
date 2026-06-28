@@ -3,8 +3,7 @@ package com.phew.presentation.settings.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.phew.core_common.exception.asSooumException
-import com.phew.domain.usecase.GetTransferCode
-import com.phew.domain.usecase.RefreshTransferCode
+import com.phew.domain.orchestrator.SettingsUseCaseOrchestrator
 import com.phew.presentation.settings.model.LoginOtherDeviceUiEffect
 import com.phew.presentation.settings.model.LoginOtherDeviceUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,13 +18,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-import com.phew.domain.usecase.GetRefreshToken
-
 @HiltViewModel
 class LoginOtherDeviceViewModel @Inject constructor(
-    private val getTransferCode: GetTransferCode,
-    private val refreshTransferCode: RefreshTransferCode,
-    private val getRefreshToken: GetRefreshToken
+    private val settingsOrchestrator: SettingsUseCaseOrchestrator,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginOtherDeviceUiState())
@@ -51,7 +46,7 @@ class LoginOtherDeviceViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             
-            getTransferCode().fold(
+            settingsOrchestrator.transferCode().fold(
                 onSuccess = { result ->
                     _uiState.update {
                         it.copy(
@@ -111,7 +106,7 @@ class LoginOtherDeviceViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             
-            refreshTransferCode().fold(
+            settingsOrchestrator.refreshTransferCode().fold(
                 onSuccess = { result ->
                     _uiState.update {
                         it.copy(
@@ -136,7 +131,7 @@ class LoginOtherDeviceViewModel @Inject constructor(
 
     private suspend fun handleApiFailure(error: Int?) {
         if (error == ERROR_CODE_SERVER) {
-            val refreshToken = getRefreshToken()
+            val refreshToken = settingsOrchestrator.refreshToken()
             _uiState.update {
                 it.copy(
                     isLoading = false,

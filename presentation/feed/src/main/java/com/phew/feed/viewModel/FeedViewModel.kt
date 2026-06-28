@@ -17,7 +17,7 @@ import com.phew.domain.dto.Notice
 import com.phew.domain.dto.NoticeSource
 import com.phew.domain.dto.Notification
 import com.phew.domain.repository.FeedPagingQuery
-import com.phew.domain.usecase.orchestrator.FeedUseCaseOrchestrator
+import com.phew.domain.orchestrator.FeedUseCaseOrchestrator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

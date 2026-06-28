@@ -12,16 +12,7 @@ import com.phew.core_common.MoveDetail
 import com.phew.core_common.errorMessage
 import com.phew.domain.dto.CardComment
 import com.phew.domain.dto.CardDetail
-import com.phew.domain.usecase.BlockMember
-import com.phew.domain.usecase.CheckCardAlreadyDelete
-import com.phew.domain.usecase.DeleteCard
-import com.phew.domain.usecase.GetCardComments
-import com.phew.domain.usecase.GetCardCommentsPaging
-import com.phew.domain.usecase.GetCardDetail
-import com.phew.domain.usecase.LikeCard
-import com.phew.domain.usecase.SaveEventLogDetailView
-import com.phew.domain.usecase.UnblockMember
-import com.phew.domain.usecase.UnlikeCard
+import com.phew.domain.orchestrator.CardDetailUseCaseOrchestrator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -76,18 +67,7 @@ sealed interface UiState<out T> {
 
 @HiltViewModel
 class CardDetailViewModel @Inject constructor(
-    private val getCardDetail: GetCardDetail,
-    private val getCardComments: GetCardComments,
-    private val commentPaging: GetCardCommentsPaging,
-    private val likeCard: LikeCard,
-    private val unLikeCard: UnlikeCard,
-    private val createPollVote: com.phew.domain.usecase.CreatePollVote,
-    private val deletePollVote: com.phew.domain.usecase.DeletePollVote,
-    private val deleteCard: DeleteCard,
-    private val blockMember: BlockMember,
-    private val unblockMember: UnblockMember,
-    private val log : SaveEventLogDetailView,
-    private val checkCardDelete: CheckCardAlreadyDelete,
+    private val detailOrchestrator: CardDetailUseCaseOrchestrator,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CardDetailUiState())
@@ -103,7 +83,7 @@ class CardDetailViewModel @Inject constructor(
         .flatMapLatest { request ->
             when (request) {
                 is PagingRequest.None -> flowOf(PagingData.empty())
-                is PagingRequest.Ready -> commentPaging(request.param)
+                is PagingRequest.Ready -> detailOrchestrator.cardCommentsPaging(request.cardId)
             }
         }
         .cachedIn(viewModelScope)
@@ -114,11 +94,7 @@ class CardDetailViewModel @Inject constructor(
 
     fun requestComment(cardId: Long) {
         _pagingRequest.update {
-            PagingRequest.Ready(
-                GetCardCommentsPaging.Param(
-                    cardId = cardId
-                )
-            )
+            PagingRequest.Ready(cardId = cardId)
         }
     }
 
@@ -128,8 +104,8 @@ class CardDetailViewModel @Inject constructor(
                 requestComment(cardId)
                 _uiState.value = _uiState.value.copy(isLoading = true, error = null, isRefresh = true)
 
-                val cardDetailDeferred = async { getCardDetail(GetCardDetail.Param(cardId)) }
-                val commentsDeferred = async { getCardComments(GetCardComments.Param(cardId)) }
+                val cardDetailDeferred = async { detailOrchestrator.cardDetail(cardId) }
+                val commentsDeferred = async { detailOrchestrator.cardComments(cardId) }
 
                 val cardDetailResult = cardDetailDeferred.await()
                 val commentsResult = commentsDeferred.await()
@@ -218,7 +194,7 @@ class CardDetailViewModel @Inject constructor(
             }
 
             // 1. 카드가 삭제되었는지 먼저 확인
-            checkCardDelete(CheckCardAlreadyDelete.Param(cardId = cardId)).fold(
+            detailOrchestrator.checkCardDeleted(cardId = cardId).fold(
                 onSuccess = { isDeleted ->
                     if (isDeleted) {
                         // 삭제된 경우 -> 에러 설정 및 다이얼로그 표시
@@ -248,9 +224,9 @@ class CardDetailViewModel @Inject constructor(
 
             // 2. 삭제되지 않은 경우 좋아요 토글 수행
             val result = if (currentDetail.isLike) {
-                unLikeCard(cardId)
+                detailOrchestrator.setCardLike(cardId = cardId, shouldLike = false)
             } else {
-                likeCard(cardId)
+                detailOrchestrator.setCardLike(cardId = cardId, shouldLike = true)
             }
 
             result.fold(
@@ -286,7 +262,7 @@ class CardDetailViewModel @Inject constructor(
             val currentDetail = _uiState.value.cardDetail ?: return@launch
             val currentPoll = currentDetail.poll ?: return@launch
 
-            checkCardDelete(CheckCardAlreadyDelete.Param(currentDetail.cardId)).fold(
+            detailOrchestrator.checkCardDeleted(currentDetail.cardId).fold(
                 onSuccess = { isDeleted ->
                     if (isDeleted) {
                         _uiState.update { it.copy(error = CardDetailError.CARD_DELETE) }
@@ -308,9 +284,7 @@ class CardDetailViewModel @Inject constructor(
                     ?.pollOptionId
                     ?: pollOptionId
 
-                deletePollVote(
-                    com.phew.domain.usecase.DeletePollVote.Param(votedOptionId)
-                ).fold(
+                detailOrchestrator.deletePollVote(votedOptionId).fold(
                     onSuccess = {
                         val canceledPoll = currentPoll.copy(
                             totalVoterCount = (currentPoll.totalVoterCount - 1L).coerceAtLeast(0L),
@@ -351,9 +325,7 @@ class CardDetailViewModel @Inject constructor(
                 return@launch
             }
 
-            createPollVote(
-                com.phew.domain.usecase.CreatePollVote.Param(pollOptionId)
-            ).fold(
+            detailOrchestrator.createPollVote(pollOptionId).fold(
                 onSuccess = { poll ->
                     _uiState.update {
                         it.copy(
@@ -385,7 +357,7 @@ class CardDetailViewModel @Inject constructor(
                 it.copy(isBlockLoading = true)
             }
 
-            val result = blockMember(BlockMember.Param(toMemberId))
+            val result = detailOrchestrator.blockMember(toMemberId)
 
             result.fold(
                 onSuccess = {
@@ -414,7 +386,7 @@ class CardDetailViewModel @Inject constructor(
         val memberId = _uiState.value.blockedMemberId ?: return
 
         viewModelScope.launch {
-            val result = unblockMember(UnblockMember.Param(memberId))
+            val result = detailOrchestrator.unblockMember(memberId)
 
             result.fold(
                 onSuccess = {
@@ -439,7 +411,7 @@ class CardDetailViewModel @Inject constructor(
 
     fun requestDeleteCard(cardId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
-            deleteCard(cardId).fold(
+            detailOrchestrator.deleteCard(cardId).fold(
                 onSuccess = {
                     if (_uiState.value.cardDetail?.commentCardCount == 0) {
                         //  상세 카드에서 댓글이 없을 경우 Home으로 이동
@@ -465,7 +437,7 @@ class CardDetailViewModel @Inject constructor(
 
     fun verifyAndNavigateToWrite(cardId: Long) {
         viewModelScope.launch {
-            checkCardDelete(CheckCardAlreadyDelete.Param(cardId = cardId)).fold(
+            detailOrchestrator.checkCardDeleted(cardId = cardId).fold(
                 onSuccess = { isDeleted ->
                     if (isDeleted) {
                         // 삭제된 경우 에러 설정 -> Dialog 표시
@@ -502,26 +474,26 @@ class CardDetailViewModel @Inject constructor(
 
     fun logMoveToCommentCard(event: MoveDetail, isEventCard: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
-            log.moveToCommentCard(event = event, isEventCard = isEventCard)
+            detailOrchestrator.moveToCommentCard(event = event, isEventCard = isEventCard)
         }
     }
 
     fun logMoveToTagView() {
         viewModelScope.launch(Dispatchers.IO) {
-            log.moveToTagView()
+            detailOrchestrator.moveToTagView()
         }
     }
 
     fun logWhereComeFrom(view: CardDetailTrace) {
         viewModelScope.launch(Dispatchers.IO) {
-            log.tracePreviousView(view)
+            detailOrchestrator.tracePreviousView(view)
         }
     }
 }
 
 sealed class PagingRequest {
     data object None : PagingRequest()
-    class Ready(val param: GetCardCommentsPaging.Param) : PagingRequest()
+    class Ready(val cardId: Long) : PagingRequest()
 }
 
 sealed class CardDetailUiEffect {
