@@ -105,6 +105,10 @@ class NetworkConvention : Plugin<Project> {
                 val checkCardDelete: String =
                     properties.getProperty("api_url_check_card_delete", "")
                 val notifyToggle: String = properties.getProperty("api_url_notify_toggle", "")
+                val userRole: String = properties.getProperty(
+                    "api_url_user_role",
+                    "\"\""
+                )
                 val articleUrl: String = properties.getProperty("api_url_cards_article", "")
                 val pollVote: String = properties.getProperty(
                     "api_url_poll_vote",
@@ -177,6 +181,7 @@ class NetworkConvention : Plugin<Project> {
                 buildConfigField("String", "API_URL_READ_ACTIVATE", readActivateAlarm)
                 buildConfigField("String", "API_URL_CHECK_CARD_DELETE", checkCardDelete)
                 buildConfigField("String", "API_URL_NOTIFY_TOGGLE", notifyToggle)
+                buildConfigField("String", "API_URL_USER_ROLE", userRole)
                 buildConfigField("String" , "API_URL_CARDS_ARTICLE", articleUrl)
                 buildConfigField("String", "API_URL_POLL_VOTE", pollVote)
             }

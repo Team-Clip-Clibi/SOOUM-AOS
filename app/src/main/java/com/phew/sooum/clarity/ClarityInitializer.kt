@@ -17,5 +17,6 @@ class ClarityInitializer @Inject constructor(
             return
         }
         Clarity.initialize(application, config)
+        Clarity.pause()
     }
 }

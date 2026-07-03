@@ -27,6 +27,7 @@ class RestoreAccount @Inject constructor(
     private val interceptorManger: InterceptorManger,
     private val profileRepository: ProfileRepository,
     private val eventLogRepository: EventRepository,
+    private val syncClarityRecording: SyncClarityRecording,
 ) {
     data class Param(
         val transferCode: String,
@@ -74,6 +75,7 @@ class RestoreAccount @Inject constructor(
                     )
                 )
                 if (!saveToken) return DomainResult.Failure(ERROR_FAIL_JOB)
+                syncClarityRecording()
                 when (val profile = profileRepository.requestMyProfile()) {
                     is DataResult.Fail -> {
                         interceptorManger.deleteAll()

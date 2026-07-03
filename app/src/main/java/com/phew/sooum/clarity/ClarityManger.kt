@@ -7,6 +7,18 @@ import com.phew.sooum.BuildConfig
 import javax.inject.Inject
 
 class ClarityManger @Inject constructor() : ClarityInterface {
+    @Volatile
+    private var isEnabled = false
+
+    override fun setEnabled(isEnabled: Boolean) {
+        this.isEnabled = isEnabled
+        if (isEnabled) {
+            resume()
+        } else {
+            pause()
+        }
+    }
+
     override fun pause() {
         if (BuildConfig.DEBUG) {
             SooumLog.d(msg = "Clarity not support DEBUG mode")
@@ -18,6 +30,10 @@ class ClarityManger @Inject constructor() : ClarityInterface {
     override fun resume() {
         if (BuildConfig.DEBUG) {
             SooumLog.d(msg = "Clarity not support DEBUG mode")
+            return
+        }
+        if (!isEnabled) {
+            SooumLog.d(msg = "Clarity disabled")
             return
         }
         Clarity.resume()
