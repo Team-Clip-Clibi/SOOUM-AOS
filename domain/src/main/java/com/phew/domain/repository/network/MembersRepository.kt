@@ -4,6 +4,7 @@ import com.phew.core_common.DataResult
 import com.phew.domain.dto.Alarm
 import com.phew.domain.model.RejoinableDate
 import com.phew.domain.model.TransferCode
+import com.phew.domain.model.UserRole
 
 interface MembersRepository {
     suspend fun getActivityRestrictionDate(): Result<String?>
@@ -14,4 +15,5 @@ interface MembersRepository {
     suspend fun getRejoinableDate(): Result<RejoinableDate>
     suspend fun toggleNotification(isAllowNotify: Alarm): DataResult<Unit>
     suspend fun getToggleNotification() : DataResult<Alarm>
+    suspend fun getUserRole(): DataResult<UserRole>
 }

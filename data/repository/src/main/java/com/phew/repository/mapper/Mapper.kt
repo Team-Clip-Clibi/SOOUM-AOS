@@ -45,6 +45,8 @@ import com.phew.domain.model.AppVersionStatusType
 import com.phew.domain.model.BlockMember
 import com.phew.domain.model.RejoinableDate
 import com.phew.domain.model.TransferCode
+import com.phew.domain.model.UserRole
+import com.phew.domain.model.UserRoleType
 import com.phew.domain.model.TagInfo as DomainTagInfo
 import com.phew.domain.model.TagInfoList
 import com.phew.domain.model.TagCards
@@ -61,6 +63,8 @@ import com.phew.network.dto.response.BlockMemberResponseDTO
 import com.phew.network.dto.response.FavoriteTagItemDTO
 import com.phew.network.dto.response.FavoriteTagsResponseDTO
 import com.phew.network.dto.response.RejoinableDateResponseDTO
+import com.phew.network.dto.response.UserRoleDTO
+import com.phew.network.dto.response.UserRoleResponseDTO
 import com.phew.network.dto.request.feed.CheckBanedDTO
 import com.phew.network.dto.request.feed.ImageInfoDTO
 import com.phew.network.dto.request.feed.UploadCardImageInfoDTO
@@ -306,6 +310,17 @@ internal fun BlockMemberResponseDTO.toDomain(): BlockMember {
         blockMemberId = this.blockMemberId,
         blockMemberNickname = this.blockMemberNickname,
         blockMemberProfileImageUrl = this.blockMemberProfileImageUrl
+    )
+}
+
+internal fun UserRoleResponseDTO.toDomain(): UserRole {
+    return UserRole(
+        role = when (this.role) {
+            UserRoleDTO.ADMIN -> UserRoleType.ADMIN
+            UserRoleDTO.USER -> UserRoleType.USER
+            UserRoleDTO.BANNED -> UserRoleType.BANNED
+        },
+        isTester = this.isTester
     )
 }
 

@@ -19,6 +19,7 @@ import javax.inject.Inject
 class Login @Inject constructor(
     private val deviceRepository: DeviceRepository,
     private val repository: SignUpRepository,
+    private val syncClarityRecording: SyncClarityRecording,
 ) {
     suspend operator fun invoke(): DomainResult<Unit, String> = coroutineScope {
         val deviceIdDeferred = async { deviceRepository.requestDeviceId() }
@@ -55,6 +56,7 @@ class Login @Inject constructor(
                 if (!saveToken) {
                     return@coroutineScope DomainResult.Failure(ERROR_FAIL_JOB)
                 }
+                syncClarityRecording()
                 return@coroutineScope DomainResult.Success(Unit)
             }
         }

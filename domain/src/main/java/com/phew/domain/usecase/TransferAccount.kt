@@ -20,6 +20,7 @@ class TransferAccount @Inject constructor(
     private val signUpRepository: SignUpRepository,
     private val interceptorManger: InterceptorManger,
     private val eventLogRepository: EventRepository,
+    private val syncClarityRecording: SyncClarityRecording,
 ) {
     data class Param(
         val transferCode: String,
@@ -67,6 +68,7 @@ class TransferAccount @Inject constructor(
                     )
                 )
                 if (!saveToken) return Result.failure(Exception("Failed to save token"))
+                syncClarityRecording()
                 return Result.success(Unit)
             }
         }

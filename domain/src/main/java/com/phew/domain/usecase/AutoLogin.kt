@@ -10,6 +10,7 @@ import javax.inject.Inject
 class AutoLogin @Inject constructor(
     private val deviceRepository: DeviceRepository,
     private val profileRepository: ProfileRepository,
+    private val syncClarityRecording: SyncClarityRecording,
 ) {
     suspend operator fun invoke(): Boolean {
         val token = deviceRepository.requestToken(BuildConfig.TOKEN_KEY)
@@ -30,6 +31,7 @@ class AutoLogin @Inject constructor(
                     deviceRepository.deleteAll()
                     return false
                 }
+                syncClarityRecording()
                 return true
             }
         }
