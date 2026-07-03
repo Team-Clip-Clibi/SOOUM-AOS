@@ -7,6 +7,7 @@ import com.phew.network.dto.request.account.TransferAccountRequestDTO
 import com.phew.network.dto.request.account.WithdrawalRequestDTO
 import com.phew.network.dto.response.RejoinableDateResponseDTO
 import com.phew.network.dto.request.NotifyToggleRequestDTO
+import com.phew.network.dto.response.UserRoleResponseDTO
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -38,4 +39,7 @@ interface MembersHttp {
 
     @GET(BuildConfig.API_URL_NOTIFY_TOGGLE)
     suspend fun getToggleNotification(): Response<NotifyToggleRequestDTO>
+
+    @GET(BuildConfig.API_URL_USER_ROLE)
+    suspend fun getUserRole(): Response<UserRoleResponseDTO>
 }
