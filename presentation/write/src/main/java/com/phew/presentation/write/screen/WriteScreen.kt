@@ -73,6 +73,7 @@ import com.phew.core.ui.model.CameraCaptureRequest
 import com.phew.core.ui.model.CameraPickerAction
 import com.phew.core.ui.model.CameraPickerEffectState
 import com.phew.core_design.AppBar
+import com.phew.core_design.Danger
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.Primary
@@ -130,12 +131,14 @@ internal fun WriteRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val defaultContent = stringResource(WriteR.string.write_card_content_default_placeholder)
     var activeDialog by remember { mutableStateOf<WriteDialog?>(null) }
+    val snackBarHostState = remember { SnackbarHostState() }
 
     WriteRouteEffects(
         viewModel = viewModel,
         navController = navController,
         args = args,
         isFromTab = isFromTab,
+        snackBarHostState = snackBarHostState,
         onWriteComplete = onWriteComplete,
         onDialogRequested = { activeDialog = it },
     )
@@ -204,13 +207,22 @@ internal fun WriteRoute(
         onEnterClick = {
             viewModel.writeFinishTagEnter(isFromFeedCard = isFromTab)
         },
-        onPollClose = viewModel::closePollCreate,
-        onPollComplete = viewModel::completePollCreate,
+        onPollClose = {
+            snackBarHostState.currentSnackbarData?.dismiss()
+            viewModel.closePollCreate()
+        },
+        onPollComplete = {
+            snackBarHostState.currentSnackbarData?.dismiss()
+            viewModel.completePollCreate()
+        },
         onPollOptionChange = viewModel::updateDraftPollOption,
         onPollAddOption = viewModel::addDraftPollOption,
         onPollRemoveOption = viewModel::removeDraftPollOption,
         onPollEdit = viewModel::openPollCreate,
-        onPollDelete = viewModel::deletePoll,
+        onPollDelete = {
+            activeDialog = WriteDialog.DeletePoll
+        },
+        snackBarHostState = snackBarHostState,
     )
 
     WriteDialogHost(
@@ -224,6 +236,13 @@ internal fun WriteRoute(
             activeDialog = null
             viewModel.resetToDefaultImage()
         },
+        onPollDeleteConfirm = {
+            activeDialog = null
+            viewModel.deletePoll()
+        },
+        onDismissPollDelete = {
+            activeDialog = null
+        },
     )
 }
 
@@ -232,6 +251,7 @@ private sealed interface WriteDialog {
     data object Restricted : WriteDialog
     data object Deleted : WriteDialog
     data object BadImage : WriteDialog
+    data object DeletePoll : WriteDialog
 }
 
 @Composable
@@ -240,6 +260,7 @@ private fun WriteRouteEffects(
     navController: NavController,
     args: WriteArgs?,
     isFromTab: Boolean,
+    snackBarHostState: SnackbarHostState,
     onWriteComplete: (CardDetailArgs) -> Unit,
     onDialogRequested: (WriteDialog) -> Unit,
 ) {
@@ -286,7 +307,12 @@ private fun WriteRouteEffects(
 
     LaunchedEffect(viewModel) {
         viewModel.uiEffect.collect { effect ->
-            currentOnDialogRequested(effect.toRouteDialog())
+            when (effect) {
+                is WriteUiEffect.ShowSnackBar -> {
+                    snackBarHostState.showSnackbar(context.getString(effect.messageResId))
+                }
+                else -> currentOnDialogRequested(effect.toRouteDialog())
+            }
         }
     }
 }
@@ -296,6 +322,7 @@ private fun WriteUiEffect.toRouteDialog(): WriteDialog = when (this) {
     WriteUiEffect.ShowRestricted -> WriteDialog.Restricted
     WriteUiEffect.ShowDeleted -> WriteDialog.Deleted
     WriteUiEffect.ShowBadImage -> WriteDialog.BadImage
+    is WriteUiEffect.ShowSnackBar -> error("SnackBar effect is handled separately.")
 }
 
 private fun isPermissionGranted(context: Context, permission: String): Boolean =
@@ -307,6 +334,8 @@ private fun WriteDialogHost(
     activateDate: UiState<String>,
     onDismissAndGoHome: () -> Unit,
     onBadImageDismissed: () -> Unit,
+    onPollDeleteConfirm: () -> Unit,
+    onDismissPollDelete: () -> Unit,
 ) {
     when (dialog) {
         null -> Unit
@@ -324,6 +353,17 @@ private fun WriteDialogHost(
             buttonText = stringResource(com.phew.core_design.R.string.common_okay),
             onClick = onBadImageDismissed,
             onDismiss = onBadImageDismissed,
+        )
+        WriteDialog.DeletePoll -> DialogComponent.DefaultButtonTwo(
+            title = stringResource(WriteR.string.write_poll_delete_dialog_title),
+            description = stringResource(WriteR.string.write_poll_delete_dialog_description),
+            buttonTextStart = stringResource(com.phew.core_design.R.string.common_cancel),
+            buttonTextEnd = stringResource(WriteR.string.write_poll_delete_dialog_confirm),
+            onClick = onPollDeleteConfirm,
+            onDismiss = onDismissPollDelete,
+            rightButtonBaseColor = Danger.M_RED,
+            rightButtonClickColor = Danger.D_RED,
+            startButtonTextColor = NeutralColor.GRAY_600,
         )
         is WriteDialog.Error -> {
             val keyboard = LocalSoftwareKeyboardController.current
@@ -430,19 +470,27 @@ private fun WriteScreen(
     onPollRemoveOption: (Long) -> Unit,
     onPollEdit: () -> Unit,
     onPollDelete: () -> Unit,
+    snackBarHostState: SnackbarHostState,
 ) {
     if (uiState.isPollCreateMode) {
-        PollCreateScreen(
-            modifier = modifier.fillMaxSize(),
-            options = uiState.draftPollContents.mapIndexed { index, text ->
-                PollOptionUi(id = index.toLong(), text = text)
-            },
-            onOptionChange = onPollOptionChange,
-            onAddOption = onPollAddOption,
-            onRemoveOption = onPollRemoveOption,
-            onClose = onPollClose,
-            onComplete = onPollComplete,
-        )
+        Box(modifier = modifier.fillMaxSize()) {
+            PollCreateScreen(
+                modifier = Modifier.fillMaxSize(),
+                options = uiState.draftPollContents.mapIndexed { index, text ->
+                    PollOptionUi(id = index.toLong(), text = text)
+                },
+                onOptionChange = onPollOptionChange,
+                onAddOption = onPollAddOption,
+                onRemoveOption = onPollRemoveOption,
+                onClose = onPollClose,
+                onComplete = onPollComplete,
+            )
+            DialogComponent.CustomAnimationSnackBarHost(
+                hostState = snackBarHostState,
+                showIcon = false,
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
+        }
         return
     }
 
@@ -461,7 +509,6 @@ private fun WriteScreen(
     val hasLocationPermission = uiState.hasLocationPermission
     val cardDefaultImagesByCategory = uiState.cardDefaultImagesByCategory
 
-    val snackBarHostState = remember { SnackbarHostState() }
     val cameraPermissions = arrayOf(Manifest.permission.CAMERA)
     val albumPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         arrayOf(Manifest.permission.READ_MEDIA_IMAGES)
@@ -571,7 +618,10 @@ private fun WriteScreen(
                 )
             },
             snackbarHost = {
-                DialogComponent.CustomAnimationSnackBarHost(snackBarHostState)
+                DialogComponent.CustomAnimationSnackBarHost(
+                    hostState = snackBarHostState,
+                    showIcon = false
+                )
             }
         ) { innerPadding ->
             val scrollState = rememberScrollState()
@@ -708,7 +758,7 @@ private fun WriteScreen(
 
                 val filteredOptions = if (args?.parentCardId != null) {
                     WriteOptions.availableOptions.filter {
-                        it.id != "twenty_four_hours" && it.id != WriteOptions.POLL_OPTION_ID
+                        it.id != WriteOptions.TWENTY_FOUR_HOURS_OPTION_ID && it.id != WriteOptions.POLL_OPTION_ID
                     }
                 } else {
                     WriteOptions.availableOptions
@@ -1014,7 +1064,7 @@ private fun RoundButtonPreview() {
 
 private fun WriteOption.iconResId(): Int? = when (id) {
     WriteOptions.DISTANCE_OPTION_ID -> com.phew.core_design.R.drawable.ic_location_stoke
-    "twenty_four_hours" -> com.phew.core_design.R.drawable.ic_timer_stoke
+    WriteOptions.TWENTY_FOUR_HOURS_OPTION_ID -> com.phew.core_design.R.drawable.ic_timer_stoke
     WriteOptions.POLL_OPTION_ID -> com.phew.core_design.R.drawable.ic_vote_stoke
     else -> null
 }
