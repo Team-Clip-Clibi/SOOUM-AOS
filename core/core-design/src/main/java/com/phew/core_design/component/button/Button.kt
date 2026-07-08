@@ -38,6 +38,7 @@ fun RoundButton(
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    @DrawableRes iconResId: Int? = null,
     enabled: Boolean = true
 ) {
     val targetBackground = when {
@@ -75,11 +76,24 @@ fun RoundButton(
             .padding(horizontal = 10.dp),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = text,
-            style = TextComponent.CAPTION_2_M_12,
-            color = textColor
-        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (iconResId != null) {
+                Icon(
+                    painter = painterResource(iconResId),
+                    contentDescription = null,
+                    tint = textColor,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+            Text(
+                text = text,
+                style = TextComponent.CAPTION_2_M_12,
+                color = textColor
+            )
+        }
     }
 }
 

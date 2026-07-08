@@ -978,6 +978,7 @@ private fun OptionButtons(
                 RoundButton(
                     text = option.displayName,
                     selected = selectedOptionIds.contains(option.id),
+                    iconResId = option.iconResId(),
                     onClick = {
                         if (isDistanceOption && !hasLocationPermission) {
                             onDistancePermissionRequest()
@@ -1009,6 +1010,13 @@ private fun RoundButtonPreview() {
         },
         onDistancePermissionRequest = {}
     )
+}
+
+private fun WriteOption.iconResId(): Int? = when (id) {
+    WriteOptions.DISTANCE_OPTION_ID -> com.phew.core_design.R.drawable.ic_location_stoke
+    "twenty_four_hours" -> com.phew.core_design.R.drawable.ic_timer_stoke
+    WriteOptions.POLL_OPTION_ID -> com.phew.core_design.R.drawable.ic_vote_stoke
+    else -> null
 }
 
 
