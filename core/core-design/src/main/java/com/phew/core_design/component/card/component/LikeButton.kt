@@ -55,7 +55,6 @@ fun LikeButton(
     onClickLike: () -> Unit,
 ) {
     val bounce = remember { Animatable(1f) }
-    val fillPop = remember { Animatable(1f) }
 
     LaunchedEffect(likeAnimationKey) {
         if (likeAnimationKey == 0) return@LaunchedEffect
@@ -71,19 +70,6 @@ fun LikeButton(
                 1f at 420
             }
         )
-
-        if (isLike) {
-            fillPop.snapTo(0.7f)
-            fillPop.animateTo(
-                targetValue = 1f,
-                animationSpec = keyframes {
-                    durationMillis = 294
-                    0.7f at 0
-                    1.04f at 176 using Overshoot
-                    1f at 294
-                }
-            )
-        }
     }
 
     Row(
@@ -120,8 +106,6 @@ fun LikeButton(
                     .fillMaxSize()
                     .graphicsLayer {
                         alpha = if (isLike) 1f else 0f
-                        scaleX = fillPop.value
-                        scaleY = fillPop.value
                     }
             )
         }
