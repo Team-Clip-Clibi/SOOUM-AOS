@@ -18,6 +18,7 @@
     <string name="write_poll_add_option">항목 추가</string>
     <string name="write_poll_option_limit">선택지는 %1$d개부터 %2$d개까지 만들 수 있어요.</string>
     <string name="write_poll_option_placeholder">선택지 %1$d</string>
+    <string name="write_poll_section_title">투표</string>
     <string name="write_poll_preview_title">투표 미리보기</string>
     <string name="write_poll_single_choice_label">단일 선택</string>
     <string name="write_poll_option_input">항목 입력</string>

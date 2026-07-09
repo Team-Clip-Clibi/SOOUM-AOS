@@ -5,6 +5,15 @@ import javax.inject.Inject
 class SelectWriteOption @Inject constructor() {
     operator fun invoke(param: Param): Result {
         if (param.optionId == param.pollOptionId) {
+            if (param.hasPoll) {
+                return Result(
+                    selectedOptionIds = param.selectedOptionIds,
+                    shouldOpenPollCreate = false,
+                    shouldConfirmPollReplacement = true,
+                    notice = null
+                )
+            }
+
             val shouldReleaseStory = param.selectedOptionIds.contains(param.storyOptionId)
             return Result(
                 selectedOptionIds = if (shouldReleaseStory) {
@@ -13,6 +22,7 @@ class SelectWriteOption @Inject constructor() {
                     param.selectedOptionIds
                 },
                 shouldOpenPollCreate = true,
+                shouldConfirmPollReplacement = false,
                 notice = if (shouldReleaseStory) Notice.PollReleasedStory else null
             )
         }
@@ -21,6 +31,7 @@ class SelectWriteOption @Inject constructor() {
             return Result(
                 selectedOptionIds = param.selectedOptionIds.filter { it != param.storyOptionId },
                 shouldOpenPollCreate = false,
+                shouldConfirmPollReplacement = false,
                 notice = Notice.PollBlocksStory
             )
         }
@@ -29,6 +40,7 @@ class SelectWriteOption @Inject constructor() {
             return Result(
                 selectedOptionIds = param.selectedOptionIds,
                 shouldOpenPollCreate = false,
+                shouldConfirmPollReplacement = false,
                 notice = null
             )
         }
@@ -42,6 +54,7 @@ class SelectWriteOption @Inject constructor() {
         return Result(
             selectedOptionIds = selectedOptionIds,
             shouldOpenPollCreate = false,
+            shouldConfirmPollReplacement = false,
             notice = null
         )
     }
@@ -59,6 +72,7 @@ class SelectWriteOption @Inject constructor() {
     data class Result(
         val selectedOptionIds: List<String>,
         val shouldOpenPollCreate: Boolean,
+        val shouldConfirmPollReplacement: Boolean,
         val notice: Notice?,
     )
 

@@ -220,7 +220,7 @@ internal fun WriteRoute(
         onPollRemoveOption = viewModel::removeDraftPollOption,
         onPollEdit = viewModel::openPollCreate,
         onPollDelete = {
-            activeDialog = WriteDialog.DeletePoll
+            activeDialog = WriteDialog.DeletePoll(PollDeleteDialogMode.DeleteOnly)
         },
         snackBarHostState = snackBarHostState,
     )
@@ -240,6 +240,10 @@ internal fun WriteRoute(
             activeDialog = null
             viewModel.deletePoll()
         },
+        onPollDeleteAndRecreateConfirm = {
+            activeDialog = null
+            viewModel.deletePollAndOpenCreate()
+        },
         onDismissPollDelete = {
             activeDialog = null
         },
@@ -251,7 +255,12 @@ private sealed interface WriteDialog {
     data object Restricted : WriteDialog
     data object Deleted : WriteDialog
     data object BadImage : WriteDialog
-    data object DeletePoll : WriteDialog
+    data class DeletePoll(val mode: PollDeleteDialogMode) : WriteDialog
+}
+
+private enum class PollDeleteDialogMode {
+    DeleteOnly,
+    DeleteAndRecreate,
 }
 
 @Composable
@@ -322,6 +331,7 @@ private fun WriteUiEffect.toRouteDialog(): WriteDialog = when (this) {
     WriteUiEffect.ShowRestricted -> WriteDialog.Restricted
     WriteUiEffect.ShowDeleted -> WriteDialog.Deleted
     WriteUiEffect.ShowBadImage -> WriteDialog.BadImage
+    WriteUiEffect.ShowPollReplacementDialog -> WriteDialog.DeletePoll(PollDeleteDialogMode.DeleteAndRecreate)
     is WriteUiEffect.ShowSnackBar -> error("SnackBar effect is handled separately.")
 }
 
@@ -335,6 +345,7 @@ private fun WriteDialogHost(
     onDismissAndGoHome: () -> Unit,
     onBadImageDismissed: () -> Unit,
     onPollDeleteConfirm: () -> Unit,
+    onPollDeleteAndRecreateConfirm: () -> Unit,
     onDismissPollDelete: () -> Unit,
 ) {
     when (dialog) {
@@ -354,12 +365,17 @@ private fun WriteDialogHost(
             onClick = onBadImageDismissed,
             onDismiss = onBadImageDismissed,
         )
-        WriteDialog.DeletePoll -> DialogComponent.DefaultButtonTwo(
+        is WriteDialog.DeletePoll -> DialogComponent.DefaultButtonTwo(
             title = stringResource(WriteR.string.write_poll_delete_dialog_title),
             description = stringResource(WriteR.string.write_poll_delete_dialog_description),
             buttonTextStart = stringResource(com.phew.core_design.R.string.common_cancel),
             buttonTextEnd = stringResource(WriteR.string.write_poll_delete_dialog_confirm),
-            onClick = onPollDeleteConfirm,
+            onClick = {
+                when (dialog.mode) {
+                    PollDeleteDialogMode.DeleteOnly -> onPollDeleteConfirm()
+                    PollDeleteDialogMode.DeleteAndRecreate -> onPollDeleteAndRecreateConfirm()
+                }
+            },
             onDismiss = onDismissPollDelete,
             rightButtonBaseColor = Danger.M_RED,
             rightButtonClickColor = Danger.D_RED,
@@ -866,27 +882,29 @@ private fun PollPreviewCard(
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clickable(onClick = onEdit)
-                    .padding(8.dp),
-                painter = painterResource(com.phew.core_design.R.drawable.ic_write_stoke),
-                contentDescription = stringResource(WriteR.string.write_poll_edit),
-                tint = NeutralColor.GRAY_500,
+            Text(
+                modifier = Modifier.weight(1f),
+                text = stringResource(WriteR.string.write_poll_section_title),
+                style = TextComponent.CAPTION_1_SB_12.copy(color = Primary.DARK),
             )
-            Icon(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clickable(onClick = onDelete)
-                    .padding(8.dp),
-                painter = painterResource(com.phew.core_design.R.drawable.ic_delete),
-                contentDescription = stringResource(WriteR.string.write_poll_delete),
-                tint = NeutralColor.GRAY_500,
-            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                PollActionIconButton(
+                    iconResId = com.phew.core_design.R.drawable.ic_edit_poll,
+                    contentDescription = stringResource(WriteR.string.write_poll_edit),
+                    onClick = onEdit,
+                )
+                PollActionIconButton(
+                    iconResId = com.phew.core_design.R.drawable.ic_delete,
+                    contentDescription = stringResource(WriteR.string.write_poll_delete),
+                    onClick = onDelete,
+                )
+            }
         }
         pollContents.forEach { content ->
             Box(
@@ -1039,6 +1057,35 @@ private fun OptionButtons(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun PollActionIconButton(
+    iconResId: Int,
+    contentDescription: String,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .size(24.dp)
+            .background(
+                color = NeutralColor.GRAY_100,
+                shape = RoundedCornerShape(100.dp)
+            )
+            .clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() },
+                onClick = onClick
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            painter = painterResource(iconResId),
+            contentDescription = contentDescription,
+            tint = NeutralColor.BLACK,
+            modifier = Modifier.size(16.dp)
+        )
     }
 }
 

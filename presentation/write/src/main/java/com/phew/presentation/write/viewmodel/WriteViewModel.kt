@@ -473,11 +473,17 @@ class WriteViewModel @Inject constructor(
                 selectedOptionIds = result.selectedOptionIds,
                 isPollCreateMode = result.shouldOpenPollCreate || it.isPollCreateMode,
                 draftPollContents = if (result.shouldOpenPollCreate) {
-                    it.pollContents.takeIf { pollContents -> pollContents.isNotEmpty() } ?: listOf("", "")
+                    listOf("", "")
                 } else {
                     it.draftPollContents
                 }
             )
+        }
+
+        if (result.shouldConfirmPollReplacement) {
+            viewModelScope.launch {
+                _uiEffect.emit(WriteUiEffect.ShowPollReplacementDialog)
+            }
         }
 
         result.notice?.let { notice ->
@@ -566,6 +572,19 @@ class WriteViewModel @Inject constructor(
                 pollContents = emptyList(),
                 draftPollContents = listOf("", ""),
                 isPollCreateMode = false,
+                selectedOptionIds = it.selectedOptionIds.filter { optionId ->
+                    optionId != WriteOptions.POLL_OPTION_ID
+                }
+            )
+        }
+    }
+
+    fun deletePollAndOpenCreate() {
+        _uiState.update {
+            it.copy(
+                pollContents = emptyList(),
+                draftPollContents = listOf("", ""),
+                isPollCreateMode = true,
                 selectedOptionIds = it.selectedOptionIds.filter { optionId ->
                     optionId != WriteOptions.POLL_OPTION_ID
                 }
