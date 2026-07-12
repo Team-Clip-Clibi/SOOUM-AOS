@@ -550,12 +550,17 @@ class WriteViewModel @Inject constructor(
 
     fun completePollCreate() {
         _uiState.update { state ->
-            val pollContents = state.draftPollContents
-                .map { it.trim() }
-                .filter { it.isNotEmpty() }
-            if (pollContents.size < REQUIRED_POLL_OPTION_COUNT) {
+            val trimmedPollContents = state.draftPollContents.map { it.trim() }
+            val requiredPollContents = trimmedPollContents.take(REQUIRED_POLL_OPTION_COUNT)
+
+            if (requiredPollContents.size < REQUIRED_POLL_OPTION_COUNT ||
+                requiredPollContents.any { it.isEmpty() }
+            ) {
                 state
             } else {
+                val pollContents = trimmedPollContents
+                    .filter { it.isNotEmpty() }
+
                 state.copy(
                     isPollCreateMode = false,
                     draftPollContents = pollContents,
