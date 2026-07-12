@@ -18,12 +18,18 @@
     <string name="write_poll_add_option">항목 추가</string>
     <string name="write_poll_option_limit">선택지는 %1$d개부터 %2$d개까지 만들 수 있어요.</string>
     <string name="write_poll_option_placeholder">선택지 %1$d</string>
+    <string name="write_poll_section_title">투표</string>
     <string name="write_poll_preview_title">투표 미리보기</string>
     <string name="write_poll_single_choice_label">단일 선택</string>
     <string name="write_poll_option_input">항목 입력</string>
     <string name="write_poll_remove_option">항목 삭제</string>
     <string name="write_poll_edit">투표 수정</string>
     <string name="write_poll_delete">투표 삭제</string>
+    <string name="write_poll_delete_dialog_title">투표를 삭제할까요?</string>
+    <string name="write_poll_delete_dialog_description">삭제하면 작성한 투표 내용이 사라져요.</string>
+    <string name="write_poll_delete_dialog_confirm">삭제</string>
+    <string name="write_poll_story_option_released">투표가 추가된 카드는 24시간 설정을 사용할 수 없어 옵션이 해제됐어요</string>
+    <string name="write_poll_story_option_unavailable">투표가 추가된 카드는 24시간 설정을 사용할 수 없어요</string>
     
     <!-- Background Filter Types -->
     <string name="background_filter_color">컬러</string>

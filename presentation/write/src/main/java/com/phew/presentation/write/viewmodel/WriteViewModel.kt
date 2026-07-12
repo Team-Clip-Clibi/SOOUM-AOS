@@ -48,6 +48,7 @@ import com.phew.domain.usecase.CheckCardAlreadyDelete
 import com.phew.domain.usecase.GetActivityRestrictionDate
 import com.phew.domain.usecase.SaveEventLogWriteCardView
 import com.phew.domain.usecase.SaveEventLogWriteCommentCardView
+import com.phew.domain.usecase.SelectWriteOption
 
 import com.phew.presentation.write.model.BackgroundFilterType
 import com.phew.presentation.write.viewmodel.WriteUiEffect
@@ -67,7 +68,8 @@ class WriteViewModel @Inject constructor(
     private val checkCardDelete: CheckCardAlreadyDelete,
     private val logWriteFeedCard: SaveEventLogWriteCardView,
     private val logWRiteCommentCard: SaveEventLogWriteCommentCardView,
-    private val getRefreshToken: GetRefreshToken
+    private val getRefreshToken: GetRefreshToken,
+    private val selectWriteOption: SelectWriteOption
 ) : ViewModel() {
 
     private val locationPermissions = arrayOf(
@@ -453,23 +455,46 @@ class WriteViewModel @Inject constructor(
     }
 
     fun selectOption(optionId: String) {
-        if (optionId == WriteOptions.POLL_OPTION_ID) {
-            openPollCreate()
-            return
+        val state = _uiState.value
+        val result = selectWriteOption(
+            SelectWriteOption.Param(
+                optionId = optionId,
+                selectedOptionIds = state.selectedOptionIds,
+                hasPoll = state.pollContents.isNotEmpty(),
+                hasDistancePermission = state.hasLocationPermission,
+                distanceOptionId = WriteOptions.DISTANCE_OPTION_ID,
+                storyOptionId = WriteOptions.TWENTY_FOUR_HOURS_OPTION_ID,
+                pollOptionId = WriteOptions.POLL_OPTION_ID,
+            )
+        )
+
+        _uiState.update {
+            it.copy(
+                selectedOptionIds = result.selectedOptionIds,
+                isPollCreateMode = result.shouldOpenPollCreate || it.isPollCreateMode,
+                draftPollContents = if (result.shouldOpenPollCreate) {
+                    listOf("", "")
+                } else {
+                    it.draftPollContents
+                }
+            )
         }
 
-        _uiState.update { state ->
-            if (optionId == distanceOptionId && !state.hasLocationPermission) {
-                return@update state
+        if (result.shouldConfirmPollReplacement) {
+            viewModelScope.launch {
+                _uiEffect.emit(WriteUiEffect.ShowPollReplacementDialog)
             }
+        }
 
-            val currentIds = state.selectedOptionIds
-            val newIds = if (currentIds.contains(optionId)) {
-                currentIds.filter { it != optionId }
-            } else {
-                currentIds + optionId
-            }
-            state.copy(selectedOptionIds = newIds)
+        result.notice?.let { notice ->
+            showSnackBar(
+                when (notice) {
+                    SelectWriteOption.Notice.PollReleasedStory ->
+                        com.phew.presentation.write.R.string.write_poll_story_option_released
+                    SelectWriteOption.Notice.PollBlocksStory ->
+                        com.phew.presentation.write.R.string.write_poll_story_option_unavailable
+                }
+            )
         }
     }
 
@@ -525,16 +550,22 @@ class WriteViewModel @Inject constructor(
 
     fun completePollCreate() {
         _uiState.update { state ->
-            val pollContents = state.draftPollContents
-                .map { it.trim() }
-                .filter { it.isNotEmpty() }
-            if (pollContents.size < REQUIRED_POLL_OPTION_COUNT) {
+            val trimmedPollContents = state.draftPollContents.map { it.trim() }
+            val requiredPollContents = trimmedPollContents.take(REQUIRED_POLL_OPTION_COUNT)
+
+            if (requiredPollContents.size < REQUIRED_POLL_OPTION_COUNT ||
+                requiredPollContents.any { it.isEmpty() }
+            ) {
                 state
             } else {
+                val pollContents = trimmedPollContents
+                    .filter { it.isNotEmpty() }
+
                 state.copy(
                     isPollCreateMode = false,
                     draftPollContents = pollContents,
-                    pollContents = pollContents
+                    pollContents = pollContents,
+                    selectedOptionIds = state.selectedOptionIds.filter { it != WriteOptions.TWENTY_FOUR_HOURS_OPTION_ID }
                 )
             }
         }
@@ -545,7 +576,23 @@ class WriteViewModel @Inject constructor(
             it.copy(
                 pollContents = emptyList(),
                 draftPollContents = listOf("", ""),
-                isPollCreateMode = false
+                isPollCreateMode = false,
+                selectedOptionIds = it.selectedOptionIds.filter { optionId ->
+                    optionId != WriteOptions.POLL_OPTION_ID
+                }
+            )
+        }
+    }
+
+    fun deletePollAndOpenCreate() {
+        _uiState.update {
+            it.copy(
+                pollContents = emptyList(),
+                draftPollContents = listOf("", ""),
+                isPollCreateMode = true,
+                selectedOptionIds = it.selectedOptionIds.filter { optionId ->
+                    optionId != WriteOptions.POLL_OPTION_ID
+                }
             )
         }
     }
@@ -668,7 +715,7 @@ class WriteViewModel @Inject constructor(
                             content = state.content,
                             font = selectedFontServerName.data.serverName,
                             imgName = imgName,
-                            isStory = state.selectedOptionIds.contains("twenty_four_hours"),
+                            isStory = state.selectedOptionIds.contains(WriteOptions.TWENTY_FOUR_HOURS_OPTION_ID),
                             tags = state.tags,
                             isDistanceShared = state.selectedOptionIds.contains(WriteOptions.DISTANCE_OPTION_ID),
                             pollContents = state.pollContents
@@ -744,6 +791,12 @@ class WriteViewModel @Inject constructor(
             optionIds.filter { it != distanceOptionId }
         } else {
             optionIds
+        }
+    }
+
+    private fun showSnackBar(messageResId: Int) {
+        viewModelScope.launch {
+            _uiEffect.emit(WriteUiEffect.ShowSnackBar(messageResId))
         }
     }
 

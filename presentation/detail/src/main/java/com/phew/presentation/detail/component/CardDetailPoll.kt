@@ -159,10 +159,12 @@ private fun VotedPollOption(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            CheckMark(
-                color = if (isSelected) Primary.MAIN else NeutralColor.BLACK,
-                modifier = Modifier.size(18.dp)
-            )
+            if (isSelected) {
+                CheckMark(
+                    color = Primary.MAIN,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
             Text(
                 text = option.content,
                 modifier = Modifier.weight(1f),

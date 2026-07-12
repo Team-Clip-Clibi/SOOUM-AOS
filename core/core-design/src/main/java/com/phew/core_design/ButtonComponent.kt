@@ -61,11 +61,6 @@ object LargeButton {
                 .fillMaxWidth()
                 .height(56.dp)
                 .clip(shape = RoundedCornerShape(10.dp))
-                .border(
-                    width = 1.dp,
-                    color = NeutralColor.GRAY_300,
-                    shape = RoundedCornerShape(10.dp)
-                )
                 .drawBehind {
                     val color = when {
                         !enabled -> disabledColor
@@ -95,7 +90,7 @@ object LargeButton {
     ) {
         BlinkLargeButton(
             onClick = onClick,
-            enabled = isEnable
+            enabled = isEnable,
         ) {
             Text(
                 text = buttonText,
@@ -114,7 +109,7 @@ object LargeButton {
     ) {
         BlinkLargeButton(
             onClick = onClick,
-            enabled = isEnable
+            enabled = isEnable,
         ) {
             Text(
                 text = buttonText,
@@ -142,7 +137,7 @@ object LargeButton {
     ) {
         BlinkLargeButton(
             onClick = onClick,
-            enabled = isEnable
+            enabled = isEnable,
         ) {
             Icon(
                 painter = painterResource(image),
@@ -174,7 +169,7 @@ object LargeButton {
             blinkColor = NeutralColor.GRAY_200,
             disabledColor = NeutralColor.GRAY_200,
             onClick = onClick,
-            enabled = isEnable
+            enabled = isEnable,
         ) {
             Text(
                 text = buttonText,
@@ -196,7 +191,7 @@ object LargeButton {
             blinkColor = NeutralColor.GRAY_200,
             disabledColor = NeutralColor.GRAY_200,
             onClick = onClick,
-            enabled = isEnable
+            enabled = isEnable,
         ) {
             Text(
                 text = buttonText,
@@ -227,7 +222,7 @@ object LargeButton {
             blinkColor = NeutralColor.GRAY_200,
             disabledColor = NeutralColor.GRAY_200,
             onClick = onClick,
-            enabled = isEnable
+            enabled = isEnable,
         ) {
             Icon(
                 painter = painterResource(image),
@@ -251,13 +246,14 @@ object LargeButton {
         buttonText: String,
         onClick: () -> Unit,
         isEnable: Boolean = true,
+        showStroke: Boolean = false,
     ) {
         BlinkLargeButton(
             baseColor = NeutralColor.WHITE,
             blinkColor = NeutralColor.GRAY_100,
             disabledColor = NeutralColor.GRAY_200,
             onClick = onClick,
-            enabled = isEnable
+            enabled = isEnable,
         ) {
             Text(
                 text = buttonText,
@@ -273,13 +269,14 @@ object LargeButton {
         onClick: () -> Unit,
         @DrawableRes image: Int = R.drawable.ic_right,
         isEnable: Boolean = true,
+        showStroke: Boolean = false,
     ) {
         BlinkLargeButton(
             baseColor = NeutralColor.WHITE,
             blinkColor = NeutralColor.GRAY_100,
             disabledColor = NeutralColor.GRAY_200,
             onClick = onClick,
-            enabled = isEnable
+            enabled = isEnable,
         ) {
             Text(
                 text = buttonText,
@@ -310,7 +307,7 @@ object LargeButton {
             blinkColor = NeutralColor.GRAY_100,
             disabledColor = NeutralColor.GRAY_200,
             onClick = onClick,
-            enabled = isEnable
+            enabled = isEnable,
         ) {
             Icon(
                 painter = painterResource(image),

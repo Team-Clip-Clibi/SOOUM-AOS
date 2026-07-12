@@ -66,7 +66,9 @@ fun PollCreateScreen(
     modifier: Modifier = Modifier,
 ) {
     val completeEnabled = options.size >= REQUIRED_POLL_OPTIONS &&
-        options.all { it.text.isNotBlank() }
+        options
+            .take(REQUIRED_POLL_OPTIONS)
+            .all { it.text.isNotBlank() }
 
     Column(
         modifier = modifier.background(NeutralColor.WHITE),
