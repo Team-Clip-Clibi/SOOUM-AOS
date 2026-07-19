@@ -43,19 +43,18 @@ internal fun TimerLabel(
             contentDescription = "Time Limit card",
             modifier = Modifier.size(20.dp)
         )
+        Spacer(modifier = Modifier.width(2.dp))
         if (isExpired) {
             Text(
                 text = "00:00:00",
                 style = TextComponent.CAPTION_2_M_12,
-                color = Primary.DARK,
-                modifier = Modifier.padding(start = 2.dp)
+                color = Primary.DARK
             )
         } else {
             Text(
                 text = TimeUtils.formatMillisToTimer(remainingTimeMillis),
                 style = TextComponent.CAPTION_2_M_12,
-                color = Primary.DARK,
-                modifier = Modifier.padding(start = 2.dp)
+                color = Primary.DARK
             )
         }
     }

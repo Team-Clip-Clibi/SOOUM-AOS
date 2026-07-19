@@ -14,11 +14,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
@@ -33,6 +38,7 @@ import com.phew.core_design.TextComponent
 import com.phew.domain.dto.Poll
 import com.phew.domain.dto.PollOption as DomainPollOption
 import com.phew.presentation.detail.R
+import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
 @Composable
@@ -48,10 +54,11 @@ internal fun CardDetailPoll(
             .padding(top = 16.dp, bottom = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        poll.options.forEach { option ->
+        poll.options.forEachIndexed { index, option ->
             if (poll.isVoted) {
                 VotedPollOption(
                     option = option,
+                    index = index,
                     enabled = !isVoteLoading,
                     onClick = { onOptionClick(option.pollOptionId) }
                 )
@@ -113,6 +120,7 @@ private fun UnvotedPollOption(
 @Composable
 private fun VotedPollOption(
     option: DomainPollOption,
+    index: Int,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     onClick: () -> Unit = {}
@@ -124,6 +132,38 @@ private fun VotedPollOption(
         TextComponent.TITLE_2_SB_16.copy(fontWeight = FontWeight.SemiBold)
     } else {
         TextComponent.SUBTITLE_1_M_16
+    }
+    val animatedFraction = remember(option.pollOptionId, option.votePercentage) {
+        Animatable(0f)
+    }
+    val checkAlpha = remember(option.pollOptionId, option.isVoted) {
+        Animatable(0f)
+    }
+
+    LaunchedEffect(fraction, index) {
+        animatedFraction.snapTo(0f)
+        delay(index * 70L)
+        animatedFraction.animateTo(
+            targetValue = fraction,
+            animationSpec = tween(
+                durationMillis = 480,
+                easing = FastOutSlowInEasing
+            )
+        )
+    }
+
+    LaunchedEffect(isSelected, index) {
+        checkAlpha.snapTo(0f)
+        if (isSelected) {
+            delay(160L + index * 70L)
+            checkAlpha.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(
+                    durationMillis = 180,
+                    easing = FastOutSlowInEasing
+                )
+            )
+        }
     }
 
     Box(
@@ -143,7 +183,7 @@ private fun VotedPollOption(
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth(fraction)
+                .fillMaxWidth(animatedFraction.value)
                 .height(48.dp)
                 .background(
                     color = if (isSelected) Primary.LIGHT_1 else NeutralColor.GRAY_200,
@@ -162,7 +202,9 @@ private fun VotedPollOption(
             if (isSelected) {
                 CheckMark(
                     color = Primary.MAIN,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier
+                        .size(18.dp)
+                        .alpha(checkAlpha.value)
                 )
             }
             Text(
