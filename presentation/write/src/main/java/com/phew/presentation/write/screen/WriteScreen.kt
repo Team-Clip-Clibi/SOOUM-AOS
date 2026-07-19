@@ -10,6 +10,11 @@ import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -61,6 +66,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import com.phew.core_design.typography.FontType
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -488,28 +494,6 @@ private fun WriteScreen(
     onPollDelete: () -> Unit,
     snackBarHostState: SnackbarHostState,
 ) {
-    if (uiState.isPollCreateMode) {
-        Box(modifier = modifier.fillMaxSize()) {
-            PollCreateScreen(
-                modifier = Modifier.fillMaxSize(),
-                options = uiState.draftPollContents.mapIndexed { index, text ->
-                    PollOptionUi(id = index.toLong(), text = text)
-                },
-                onOptionChange = onPollOptionChange,
-                onAddOption = onPollAddOption,
-                onRemoveOption = onPollRemoveOption,
-                onClose = onPollClose,
-                onComplete = onPollComplete,
-            )
-            DialogComponent.CustomAnimationSnackBarHost(
-                hostState = snackBarHostState,
-                showIcon = false,
-                modifier = Modifier.align(Alignment.BottomCenter)
-            )
-        }
-        return
-    }
-
     val content = uiState.content
     val tags = uiState.tags
     val currentTagInput = uiState.currentTagInput
@@ -602,9 +586,14 @@ private fun WriteScreen(
         onGalleryPermissionDenied = onGalleryPermissionDenied
     )
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    val pollTransitionSpec = tween<IntOffset>(
+        durationMillis = 300,
+        easing = FastOutSlowInEasing
+    )
+
+    Box(modifier = modifier.fillMaxSize()) {
         Scaffold(
-            modifier = modifier.clickable(
+            modifier = Modifier.clickable(
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() }
             ) {
@@ -804,6 +793,42 @@ private fun WriteScreen(
             ) {
                 LoadingAnimation.LoadingView(
                     modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+
+        AnimatedVisibility(
+            visible = uiState.isPollCreateMode,
+            enter = slideInHorizontally(
+                initialOffsetX = { it },
+                animationSpec = pollTransitionSpec
+            ),
+            exit = slideOutHorizontally(
+                targetOffsetX = { it },
+                animationSpec = pollTransitionSpec
+            ),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(NeutralColor.WHITE)
+            ) {
+                PollCreateScreen(
+                    modifier = Modifier.fillMaxSize(),
+                    options = uiState.draftPollContents.mapIndexed { index, text ->
+                        PollOptionUi(id = index.toLong(), text = text)
+                    },
+                    onOptionChange = onPollOptionChange,
+                    onAddOption = onPollAddOption,
+                    onRemoveOption = onPollRemoveOption,
+                    onClose = onPollClose,
+                    onComplete = onPollComplete,
+                )
+                DialogComponent.CustomAnimationSnackBarHost(
+                    hostState = snackBarHostState,
+                    showIcon = false,
+                    modifier = Modifier.align(Alignment.BottomCenter)
                 )
             }
         }

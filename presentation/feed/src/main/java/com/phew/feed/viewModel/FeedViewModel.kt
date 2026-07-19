@@ -27,6 +27,7 @@ import com.phew.domain.usecase.GetNotification
 import com.phew.domain.usecase.GetReadNotification
 import com.phew.domain.usecase.GetUnReadNotification
 import com.phew.domain.usecase.LikeCard
+import com.phew.domain.usecase.RunHaptic
 import com.phew.domain.usecase.SaveEventLogFeedView
 import com.phew.domain.usecase.SetReadActivateNotify
 import com.phew.domain.usecase.SetReadActivateNotify.*
@@ -65,6 +66,7 @@ class FeedViewModel @Inject constructor(
     private val getArticle: GetCardArticle,
     private val likeCard: LikeCard,
     private val unlikeCard: UnlikeCard,
+    private val runHaptic: RunHaptic,
 ) :
     ViewModel() {
     private val _uiState = MutableStateFlow(Home())
@@ -316,6 +318,7 @@ class FeedViewModel @Inject constructor(
     ) {
         val currentState = _uiState.value.feedLikeStates[cardId]
         if (currentState?.isLoading == true) return
+        runHaptic()
 
         val stateBeforeToggle = currentState ?: FeedLikeUiState(
             isLike = initialIsLike,
