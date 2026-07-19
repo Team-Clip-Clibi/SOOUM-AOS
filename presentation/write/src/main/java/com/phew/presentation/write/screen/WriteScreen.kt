@@ -10,6 +10,12 @@ import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -61,6 +67,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import com.phew.core_design.typography.FontType
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -488,28 +495,6 @@ private fun WriteScreen(
     onPollDelete: () -> Unit,
     snackBarHostState: SnackbarHostState,
 ) {
-    if (uiState.isPollCreateMode) {
-        Box(modifier = modifier.fillMaxSize()) {
-            PollCreateScreen(
-                modifier = Modifier.fillMaxSize(),
-                options = uiState.draftPollContents.mapIndexed { index, text ->
-                    PollOptionUi(id = index.toLong(), text = text)
-                },
-                onOptionChange = onPollOptionChange,
-                onAddOption = onPollAddOption,
-                onRemoveOption = onPollRemoveOption,
-                onClose = onPollClose,
-                onComplete = onPollComplete,
-            )
-            DialogComponent.CustomAnimationSnackBarHost(
-                hostState = snackBarHostState,
-                showIcon = false,
-                modifier = Modifier.align(Alignment.BottomCenter)
-            )
-        }
-        return
-    }
-
     val content = uiState.content
     val tags = uiState.tags
     val currentTagInput = uiState.currentTagInput
@@ -602,97 +587,154 @@ private fun WriteScreen(
         onGalleryPermissionDenied = onGalleryPermissionDenied
     )
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Scaffold(
-            modifier = modifier.clickable(
-                indication = null,
-                interactionSource = remember { MutableInteractionSource() }
-            ) {
-                keyboard?.hide()
-                focusManager.clearFocus()
-                hideRelatedTags()
-            },
-            topBar = {
-                val titleRes = if (args?.parentCardId != null) {
-                    WriteR.string.write_screen_comment_title
-                } else {
-                    WriteR.string.write_screen_title
-                }
-                AppBar.TextButtonAppBarText(
-                    appBarText = stringResource(titleRes),
-                    buttonText = stringResource(WriteR.string.write_screen_complete),
-                    onButtonClick = {
-                        // 입력 중인 태그가 있으면 먼저 추가
-                        if (currentTagInput.isNotBlank()) {
-                            onAddTag(currentTagInput)
-                            onResetTagInput()
-                        }
-                        onWriteComplete()
-                    },
-                    onClick = onBackPressed,
-                    buttonTextColor = if (isWriteCompleted) NeutralColor.BLACK else NeutralColor.GRAY_300
-                )
-            },
-            snackbarHost = {
-                DialogComponent.CustomAnimationSnackBarHost(
-                    hostState = snackBarHostState,
-                    showIcon = false
-                )
-            }
-        ) { innerPadding ->
-            val scrollState = rememberScrollState()
-            var isUserDragging by remember { mutableStateOf(false) }
-            LaunchedEffect(scrollState.isScrollInProgress, isUserDragging) {
-                if (scrollState.isScrollInProgress && isUserDragging) {
-                    finalizeTagInputIfNeeded()
-                    hideRelatedTags()
-                    keyboard?.hide()
-                    focusManager.clearFocus()
-                }
-            }
-            val layoutDirection = LocalLayoutDirection.current
+    val pollTransitionSpec = tween<IntOffset>(
+        durationMillis = 300,
+        easing = FastOutSlowInEasing
+    )
 
-            Column(
-                modifier = Modifier
-                    .background(NeutralColor.WHITE)
-                    .fillMaxSize()
-                    .padding(
-                        top = innerPadding.calculateTopPadding(),
-                        start = innerPadding.calculateStartPadding(layoutDirection),
-                        end = innerPadding.calculateEndPadding(layoutDirection)
+    Box(modifier = modifier.fillMaxSize()) {
+        AnimatedContent(
+            targetState = uiState.isPollCreateMode,
+            transitionSpec = {
+                if (targetState) {
+                    slideInHorizontally(
+                        initialOffsetX = { it },
+                        animationSpec = pollTransitionSpec
+                    ).togetherWith(
+                        slideOutHorizontally(
+                            targetOffsetX = { -it },
+                            animationSpec = pollTransitionSpec
+                        )
                     )
-                    .windowInsetsPadding(
-                        WindowInsets.ime.union(WindowInsets.navigationBars)
+                } else {
+                    slideInHorizontally(
+                        initialOffsetX = { -it },
+                        animationSpec = pollTransitionSpec
+                    ).togetherWith(
+                        slideOutHorizontally(
+                            targetOffsetX = { it },
+                            animationSpec = pollTransitionSpec
+                        )
                     )
-            ) {
-                Column(
+                }
+            },
+            modifier = Modifier.fillMaxSize(),
+            label = "PollCreateTransition"
+        ) { isPollCreateMode ->
+            if (isPollCreateMode) {
+                Box(
                     modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .pointerInput(isImeVisible) {
-                            awaitPointerEventScope {
-                                while (true) {
-                                    val event = awaitPointerEvent()
-                                    if (!isImeVisible) continue
-                                    val dragDetected = event.changes.any { pointer ->
-                                        pointer.type == PointerType.Touch &&
-                                                pointer.pressed &&
-                                                !pointer.isConsumed &&
-                                                pointer.positionChange() != Offset.Zero
-                                    }
-                                    if (dragDetected) {
-                                        isUserDragging = true
-                                    }
-                                    if (!event.changes.any { it.pressed }) {
-                                        isUserDragging = false
+                        .fillMaxSize()
+                        .background(NeutralColor.WHITE)
+                ) {
+                    PollCreateScreen(
+                        modifier = Modifier.fillMaxSize(),
+                        options = uiState.draftPollContents.mapIndexed { index, text ->
+                            PollOptionUi(id = index.toLong(), text = text)
+                        },
+                        onOptionChange = onPollOptionChange,
+                        onAddOption = onPollAddOption,
+                        onRemoveOption = onPollRemoveOption,
+                        onClose = onPollClose,
+                        onComplete = onPollComplete,
+                    )
+                    DialogComponent.CustomAnimationSnackBarHost(
+                        hostState = snackBarHostState,
+                        showIcon = false,
+                        modifier = Modifier.align(Alignment.BottomCenter)
+                    )
+                }
+            } else {
+                Scaffold(
+                    modifier = Modifier.clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    ) {
+                        keyboard?.hide()
+                        focusManager.clearFocus()
+                        hideRelatedTags()
+                    },
+                    topBar = {
+                        val titleRes = if (args?.parentCardId != null) {
+                            WriteR.string.write_screen_comment_title
+                        } else {
+                            WriteR.string.write_screen_title
+                        }
+                        AppBar.TextButtonAppBarText(
+                            appBarText = stringResource(titleRes),
+                            buttonText = stringResource(WriteR.string.write_screen_complete),
+                            onButtonClick = {
+                                // 입력 중인 태그가 있으면 먼저 추가
+                                if (currentTagInput.isNotBlank()) {
+                                    onAddTag(currentTagInput)
+                                    onResetTagInput()
+                                }
+                                onWriteComplete()
+                            },
+                            onClick = onBackPressed,
+                            buttonTextColor = if (isWriteCompleted) NeutralColor.BLACK else NeutralColor.GRAY_300
+                        )
+                    },
+                    snackbarHost = {
+                        DialogComponent.CustomAnimationSnackBarHost(
+                            hostState = snackBarHostState,
+                            showIcon = false
+                        )
+                    }
+                ) { innerPadding ->
+                    val scrollState = rememberScrollState()
+                    var isUserDragging by remember { mutableStateOf(false) }
+                    LaunchedEffect(scrollState.isScrollInProgress, isUserDragging) {
+                        if (scrollState.isScrollInProgress && isUserDragging) {
+                            finalizeTagInputIfNeeded()
+                            hideRelatedTags()
+                            keyboard?.hide()
+                            focusManager.clearFocus()
+                        }
+                    }
+                    val layoutDirection = LocalLayoutDirection.current
+
+                    Column(
+                        modifier = Modifier
+                            .background(NeutralColor.WHITE)
+                            .fillMaxSize()
+                            .padding(
+                                top = innerPadding.calculateTopPadding(),
+                                start = innerPadding.calculateStartPadding(layoutDirection),
+                                end = innerPadding.calculateEndPadding(layoutDirection)
+                            )
+                            .windowInsetsPadding(
+                                WindowInsets.ime.union(WindowInsets.navigationBars)
+                            )
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp)
+                                .pointerInput(isImeVisible) {
+                                    awaitPointerEventScope {
+                                        while (true) {
+                                            val event = awaitPointerEvent()
+                                            if (!isImeVisible) continue
+                                            val dragDetected = event.changes.any { pointer ->
+                                                pointer.type == PointerType.Touch &&
+                                                        pointer.pressed &&
+                                                        !pointer.isConsumed &&
+                                                        pointer.positionChange() != Offset.Zero
+                                            }
+                                            if (dragDetected) {
+                                                isUserDragging = true
+                                            }
+                                            if (!event.changes.any { it.pressed }) {
+                                                isUserDragging = false
+                                            }
+                                        }
                                     }
                                 }
-                            }
-                        }
-                        .verticalScroll(scrollState)
-                        .weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Spacer(Modifier.height(8.dp))
+                                .verticalScroll(scrollState)
+                                .weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Spacer(Modifier.height(8.dp))
 
                     Box(
                         modifier = Modifier.fillMaxWidth(),
@@ -793,6 +835,8 @@ private fun WriteScreen(
                         onOptionSelected = { option -> onOptionSelected(option.id) },
                         onDistancePermissionRequest = onDistanceOptionWithoutPermission
                     )
+                }
+                    }
                 }
             }
         }

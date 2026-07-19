@@ -19,6 +19,7 @@ import com.phew.domain.usecase.GetCardComments
 import com.phew.domain.usecase.GetCardCommentsPaging
 import com.phew.domain.usecase.GetCardDetail
 import com.phew.domain.usecase.LikeCard
+import com.phew.domain.usecase.RunHaptic
 import com.phew.domain.usecase.SaveEventLogDetailView
 import com.phew.domain.usecase.UnblockMember
 import com.phew.domain.usecase.UnlikeCard
@@ -86,6 +87,7 @@ class CardDetailViewModel @Inject constructor(
     private val unblockMember: UnblockMember,
     private val log : SaveEventLogDetailView,
     private val checkCardDelete: CheckCardAlreadyDelete,
+    private val runHaptic: RunHaptic,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CardDetailUiState())
@@ -193,6 +195,7 @@ class CardDetailViewModel @Inject constructor(
             if (_uiState.value.isLikeLoading) return@launch
 
             val currentDetail = _uiState.value.cardDetail ?: return@launch
+            runHaptic()
             val updatedDetail = currentDetail.copy(
                 isLike = !currentDetail.isLike,
                 likeCount = if (currentDetail.isLike) {
