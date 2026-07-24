@@ -109,7 +109,10 @@ class NetworkConvention : Plugin<Project> {
                     "api_url_user_role",
                     "\"\""
                 )
-                val articleUrl: String = properties.getProperty("api_url_cards_article", "")
+                val articleUrl: String = properties.getProperty(
+                    "api_url_cards_article",
+                    "\"api/cards/article/v2\""
+                )
                 val pollVote: String = properties.getProperty(
                     "api_url_poll_vote",
                     "\"api/polls/options/{pollOptionId}/votes\""

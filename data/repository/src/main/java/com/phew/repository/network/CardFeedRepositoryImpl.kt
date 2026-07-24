@@ -311,10 +311,10 @@ class CardFeedRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun requestCardArticle(): DataResult<CardArticle> {
+    override suspend fun requestCardArticle(): DataResult<List<CardArticle>> {
         return apiCall(
             apiCall = { feedHttp.requestCardsArticle() },
-            mapper = { data -> data.toDomain() }
+            mapper = { data -> data.map { it.toDomain() } }
         )
     }
 }

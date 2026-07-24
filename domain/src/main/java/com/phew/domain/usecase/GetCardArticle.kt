@@ -10,7 +10,7 @@ import com.phew.domain.repository.network.CardFeedRepository
 import javax.inject.Inject
 
 class GetCardArticle @Inject constructor(private val repository: CardFeedRepository) {
-    suspend operator fun invoke(): DomainResult<CardArticle, String> {
+    suspend operator fun invoke(): DomainResult<List<CardArticle>, String> {
         return when (val request = repository.requestCardArticle()) {
             is DataResult.Fail -> {
                 if (request.code == HTTP_NO_MORE_CONTENT) {
@@ -20,6 +20,9 @@ class GetCardArticle @Inject constructor(private val repository: CardFeedReposit
             }
 
             is DataResult.Success -> {
+                if (request.data.isEmpty()) {
+                    return DomainResult.Failure(ERROR_NO_DATA)
+                }
                 DomainResult.Success(request.data)
             }
         }

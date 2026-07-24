@@ -526,7 +526,7 @@ data class Home(
     val setReadNotify: UiState<Unit> = UiState.Loading,
     val checkCardDelete: UiState<Long> = UiState.None,
     val hiddenCardIds: Set<Long> = emptySet(),
-    val cardArticle: UiState<CardArticle> = UiState.Loading,
+    val cardArticle: UiState<List<CardArticle>> = UiState.Loading,
     val feedLikeStates: Map<Long, FeedLikeUiState> = emptyMap(),
 )
 
