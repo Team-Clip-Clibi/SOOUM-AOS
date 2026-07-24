@@ -141,5 +141,5 @@ interface FeedHttp {
      * 아티클 조회
      */
     @GET(BuildConfig.API_URL_CARDS_ARTICLE)
-    suspend fun requestCardsArticle(): Response<CardArticleDTO>
+    suspend fun requestCardsArticle(): Response<List<CardArticleDTO>>
 }
