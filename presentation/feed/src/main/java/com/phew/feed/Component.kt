@@ -18,12 +18,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LocalContentColor
@@ -39,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -59,7 +62,6 @@ import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.nativead.NativeAdOptions
 import com.phew.core_common.TimeUtils
-import com.phew.core_design.Danger
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.NeutralColor.GRAY_400
 import com.phew.core_design.NeutralColor.GRAY_600
@@ -160,15 +162,15 @@ object FeedUi {
 
 
     @Composable
-     fun CardArticleView(
-        data: CardArticle,
+    fun CardArticleView(
+        data: List<CardArticle>,
         modifier: Modifier,
         onCardClick: (cardId: Long) -> Unit
     ) {
-        Row(
+        Column(
             modifier = modifier
                 .fillMaxWidth()
-                .height(83.dp)
+                .height(129.dp)
                 .shadow(
                     elevation = 16.dp,
                     shape = RoundedCornerShape(16.dp),
@@ -177,111 +179,143 @@ object FeedUi {
                 )
                 .background(color = WHITE, shape = RoundedCornerShape(16.dp))
                 .border(width = 1.dp, color = GRAY_100, shape = RoundedCornerShape(16.dp))
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = { onCardClick(data.cardId) }
-                )
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.Start),
-            verticalAlignment = Alignment.CenterVertically,
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalAlignment = Alignment.Start,
         ) {
-            CardArticleProfileImage(
-                profileImage = data.profileImgUrl,
-                isRead = data.isRead,
-                description = data.cardContent
+            Text(
+                text = stringResource(id = R.string.home_article_title),
+                style = TextComponent.CAPTION_1_SB_12,
+                color = NeutralColor.BLACK
             )
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = data.nickName,
-                    style = TextComponent.CAPTION_2_M_12,
-                    color = GRAY_400
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = data.cardContent.replace("\n", " ")
-                        .let { if (it.length > 17) "${it.take(17)}..." else it },
-                    style = TextComponent.SUBTITLE_3_SB_14,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    color = GRAY_600
-                )
-                Row(
-                    modifier = Modifier.weight(1f),
-                    verticalAlignment = Alignment.CenterVertically,
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) {
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight()
                 ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy((-6).dp, Alignment.Start),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        data.writerProfileImageUrls.forEach { imageUrl ->
-                            AsyncImage(
-                                model = ImageRequest.Builder(LocalContext.current)
-                                    .data(imageUrl.ifEmpty { DesignR.drawable.ic_profile })
-                                    .crossfade(true)
-                                    .build(),
-                                contentDescription = data.cardContent,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .size(20.dp)
-                                    .clip(CircleShape)
-                                    .border(
-                                        width = 1.dp,
-                                        color = WHITE,
-                                        shape = CircleShape
-                                    )
-                            )
-                        }
+                    items(
+                        items = data,
+                        key = { article -> article.cardId }
+                    ) { article ->
+                        CardArticleItem(
+                            data = article,
+                            onCardClick = onCardClick
+                        )
                     }
-                    Spacer(modifier = Modifier.width(1.dp))
-                    Text(
-                        text = if (data.totalWriterCnt == 0) {
-                            stringResource(id = R.string.home_article_write_first)
-                        } else {
-                            stringResource(
-                                id = R.string.home_article_write,
-                                data.totalWriterCnt
-                            )
-                        },
-                        style = TextComponent.CAPTION_2_M_12,
-                        color = GRAY_500
-                    )
                 }
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .fillMaxHeight()
+                        .width(20.dp)
+                        .background(
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(
+                                    WHITE.copy(alpha = 0f),
+                                    WHITE
+                                )
+                            )
+                        )
+                )
             }
         }
     }
 
     @Composable
-    private fun CardArticleProfileImage(
-        profileImage: String,
-        isRead: Boolean,
-        description: String,
+    private fun CardArticleItem(
+        data: CardArticle,
+        onCardClick: (cardId: Long) -> Unit,
     ) {
-        Box(
+        Column(
             modifier = Modifier
-                .size(48.dp)
-                .padding(1.dp)
+                .width(230.dp)
+                .fillMaxHeight()
+                .background(color = GRAY_100, shape = RoundedCornerShape(8.dp))
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = { onCardClick(data.cardId) }
+                )
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.Center
         ) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(profileImage.ifEmpty { DesignR.drawable.ic_profile })
-                    .crossfade(true).build(),
-                contentDescription = description,
-                modifier = Modifier
-                    .matchParentSize()
-                    .clip(RoundedCornerShape(16.dp))
+            Text(
+                text = data.cardContent.replace("\n", " "),
+                style = TextComponent.BODY_1_M_14,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                color = GRAY_600
             )
-            if (!isRead) {
-                Box(
-                    modifier = Modifier
-                        .size(12.dp)
-                        .align(Alignment.TopEnd)
-                        .offset(x = (1).dp, y = (-1).dp)
-                        .background(color = Danger.M_RED, shape = CircleShape)
-                        .border(width = 2.dp, color = WHITE, shape = CircleShape)
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(
+                modifier = Modifier.height(20.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy((-4).dp, Alignment.Start),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    val profileImages = data.writerProfileImageUrls.take(3)
+                    if (profileImages.isEmpty()) {
+                        CardArticleWriterProfileImage(
+                            imageUrl = "",
+                            description = data.cardContent
+                        )
+                    } else {
+                        profileImages.forEach { imageUrl ->
+                            CardArticleWriterProfileImage(
+                                imageUrl = imageUrl,
+                                description = data.cardContent
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = if (data.totalWriterCnt == 0) {
+                        stringResource(id = R.string.home_article_write_first)
+                    } else {
+                        stringResource(
+                            id = R.string.home_article_write,
+                            data.totalWriterCnt
+                        )
+                    },
+                    style = TextComponent.CAPTION_2_M_12,
+                    color = GRAY_500,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
+    }
+
+    @Composable
+    private fun CardArticleWriterProfileImage(
+        imageUrl: String,
+        description: String,
+    ) {
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(imageUrl.ifEmpty { DesignR.drawable.ic_profile })
+                .crossfade(true)
+                .build(),
+            contentDescription = description,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(20.dp)
+                .clip(CircleShape)
+                .border(
+                    width = 1.dp,
+                    color = WHITE,
+                    shape = CircleShape
+                )
+        )
     }
 
     @Composable

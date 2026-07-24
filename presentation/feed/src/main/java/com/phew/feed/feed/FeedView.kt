@@ -321,7 +321,7 @@ private fun FeedContentView(
     hiddenCardIds: Set<Long>,
     webViewClick: (String) -> Unit,
     deleteNotice: (Int) -> Unit,
-    cardsArticle: UiState<CardArticle>,
+    cardsArticle: UiState<List<CardArticle>>,
 ) {
     val selectIndex = when (currentTab) {
         FeedType.Latest -> NAV_HOME_FEED_INDEX
