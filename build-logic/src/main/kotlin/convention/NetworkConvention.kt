@@ -63,6 +63,7 @@ class NetworkConvention : Plugin<Project> {
                 val cardBackgroundUpload: String =
                     properties.getProperty("api_url_upload_card_background", "")
                 val uploadCard: String = properties.getProperty("api_url_upload_card", "")
+                val uploadCardV2: String = properties.getProperty("api_url_upload_card_v2", "")
                 val banedChecked: String = properties.getProperty("api_url_upload_baned", "")
                 val answerCard: String = properties.getProperty("api_url_upload_card_answer", "")
                 val cardDistance: String = properties.getProperty("api_url_card_distance", "")
@@ -104,7 +105,18 @@ class NetworkConvention : Plugin<Project> {
                 val checkCardDelete: String =
                     properties.getProperty("api_url_check_card_delete", "")
                 val notifyToggle: String = properties.getProperty("api_url_notify_toggle", "")
-                val articleUrl: String = properties.getProperty("api_url_cards_article", "")
+                val userRole: String = properties.getProperty(
+                    "api_url_user_role",
+                    "\"\""
+                )
+                val articleUrl: String = properties.getProperty(
+                    "api_url_cards_article",
+                    "\"api/cards/article/v2\""
+                )
+                val pollVote: String = properties.getProperty(
+                    "api_url_poll_vote",
+                    "\"api/polls/options/{pollOptionId}/votes\""
+                )
 
                 buildConfigField("String", "BASE_URL_DEBUG", baseUrlDebug)
                 buildConfigField("String", "BASE_URL_PROD", baseUrlProd)
@@ -134,6 +146,7 @@ class NetworkConvention : Plugin<Project> {
                 buildConfigField("String", "API_URL_CARD_IMAGE_DEFAULT", cardBackgroundImageDefault)
                 buildConfigField("String", "API_URL_UPLOAD_CARD_IMAGE", cardBackgroundUpload)
                 buildConfigField("String", "API_URL_UPLOAD_CARD", uploadCard)
+                buildConfigField("String", "API_URL_UPLOAD_CARD_V2", uploadCardV2)
                 buildConfigField("String", "API_URL_CHECKED_BANED", banedChecked)
                 buildConfigField("String", "API_URL_UPLOAD_CARD_ANSWER", answerCard)
                 buildConfigField(
@@ -171,7 +184,9 @@ class NetworkConvention : Plugin<Project> {
                 buildConfigField("String", "API_URL_READ_ACTIVATE", readActivateAlarm)
                 buildConfigField("String", "API_URL_CHECK_CARD_DELETE", checkCardDelete)
                 buildConfigField("String", "API_URL_NOTIFY_TOGGLE", notifyToggle)
+                buildConfigField("String", "API_URL_USER_ROLE", userRole)
                 buildConfigField("String" , "API_URL_CARDS_ARTICLE", articleUrl)
+                buildConfigField("String", "API_URL_POLL_VOTE", pollVote)
             }
             buildFeatures.buildConfig = true
             compileOptions {

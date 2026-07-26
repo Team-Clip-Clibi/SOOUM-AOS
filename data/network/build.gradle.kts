@@ -9,4 +9,5 @@ dependencies {
     // core-common 모듈로 이동하거나 별도의 infrastructure 모듈 생성 고려
     implementation(project(":domain"))
     implementation(project(":core:core-common"))
+    testImplementation(libs.junit)
 }

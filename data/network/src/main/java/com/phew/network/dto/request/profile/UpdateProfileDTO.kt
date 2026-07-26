@@ -6,4 +6,5 @@ import kotlinx.serialization.Serializable
 data class UpdateProfileDTO(
     val nickname: String?,
     val profileImgName: String?,
+    val profileBio: String?,
 )

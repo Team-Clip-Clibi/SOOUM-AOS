@@ -91,7 +91,7 @@ interface FeedHttp {
     /**
      * Card Upload url
      */
-    @POST(BuildConfig.API_URL_UPLOAD_CARD)
+    @POST(BuildConfig.API_URL_UPLOAD_CARD_V2)
     suspend fun requestUploadCard(
         @Body request: RequestUploadCardDTO,
     ): Response<CardIdResponseDto> // Changed return type
@@ -141,5 +141,5 @@ interface FeedHttp {
      * 아티클 조회
      */
     @GET(BuildConfig.API_URL_CARDS_ARTICLE)
-    suspend fun requestCardsArticle(): Response<CardArticleDTO>
+    suspend fun requestCardsArticle(): Response<List<CardArticleDTO>>
 }

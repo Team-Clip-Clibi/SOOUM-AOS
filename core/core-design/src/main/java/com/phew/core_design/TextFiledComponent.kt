@@ -5,11 +5,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -31,10 +34,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 object TextFiledComponent {
@@ -292,60 +297,84 @@ object TextFiledComponent {
         value: String,
         maxValueLength: Int = 0,
         placeHolder: String = "",
+        height: Dp = 199.dp,
+        horizontalPadding: Dp = 24.dp,
+        verticalPadding: Dp = 15.dp,
+        showCounter: Boolean = true,
         onValueChange: (String) -> Unit,
     ) {
         val focusRequester = remember { FocusRequester() }
         val interaction = remember { MutableInteractionSource() }
+        val scrollState = rememberScrollState()
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(199.dp)
+                .height(height)
                 .background(color = NeutralColor.GRAY_100, shape = RoundedCornerShape(10.dp))
-                .padding(start = 24.dp, top = 15.dp, end = 24.dp, bottom = 15.dp)
                 .clickable(
                     interactionSource = interaction,
                     indication = null
                 ) { focusRequester.requestFocus() }
         ) {
-            TextField(
+            BasicTextField(
                 value = value,
                 onValueChange = onValueChange,
-                placeholder = {
-                    Text(
-                        text = placeHolder,
-                        style = TextComponent.SUBTITLE_1_M_16,
-                        color = NeutralColor.GRAY_500
-                    )
-                },
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .fillMaxSize()
                     .align(Alignment.TopStart)
                     .focusRequester(focusRequester),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    disabledContainerColor = Color.Transparent,
-                    errorContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    disabledIndicatorColor = Color.Transparent,
-                    errorIndicatorColor = Color.Transparent,
-                    cursorColor = NeutralColor.BLACK
-                ),
+                textStyle = TextComponent.SUBTITLE_1_M_16.copy(color = NeutralColor.BLACK),
+                cursorBrush = SolidColor(NeutralColor.BLACK),
+                decorationBox = { innerTextField ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(scrollState)
+                            .padding(
+                                start = horizontalPadding,
+                                top = verticalPadding,
+                                end = horizontalPadding
+                            )
+                    ) {
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            if (value.isEmpty()) {
+                                Text(
+                                    text = placeHolder,
+                                    style = TextComponent.SUBTITLE_1_M_16,
+                                    color = NeutralColor.GRAY_500
+                                )
+                            }
+                            innerTextField()
+                        }
+                        Spacer(
+                            modifier = Modifier.height(
+                                if (showCounter) {
+                                    TEXT_AREA_COUNTER_BOTTOM_SPACE
+                                } else {
+                                    verticalPadding
+                                }
+                            )
+                        )
+                    }
+                }
             )
-            Text(
-                text = "${value.length}/${maxValueLength}",
-                style = TextComponent.CAPTION_2_M_12,
-                color = NeutralColor.GRAY_400,
-                textAlign = TextAlign.End,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .padding(top = 6.dp)
-            )
+            if (showCounter) {
+                Text(
+                    text = "${value.length}/${maxValueLength}",
+                    style = TextComponent.CAPTION_2_M_12,
+                    color = NeutralColor.GRAY_400,
+                    textAlign = TextAlign.End,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.BottomCenter)
+                        .padding(top = 6.dp)
+                )
+            }
         }
     }
 }
+
+private val TEXT_AREA_COUNTER_BOTTOM_SPACE = 32.dp
 
 @Composable
 @Preview

@@ -69,6 +69,7 @@ import com.phew.feed.NAV_HOME_NEAR_INDEX
 import com.phew.feed.NAV_HOME_POPULAR_INDEX
 import com.phew.feed.viewModel.DistanceType
 import com.phew.feed.viewModel.FeedType
+import com.phew.feed.viewModel.FeedLikeUiState
 import com.phew.feed.viewModel.FeedViewModel
 import com.phew.feed.viewModel.NavigationEvent
 import com.phew.feed.viewModel.UiState
@@ -178,7 +179,26 @@ fun FeedView(
 
     val snackBarHostState = remember { SnackbarHostState() }
     val refreshState = rememberPullToRefreshState()
-    val isRefresh = feedItems.loadState.refresh is LoadState.Loading && feedItems.itemCount > 0
+    val feedRefreshLoadState = feedItems.loadState.refresh
+    val isRefresh = feedRefreshLoadState is LoadState.Loading && feedItems.itemCount > 0
+    var wasRefreshingExistingFeed by remember { mutableStateOf(false) }
+
+    LaunchedEffect(feedRefreshLoadState, feedItems.itemCount) {
+        when {
+            feedRefreshLoadState is LoadState.Loading && feedItems.itemCount > 0 -> {
+                wasRefreshingExistingFeed = true
+            }
+
+            wasRefreshingExistingFeed && feedRefreshLoadState is LoadState.NotLoading -> {
+                wasRefreshingExistingFeed = false
+                viewModel.onFeedRefreshCompleted()
+            }
+
+            feedRefreshLoadState is LoadState.Error -> {
+                wasRefreshingExistingFeed = false
+            }
+        }
+    }
     val pullDistance = 102.dp
     val pullOffsetPx = with(LocalDensity.current) {
         refreshState.distanceFraction * pullDistance.toPx()
@@ -224,6 +244,8 @@ fun FeedView(
                     feedItems = feedItems,
                     onClick = viewModel::navigateToDetail,
                     onRemoveCard = viewModel::removeFeedCard,
+                    feedLikeStates = uiState.feedLikeStates,
+                    onClickLike = viewModel::verifyAndToggleLike,
                     pullOffsetPx = pullOffsetPx,
                     onRefresh = refreshCurrentFeed,
                     hiddenCardIds = uiState.hiddenCardIds,
@@ -292,12 +314,14 @@ private fun FeedContentView(
     feedItems: LazyPagingItems<FeedCardType>,
     onClick: (String, Boolean) -> Unit,
     onRemoveCard: (String) -> Unit,
+    feedLikeStates: Map<Long, FeedLikeUiState>,
+    onClickLike: (Long, Int, Boolean) -> Unit,
     pullOffsetPx: Float,
     onRefresh: () -> Unit,
     hiddenCardIds: Set<Long>,
     webViewClick: (String) -> Unit,
     deleteNotice: (Int) -> Unit,
-    cardsArticle: UiState<CardArticle>,
+    cardsArticle: UiState<List<CardArticle>>,
 ) {
     val selectIndex = when (currentTab) {
         FeedType.Latest -> NAV_HOME_FEED_INDEX
@@ -403,7 +427,9 @@ private fun FeedContentView(
                                 feedCard = feedCard,
                                 pullOffsetPx = pullOffsetPx,
                                 onClick = onClick,
-                                onRemoveCard = onRemoveCard
+                                onRemoveCard = onRemoveCard,
+                                likeState = feedCard.cardId.toLongOrNull()?.let(feedLikeStates::get),
+                                onClickLike = onClickLike,
                             )
                         }
                     }
@@ -453,7 +479,12 @@ private fun FeedCardItem(
     pullOffsetPx: Float,
     onClick: (String, Boolean) -> Unit,
     onRemoveCard: (String) -> Unit,
+    likeState: FeedLikeUiState?,
+    onClickLike: (Long, Int, Boolean) -> Unit,
 ) {
+    val cardId = feedCard.cardId.toLongOrNull()
+    val displayedIsLike = likeState?.isLike ?: feedCard.isLike
+    val displayedLikeCount = likeState?.likeCount ?: feedCard.likeValue.toIntOrNull() ?: 0
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -467,6 +498,15 @@ private fun FeedCardItem(
                 onClick(id, feedCard.isEventCard())
             },
             onRemoveCard = onRemoveCard,
+            isLike = displayedIsLike,
+            likeCount = displayedLikeCount,
+            isLikeLoading = likeState?.isLoading == true,
+            likeAnimationKey = likeState?.animationVersion ?: 0,
+            onClickLike = {
+                cardId?.let {
+                    onClickLike(it, displayedLikeCount, displayedIsLike)
+                }
+            },
         )
     }
 }
@@ -527,6 +567,20 @@ private val FeedCardType.cardId: String
         is FeedCardType.BoombType -> cardId
         is FeedCardType.AdminType -> cardId
         is FeedCardType.NormalType -> cardId
+    }
+
+private val FeedCardType.likeValue: String
+    get() = when (this) {
+        is FeedCardType.BoombType -> likeValue
+        is FeedCardType.AdminType -> likeValue
+        is FeedCardType.NormalType -> likeValue
+    }
+
+private val FeedCardType.isLike: Boolean
+    get() = when (this) {
+        is FeedCardType.BoombType -> isLike
+        is FeedCardType.AdminType -> isLike
+        is FeedCardType.NormalType -> isLike
     }
 
 private fun FeedCardType.isHidden(hiddenCardIds: Set<Long>): Boolean {

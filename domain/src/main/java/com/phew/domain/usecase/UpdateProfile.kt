@@ -32,6 +32,7 @@ class UpdateProfile @Inject constructor(
     data class Param(
         val nickName: String?,
         val imgName: String?,
+        val profileBio: String?,
         val profileImage: String?,
         val isImageChange: Boolean
     )
@@ -42,7 +43,8 @@ class UpdateProfile @Inject constructor(
             false -> {
                 val request = repository.requestUpdateProfile(
                     nickName = param.nickName,
-                    profileImageName = param.imgName
+                    profileImageName = param.imgName,
+                    profileBio = param.profileBio
                 )
                 return handleResult(request = request)
             }
@@ -52,7 +54,8 @@ class UpdateProfile @Inject constructor(
                 if (param.profileImage == null) {
                     val request = repository.requestUpdateProfile(
                         nickName = param.nickName,
-                        profileImageName = null
+                        profileImageName = null,
+                        profileBio = param.profileBio
                     )
                     return handleResult(request = request)
                 }
@@ -78,8 +81,9 @@ class UpdateProfile @Inject constructor(
                     }
                 }
                 val requestUpdateProfile = repository.requestUpdateProfile(
-                    nickName = null,
-                    profileImageName = requestImageUrl.data.imgName
+                    nickName = param.nickName,
+                    profileImageName = requestImageUrl.data.imgName,
+                    profileBio = param.profileBio
                 )
                 return handleResult(request = requestUpdateProfile)
             }

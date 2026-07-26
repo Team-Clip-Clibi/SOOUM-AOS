@@ -45,6 +45,8 @@ interface CardFeedRepository {
         imageName: String,
         isStory: Boolean,
         tag: List<String>,
+        hasPoll: Boolean,
+        pollContents: List<String>,
     ): DataResult<CardIdResponse>
 
     suspend fun requestUploadCardAnswer(
@@ -62,5 +64,5 @@ interface CardFeedRepository {
     suspend fun requestUploadImage(data: RequestBody, url: String): DataResult<Unit>
     suspend fun requestCheckImage(imageName: String): DataResult<Boolean>
     suspend fun requestCheckCardDelete(cardId: Long): DataResult<Boolean>
-    suspend fun requestCardArticle(): DataResult<CardArticle>
+    suspend fun requestCardArticle(): DataResult<List<CardArticle>>
 }

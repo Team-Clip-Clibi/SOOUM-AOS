@@ -10,6 +10,12 @@ import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -39,6 +45,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,10 +60,14 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import com.phew.core_design.typography.FontType
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -69,6 +80,7 @@ import com.phew.core.ui.model.CameraCaptureRequest
 import com.phew.core.ui.model.CameraPickerAction
 import com.phew.core.ui.model.CameraPickerEffectState
 import com.phew.core_design.AppBar
+import com.phew.core_design.Danger
 import com.phew.core_design.DialogComponent
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.Primary
@@ -81,6 +93,7 @@ import com.phew.presentation.write.component.NumberTagFlowLayout
 import com.phew.presentation.write.component.NumberTagItem
 import com.phew.domain.dto.CardImageDefault
 import com.phew.presentation.write.model.BackgroundConfig
+import com.phew.presentation.write.model.WriteUiState
 import com.phew.core_design.FontItem
 import com.phew.presentation.write.model.WriteOption
 import com.phew.presentation.write.model.WriteOptions
@@ -91,6 +104,8 @@ import com.phew.core_design.CustomFont
 import com.phew.core_design.component.filter.SooumFilter
 import com.phew.presentation.write.model.BackgroundFilterType
 import com.phew.presentation.write.screen.component.ImageGrid
+import com.phew.presentation.write.screen.component.PollCreateScreen
+import com.phew.presentation.write.screen.component.PollOptionUi
 import com.phew.presentation.write.R as WriteR
 import androidx.navigation.NavController
 import com.phew.core.ui.model.navigation.CardDetailArgs
@@ -120,114 +135,25 @@ internal fun WriteRoute(
         viewModel.clickBackHandler(isFromFeedCard = isFromTab)
     }
 
-    LaunchedEffect(Unit) {
-        if (isFromTab) viewModel.isComeFromTab()
-    }
-    val context = LocalContext.current
-    val keyboard = LocalSoftwareKeyboardController.current
-    val focusManager = LocalFocusManager.current
-
-    //   위치 권한
-    val locationPermission = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestMultiplePermissions(),
-        onResult = { permissionResult ->
-            val isGranted = permissionResult.any { it.value }
-            viewModel.onLocationPermissionResult(isGranted)
-        }
-    )
-
-    LaunchedEffect(context) {
-        val fineGranted = ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-
-        val coarseGranted = ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-
-        viewModel.onInitialLocationPermissionCheck(fineGranted || coarseGranted)
-    }
-    //  Effect Event로 수정
-    LaunchedEffect(Unit) {
-        viewModel.requestPermissionEvent.collect { permissions ->
-            locationPermission.launch(permissions)
-        }
-    }
-
-    // 완료 이벤트 처리
-    LaunchedEffect(Unit) {
-        viewModel.writeCompleteEvent.collect {
-            SooumLog.d(TAG, "writeCompleteEvent")
-            navController.previousBackStackEntry?.savedStateHandle?.set("card_added", true)
-            onWriteComplete(CardDetailArgs(cardId = it))
-        }
-    }
-
-    // parentCardId 설정
-    LaunchedEffect(args) {
-        args?.parentCardId?.let { parentCardId ->
-            viewModel.setParentCardId(parentCardId)
-        }
-    }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val compareContent = stringResource(WriteR.string.write_card_content_default_placeholder)
-    var errorWithRefreshToken by remember { mutableStateOf<String?>(null) }
-    var showRestrictedDialog by remember { mutableStateOf(false) }
-    var showDeletedDialog by remember { mutableStateOf(false) }
-    var showBadImageDialog by remember { mutableStateOf(false) }
-    val composition by rememberLottieComposition(
-        LottieCompositionSpec.RawRes(com.phew.core_design.R.raw.ic_refresh)
+    val defaultContent = stringResource(WriteR.string.write_card_content_default_placeholder)
+    var activeDialog by remember { mutableStateOf<WriteDialog?>(null) }
+    val snackBarHostState = remember { SnackbarHostState() }
+
+    WriteRouteEffects(
+        viewModel = viewModel,
+        navController = navController,
+        args = args,
+        isFromTab = isFromTab,
+        snackBarHostState = snackBarHostState,
+        onWriteComplete = onWriteComplete,
+        onDialogRequested = { activeDialog = it },
     )
-    val progress by animateLottieCompositionAsState(
-        composition = composition,
-        iterations = LottieConstants.IterateForever,
-        isPlaying = showRestrictedDialog && uiState.activateDate is UiState.Loading
-    )
-
-    LaunchedEffect(Unit) {
-        viewModel.uiEffect.collect { effect ->
-            when (effect) {
-                is WriteUiEffect.ShowError -> {
-                    errorWithRefreshToken = effect.refreshToken
-                }
-
-                WriteUiEffect.ShowRestricted -> {
-                    showRestrictedDialog = true
-                }
-
-                WriteUiEffect.ShowDeleted -> {
-                    showDeletedDialog = true
-                }
-
-                WriteUiEffect.ShowBadImage -> {
-                    showBadImageDialog = true
-                }
-            }
-        }
-    }
 
     WriteScreen(
         modifier = modifier,
         args = args,
-        content = uiState.content,
-        tags = uiState.tags,
-        currentTagInput = uiState.currentTagInput,
-        relatedTags = uiState.relatedNumberTags,
-        isWriteCompleted = uiState.canComplete,
-        activeBackgroundImageResId = uiState.activeBackgroundResId,
-        activeBackgroundUri = uiState.activeBackgroundUri,
-        selectedBackgroundFilter = uiState.selectedBackgroundFilter,
-        selectedGridImageName = uiState.selectedGridImageName,
-        selectedFont = uiState.selectedFont,
-        selectedFontType = uiState.selectedFontType,
-        selectedOptionIds = uiState.selectedOptionIds,
-        hasLocationPermission = uiState.hasLocationPermission,
-        showLocationPermissionDialog = uiState.showLocationPermissionDialog,
-        showCameraPermissionDialog = uiState.showCameraPermissionDialog,
-        showGalleryPermissionDialog = uiState.showGalleryPermissionDialog,
-        cardDefaultImagesByCategory = uiState.cardDefaultImagesByCategory,
+        uiState = uiState,
         onBackPressed = onBackPressed,
         onContentChange = viewModel::updateContent,
         onTagInputChange = viewModel::updateTagInput,
@@ -246,7 +172,7 @@ internal fun WriteRoute(
         onContentClick = {
             viewModel.hideRelatedTags()
 
-            if (uiState.content == compareContent) {
+            if (uiState.content == defaultContent) {
                 viewModel.updateContent("")
             }
         },
@@ -270,15 +196,10 @@ internal fun WriteRoute(
         onAddTag = viewModel::addTag,
         onRemoveTag = viewModel::removeTag,
         onRelatedTagClick = { tagItem -> viewModel.addTag(tagItem.name) },
-        focusTagInput = uiState.focusTagInput,
         onCompleteTagInput = viewModel::completeTagInput,
         onResetTagInput = viewModel::resetTagInput,
         onTagFocusHandled = viewModel::onTagInputFocusHandled,
         onWriteComplete = viewModel::onWriteComplete,
-        showBackgroundPicker = uiState.showBackgroundPickerSheet,
-        shouldLaunchAlbum = uiState.shouldLaunchBackgroundAlbum,
-        shouldRequestCameraPermission = uiState.shouldRequestBackgroundCameraPermission,
-        pendingCameraCapture = uiState.pendingBackgroundCameraCapture,
         onCameraPickerRequested = viewModel::onBackgroundPickerRequested,
         onCameraPickerDismissed = viewModel::onBackgroundPickerDismissed,
         onCameraPickerAction = viewModel::onBackgroundPickerAction,
@@ -290,87 +211,236 @@ internal fun WriteRoute(
         onGallerySettingsResult = viewModel::onGallerySettingsResult,
         onCameraSettingsResult = viewModel::onCameraSettingsResult,
         hideRelatedTags = viewModel::hideRelatedTags,
-        isWriteInProgress = uiState.isWriteInProgress,
         onEnterClick = {
             viewModel.writeFinishTagEnter(isFromFeedCard = isFromTab)
-        }
+        },
+        onPollClose = {
+            snackBarHostState.currentSnackbarData?.dismiss()
+            viewModel.closePollCreate()
+        },
+        onPollComplete = {
+            snackBarHostState.currentSnackbarData?.dismiss()
+            viewModel.completePollCreate()
+        },
+        onPollOptionChange = viewModel::updateDraftPollOption,
+        onPollAddOption = viewModel::addDraftPollOption,
+        onPollRemoveOption = viewModel::removeDraftPollOption,
+        onPollEdit = viewModel::openPollCreate,
+        onPollDelete = {
+            activeDialog = WriteDialog.DeletePoll(PollDeleteDialogMode.DeleteOnly)
+        },
+        snackBarHostState = snackBarHostState,
     )
 
-    if (showRestrictedDialog) {
-        when (val activateDate = uiState.activateDate) {
-            is UiState.Loading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    LottieAnimation(
-                        composition = composition,
-                        progress = { progress },
-                        modifier = Modifier.size(44.dp)
-                    )
-                }
-            }
+    WriteDialogHost(
+        dialog = activeDialog,
+        activateDate = uiState.activateDate,
+        onDismissAndGoHome = {
+            activeDialog = null
+            onHome()
+        },
+        onBadImageDismissed = {
+            activeDialog = null
+            viewModel.resetToDefaultImage()
+        },
+        onPollDeleteConfirm = {
+            activeDialog = null
+            viewModel.deletePoll()
+        },
+        onPollDeleteAndRecreateConfirm = {
+            activeDialog = null
+            viewModel.deletePollAndOpenCreate()
+        },
+        onDismissPollDelete = {
+            activeDialog = null
+        },
+    )
+}
 
-            is UiState.Success, is UiState.Fail -> {
-                val dateString = if (activateDate is UiState.Success) activateDate.data else ""
-                val onDismissAction = {
-                    showRestrictedDialog = false
-                    onHome()
-                }
-                DialogComponent.DefaultButtonOne(
-                    title = stringResource(WriteR.string.write_screen_dialog_restrict_title),
-                    description = stringResource(
-                        WriteR.string.write_screen_dialog_restrict_message,
-                        dateString
-                    ),
-                    onClick = onDismissAction,
-                    onDismiss = onDismissAction,
-                    buttonText = stringResource(com.phew.core_design.R.string.common_okay)
-                )
-            }
-        }
+private sealed interface WriteDialog {
+    data class Error(val refreshToken: String) : WriteDialog
+    data object Restricted : WriteDialog
+    data object Deleted : WriteDialog
+    data object BadImage : WriteDialog
+    data class DeletePoll(val mode: PollDeleteDialogMode) : WriteDialog
+}
+
+private enum class PollDeleteDialogMode {
+    DeleteOnly,
+    DeleteAndRecreate,
+}
+
+@Composable
+private fun WriteRouteEffects(
+    viewModel: WriteViewModel,
+    navController: NavController,
+    args: WriteArgs?,
+    isFromTab: Boolean,
+    snackBarHostState: SnackbarHostState,
+    onWriteComplete: (CardDetailArgs) -> Unit,
+    onDialogRequested: (WriteDialog) -> Unit,
+) {
+    val context = LocalContext.current
+    val currentOnWriteComplete by rememberUpdatedState(onWriteComplete)
+    val currentOnDialogRequested by rememberUpdatedState(onDialogRequested)
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+        onResult = { result ->
+            viewModel.onLocationPermissionResult(result.values.any { it })
+        },
+    )
+
+    LaunchedEffect(viewModel, isFromTab) {
+        if (isFromTab) viewModel.isComeFromTab()
     }
 
-    if (showDeletedDialog) {
-        DeletedCardDialog(
-            onConfirm = {
-                showDeletedDialog = false
-                onHome()
-            },
-            onDismiss = {
-                showDeletedDialog = false
-                onHome()
-            }
+    LaunchedEffect(context, viewModel) {
+        viewModel.onInitialLocationPermissionCheck(
+            isPermissionGranted(context, Manifest.permission.ACCESS_FINE_LOCATION) ||
+                isPermissionGranted(context, Manifest.permission.ACCESS_COARSE_LOCATION),
         )
     }
 
-    if (showBadImageDialog) {
-        DialogComponent.DefaultButtonOne(
+    LaunchedEffect(viewModel) {
+        viewModel.requestPermissionEvent.collect { permissions ->
+            locationPermissionLauncher.launch(permissions)
+        }
+    }
+
+    LaunchedEffect(viewModel, navController) {
+        viewModel.writeCompleteEvent.collect { cardId ->
+            SooumLog.d(TAG, "writeCompleteEvent")
+            navController.previousBackStackEntry
+                ?.savedStateHandle
+                ?.set("card_added", true)
+            currentOnWriteComplete(CardDetailArgs(cardId = cardId))
+        }
+    }
+
+    LaunchedEffect(viewModel, args?.parentCardId) {
+        args?.parentCardId?.let(viewModel::setParentCardId)
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.uiEffect.collect { effect ->
+            when (effect) {
+                is WriteUiEffect.ShowSnackBar -> {
+                    snackBarHostState.showSnackbar(context.getString(effect.messageResId))
+                }
+                else -> currentOnDialogRequested(effect.toRouteDialog())
+            }
+        }
+    }
+}
+
+private fun WriteUiEffect.toRouteDialog(): WriteDialog = when (this) {
+    is WriteUiEffect.ShowError -> WriteDialog.Error(refreshToken)
+    WriteUiEffect.ShowRestricted -> WriteDialog.Restricted
+    WriteUiEffect.ShowDeleted -> WriteDialog.Deleted
+    WriteUiEffect.ShowBadImage -> WriteDialog.BadImage
+    WriteUiEffect.ShowPollReplacementDialog -> WriteDialog.DeletePoll(PollDeleteDialogMode.DeleteAndRecreate)
+    is WriteUiEffect.ShowSnackBar -> error("SnackBar effect is handled separately.")
+}
+
+private fun isPermissionGranted(context: Context, permission: String): Boolean =
+    ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+
+@Composable
+private fun WriteDialogHost(
+    dialog: WriteDialog?,
+    activateDate: UiState<String>,
+    onDismissAndGoHome: () -> Unit,
+    onBadImageDismissed: () -> Unit,
+    onPollDeleteConfirm: () -> Unit,
+    onPollDeleteAndRecreateConfirm: () -> Unit,
+    onDismissPollDelete: () -> Unit,
+) {
+    when (dialog) {
+        null -> Unit
+        WriteDialog.Restricted -> RestrictedWriteDialog(
+            activateDate = activateDate,
+            onDismiss = onDismissAndGoHome,
+        )
+        WriteDialog.Deleted -> DeletedCardDialog(
+            onConfirm = onDismissAndGoHome,
+            onDismiss = onDismissAndGoHome,
+        )
+        WriteDialog.BadImage -> DialogComponent.DefaultButtonOne(
             title = stringResource(WriteR.string.write_screen_picture_dialog_image_title),
             description = stringResource(WriteR.string.write_screen_picture_dialog_image_content),
             buttonText = stringResource(com.phew.core_design.R.string.common_okay),
+            onClick = onBadImageDismissed,
+            onDismiss = onBadImageDismissed,
+        )
+        is WriteDialog.DeletePoll -> DialogComponent.DefaultButtonTwo(
+            title = stringResource(WriteR.string.write_poll_delete_dialog_title),
+            description = stringResource(WriteR.string.write_poll_delete_dialog_description),
+            buttonTextStart = stringResource(com.phew.core_design.R.string.common_cancel),
+            buttonTextEnd = stringResource(WriteR.string.write_poll_delete_dialog_confirm),
             onClick = {
-                showBadImageDialog = false
-                viewModel.resetToDefaultImage()
+                when (dialog.mode) {
+                    PollDeleteDialogMode.DeleteOnly -> onPollDeleteConfirm()
+                    PollDeleteDialogMode.DeleteAndRecreate -> onPollDeleteAndRecreateConfirm()
+                }
             },
-            onDismiss = {
-                showBadImageDialog = false
-                viewModel.resetToDefaultImage()
-            }
+            onDismiss = onDismissPollDelete,
+            rightButtonBaseColor = Danger.M_RED,
+            rightButtonClickColor = Danger.D_RED,
+            startButtonTextColor = NeutralColor.GRAY_600,
         )
+        is WriteDialog.Error -> {
+            val keyboard = LocalSoftwareKeyboardController.current
+            val focusManager = LocalFocusManager.current
+            ErrorDialog(
+                onDismiss = {
+                    keyboard?.hide()
+                    focusManager.clearFocus(force = true)
+                    onDismissAndGoHome()
+                },
+                refreshToken = dialog.refreshToken,
+            )
+        }
     }
+}
 
-    errorWithRefreshToken?.let { refreshToken ->
-        ErrorDialog(
-            onDismiss = {
-                keyboard?.hide()
-                focusManager.clearFocus(force = true)
-                errorWithRefreshToken = null
-                onHome()
-            },
-            refreshToken = refreshToken
-        )
+@Composable
+private fun RestrictedWriteDialog(
+    activateDate: UiState<String>,
+    onDismiss: () -> Unit,
+) {
+    val composition by rememberLottieComposition(
+        LottieCompositionSpec.RawRes(com.phew.core_design.R.raw.ic_refresh),
+    )
+    val progress by animateLottieCompositionAsState(
+        composition = composition,
+        iterations = LottieConstants.IterateForever,
+        isPlaying = activateDate is UiState.Loading,
+    )
+
+    when (activateDate) {
+        is UiState.Loading -> Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            LottieAnimation(
+                composition = composition,
+                progress = { progress },
+                modifier = Modifier.size(44.dp),
+            )
+        }
+        is UiState.Success, is UiState.Fail -> {
+            val date = (activateDate as? UiState.Success)?.data.orEmpty()
+            DialogComponent.DefaultButtonOne(
+                title = stringResource(WriteR.string.write_screen_dialog_restrict_title),
+                description = stringResource(
+                    WriteR.string.write_screen_dialog_restrict_message,
+                    date,
+                ),
+                onClick = onDismiss,
+                onDismiss = onDismiss,
+                buttonText = stringResource(com.phew.core_design.R.string.common_okay),
+            )
+        }
     }
 }
 
@@ -378,23 +448,7 @@ internal fun WriteRoute(
 private fun WriteScreen(
     modifier: Modifier = Modifier,
     args: WriteArgs? = null,
-    content: String,
-    tags: List<String>,
-    currentTagInput: String,
-    relatedTags: List<NumberTagItem>,
-    isWriteCompleted: Boolean,
-    activeBackgroundImageResId: Int?,
-    activeBackgroundUri: Uri?,
-    selectedBackgroundFilter: BackgroundFilterType,
-    selectedGridImageName: String?,
-    selectedFont: String,
-    selectedFontType: FontType?,
-    selectedOptionIds: List<String>,
-    hasLocationPermission: Boolean,
-    showLocationPermissionDialog: Boolean,
-    showCameraPermissionDialog: Boolean,
-    showGalleryPermissionDialog: Boolean,
-    cardDefaultImagesByCategory: Map<BackgroundFilterType, List<CardImageDefault>>,
+    uiState: WriteUiState,
     onBackPressed: () -> Unit,
     onContentChange: (String) -> Unit,
     onTagInputChange: (String) -> Unit,
@@ -415,15 +469,10 @@ private fun WriteScreen(
     onAddTag: (String) -> Unit,
     onRemoveTag: (String) -> Unit,
     onRelatedTagClick: (NumberTagItem) -> Unit,
-    focusTagInput: Boolean,
     onCompleteTagInput: () -> Unit,
     onResetTagInput: () -> Unit,
     onTagFocusHandled: () -> Unit,
     onWriteComplete: () -> Unit,
-    showBackgroundPicker: Boolean,
-    shouldLaunchAlbum: Boolean,
-    shouldRequestCameraPermission: Boolean,
-    pendingCameraCapture: CameraCaptureRequest?,
     onCameraPickerRequested: () -> Unit,
     onCameraPickerDismissed: () -> Unit,
     onCameraPickerAction: (CameraPickerAction) -> Unit,
@@ -436,10 +485,31 @@ private fun WriteScreen(
     onGallerySettingsResult: (Boolean) -> Unit,
     onCameraSettingsResult: (Boolean) -> Unit,
     hideRelatedTags: () -> Unit,
-    isWriteInProgress: Boolean,
     onEnterClick: () -> Unit,
+    onPollClose: () -> Unit,
+    onPollComplete: () -> Unit,
+    onPollOptionChange: (Long, String) -> Unit,
+    onPollAddOption: () -> Unit,
+    onPollRemoveOption: (Long) -> Unit,
+    onPollEdit: () -> Unit,
+    onPollDelete: () -> Unit,
+    snackBarHostState: SnackbarHostState,
 ) {
-    val snackBarHostState = remember { SnackbarHostState() }
+    val content = uiState.content
+    val tags = uiState.tags
+    val currentTagInput = uiState.currentTagInput
+    val relatedTags = uiState.relatedNumberTags
+    val isWriteCompleted = uiState.canComplete
+    val activeBackgroundImageResId = uiState.activeBackgroundResId
+    val activeBackgroundUri = uiState.activeBackgroundUri
+    val selectedBackgroundFilter = uiState.selectedBackgroundFilter
+    val selectedGridImageName = uiState.selectedGridImageName
+    val selectedFont = uiState.selectedFont
+    val selectedFontType = uiState.selectedFontType
+    val selectedOptionIds = uiState.selectedOptionIds
+    val hasLocationPermission = uiState.hasLocationPermission
+    val cardDefaultImagesByCategory = uiState.cardDefaultImagesByCategory
+
     val cameraPermissions = arrayOf(Manifest.permission.CAMERA)
     val albumPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         arrayOf(Manifest.permission.READ_MEDIA_IMAGES)
@@ -501,9 +571,9 @@ private fun WriteScreen(
 
     CameraPickerEffect(
         effectState = CameraPickerEffectState(
-            launchAlbum = shouldLaunchAlbum,
-            requestCameraPermission = shouldRequestCameraPermission,
-            pendingCapture = pendingCameraCapture
+            launchAlbum = uiState.shouldLaunchBackgroundAlbum,
+            requestCameraPermission = uiState.shouldRequestBackgroundCameraPermission,
+            pendingCapture = uiState.pendingBackgroundCameraCapture,
         ),
         onAlbumRequestConsumed = onAlbumRequestConsumed,
         onAlbumPicked = onCustomImageSelected,
@@ -517,94 +587,154 @@ private fun WriteScreen(
         onGalleryPermissionDenied = onGalleryPermissionDenied
     )
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Scaffold(
-            modifier = modifier.clickable(
-                indication = null,
-                interactionSource = remember { MutableInteractionSource() }
-            ) {
-                keyboard?.hide()
-                focusManager.clearFocus()
-                hideRelatedTags()
-            },
-            topBar = {
-                val titleRes = if (args?.parentCardId != null) {
-                    WriteR.string.write_screen_comment_title
-                } else {
-                    WriteR.string.write_screen_title
-                }
-                AppBar.TextButtonAppBarText(
-                    appBarText = stringResource(titleRes),
-                    buttonText = stringResource(WriteR.string.write_screen_complete),
-                    onButtonClick = {
-                        // 입력 중인 태그가 있으면 먼저 추가
-                        if (currentTagInput.isNotBlank()) {
-                            onAddTag(currentTagInput)
-                            onResetTagInput()
-                        }
-                        onWriteComplete()
-                    },
-                    onClick = onBackPressed,
-                    buttonTextColor = if (isWriteCompleted) NeutralColor.BLACK else NeutralColor.GRAY_300
-                )
-            },
-            snackbarHost = {
-                DialogComponent.CustomAnimationSnackBarHost(snackBarHostState)
-            }
-        ) { innerPadding ->
-            val scrollState = rememberScrollState()
-            var isUserDragging by remember { mutableStateOf(false) }
-            LaunchedEffect(scrollState.isScrollInProgress, isUserDragging) {
-                if (scrollState.isScrollInProgress && isUserDragging) {
-                    finalizeTagInputIfNeeded()
-                    hideRelatedTags()
-                    keyboard?.hide()
-                    focusManager.clearFocus()
-                }
-            }
-            val layoutDirection = LocalLayoutDirection.current
+    val pollTransitionSpec = tween<IntOffset>(
+        durationMillis = 300,
+        easing = FastOutSlowInEasing
+    )
 
-            Column(
-                modifier = Modifier
-                    .background(NeutralColor.WHITE)
-                    .fillMaxSize()
-                    .padding(
-                        top = innerPadding.calculateTopPadding(),
-                        start = innerPadding.calculateStartPadding(layoutDirection),
-                        end = innerPadding.calculateEndPadding(layoutDirection)
+    Box(modifier = modifier.fillMaxSize()) {
+        AnimatedContent(
+            targetState = uiState.isPollCreateMode,
+            transitionSpec = {
+                if (targetState) {
+                    slideInHorizontally(
+                        initialOffsetX = { it },
+                        animationSpec = pollTransitionSpec
+                    ).togetherWith(
+                        slideOutHorizontally(
+                            targetOffsetX = { -it },
+                            animationSpec = pollTransitionSpec
+                        )
                     )
-                    .windowInsetsPadding(
-                        WindowInsets.ime.union(WindowInsets.navigationBars)
+                } else {
+                    slideInHorizontally(
+                        initialOffsetX = { -it },
+                        animationSpec = pollTransitionSpec
+                    ).togetherWith(
+                        slideOutHorizontally(
+                            targetOffsetX = { it },
+                            animationSpec = pollTransitionSpec
+                        )
                     )
-            ) {
-                Column(
+                }
+            },
+            modifier = Modifier.fillMaxSize(),
+            label = "PollCreateTransition"
+        ) { isPollCreateMode ->
+            if (isPollCreateMode) {
+                Box(
                     modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .pointerInput(isImeVisible) {
-                            awaitPointerEventScope {
-                                while (true) {
-                                    val event = awaitPointerEvent()
-                                    if (!isImeVisible) continue
-                                    val dragDetected = event.changes.any { pointer ->
-                                        pointer.type == PointerType.Touch &&
-                                                pointer.pressed &&
-                                                !pointer.isConsumed &&
-                                                pointer.positionChange() != Offset.Zero
-                                    }
-                                    if (dragDetected) {
-                                        isUserDragging = true
-                                    }
-                                    if (!event.changes.any { it.pressed }) {
-                                        isUserDragging = false
+                        .fillMaxSize()
+                        .background(NeutralColor.WHITE)
+                ) {
+                    PollCreateScreen(
+                        modifier = Modifier.fillMaxSize(),
+                        options = uiState.draftPollContents.mapIndexed { index, text ->
+                            PollOptionUi(id = index.toLong(), text = text)
+                        },
+                        onOptionChange = onPollOptionChange,
+                        onAddOption = onPollAddOption,
+                        onRemoveOption = onPollRemoveOption,
+                        onClose = onPollClose,
+                        onComplete = onPollComplete,
+                    )
+                    DialogComponent.CustomAnimationSnackBarHost(
+                        hostState = snackBarHostState,
+                        showIcon = false,
+                        modifier = Modifier.align(Alignment.BottomCenter)
+                    )
+                }
+            } else {
+                Scaffold(
+                    modifier = Modifier.clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    ) {
+                        keyboard?.hide()
+                        focusManager.clearFocus()
+                        hideRelatedTags()
+                    },
+                    topBar = {
+                        val titleRes = if (args?.parentCardId != null) {
+                            WriteR.string.write_screen_comment_title
+                        } else {
+                            WriteR.string.write_screen_title
+                        }
+                        AppBar.TextButtonAppBarText(
+                            appBarText = stringResource(titleRes),
+                            buttonText = stringResource(WriteR.string.write_screen_complete),
+                            onButtonClick = {
+                                // 입력 중인 태그가 있으면 먼저 추가
+                                if (currentTagInput.isNotBlank()) {
+                                    onAddTag(currentTagInput)
+                                    onResetTagInput()
+                                }
+                                onWriteComplete()
+                            },
+                            onClick = onBackPressed,
+                            buttonTextColor = if (isWriteCompleted) NeutralColor.BLACK else NeutralColor.GRAY_300
+                        )
+                    },
+                    snackbarHost = {
+                        DialogComponent.CustomAnimationSnackBarHost(
+                            hostState = snackBarHostState,
+                            showIcon = false
+                        )
+                    }
+                ) { innerPadding ->
+                    val scrollState = rememberScrollState()
+                    var isUserDragging by remember { mutableStateOf(false) }
+                    LaunchedEffect(scrollState.isScrollInProgress, isUserDragging) {
+                        if (scrollState.isScrollInProgress && isUserDragging) {
+                            finalizeTagInputIfNeeded()
+                            hideRelatedTags()
+                            keyboard?.hide()
+                            focusManager.clearFocus()
+                        }
+                    }
+                    val layoutDirection = LocalLayoutDirection.current
+
+                    Column(
+                        modifier = Modifier
+                            .background(NeutralColor.WHITE)
+                            .fillMaxSize()
+                            .padding(
+                                top = innerPadding.calculateTopPadding(),
+                                start = innerPadding.calculateStartPadding(layoutDirection),
+                                end = innerPadding.calculateEndPadding(layoutDirection)
+                            )
+                            .windowInsetsPadding(
+                                WindowInsets.ime.union(WindowInsets.navigationBars)
+                            )
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp)
+                                .pointerInput(isImeVisible) {
+                                    awaitPointerEventScope {
+                                        while (true) {
+                                            val event = awaitPointerEvent()
+                                            if (!isImeVisible) continue
+                                            val dragDetected = event.changes.any { pointer ->
+                                                pointer.type == PointerType.Touch &&
+                                                        pointer.pressed &&
+                                                        !pointer.isConsumed &&
+                                                        pointer.positionChange() != Offset.Zero
+                                            }
+                                            if (dragDetected) {
+                                                isUserDragging = true
+                                            }
+                                            if (!event.changes.any { it.pressed }) {
+                                                isUserDragging = false
+                                            }
+                                        }
                                     }
                                 }
-                            }
-                        }
-                        .verticalScroll(scrollState)
-                        .weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Spacer(Modifier.height(8.dp))
+                                .verticalScroll(scrollState)
+                                .weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Spacer(Modifier.height(8.dp))
 
                     Box(
                         modifier = Modifier.fillMaxWidth(),
@@ -626,12 +756,23 @@ private fun WriteScreen(
                                 },
                                 onAddTag = onAddTag,
                                 onRemoveTag = onRemoveTag,
-                                shouldFocusTagInput = focusTagInput,
+                                shouldFocusTagInput = uiState.focusTagInput,
                                 onTagFocusHandled = onTagFocusHandled,
                                 currentTagInput = currentTagInput,
                                 onTagInputChange = onTagInputChange,
                                 enterClick = onEnterClick
                             )
+                        )
+                    }
+
+                    if (uiState.pollContents.isNotEmpty()) {
+                        PollPreviewCard(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 12.dp),
+                            pollContents = uiState.pollContents,
+                            onEdit = onPollEdit,
+                            onDelete = onPollDelete,
                         )
                     }
 
@@ -674,24 +815,33 @@ private fun WriteScreen(
                 }
 
                 val filteredOptions = if (args?.parentCardId != null) {
-                    WriteOptions.availableOptions.filter { it.id != "twenty_four_hours" }
+                    WriteOptions.availableOptions.filter {
+                        it.id != WriteOptions.TWENTY_FOUR_HOURS_OPTION_ID && it.id != WriteOptions.POLL_OPTION_ID
+                    }
                 } else {
                     WriteOptions.availableOptions
+                }
+                val displayedSelectedOptionIds = if (uiState.pollContents.isNotEmpty()) {
+                    selectedOptionIds + WriteOptions.POLL_OPTION_ID
+                } else {
+                    selectedOptionIds
                 }
 
                 if (showOptionButtons) {
                     OptionButtons(
                         options = filteredOptions,
-                        selectedOptionIds = selectedOptionIds,
+                        selectedOptionIds = displayedSelectedOptionIds,
                         hasLocationPermission = hasLocationPermission,
                         onOptionSelected = { option -> onOptionSelected(option.id) },
                         onDistancePermissionRequest = onDistanceOptionWithoutPermission
                     )
                 }
+                    }
+                }
             }
         }
 
-        if (isWriteInProgress) {
+        if (uiState.isWriteInProgress) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -703,7 +853,7 @@ private fun WriteScreen(
         }
     }
 
-    if (showLocationPermissionDialog) {
+    if (uiState.showLocationPermissionDialog) {
         DialogComponent.DefaultButtonTwo(
             title = stringResource(R.string.location_permission_title),
             description = stringResource(R.string.location_permission_description),
@@ -718,7 +868,7 @@ private fun WriteScreen(
         )
     }
 
-    if (showCameraPermissionDialog) {
+    if (uiState.showCameraPermissionDialog) {
         DialogComponent.DefaultButtonTwo(
             title = stringResource(R.string.camera_permission_title),
             description = stringResource(R.string.camera_permission_description),
@@ -734,7 +884,7 @@ private fun WriteScreen(
             startButtonTextColor = NeutralColor.GRAY_600
         )
     }
-    if (showGalleryPermissionDialog) {
+    if (uiState.showGalleryPermissionDialog) {
         DialogComponent.DefaultButtonTwo(
             title = stringResource(R.string.gallery_permission_title),
             description = stringResource(R.string.gallery_permission_description),
@@ -752,7 +902,7 @@ private fun WriteScreen(
     }
 
     CameraPickerBottomSheet(
-        visible = showBackgroundPicker,
+        visible = uiState.showBackgroundPickerSheet,
         onActionSelected = onCameraPickerAction,
         onDismiss = onCameraPickerDismissed
     )
@@ -763,16 +913,72 @@ private fun appSettingsIntent(context: Context): Intent =
         data = Uri.fromParts("package", context.packageName, null)
     }
 
+@Composable
+private fun PollPreviewCard(
+    pollContents: List<String>,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                modifier = Modifier.weight(1f),
+                text = stringResource(WriteR.string.write_poll_section_title),
+                style = TextComponent.CAPTION_1_SB_12.copy(color = Primary.DARK),
+            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                PollActionIconButton(
+                    iconResId = com.phew.core_design.R.drawable.ic_edit_poll,
+                    contentDescription = stringResource(WriteR.string.write_poll_edit),
+                    onClick = onEdit,
+                )
+                PollActionIconButton(
+                    iconResId = com.phew.core_design.R.drawable.ic_delete,
+                    contentDescription = stringResource(WriteR.string.write_poll_delete),
+                    onClick = onDelete,
+                )
+            }
+        }
+        pollContents.forEach { content ->
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .background(
+                        color = NeutralColor.GRAY_100,
+                        shape = RoundedCornerShape(10.dp)
+                    )
+                    .padding(horizontal = 20.dp),
+                contentAlignment = Alignment.CenterStart,
+            ) {
+                Text(
+                    text = content,
+                    style = TextComponent.SUBTITLE_1_M_16,
+                    color = NeutralColor.BLACK,
+                )
+            }
+        }
+    }
+}
+
 private fun isGalleryPermissionGranted(context: Context): Boolean {
     val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         Manifest.permission.READ_MEDIA_IMAGES
     } else {
         Manifest.permission.READ_EXTERNAL_STORAGE
     }
-    return ContextCompat.checkSelfPermission(
-        context,
-        permission
-    ) == PackageManager.PERMISSION_GRANTED
+    return isPermissionGranted(context, permission)
 }
 
 private enum class SettingsTarget {
@@ -884,6 +1090,12 @@ private fun OptionButtons(
                 RoundButton(
                     text = option.displayName,
                     selected = selectedOptionIds.contains(option.id),
+                    iconResId = option.iconResId(),
+                    iconTextSpacing = if (option.id == WriteOptions.TWENTY_FOUR_HOURS_OPTION_ID) {
+                        2.dp
+                    } else {
+                        4.dp
+                    },
                     onClick = {
                         if (isDistanceOption && !hasLocationPermission) {
                             onDistancePermissionRequest()
@@ -894,6 +1106,35 @@ private fun OptionButtons(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun PollActionIconButton(
+    iconResId: Int,
+    contentDescription: String,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .size(24.dp)
+            .background(
+                color = NeutralColor.GRAY_100,
+                shape = RoundedCornerShape(100.dp)
+            )
+            .clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() },
+                onClick = onClick
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            painter = painterResource(iconResId),
+            contentDescription = contentDescription,
+            tint = NeutralColor.BLACK,
+            modifier = Modifier.size(16.dp)
+        )
     }
 }
 
@@ -915,6 +1156,13 @@ private fun RoundButtonPreview() {
         },
         onDistancePermissionRequest = {}
     )
+}
+
+private fun WriteOption.iconResId(): Int? = when (id) {
+    WriteOptions.DISTANCE_OPTION_ID -> com.phew.core_design.R.drawable.ic_location_stoke
+    WriteOptions.TWENTY_FOUR_HOURS_OPTION_ID -> com.phew.core_design.R.drawable.ic_timer_stoke
+    WriteOptions.POLL_OPTION_ID -> com.phew.core_design.R.drawable.ic_vote_stoke
+    else -> null
 }
 
 

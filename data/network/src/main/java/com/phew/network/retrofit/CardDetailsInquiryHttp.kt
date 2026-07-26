@@ -5,6 +5,7 @@ import com.phew.network.dto.request.card.RequestBlockMemberDTO
 import com.phew.network.dto.request.feed.RequestUploadCardAnswerDTO
 import com.phew.network.dto.response.card.CardCommentResponseDTO
 import com.phew.network.dto.response.card.CardDetailResponseDTO
+import com.phew.network.dto.response.card.PollVoteResponseDTO
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -33,6 +34,22 @@ interface CardDetailsInquiryHttp {
     @DELETE(BuildConfig.API_URL_CARD_LIKE)
     suspend fun deleteCardLike(
         @Path("cardId") cardId: Long
+    ): Response<Unit>
+
+    /**
+     *  투표하기
+     */
+    @POST(BuildConfig.API_URL_POLL_VOTE)
+    suspend fun createPollVote(
+        @Path("pollOptionId") pollOptionId: Long
+    ): Response<PollVoteResponseDTO>
+
+    /**
+     *  투표 취소
+     */
+    @DELETE(BuildConfig.API_URL_POLL_VOTE)
+    suspend fun deletePollVote(
+        @Path("pollOptionId") pollOptionId: Long
     ): Response<Unit>
 
     /**

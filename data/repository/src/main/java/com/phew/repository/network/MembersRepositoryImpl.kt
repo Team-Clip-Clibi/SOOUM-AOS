@@ -8,6 +8,7 @@ import com.phew.device_info.DeviceInfo
 import com.phew.domain.dto.Alarm
 import com.phew.domain.model.RejoinableDate
 import com.phew.domain.model.TransferCode
+import com.phew.domain.model.UserRole
 import com.phew.domain.repository.network.MembersRepository
 import com.phew.network.dto.request.account.TransferAccountRequestDTO
 import com.phew.network.dto.request.account.WithdrawalRequestDTO
@@ -153,6 +154,16 @@ class MembersRepositoryImpl @Inject constructor(
     override suspend fun getToggleNotification(): DataResult<Alarm> {
         return apiCall(
             apiCall = { membersHttp.getToggleNotification() },
+            mapper = { result -> result.toDomain() }
+        )
+    }
+
+    override suspend fun getUserRole(): DataResult<UserRole> {
+        if (com.phew.network.BuildConfig.API_URL_USER_ROLE.isBlank()) {
+            return DataResult.Fail(message = "API_URL_USER_ROLE is empty")
+        }
+        return apiCall(
+            apiCall = { membersHttp.getUserRole() },
             mapper = { result -> result.toDomain() }
         )
     }

@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,10 +16,20 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Constraints
 import coil3.compose.AsyncImage
 import com.phew.core_design.NeutralColor
 import com.phew.domain.dto.FollowData
@@ -26,6 +37,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.remember
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import com.phew.core_design.SmallButton
 import com.phew.core_design.TabBar
 import com.phew.core_design.TextComponent
@@ -146,4 +159,115 @@ object ProfileComponent {
         }
     }
 
+    @Composable
+    fun BioView(
+        bio: String,
+        modifier: Modifier = Modifier,
+    ) {
+        val bioText = bio.trim()
+        if (bioText.isEmpty()) return
+        var expanded by remember(bioText) { mutableStateOf(false) }
+        val moreText = stringResource(R.string.profile_txt_bio_more)
+        val textMeasurer = rememberTextMeasurer()
+        val density = LocalDensity.current
+
+        BoxWithConstraints(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(end = 76.dp, bottom = 12.dp)
+        ) {
+            val widthPx = with(density) { maxWidth.roundToPx() }
+            val collapsedPrefix = remember(bioText, moreText, widthPx) {
+                if (widthPx <= 0) {
+                    null
+                } else {
+                    resolveCollapsedBioPrefix(
+                        bioText = bioText,
+                        moreText = moreText,
+                        measure = { text ->
+                            textMeasurer.measure(
+                                text = text,
+                                style = TextComponent.BODY_1_M_14,
+                                maxLines = PROFILE_BIO_COLLAPSED_MAX_LINES,
+                                overflow = TextOverflow.Clip,
+                                constraints = Constraints(maxWidth = widthPx)
+                            ).hasVisualOverflow
+                        }
+                    )
+                }
+            }
+            val isCollapsed = !expanded && collapsedPrefix != null
+            Text(
+                text = if (isCollapsed) {
+                    buildCollapsedBioText(
+                        prefix = collapsedPrefix.orEmpty(),
+                        moreText = moreText
+                    )
+                } else {
+                    AnnotatedString(bioText)
+                },
+                style = TextComponent.BODY_1_M_14,
+                color = NeutralColor.BLACK,
+                maxLines = if (expanded) Int.MAX_VALUE else PROFILE_BIO_COLLAPSED_MAX_LINES,
+                overflow = TextOverflow.Clip,
+                modifier = Modifier
+                    .let { baseModifier ->
+                        if (isCollapsed) {
+                            baseModifier.clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = { expanded = true }
+                            )
+                        } else {
+                            baseModifier
+                        }
+                    }
+            )
+        }
+    }
+
 }
+
+private fun resolveCollapsedBioPrefix(
+    bioText: String,
+    moreText: String,
+    measure: (AnnotatedString) -> Boolean,
+): String? {
+    if (!measure(AnnotatedString(bioText))) return null
+
+    var low = 0
+    var high = bioText.length
+    var best = ""
+    while (low <= high) {
+        val mid = (low + high) / 2
+        val prefix = bioText.take(mid).trimEnd()
+        val hasOverflow = measure(buildCollapsedBioText(prefix = prefix, moreText = moreText))
+        if (hasOverflow) {
+            high = mid - 1
+        } else {
+            best = prefix
+            low = mid + 1
+        }
+    }
+    return best.trimEnd('.', '…', ' ')
+}
+
+private fun buildCollapsedBioText(
+    prefix: String,
+    moreText: String,
+): AnnotatedString {
+    return buildAnnotatedString {
+        append(prefix)
+        append("... ")
+        withStyle(
+            SpanStyle(
+                color = NeutralColor.GRAY_400,
+                fontWeight = FontWeight(600)
+            )
+        ) {
+            append(moreText)
+        }
+    }
+}
+
+private const val PROFILE_BIO_COLLAPSED_MAX_LINES = 4

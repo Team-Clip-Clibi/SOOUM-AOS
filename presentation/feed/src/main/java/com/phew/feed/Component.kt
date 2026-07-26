@@ -12,18 +12,23 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LocalContentColor
@@ -39,6 +44,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -59,7 +65,6 @@ import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.nativead.NativeAdOptions
 import com.phew.core_common.TimeUtils
-import com.phew.core_design.Danger
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.NeutralColor.GRAY_400
 import com.phew.core_design.NeutralColor.GRAY_600
@@ -160,15 +165,17 @@ object FeedUi {
 
 
     @Composable
-     fun CardArticleView(
-        data: CardArticle,
+    fun CardArticleView(
+        data: List<CardArticle>,
         modifier: Modifier,
         onCardClick: (cardId: Long) -> Unit
     ) {
-        Row(
+        val articleListState = rememberLazyListState()
+
+        Column(
             modifier = modifier
                 .fillMaxWidth()
-                .height(83.dp)
+                .height(129.dp)
                 .shadow(
                     elevation = 16.dp,
                     shape = RoundedCornerShape(16.dp),
@@ -176,111 +183,157 @@ object FeedUi {
                     ambientColor = unknownColor
                 )
                 .background(color = WHITE, shape = RoundedCornerShape(16.dp))
-                .border(width = 1.dp, color = GRAY_100, shape = RoundedCornerShape(16.dp))
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = { onCardClick(data.cardId) }
-                )
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.Start),
-            verticalAlignment = Alignment.CenterVertically,
+                .border(width = 1.dp, color = GRAY_100, shape = RoundedCornerShape(16.dp)),
+            horizontalAlignment = Alignment.Start,
         ) {
-            CardArticleProfileImage(
-                profileImage = data.profileImgUrl,
-                isRead = data.isRead,
-                description = data.cardContent
+            Text(
+                text = stringResource(id = R.string.home_article_title),
+                style = TextComponent.CAPTION_1_SB_12,
+                color = NeutralColor.BLACK,
+                modifier = Modifier.padding(start = 16.dp, top = 16.dp)
             )
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = data.nickName,
-                    style = TextComponent.CAPTION_2_M_12,
-                    color = GRAY_400
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = data.cardContent.replace("\n", " ")
-                        .let { if (it.length > 17) "${it.take(17)}..." else it },
-                    style = TextComponent.SUBTITLE_3_SB_14,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    color = GRAY_600
-                )
-                Row(
-                    modifier = Modifier.weight(1f),
-                    verticalAlignment = Alignment.CenterVertically,
+            Spacer(modifier = Modifier.height(10.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(69.dp)
+            ) {
+                LazyRow(
+                    state = articleListState,
+                    contentPadding = PaddingValues(start = 16.dp, end = 36.dp),
+                    flingBehavior = rememberSnapFlingBehavior(lazyListState = articleListState),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight()
                 ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy((-6).dp, Alignment.Start),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        data.writerProfileImageUrls.forEach { imageUrl ->
-                            AsyncImage(
-                                model = ImageRequest.Builder(LocalContext.current)
-                                    .data(imageUrl.ifEmpty { DesignR.drawable.ic_profile })
-                                    .crossfade(true)
-                                    .build(),
-                                contentDescription = data.cardContent,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .size(20.dp)
-                                    .clip(CircleShape)
-                                    .border(
-                                        width = 1.dp,
-                                        color = WHITE,
-                                        shape = CircleShape
-                                    )
-                            )
-                        }
+                    items(
+                        items = data,
+                        key = { article -> article.cardId }
+                    ) { article ->
+                        CardArticleItem(
+                            data = article,
+                            onCardClick = onCardClick
+                        )
                     }
-                    Spacer(modifier = Modifier.width(1.dp))
-                    Text(
-                        text = if (data.totalWriterCnt == 0) {
-                            stringResource(id = R.string.home_article_write_first)
-                        } else {
-                            stringResource(
-                                id = R.string.home_article_write,
-                                data.totalWriterCnt
-                            )
-                        },
-                        style = TextComponent.CAPTION_2_M_12,
-                        color = GRAY_500
-                    )
                 }
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .fillMaxHeight()
+                        .width(20.dp)
+                        .background(
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(
+                                    WHITE.copy(alpha = 0f),
+                                    WHITE
+                                )
+                            )
+                        )
+                )
             }
         }
     }
 
     @Composable
-    private fun CardArticleProfileImage(
-        profileImage: String,
-        isRead: Boolean,
-        description: String,
+    private fun CardArticleItem(
+        data: CardArticle,
+        onCardClick: (cardId: Long) -> Unit,
     ) {
-        Box(
+        Column(
             modifier = Modifier
-                .size(48.dp)
-                .padding(1.dp)
+                .width(230.dp)
+                .fillMaxHeight()
+                .background(color = GRAY_100, shape = RoundedCornerShape(8.dp))
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = { onCardClick(data.cardId) }
+                )
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.Center
         ) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(profileImage.ifEmpty { DesignR.drawable.ic_profile })
-                    .crossfade(true).build(),
-                contentDescription = description,
-                modifier = Modifier
-                    .matchParentSize()
-                    .clip(RoundedCornerShape(16.dp))
+            Text(
+                text = data.cardContent.replace("\n", " "),
+                style = TextComponent.BODY_1_M_14,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                color = GRAY_600
             )
-            if (!isRead) {
-                Box(
-                    modifier = Modifier
-                        .size(12.dp)
-                        .align(Alignment.TopEnd)
-                        .offset(x = (1).dp, y = (-1).dp)
-                        .background(color = Danger.M_RED, shape = CircleShape)
-                        .border(width = 2.dp, color = WHITE, shape = CircleShape)
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(
+                modifier = Modifier.height(20.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy((-4).dp, Alignment.Start),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    val profileImages = data.writerProfileImageUrls.take(3)
+                    if (profileImages.isEmpty()) {
+                        CardArticleWriterProfileImage(
+                            imageUrl = "",
+                            description = data.cardContent
+                        )
+                    } else {
+                        profileImages.forEach { imageUrl ->
+                            CardArticleWriterProfileImage(
+                                imageUrl = imageUrl,
+                                description = data.cardContent
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.width(2.dp))
+                Text(
+                    text = if (data.totalWriterCnt == 0) {
+                        stringResource(id = R.string.home_article_write_first)
+                    } else {
+                        stringResource(
+                            id = R.string.home_article_write,
+                            data.totalWriterCnt
+                        )
+                    },
+                    style = TextComponent.CAPTION_2_M_12,
+                    color = GRAY_500,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
+        }
+    }
+
+    @Composable
+    private fun CardArticleWriterProfileImage(
+        imageUrl: String,
+        description: String,
+    ) {
+        val imageModifier = Modifier
+            .size(20.dp)
+            .clip(CircleShape)
+            .border(
+                width = 1.dp,
+                color = WHITE,
+                shape = CircleShape
+            )
+
+        if (imageUrl.isEmpty()) {
+            Image(
+                painter = painterResource(DesignR.drawable.ic_profile),
+                contentDescription = description,
+                contentScale = ContentScale.Crop,
+                modifier = imageModifier
+            )
+        } else {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(imageUrl)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = description,
+                contentScale = ContentScale.Crop,
+                modifier = imageModifier
+            )
         }
     }
 
@@ -415,6 +468,11 @@ object FeedUi {
         feedCard: FeedCardType,
         onClick: (String) -> Unit,
         onRemoveCard: (String) -> Unit,
+        isLike: Boolean = false,
+        likeCount: Int = 0,
+        isLikeLoading: Boolean = false,
+        likeAnimationKey: Int = 0,
+        onClickLike: () -> Unit = {},
     ) {
         when (feedCard) {
             is FeedCardType.BoombType -> PungTypeCard(
@@ -425,12 +483,22 @@ object FeedUi {
 
             is FeedCardType.AdminType -> AdminTypeCard(
                 feedCard = feedCard,
-                onClick = onClick
+                onClick = onClick,
+                isLike = isLike,
+                likeCount = likeCount,
+                isLikeLoading = isLikeLoading,
+                likeAnimationKey = likeAnimationKey,
+                onClickLike = onClickLike,
             )
 
             is FeedCardType.NormalType -> NormalTypeCard(
                 feedCard = feedCard,
-                onClick = onClick
+                onClick = onClick,
+                isLike = isLike,
+                likeCount = likeCount,
+                isLikeLoading = isLikeLoading,
+                likeAnimationKey = likeAnimationKey,
+                onClickLike = onClickLike,
             )
         }
     }
@@ -471,6 +539,7 @@ object FeedUi {
                 timeAgo = feedCard.writeTime,
                 commentCount = feedCard.commentValue,
                 likeCount = feedCard.likeValue,
+                pollVoterCount = feedCard.pollVoterValue,
                 remainingTimeMillis = remainingTimeMillis,
                 onClick = {
                     onClick(feedCard.cardId)
@@ -483,6 +552,11 @@ object FeedUi {
     internal fun AdminTypeCard(
         feedCard: FeedCardType.AdminType,
         onClick: (String) -> Unit,
+        isLike: Boolean,
+        likeCount: Int,
+        isLikeLoading: Boolean,
+        likeAnimationKey: Int,
+        onClickLike: () -> Unit,
     ) {
         FeedAdminCard(
             id = feedCard.cardId,
@@ -491,7 +565,11 @@ object FeedUi {
             font = feedCard.font,
             timeAgo = feedCard.writeTime,
             commentCount = feedCard.commentValue,
-            likeCount = feedCard.likeValue,
+            likeCount = likeCount.toString(),
+            isLike = isLike,
+            isLikeLoading = isLikeLoading,
+            likeAnimationKey = likeAnimationKey,
+            onClickLike = onClickLike,
             onClick = {
                 onClick(feedCard.cardId)
             }
@@ -502,6 +580,11 @@ object FeedUi {
     internal fun NormalTypeCard(
         feedCard: FeedCardType.NormalType,
         onClick: (String) -> Unit,
+        isLike: Boolean,
+        likeCount: Int,
+        isLikeLoading: Boolean,
+        likeAnimationKey: Int,
+        onClickLike: () -> Unit,
     ) {
         FeedDefaultCard(
             id = feedCard.cardId,
@@ -511,7 +594,12 @@ object FeedUi {
             distance = feedCard.location ?: "",
             timeAgo = feedCard.writeTime,
             commentCount = feedCard.commentValue,
-            likeCount = feedCard.likeValue,
+            likeCount = likeCount.toString(),
+            pollVoterCount = feedCard.pollVoterValue,
+            isLike = isLike,
+            isLikeLoading = isLikeLoading,
+            likeAnimationKey = likeAnimationKey,
+            onClickLike = onClickLike,
             onClick = {
                 onClick(feedCard.cardId)
             }
@@ -864,7 +952,8 @@ private fun BoombTypeCardPreview() {
         location = "150m",
         writeTime = "2025-01-15T10:30:00",
         commentValue = "12",
-        likeValue = "45"
+        likeValue = "45",
+        pollVoterValue = "36"
     )
 
     TypedFeedCardView(
@@ -886,7 +975,8 @@ private fun AdminTypeCardPreview() {
         location = "100m",
         writeTime = "2025-01-15T09:00:00",
         commentValue = "25",
-        likeValue = "78"
+        likeValue = "78",
+        pollVoterValue = "0"
     )
 
     TypedFeedCardView(feedCard = sampleAdminCard, onClick = {}, onRemoveCard = {})
@@ -904,7 +994,8 @@ private fun NormalTypeCardPreview() {
         location = "100m",
         writeTime = "2025-01-15T11:00:00",
         commentValue = "8",
-        likeValue = "23"
+        likeValue = "23",
+        pollVoterValue = "14"
     )
 
     TypedFeedCardView(feedCard = sampleNormalCard, onClick = {}, onRemoveCard = {})

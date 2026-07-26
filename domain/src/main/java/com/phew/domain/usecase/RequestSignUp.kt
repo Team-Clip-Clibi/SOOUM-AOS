@@ -34,6 +34,7 @@ import javax.inject.Inject
 class RequestSignUp @Inject constructor(
     private val repository: SignUpRepository,
     private val deviceRepository: DeviceRepository,
+    private val syncClarityRecording: SyncClarityRecording,
     @ApplicationContext private val context: Context,
 ) {
     data class Param(
@@ -125,6 +126,7 @@ class RequestSignUp @Inject constructor(
                     )
                 )
                 if (!saveToken) return DomainResult.Failure(ERROR_FAIL_JOB)
+                syncClarityRecording()
                 val saveProfile = deviceRepository.saveProfileInfo(
                     profileKey = BuildConfig.PROFILE_KEY,
                     nickName = data.nickName

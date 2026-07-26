@@ -238,6 +238,7 @@ object DialogComponent {
     fun CustomAnimationSnackBarHost(
         hostState: SnackbarHostState,
         modifier: Modifier = Modifier,
+        showIcon: Boolean = true,
     ) {
         AnimatedContent(
             targetState = hostState.currentSnackbarData,
@@ -269,7 +270,7 @@ object DialogComponent {
                             .fillMaxWidth()
                             .padding(bottom = 20.dp, start = 16.dp, end = 16.dp)
                     ) {
-                        SnackBar(data = data)
+                        SnackBar(data = data, showIcon = showIcon)
                     }
                 }
             }
@@ -279,24 +280,27 @@ object DialogComponent {
     @Composable
     private fun SnackBar(
         data: SnackbarData,
+        showIcon: Boolean,
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp)
+                .heightIn(min = 48.dp)
                 .background(color = NeutralColor.GRAY_600, shape = RoundedCornerShape(size = 8.dp))
-                .padding(start = 16.dp, end = 16.dp),
+                .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_message),
-                contentDescription = "message",
-                contentScale = ContentScale.None,
-                modifier = Modifier
-                    .width(24.dp)
-                    .height(24.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
+            if (showIcon) {
+                Image(
+                    painter = painterResource(id = R.drawable.ic_message),
+                    contentDescription = "message",
+                    contentScale = ContentScale.None,
+                    modifier = Modifier
+                        .width(24.dp)
+                        .height(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+            }
             Text(
                 text = data.visuals.message,
                 style = TextComponent.CAPTION_2_M_12,

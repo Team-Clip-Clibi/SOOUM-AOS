@@ -14,16 +14,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.phew.core_common.TimeUtils
-import com.phew.core_common.log.SooumLog
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.Primary
 import com.phew.core_design.R
@@ -42,23 +39,22 @@ internal fun TimerLabel(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Image(
-            painter = painterResource(R.drawable.ic_bomb),
+            painter = painterResource(R.drawable.ic_timer_stoke),
             contentDescription = "Time Limit card",
-            modifier = Modifier.size(16.dp)
+            modifier = Modifier.size(20.dp)
         )
+        Spacer(modifier = Modifier.width(2.dp))
         if (isExpired) {
             Text(
                 text = "00:00:00",
                 style = TextComponent.CAPTION_2_M_12,
-                color = Primary.DARK,
-                modifier = Modifier.padding(start = 2.dp)
+                color = Primary.DARK
             )
         } else {
             Text(
                 text = TimeUtils.formatMillisToTimer(remainingTimeMillis),
                 style = TextComponent.CAPTION_2_M_12,
-                color = Primary.DARK,
-                modifier = Modifier.padding(start = 2.dp)
+                color = Primary.DARK
             )
         }
     }
@@ -76,12 +72,12 @@ internal fun ManagerLabel(
         Image(
             painter = painterResource(R.drawable.ic_official_filled),
             contentDescription = "Admin",
-            modifier = Modifier.size(12.dp)
+            modifier = Modifier.size(20.dp)
         )
         Text(
             text = "sooum",
-            style = TextComponent.CAPTION_2_M_12,
-            color = NeutralColor.GRAY_500,
+            style = TextComponent.BODY_1_M_14,
+            color = NeutralColor.BLACK,
             modifier = Modifier.padding(start = 2.dp)
         )
     }
@@ -129,51 +125,65 @@ internal fun LocationAndWriteTimeLabel(
 internal fun LikeAndComment(
     modifier: Modifier = Modifier,
     likeValue: String? = null,
-    commentValue: String? = null
+    commentValue: String? = null,
+    pollVoterValue: String? = null,
+    isLike: Boolean = false,
+    isLikeLoading: Boolean = false,
+    likeAnimationKey: Int = 0,
+    onClickLike: () -> Unit = {},
 ) {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // 좋아요 버튼
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Image(
-                painter = painterResource(R.drawable.ic_heart_stoke),
-                contentDescription = "좋아요",
-                modifier = modifier.then(
-                    Modifier.size(14.dp)
-                ),
-                colorFilter = ColorFilter.tint(NeutralColor.GRAY_500)
-            )
-            Spacer(modifier = Modifier.width(2.dp))
-            Text(
-                text = likeValue ?: "0",
-                style = TextComponent.CAPTION_2_M_12.copy(color = NeutralColor.GRAY_500),
-                color = NeutralColor.GRAY_500
-            )
-        }
+        LikeButton(
+            likeCount = likeValue ?: "0",
+            isLike = isLike,
+            isLikeLoading = isLikeLoading,
+            likeAnimationKey = likeAnimationKey,
+            onClickLike = onClickLike,
+        )
 
         // 댓글 버튼
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = modifier.then(
-                Modifier.padding(start = 4.dp)
-            )
+            modifier = Modifier.padding(start = 4.dp)
         ) {
             Image(
                 painter = painterResource(R.drawable.ic_message_stoke),
                 contentDescription = "댓글",
-                modifier = Modifier.size(12.dp),
+                modifier = Modifier.size(20.dp),
                 colorFilter = ColorFilter.tint(NeutralColor.GRAY_500)
             )
             Spacer(modifier = Modifier.width(2.dp))
             Text(
                 text = commentValue ?: "0",
-                style = TextComponent.CAPTION_2_M_12.copy(color = NeutralColor.GRAY_500),
+                style = TextComponent.BODY_1_M_14.copy(color = NeutralColor.GRAY_500),
                 color = NeutralColor.GRAY_500
             )
+        }
+        val visiblePollVoterValue = pollVoterValue
+            ?.toLongOrNull()
+            ?.takeIf { it >= 0L }
+            ?.toString()
+        if (visiblePollVoterValue != null) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.ic_vote_stoke),
+                    contentDescription = "투표",
+                    modifier = Modifier.size(20.dp),
+                    colorFilter = ColorFilter.tint(NeutralColor.GRAY_500)
+                )
+                Spacer(modifier = Modifier.width(2.dp))
+                Text(
+                    text = visiblePollVoterValue,
+                    style = TextComponent.BODY_1_M_14.copy(color = NeutralColor.GRAY_500),
+                    color = NeutralColor.GRAY_500
+                )
+            }
         }
     }
 }
@@ -201,68 +211,81 @@ internal fun BottomContent(
     distance: String? = null,
     likeCount: String? = null,
     commentCount: String? = null,
+    pollVoterCount: String? = null,
     timeAgo: String? = null,
     remainingTimeMillis: String? = null,
+    isLike: Boolean = false,
+    isLikeLoading: Boolean = false,
+    likeAnimationKey: Int = 0,
     isAdminManger: Boolean = false,
     showLocationAndTime: Boolean = true,
-    cardType: FeedCardType = FeedCardType.DEFAULT
+    cardType: FeedCardType = FeedCardType.DEFAULT,
+    onClickLike: () -> Unit = {},
 ) {
     val remaining = remainingTimeMillis?.toLongOrNull() ?: 0L
     val isExpired = remaining <= 0L
     
-    // 타이머 표시 조건: FeedDeletedCard(만료된 타이머) 또는 FeedPungCard(남은 시간이 있을 때)
+    // 작성 시간/거리는 숨기고, 메트릭은 좌측, 스토리 타이머는 우측에 함께 배치한다.
     val showTimer = when (cardType) {
-        FeedCardType.PUNG -> !remainingTimeMillis.isNullOrEmpty() && remaining > 0L // 남은 시간이 있을 때만
-        FeedCardType.DELETED -> !remainingTimeMillis.isNullOrEmpty() // 만료된 타이머 표시
-        else -> false // DEFAULT, ADMIN은 타이머 표시 안 함
+        FeedCardType.PUNG -> !remainingTimeMillis.isNullOrEmpty() && remaining > 0L
+        FeedCardType.DELETED -> !remainingTimeMillis.isNullOrEmpty()
+        else -> false
     }
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(34.dp)
+            .height(40.dp)
             .background(color = NeutralColor.WHITE)
             .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if (showLocationAndTime) {
-                if (isAdminManger){
-                    ManagerLabel()
-                    if (!distance.isNullOrEmpty() || !timeAgo.isNullOrEmpty()) {
-                        SpotSeparator()
-                    }
-                }
-                LocationAndWriteTimeLabel(
-                    location = distance?.takeIf { it.isNotEmpty() },
-                    writeTime = timeAgo?.takeIf { it.isNotEmpty() }
+        when {
+            isAdminManger -> {
+                LikeAndComment(
+                    likeValue = likeCount,
+                    commentValue = commentCount,
+                    isLike = isLike,
+                    isLikeLoading = isLikeLoading,
+                    likeAnimationKey = likeAnimationKey,
+                    onClickLike = onClickLike,
                 )
-                if(showTimer){
-                    SpotSeparator()
+                Spacer(modifier = Modifier.weight(1f))
+                ManagerLabel()
+            }
+            cardType == FeedCardType.DELETED -> TimerLabel(
+                remainingTimeMillis = remaining,
+                isExpired = isExpired
+            )
+            else -> {
+                LikeAndComment(
+                    likeValue = likeCount,
+                    commentValue = commentCount,
+                    pollVoterValue = pollVoterCount,
+                    isLike = isLike,
+                    isLikeLoading = isLikeLoading,
+                    likeAnimationKey = likeAnimationKey,
+                    onClickLike = onClickLike,
+                )
+                if (showTimer) {
+                    Spacer(modifier = Modifier.weight(1f))
+                    TimerLabel(remainingTimeMillis = remaining, isExpired = isExpired)
                 }
             }
-            if (showTimer) {
-                TimerLabel(remainingTimeMillis = remaining, isExpired = isExpired)
-            }
-        }
-        if (!showTimer) {
-            LikeAndComment(
-                likeValue = likeCount,
-                commentValue = commentCount
-            )
         }
     }
 }
 
 @Preview(showBackground = true, backgroundColor = 0xFFFFFFFF)
 @Composable
-private fun BottomContentPreview_WithTimer() {
+private fun BottomContentPreview_PungCard() {
     Box(modifier = Modifier.background(NeutralColor.WHITE)) {
         BottomContent(
             distance = "600m",
             likeCount = "0",
             commentCount = "0",
+            pollVoterCount = "24",
             timeAgo = "방금 전",
             remainingTimeMillis = "86400000",
             cardType = FeedCardType.PUNG
@@ -278,9 +301,24 @@ private fun BottomContentPreview_NoTimer() {
             distance = "600m",
             likeCount = "12",
             commentCount = "3",
+            pollVoterCount = "47",
             timeAgo = "방금 전1",
             remainingTimeMillis = null,
             cardType = FeedCardType.DEFAULT
+        )
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFFFFFFFF)
+@Composable
+private fun BottomContentPreview_AdminCard() {
+    Box(modifier = Modifier.background(NeutralColor.WHITE)) {
+        BottomContent(
+            likeCount = "602",
+            commentCount = "47",
+            timeAgo = "방금 전",
+            isAdminManger = true,
+            cardType = FeedCardType.ADMIN
         )
     }
 }
@@ -300,5 +338,3 @@ private fun BottomContentPreview_DeletedCard() {
         )
     }
 }
-
-private const val TAG = "BottomContent"

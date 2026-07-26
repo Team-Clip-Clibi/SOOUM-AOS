@@ -23,6 +23,7 @@ const val HTTP_UN_GOOD_IMAGE = 422
 const val WITHDRAWAL_USER = 418
 const val HTTP_TOKEN_ERROR = 403
 const val HTTP_CARD_ALREADY_DELETE = 410
+const val HTTP_GLOBAL_MESSAGE = 526
 
 //error messages
 const val ERROR_ACCOUNT_SUSPENDED = "계정이 정지되었습니다."

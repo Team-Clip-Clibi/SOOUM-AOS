@@ -90,7 +90,7 @@ object LargeButton {
     ) {
         BlinkLargeButton(
             onClick = onClick,
-            enabled = isEnable
+            enabled = isEnable,
         ) {
             Text(
                 text = buttonText,
@@ -109,7 +109,7 @@ object LargeButton {
     ) {
         BlinkLargeButton(
             onClick = onClick,
-            enabled = isEnable
+            enabled = isEnable,
         ) {
             Text(
                 text = buttonText,
@@ -137,7 +137,7 @@ object LargeButton {
     ) {
         BlinkLargeButton(
             onClick = onClick,
-            enabled = isEnable
+            enabled = isEnable,
         ) {
             Icon(
                 painter = painterResource(image),
@@ -169,7 +169,7 @@ object LargeButton {
             blinkColor = NeutralColor.GRAY_200,
             disabledColor = NeutralColor.GRAY_200,
             onClick = onClick,
-            enabled = isEnable
+            enabled = isEnable,
         ) {
             Text(
                 text = buttonText,
@@ -191,7 +191,7 @@ object LargeButton {
             blinkColor = NeutralColor.GRAY_200,
             disabledColor = NeutralColor.GRAY_200,
             onClick = onClick,
-            enabled = isEnable
+            enabled = isEnable,
         ) {
             Text(
                 text = buttonText,
@@ -222,7 +222,7 @@ object LargeButton {
             blinkColor = NeutralColor.GRAY_200,
             disabledColor = NeutralColor.GRAY_200,
             onClick = onClick,
-            enabled = isEnable
+            enabled = isEnable,
         ) {
             Icon(
                 painter = painterResource(image),
@@ -246,13 +246,14 @@ object LargeButton {
         buttonText: String,
         onClick: () -> Unit,
         isEnable: Boolean = true,
+        showStroke: Boolean = false,
     ) {
         BlinkLargeButton(
             baseColor = NeutralColor.WHITE,
             blinkColor = NeutralColor.GRAY_100,
             disabledColor = NeutralColor.GRAY_200,
             onClick = onClick,
-            enabled = isEnable
+            enabled = isEnable,
         ) {
             Text(
                 text = buttonText,
@@ -268,13 +269,14 @@ object LargeButton {
         onClick: () -> Unit,
         @DrawableRes image: Int = R.drawable.ic_right,
         isEnable: Boolean = true,
+        showStroke: Boolean = false,
     ) {
         BlinkLargeButton(
             baseColor = NeutralColor.WHITE,
             blinkColor = NeutralColor.GRAY_100,
             disabledColor = NeutralColor.GRAY_200,
             onClick = onClick,
-            enabled = isEnable
+            enabled = isEnable,
         ) {
             Text(
                 text = buttonText,
@@ -305,7 +307,7 @@ object LargeButton {
             blinkColor = NeutralColor.GRAY_100,
             disabledColor = NeutralColor.GRAY_200,
             onClick = onClick,
-            enabled = isEnable
+            enabled = isEnable,
         ) {
             Icon(
                 painter = painterResource(image),
@@ -332,9 +334,8 @@ object MediumButton {
         baseColor: Color = NeutralColor.BLACK,
         blinkColor: Color = NeutralColor.GRAY_600,
         disabledColor: Color = NeutralColor.GRAY_200,
-        borderColor: Color = baseColor,
         onClick: () -> Unit,
-        showStroke : Boolean = true,
+        showStroke: Boolean = true,
         horizontalArrangement: Arrangement.Horizontal = Arrangement.Center,
         content: @Composable RowScope.() -> Unit,
     ) {
@@ -350,7 +351,7 @@ object MediumButton {
                     if (showStroke) {
                         Modifier.border(
                             width = 1.dp,
-                            color = borderColor,
+                            color = NeutralColor.GRAY_300,
                             shape = RoundedCornerShape(10.dp)
                         )
                     } else {
@@ -420,7 +421,7 @@ object MediumButton {
                 style = TextComponent.SUBTITLE_1_M_16,
                 color = if (isEnable) NeutralColor.WHITE else NeutralColor.GRAY_400
             )
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(6.dp))
             Icon(
                 painter = painterResource(image),
                 contentDescription = "button icon",
@@ -508,7 +509,6 @@ object MediumButton {
             baseColor = baseColor,
             blinkColor = blinkColor,
             disabledColor = disabledColor,
-            borderColor = borderColor,
             onClick = onClick,
             enabled = isEnable,
             showStroke = false
@@ -536,7 +536,6 @@ object MediumButton {
             baseColor = Primary.LIGHT_1,
             blinkColor = Primary.LIGHT_1,
             disabledColor = NeutralColor.GRAY_100,
-            borderColor = Primary.MAIN,
             onClick = onClick,
             enabled = isEnable,
             horizontalArrangement = if (textAlign == TextAlign.Start) Arrangement.Start else Arrangement.Center
@@ -568,7 +567,6 @@ object MediumButton {
             baseColor = NeutralColor.GRAY_100,
             blinkColor = NeutralColor.GRAY_200,
             disabledColor = NeutralColor.GRAY_100,
-            borderColor = NeutralColor.GRAY_100,
             onClick = onClick,
             showStroke = false,
             enabled = isEnable,
@@ -607,7 +605,7 @@ object MediumButton {
                 style = TextComponent.SUBTITLE_1_M_16,
                 color = if (isEnable) NeutralColor.GRAY_600 else NeutralColor.GRAY_400
             )
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(6.dp))
             Icon(
                 painter = painterResource(image),
                 contentDescription = "button icon",
@@ -744,9 +742,9 @@ object SmallButton {
         disabledColor: Color = NeutralColor.GRAY_200,
         onClick: () -> Unit,
         modifier: Modifier,
+        isBorderShow: Boolean = true,
         content: @Composable RowScope.() -> Unit,
-
-        ) {
+    ) {
         val interactionSource = remember { MutableInteractionSource() }
         val isPressed by interactionSource.collectIsPressedAsState()
 
@@ -755,6 +753,17 @@ object SmallButton {
                 .fillMaxWidth()
                 .height(32.dp)
                 .clip(shape = RoundedCornerShape(8.dp))
+                .then(
+                    if (isBorderShow) {
+                        Modifier.border(
+                            width = 1.dp,
+                            color = NeutralColor.GRAY_300,
+                            shape = RoundedCornerShape(size = 8.dp)
+                        )
+                    } else {
+                        Modifier
+                    }
+                )
                 .drawBehind {
                     val color = when {
                         !enabled -> disabledColor
@@ -825,6 +834,7 @@ object SmallButton {
         buttonText: String,
         onClick: () -> Unit,
         isEnable: Boolean = true,
+        isBorderShow: Boolean = true,
         modifier: Modifier
     ) {
         BlinkSmallButton(
@@ -833,6 +843,7 @@ object SmallButton {
             disabledColor = NeutralColor.GRAY_200,
             onClick = onClick,
             enabled = isEnable,
+            isBorderShow = isBorderShow,
             modifier = modifier
         ) {
             Text(

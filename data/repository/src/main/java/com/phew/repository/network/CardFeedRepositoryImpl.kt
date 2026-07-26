@@ -201,7 +201,9 @@ class CardFeedRepositoryImpl @Inject constructor(
         imageType: String,
         imageName: String,
         isStory: Boolean,
-        tag: List<String>
+        tag: List<String>,
+        hasPoll: Boolean,
+        pollContents: List<String>,
     ): DataResult<CardIdResponse> {
         return try {
             val request = feedHttp.requestUploadCard(
@@ -214,7 +216,10 @@ class CardFeedRepositoryImpl @Inject constructor(
                     imgType = imageType,
                     imgName = imageName,
                     isStory = isStory,
-                    tags = tag
+                    tags = tag,
+                    hasPoll = hasPoll,
+                    pollContents = pollContents.takeIf { hasPoll },
+                    pollType = "SINGLE".takeIf { hasPoll }
                 )
             )
             if (request.isSuccessful && request.code() == 200) {
@@ -306,10 +311,10 @@ class CardFeedRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun requestCardArticle(): DataResult<CardArticle> {
+    override suspend fun requestCardArticle(): DataResult<List<CardArticle>> {
         return apiCall(
             apiCall = { feedHttp.requestCardsArticle() },
-            mapper = { data -> data.toDomain() }
+            mapper = { data -> data.map { it.toDomain() } }
         )
     }
 }

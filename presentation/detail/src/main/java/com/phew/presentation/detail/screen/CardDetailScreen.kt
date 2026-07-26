@@ -91,6 +91,7 @@ import com.phew.core.ui.model.navigation.TagViewArgs
 import com.phew.core_common.CardDetailTrace
 import com.phew.core_common.MoveDetail
 import com.phew.domain.dto.CardDetailTag
+import com.phew.domain.dto.Poll
 import com.phew.core_common.TimeUtils
 import com.phew.core_common.isEventCard
 import com.phew.core_common.log.SooumLog
@@ -109,6 +110,7 @@ import com.phew.core_design.component.card.CardViewComment
 import com.phew.domain.dto.CardComment
 import com.phew.presentation.detail.component.CardDetailBottom
 import com.phew.presentation.detail.component.CardDetailHeader
+import com.phew.presentation.detail.component.CardDetailPoll
 import com.phew.presentation.detail.component.CardDetailTopBar
 import com.phew.presentation.detail.model.MoreAction
 import com.phew.presentation.detail.viewmodel.CardDetailError
@@ -350,6 +352,10 @@ internal fun CardDetailRoute(
         commentCnt = cardDetail.commentCardCount,
         searchCnt = cardDetail.visitedCnt,
         isLikeCard = cardDetail.isLike,
+        isLikeLoading = uiState.isLikeLoading,
+        likeAnimationKey = uiState.likeAnimationKey,
+        poll = cardDetail.poll,
+        isPollVoteLoading = uiState.isPollVoteLoading,
         commentsPagingItems = commentsPagingItems,
         isRefreshing = isRefreshing,
         composition = composition,
@@ -357,6 +363,9 @@ internal fun CardDetailRoute(
         onBackPressed = onBackPressed,
         onClickLike = {
             viewModel.verifyAndToggleLike(args.cardId)
+        },
+        onPollOptionClick = { pollOptionId ->
+            viewModel.voteOrCancelPoll(pollOptionId)
         },
         onClickCommentIcon = { event ->
             viewModel.logMoveToCommentCard(
@@ -441,12 +450,17 @@ private fun CardDetailScreen(
     commentCnt: Int,
     searchCnt: Int,
     isLikeCard: Boolean,
+    isLikeLoading: Boolean,
+    likeAnimationKey: Int,
+    poll: Poll?,
+    isPollVoteLoading: Boolean,
     commentsPagingItems: LazyPagingItems<CardComment>,
     isRefreshing: Boolean,
     progress: Float,
     composition: LottieComposition?,
     onBackPressed: () -> Unit,
     onClickLike: () -> Unit,
+    onPollOptionClick: (Long) -> Unit,
     onClickCommentIcon: (MoveDetail) -> Unit,
     onClickCommentView: (Long) -> Unit,
     onBlockMember: (Long, String) -> Unit,
@@ -637,12 +651,23 @@ private fun CardDetailScreen(
                                     onClick = profileClick
                                 )
                             },
+                            contentAfterCard = {
+                                poll?.let {
+                                    CardDetailPoll(
+                                        poll = it,
+                                        isVoteLoading = isPollVoteLoading,
+                                        onOptionClick = onPollOptionClick
+                                    )
+                                }
+                            },
                             bottom = {
                                 CardDetailBottom(
                                     likeCnt = likeCnt,
                                     commentCnt = commentCnt,
                                     searchCnt = searchCnt,
                                     isLikeCard = isLikeCard,
+                                    isLikeLoading = isLikeLoading,
+                                    likeAnimationKey = likeAnimationKey,
                                     onClickLike = onClickLike,
                                     onClickComment = {
                                         onClickCommentIcon(MoveDetail.IMAGE)

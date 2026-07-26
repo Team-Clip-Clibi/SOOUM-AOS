@@ -144,9 +144,13 @@ internal fun EditProfileScreen(viewModel: ProfileViewModel, onBackPress: () -> U
                     paddingValues = paddingValues,
                     imageUrl = uiState.newProfileImageUri.lastOrNull()?.toString() ?: "",
                     nickName = uiState.changeNickName ?: result.data.nickname,
+                    bio = uiState.changeBio ?: result.data.bio,
                     onAvatarClick = { bottomSheetView = true },
                     onValueChange = remember(viewModel::changeNickName) {
                         viewModel::changeNickName
+                    },
+                    onBioValueChange = remember(viewModel::changeBio) {
+                        viewModel::changeBio
                     },
                     hint = stringResource(
                         when {
@@ -195,8 +199,10 @@ private fun ChangeProfileView(
     paddingValues: PaddingValues,
     imageUrl: String,
     nickName: String,
+    bio: String,
     onAvatarClick: () -> Unit,
     onValueChange: (String) -> Unit,
+    onBioValueChange: (String) -> Unit,
     hint: String,
     showError: Boolean,
 ) {
@@ -224,6 +230,8 @@ private fun ChangeProfileView(
             onClick = onAvatarClick
         )
         Spacer(modifier = Modifier.height(40.dp))
+        EditProfileFieldTitle(text = stringResource(R.string.edit_profile_nickname_title))
+        Spacer(modifier = Modifier.height(8.dp))
         TextFiledComponent.RightIcon(
             rightImageClick = remember(onValueChange) { { onValueChange("") } },
             value = nickName,
@@ -236,7 +244,33 @@ private fun ChangeProfileView(
             helperText = hint,
             showError = showError
         )
+        Spacer(modifier = Modifier.height(24.dp))
+        EditProfileFieldTitle(text = stringResource(R.string.edit_profile_bio_title))
+        Spacer(modifier = Modifier.height(8.dp))
+        TextFiledComponent.TextArea(
+            value = bio,
+            placeHolder = stringResource(R.string.edit_profile_bio_placeholder),
+            height = 120.dp,
+            horizontalPadding = 20.dp,
+            verticalPadding = 12.dp,
+            showCounter = false,
+            onValueChange = onBioValueChange
+        )
     }
+}
+
+@Composable
+private fun EditProfileFieldTitle(
+    text: String,
+) {
+    Text(
+        text = text,
+        style = TextComponent.CAPTION_1_SB_12,
+        color = NeutralColor.BLACK,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp)
+    )
 }
 
 @Composable
