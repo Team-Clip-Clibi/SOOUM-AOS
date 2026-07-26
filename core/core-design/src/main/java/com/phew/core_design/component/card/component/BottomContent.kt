@@ -242,7 +242,18 @@ internal fun BottomContent(
         verticalAlignment = Alignment.CenterVertically
     ) {
         when {
-            isAdminManger -> ManagerLabel()
+            isAdminManger -> {
+                LikeAndComment(
+                    likeValue = likeCount,
+                    commentValue = commentCount,
+                    isLike = isLike,
+                    isLikeLoading = isLikeLoading,
+                    likeAnimationKey = likeAnimationKey,
+                    onClickLike = onClickLike,
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                ManagerLabel()
+            }
             cardType == FeedCardType.DELETED -> TimerLabel(
                 remainingTimeMillis = remaining,
                 isExpired = isExpired
@@ -294,6 +305,20 @@ private fun BottomContentPreview_NoTimer() {
             timeAgo = "방금 전1",
             remainingTimeMillis = null,
             cardType = FeedCardType.DEFAULT
+        )
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFFFFFFFF)
+@Composable
+private fun BottomContentPreview_AdminCard() {
+    Box(modifier = Modifier.background(NeutralColor.WHITE)) {
+        BottomContent(
+            likeCount = "602",
+            commentCount = "47",
+            timeAgo = "방금 전",
+            isAdminManger = true,
+            cardType = FeedCardType.ADMIN
         )
     }
 }
