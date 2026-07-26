@@ -1091,6 +1091,11 @@ private fun OptionButtons(
                     text = option.displayName,
                     selected = selectedOptionIds.contains(option.id),
                     iconResId = option.iconResId(),
+                    iconTextSpacing = if (option.id == WriteOptions.TWENTY_FOUR_HOURS_OPTION_ID) {
+                        2.dp
+                    } else {
+                        4.dp
+                    },
                     onClick = {
                         if (isDistanceOption && !hasLocationPermission) {
                             onDistancePermissionRequest()

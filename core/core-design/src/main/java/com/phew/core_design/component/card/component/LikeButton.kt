@@ -66,7 +66,6 @@ fun LikeButton(
                 durationMillis = 420
                 1f at 0
                 1.10f at 147 using Snappy
-                0.95f at 273
                 1f at 420
             }
         )

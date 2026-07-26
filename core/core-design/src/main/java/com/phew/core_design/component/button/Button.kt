@@ -27,6 +27,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.phew.core_design.NeutralColor
 import com.phew.core_design.Primary
@@ -39,7 +40,8 @@ fun RoundButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     @DrawableRes iconResId: Int? = null,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    iconTextSpacing: Dp = 4.dp,
 ) {
     val targetBackground = when {
         !enabled -> NeutralColor.GRAY_100
@@ -77,7 +79,7 @@ fun RoundButton(
         contentAlignment = Alignment.Center
     ) {
         Row(
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(iconTextSpacing),
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (iconResId != null) {
