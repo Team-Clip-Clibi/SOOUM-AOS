@@ -12,10 +12,12 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -26,6 +28,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LocalContentColor
@@ -167,6 +170,8 @@ object FeedUi {
         modifier: Modifier,
         onCardClick: (cardId: Long) -> Unit
     ) {
+        val articleListState = rememberLazyListState()
+
         Column(
             modifier = modifier
                 .fillMaxWidth()
@@ -178,22 +183,25 @@ object FeedUi {
                     ambientColor = unknownColor
                 )
                 .background(color = WHITE, shape = RoundedCornerShape(16.dp))
-                .border(width = 1.dp, color = GRAY_100, shape = RoundedCornerShape(16.dp))
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+                .border(width = 1.dp, color = GRAY_100, shape = RoundedCornerShape(16.dp)),
             horizontalAlignment = Alignment.Start,
         ) {
             Text(
                 text = stringResource(id = R.string.home_article_title),
                 style = TextComponent.CAPTION_1_SB_12,
-                color = NeutralColor.BLACK
+                color = NeutralColor.BLACK,
+                modifier = Modifier.padding(start = 16.dp, top = 16.dp)
             )
+            Spacer(modifier = Modifier.height(10.dp))
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
+                    .height(69.dp)
             ) {
                 LazyRow(
+                    state = articleListState,
+                    contentPadding = PaddingValues(start = 16.dp, end = 36.dp),
+                    flingBehavior = rememberSnapFlingBehavior(lazyListState = articleListState),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -276,7 +284,7 @@ object FeedUi {
                         }
                     }
                 }
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(2.dp))
                 Text(
                     text = if (data.totalWriterCnt == 0) {
                         stringResource(id = R.string.home_article_write_first)
@@ -300,22 +308,33 @@ object FeedUi {
         imageUrl: String,
         description: String,
     ) {
-        AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(imageUrl.ifEmpty { DesignR.drawable.ic_profile })
-                .crossfade(true)
-                .build(),
-            contentDescription = description,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(20.dp)
-                .clip(CircleShape)
-                .border(
-                    width = 1.dp,
-                    color = WHITE,
-                    shape = CircleShape
-                )
-        )
+        val imageModifier = Modifier
+            .size(20.dp)
+            .clip(CircleShape)
+            .border(
+                width = 1.dp,
+                color = WHITE,
+                shape = CircleShape
+            )
+
+        if (imageUrl.isEmpty()) {
+            Image(
+                painter = painterResource(DesignR.drawable.ic_profile),
+                contentDescription = description,
+                contentScale = ContentScale.Crop,
+                modifier = imageModifier
+            )
+        } else {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(imageUrl)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = description,
+                contentScale = ContentScale.Crop,
+                modifier = imageModifier
+            )
+        }
     }
 
     @Composable
